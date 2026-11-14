@@ -1,0 +1,30 @@
+[project]
+name = "fire-api"
+version = "0.1.0"
+description = "Read-only API for the Global Fire Harmonization contract products (T-034)"
+requires-python = ">=3.12,<3.15"
+# Pinned to the approved stack (docs/TECH_STACK.md section 7, D-008).
+dependencies = [
+  "fastapi==0.162.7",
+  "uvicorn==0.54.0",
+  "duckdb==2.0.0",
+  "pydantic==2.14.3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx==0.28.1",
+  "pytest==9.2.0",
+  "ruff==0.17.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
