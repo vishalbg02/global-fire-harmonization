@@ -1,7 +1,7 @@
-# Task prompt: Validation integration PR (all real test statuses into the products and the plan)
+# Task prompt: T-027 Validation integration (all real test statuses into the products and the plan)
 
 > Prepared for: Member 2 · Date: 2026-11-15 · Based on main @ 14bfacb
-> Source of truth: the Lead's merge plan on PR #50 ("Then **one integration PR (Member 2)** writes every real status (including FAILs, the D1 per-region and night entries, and the NOT_RUN halves) into `data/products/validation_results.json` and `docs/VALIDATION_PLAN.md` §4, so the methods page shows them") and the Lead's decisions on PRs #55, #56 and #57. **This work has no row in `docs/TASK_TRACKER.md`; the Lead is asked to add one (see §15).** This prompt adds no scope beyond those comments.
+> Source of truth: the Lead's merge plan on PR #50 ("Then **one integration PR (Member 2)** writes every real status (including FAILs, the D1 per-region and night entries, and the NOT_RUN halves) into `data/products/validation_results.json` and `docs/VALIDATION_PLAN.md` §4, so the methods page shows them") and the Lead's decisions on PRs #55, #56 and #57. **Assigned as T-027, priority 1, in PR #61 (row T-027, branch `science/T-027-validation-integration`).** This prompt adds no scope beyond those comments.
 
 ## 1. Project context
 The Witness Stand publishes pre-registered validation tests, failures included. The validation PRs T-020 (A1), T-021 (B1, B3), T-022 (D1, D2) and T-025 (E1, S1) are merged, but their results exist only in their reports and in uncommitted files under `data/interim/qa/`. `data/products/validation_results.json` still has an empty test list and `docs/VALIDATION_PLAN.md` §4 still says `NOT_RUN` everywhere, so the methods page (T-041) cannot show anything.
@@ -10,13 +10,13 @@ The Witness Stand publishes pre-registered validation tests, failures included. 
 Re-run the four merged harnesses on the final products, merge their entries into one contract-valid `validation_results.json` (committed through Git LFS, D-027), and update `docs/VALIDATION_PLAN.md` §4 and §5 with the actual results, exactly as decided by the Lead.
 
 ## 3. Assigned responsibility
-- Task ID / priority: none yet (named by the Lead on #50) / P0
+- Task ID / priority: T-027 / P0
 - Owner: Member 2 · Reviewer and merger: Member 1 (Project Lead)
 - Dependencies (merged): T-014, T-020, T-021, T-022, T-025
 
 ## 4. Relevant files and directories
 - Read: `docs/validation/T-020-results.md`, `T-021-results.md`, `T-022-results.md`, `T-025-results.md`, `docs/DATA_CONTRACT.md` §6, `pipeline/validation_a1.py`, `validation_b.py`, `validation_d.py`, `validation_e1_s1.py`, `pipeline/contract_check.py`
-- Create/modify: `docs/task-prompts/validation-integration.md` (this file), `pipeline/validation_integrate.py` and `pipeline/tests/test_validation_integrate.py` (merge and checks), `data/products/validation_results.json` (LFS), `docs/VALIDATION_PLAN.md` (§4 and §5 only; no criterion text), `docs/HANDOFF.md` and `docs/PROGRESS_LOG.md` if the session is substantial
+- Create/modify: `docs/task-prompts/T-027-validation-integration.md` (this file), `pipeline/validation_integrate.py` and `pipeline/tests/test_validation_integrate.py` (merge and checks), `data/products/validation_results.json` (LFS), `docs/VALIDATION_PLAN.md` (§4 and §5 only; no criterion text), `docs/HANDOFF.md` and `docs/PROGRESS_LOG.md` if the session is substantial
 - Not committed: `data/interim/`
 
 ## 5. Approved technologies
@@ -52,8 +52,8 @@ The entries files written by the harnesses: `data/interim/qa/T-020_validation_en
 `docs/VALIDATION_PLAN.md` §4 and §5; tracker row (once the Lead adds one); `docs/HANDOFF.md` and `docs/PROGRESS_LOG.md` at the end.
 
 ## 14. Git branch and PR instructions
-- Branch: `science/validation-integration` from the latest `main`; first commit: this prompt; open a PR with the template; never merge.
+- Branch: `science/T-027-validation-integration` from the latest `main`; first commit: this prompt; open a PR with the template; never merge.
 
 ## 15. Out-of-scope or blocking issues
-- **No tracker row:** the Lead named this work on #50 but it has no ID. Please add one (suggested `T-027`, owner M2) before merge.
+- The tracker row T-027 comes with PR #61; this PR edits only that row once #61 is merged.
 - If any harness no longer reproduces its merged status, stop and report it under "Scope issues".
