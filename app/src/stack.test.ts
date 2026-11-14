@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest'
 describe('approved stack is installed', () => {
   it.each([
     'maplibre-gl',
-    'deck.gl',
+    '@deck.gl/core',
+    '@deck.gl/layers',
+    '@deck.gl/react',
+    '@deck.gl/maplibre',
     'terra-draw',
     'echarts',
     '@tanstack/react-query',

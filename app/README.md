@@ -25,7 +25,7 @@ Run all commands from this `app/` directory.
 
 ## Stack (approved, D-008)
 
-React 19, Vite 8, TypeScript (strict), MapLibre GL JS 6, deck.gl 9, terra-draw, Apache ECharts 6, TanStack Query, Vitest. The map, drawing and chart libraries are installed but not used yet. Exact versions are pinned in `package-lock.json`.
+React 19, Vite 8, TypeScript (strict), MapLibre GL JS 6, deck.gl 9 (installed as the individual modules `@deck.gl/core`, `@deck.gl/layers`, `@deck.gl/react` and `@deck.gl/maplibre`, not the `deck.gl` meta-package, which pulls in unused ArcGIS and Vaadin packages), terra-draw, Apache ECharts 6, TanStack Query, Vitest. The map, drawing and chart libraries are installed but not used yet. Exact versions are pinned in `package-lock.json`.
 
 ## Folder map
 
@@ -42,6 +42,12 @@ app/
 ```
 
 Folders for the API client, state, components and content are added when the task that needs them starts.
+
+## Pointer for the root README (proposed, awaiting Lead approval)
+
+The root `README.md` "Setup" section is not edited in this task. Proposed line for it:
+
+> Web app: see [`app/README.md`](app/README.md) for install, run, build and test commands.
 
 ## Rules for this folder
 
