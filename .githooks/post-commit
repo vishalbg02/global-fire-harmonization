@@ -1,0 +1,4 @@
+#!/bin/sh
+# Git LFS (D-027): core.hooksPath replaces .git/hooks, so forward to Git LFS's post-commit hook.
+command -v git-lfs >/dev/null 2>&1 || exit 0
+exec git lfs post-commit "$@"
