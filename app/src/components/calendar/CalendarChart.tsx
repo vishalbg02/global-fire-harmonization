@@ -3,7 +3,7 @@ import { CustomChart } from 'echarts/charts'
 import { AriaComponent, GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import type { ValueMode } from '../../state/selection.ts'
+import type { Source, ValueMode } from '../../state/selection.ts'
 import { buildChartOption } from './chartOption.ts'
 import type { CalendarRow } from './grid.ts'
 
@@ -18,11 +18,12 @@ interface Props {
   maxActivity: number
   selected: { year: number; month: number } | null
   areaName: string
+  source: Source
   onSelectMonth: (year: number, month: number) => void
 }
 
 /** The ECharts heatmap. It is a canvas, so the table view is the keyboard route to the same data. */
-export function CalendarChart({ rows, mode, maxActivity, selected, areaName, onSelectMonth }: Props) {
+export function CalendarChart({ rows, mode, maxActivity, selected, areaName, source, onSelectMonth }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const chartRef = useRef<echarts.ECharts | null>(null)
   const onSelect = useRef(onSelectMonth)
@@ -48,8 +49,8 @@ export function CalendarChart({ rows, mode, maxActivity, selected, areaName, onS
   }, [])
 
   useEffect(() => {
-    chartRef.current?.setOption(buildChartOption(rows, mode, maxActivity, selected, areaName), true)
-  }, [rows, mode, maxActivity, selected, areaName])
+    chartRef.current?.setOption(buildChartOption(rows, mode, maxActivity, selected, areaName, source), true)
+  }, [rows, mode, maxActivity, selected, areaName, source])
 
   return (
     <div
@@ -57,7 +58,7 @@ export function CalendarChart({ rows, mode, maxActivity, selected, areaName, onS
       className="calendar-chart"
       style={{ height: rows.length * ROW_HEIGHT + CHROME_HEIGHT }}
       role="img"
-      aria-label={`Calendar of satellite-detected fire activity for ${areaName}. The table view gives the same values.`}
+      aria-label={`Calendar of ${source} satellite-detected fire activity for ${areaName}. The table view gives the same values.`}
     />
   )
 }

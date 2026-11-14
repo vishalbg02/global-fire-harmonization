@@ -68,11 +68,15 @@ export function buildCalendarGrid(
   return rows
 }
 
-/** Largest non-null harmonized estimate in the series; 0 if there is none. */
-export function maxEstimate(records: readonly EntityMonth[]): number {
+/**
+ * The one maximum of the colour scale: the largest value among the raw combined counts and the
+ * non-null harmonized estimates of the series (0 if there is none). Both sources share it, so
+ * switching between them never rescales the colours. Nothing is converted.
+ */
+export function maxActivity(records: readonly EntityMonth[]): number {
   let max = 0
   for (const r of records) {
-    if (r.estimate !== null) max = Math.max(max, r.estimate)
+    max = Math.max(max, r.raw_combined_cell_days, r.estimate ?? 0)
   }
   return max
 }

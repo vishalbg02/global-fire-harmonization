@@ -2,20 +2,21 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ApiError, fetchSeries } from '../../api/client.ts'
 import type { Metadata } from '../../api/contract.ts'
-import type { Area, ValueMode } from '../../state/selection.ts'
+import type { Area, Source, ValueMode } from '../../state/selection.ts'
 import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { CalendarChart } from './CalendarChart.tsx'
 import { CalendarLegend } from './CalendarLegend.tsx'
 import { CalendarTable } from './CalendarTable.tsx'
 import { ValueModeSelector } from './ValueModeSelector.tsx'
-import { buildCalendarGrid, maxEstimate } from './grid.ts'
+import { buildCalendarGrid, maxActivity as seriesMaxActivity } from './grid.ts'
 
 interface Props {
   area: Area
   meta: Metadata | null
   selectedMonth: { year: number; month: number } | null
   valueMode: ValueMode
+  source: Source
   onValueModeChange: (mode: ValueMode) => void
   onSelectMonth: (year: number, month: number) => void
   onShowWorld: () => void
@@ -27,6 +28,7 @@ export function CalendarPanel({
   meta,
   selectedMonth,
   valueMode,
+  source,
   onValueModeChange,
   onSelectMonth,
   onShowWorld,
@@ -46,7 +48,7 @@ export function CalendarPanel({
         : buildCalendarGrid(records, meta.first_month, meta.latest_month, meta.provisional_months),
     [records, meta],
   )
-  const maxActivity = useMemo(() => (records === undefined ? 0 : maxEstimate(records)), [records])
+  const maxActivity = useMemo(() => (records === undefined ? 0 : seriesMaxActivity(records)), [records])
 
   const notFound = series.error instanceof ApiError && series.error.status === 404
 
@@ -97,6 +99,7 @@ export function CalendarPanel({
                 maxActivity={maxActivity}
                 selected={selectedMonth}
                 areaName={area.entity_name}
+                source={source}
                 onSelectMonth={onSelectMonth}
               />
             ) : (
@@ -113,12 +116,13 @@ export function CalendarPanel({
                   maxActivity={maxActivity}
                   selected={selectedMonth}
                   areaName={area.entity_name}
+                  source={source}
                   onSelectMonth={onSelectMonth}
                 />
               </ErrorBoundary>
             )}
           </div>
-          <CalendarLegend mode={valueMode} maxActivity={maxActivity} />
+          <CalendarLegend mode={valueMode} maxActivity={maxActivity} source={source} />
         </div>
       )}
     </section>

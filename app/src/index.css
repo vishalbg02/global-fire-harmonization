@@ -103,6 +103,29 @@ select:focus-visible,
   font-weight: 600;
 }
 
+.source-toggle {
+  flex-wrap: wrap;
+  max-width: 34rem;
+}
+
+.source-note {
+  flex-basis: 100%;
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.source-unavailable {
+  color: var(--text);
+  border-left: 3px solid #8a6d00;
+  padding-left: 0.5rem;
+}
+
+.is-disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
 .map-area {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 22rem;

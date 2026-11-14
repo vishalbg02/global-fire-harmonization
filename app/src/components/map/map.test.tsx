@@ -4,7 +4,7 @@ import { VERDICTS, parseMapCell } from '../../api/contract.ts'
 import type { MapCell } from '../../api/contract.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { CellInfo } from './CellInfo.tsx'
-import { LayerSelector } from './LayerSelector.tsx'
+import { MapModeSelector } from './MapModeSelector.tsx'
 import { Legend } from './Legend.tsx'
 import { MonthSelector } from './MonthSelector.tsx'
 import { countryIso3 } from './countries.ts'
@@ -141,10 +141,13 @@ describe('Legend', () => {
     }
   })
 
-  it('states the units in raw and harmonized modes', () => {
-    for (const layer of ['raw', 'harmonized'] as const) {
-      expect(renderToString(<Legend layer={layer} max={50} />)).toContain('Fire-active cell-days, Aqua-equivalent')
-    }
+  it('states the source and the units in raw and harmonized modes', () => {
+    expect(renderToString(<Legend layer="raw" max={50} />)).toContain(
+      'Raw: fire-active cell-days summed across all operating satellites',
+    )
+    expect(renderToString(<Legend layer="harmonized" max={50} />)).toContain(
+      'Harmonized: fire-active cell-days, Aqua-equivalent.',
+    )
   })
 })
 
@@ -168,12 +171,13 @@ describe('MonthSelector', () => {
   })
 })
 
-describe('LayerSelector', () => {
-  it('offers the three layer modes', () => {
-    const html = renderToString(<LayerSelector value="verdict" onChange={() => {}} />)
+describe('MapModeSelector', () => {
+  it('offers Verdict and Activity; raw and harmonized come from the shared control', () => {
+    const html = renderToString(<MapModeSelector value="verdict" onChange={() => {}} />)
     expect(html).toContain('Verdict')
-    expect(html).toContain('Raw')
-    expect(html).toContain('Harmonized')
+    expect(html).toContain('Activity')
+    expect(html).not.toContain('Raw')
+    expect(html).not.toContain('Harmonized')
   })
 })
 
@@ -184,5 +188,47 @@ describe('states', () => {
     expect(error).toContain('Data are not available right now.')
     expect(error).toContain('Retry')
     expect(renderToString(<EmptyState message="No cells for this month." />)).toContain('No cells for this month.')
+  })
+})
+
+
+describe('raw layer (T-033)', () => {
+  const raw = (c: MapCell = cell()) => renderToString(<CellInfo cell={c} layer="raw" />)
+
+  it('shows only the stored raw count, with the approved wording', () => {
+    const html = raw()
+    expect(html).toContain('Raw combined')
+    expect(html).toContain('20')
+    expect(html).toContain('Raw: fire-active cell-days summed across all operating satellites')
+    expect(html).toContain('Not comparable across years, because the number of satellites changes.')
+  })
+
+  it('shows no verdict, probability, interval, % of normal or notes', () => {
+    const html = raw()
+    for (const hidden of ['Verdict', 'Above normal', '82%', '137%', '90% interval', 'Notes', 'Compared with normal', '▲']) {
+      expect(html).not.toContain(hidden)
+    }
+  })
+
+  it('keeps a real zero as a value, not as no data', () => {
+    const html = raw(cell({ raw_combined_cell_days: 0, estimate: null, pct_of_normal: null }))
+    expect(html).toContain('<dd>0</dd>')
+    expect(html).not.toContain('no data')
+  })
+
+  it('still marks provisional data', () => {
+    expect(raw(cell({ data_level: 'NRT' }))).toContain('Provisional (NRT)')
+  })
+
+  it('leaves the harmonized details unchanged', () => {
+    const html = renderToString(<CellInfo cell={cell()} layer="harmonized" />)
+    expect(html).toContain('82% likely above normal')
+    expect(html).toContain('90% interval 8.1 to 16.4')
+  })
+
+  it('the map legend uses the approved raw wording and says the scale is shared', () => {
+    const html = renderToString(<Legend layer="raw" max={50} />)
+    expect(html).toContain('Raw: fire-active cell-days summed across all operating satellites')
+    expect(html).toContain('share this colour scale')
   })
 })
