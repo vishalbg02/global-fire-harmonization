@@ -32,6 +32,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-026 | 2026-11-14 | Reason code `NOT_HARMONIZED` and raw-only products (contract 0.1.1) | **APPROVED** (2026-11-14) |
 | D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
 | D-024 | 2026-11-14 | Add `terra-draw-maplibre-gl-adapter` 1.5.0 to the frontend stack (drawing the custom rectangle on the MapLibre map, T-035) | **APPROVED** (2026-11-14) |
+| D-029 | 2026-11-15 | Test A1: both paths use the shared Aqua-measured 2003-2022 baseline (amends D-028 for A1 only; adopted after seeing C1, whose official result stays INCONCLUSIVE) | **APPROVED** (2026-11-15) |
 
 ---
 
@@ -258,3 +259,14 @@ The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the 
 **6. Validation thresholds.** Locked exactly as written in `docs/VALIDATION_PLAN.md` §3 (A1, A2, B1, B2, B3, C1, D1, D2, E1, CTRL, S1). Cases and windows: T-050 in `docs/VALIDATION_PLAN.md` §2.
 
 - **Status:** **APPROVED** by the Lead, 2026-11-14 (G1 lock). D-010 is closed by this entry.
+
+**Amendment A (T-014, PR #52), approved by the Lead 2026-11-15: step 3 also requires no detection by any witness.** `NO_DETECTED_ACTIVITY` is given only when the estimate is 0, the baseline p75 is at most 1 cell-day **and the raw combined cell-days are 0** (any witness, Terra included). If any satellite saw something, the product does not say "nothing detected": such a row goes on to step 4 and gets `INSUFFICIENT_BASELINE`. Reason: the contract checker (`contract_check.py`) forbids `NO_DETECTED_ACTIVITY` where detections are present; the checker is kept as it is. Rows moved by this amendment in the first run without it: **216,103 cell-months** (2.0% of the `NO_DETECTED_ACTIVITY` rows), **545 country-months** and **3 continent-months**. No threshold of D-028 changed.
+
+### D-029: Test A1 uses the shared Aqua-measured 2003-2022 baseline for both paths (amends D-028 for A1 only) **[APPROVED 2026-11-15]**
+- **Context:** A1 (`docs/VALIDATION_PLAN.md` §3) compares `pct_of_normal` from Aqua alone with `pct_of_normal` from converted S-NPP alone. D-028 builds a baseline from a path's own estimates and gives no baseline when fewer than 15 of the 20 years (2003-2022) have an estimate. S-NPP starts in 2012, so the S-NPP-only path has at most 11 baseline years and no baseline; case C1 (Indonesia, Sep-Oct 2015) was therefore INCONCLUSIVE as pre-registered (T-020, `docs/validation/T-020-results.md`).
+- **Decision:** for test A1, **both paths use the same baseline: the Aqua-measured 2003-2022 baseline** (same calendar month, empirical p25/p50/p75 over the years with an Aqua-only estimate, minimum 15 years and median at least 5 cell-days as in D-028). The paths then differ only in the numerator (the Aqua-only estimate against the converted S-NPP-only estimate). Reason: the product compares every month against one 2003-2022 normal; an S-NPP-only normal built from 2012-2022 covers a different period, so its percentages are not comparable to Aqua's.
+- **Timing, stated plainly:** this amendment was adopted **after C1 had been run and its three readings seen** (D-028 as written: INCONCLUSIVE; shared Aqua baseline: PASS; S-NPP own 2012-2022 baseline with a 10-year minimum: FAIL). It is applied **before** C2 to C6 are run. **C1's official result stays INCONCLUSIVE, as pre-registered**; its other two readings are published beside it and are not the official result. C1 counts as INCONCLUSIVE, not PASS, in the family result.
+- **Unchanged:** the A1 criterion (same direction above or below normal; peak month within ±1; 90% intervals overlap), the family pass (at least 5 of 6 clean-overlap cases C1-C6), all other thresholds, and the baseline of every other test and of the product.
+- **Limit kept:** both paths now share one baseline, so A1 tests the numerators only; the baseline is itself built from Aqua, and the baseline's uncertainty is not propagated (D-028).
+- **Status:** **APPROVED** by the Lead, 2026-11-15.
+
