@@ -27,6 +27,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-022 | 2026-11-14 | Contract additions from the workstream prompts (cell_id, cell bounds, entity IDs, PRODUCTS_DIR, path rule); envelope and error format not adopted → contract 0.1.1 | **APPROVED** (2026-11-14) |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
 | D-021 | 2026-11-14 | Rewrite the 4 bootstrap commits on `main` to remove AI trailers | APPROVED and DONE (force-pushed 2026-11-14) |
+| D-027 | 2026-11-14 | Contract products in `data/products/` are committed through Git LFS; raw and interim data stay out of Git | **APPROVED** (2026-11-14) |
 | D-026 | 2026-11-14 | Reason code `NOT_HARMONIZED` and raw-only products (contract 0.1.1) | **APPROVED** (2026-11-14) |
 | D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
 | D-024 | 2026-11-14 | Add `terra-draw-maplibre-gl-adapter` 1.5.0 to the frontend stack (drawing the custom rectangle on the MapLibre map, T-035) | **APPROVED** (2026-11-14) |
@@ -208,3 +209,10 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Decision:** add the reason code `NOT_HARMONIZED` (contract 0.1.1). A raw-only row fills only the raw fields; every harmonized field is `null`, `witnesses_used = []`, `verdict = CANNOT_DETERMINE`, `reason_codes = ["NOT_HARMONIZED"]`, and `method_version` ends in `-raw-only`. T-014 replaces these products.
 - **User-facing text:** "Harmonized values aren't computed yet; this shows raw satellite data only."
 - **Status:** **APPROVED** by the Lead, 2026-11-14.
+
+### D-027: Contract products through Git LFS
+- **Context:** real products (about 180 MB for `cell_month_witness.parquet` alone) were shared outside Git (WhatsApp or Drive) with checksums. That is error-prone, and GitHub rejects normal files over 100 MB.
+- **Decision:** commit the contract products in `data/products/` through **Git LFS**. `.gitattributes` tracks `data/products/**/*.parquet`; small JSON products are normal Git files. Members run `git lfs install` once per machine.
+- **Not changed:** NASA raw archives (`data/raw/`, about 9.7 GB) and interim files (`data/interim/`, about 6.3 GB) are never committed. They are reproducible from FIRMS and the pipeline, and are too large for the LFS quota.
+- **Cost:** every committed version stays in LFS history and counts against the account's LFS storage and bandwidth quota, so products are committed only when they change.
+- **Status:** **APPROVED** by the Lead, 2026-11-14 (replaces the earlier "never commit products" rule).

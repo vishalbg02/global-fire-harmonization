@@ -122,7 +122,7 @@ used or produced; contract_version.>
 - Do not change the tech stack, architecture, scientific methodology or data contract.
 - Do not edit files outside §4 "Create/modify".
 - Do not touch the other workstream's directories: <list>.
-- No secrets, no large data files, no direct pushes to main, no self-merge.
+- No secrets, no raw or interim data files (products only through Git LFS, D-027), no direct pushes to main, no self-merge.
 - Do not mark unverified scientific claims as validated.
 - <task-specific constraints>
 
@@ -195,7 +195,7 @@ If anything requires a change outside this prompt: stop, describe it under
 7. Errors and edge cases are handled (nulls, outages, zero baselines, no detections, provisional months).
 8. Integrates with the other workstream.
 9. Documentation updated.
-10. No accidental secrets or large files.
+10. No accidental secrets or large files outside Git LFS (D-027).
 11. No regressions.
 
 **Outcomes** (recorded with GitHub's review feature and in the tracker's *Review* column):
