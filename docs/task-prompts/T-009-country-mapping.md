@@ -33,7 +33,7 @@ No contract product is changed. Codes follow the proposed entity ID scheme in th
 
 ## 7. Inputs
 - Distinct `country_name` values in `data/interim/detections/` (T-003, local).
-- `ne_50m_admin_0_countries.zip` from https://naciscdn.org/naturalearth/50m/cultural/ (799,734 bytes, SHA-256 `5fed433373581fa648920435f937d95f2d3c0200e067409c6478dcdf1b853139`), downloaded locally with the Member 2's approval, only its attribute table is read, never committed.
+- `ne_50m_admin_0_countries.zip` from https://naciscdn.org/naturalearth/50m/cultural/ (799,734 bytes, SHA-256 `5fed433373581fa648920435f937d95f2d3c0200e067409c6478dcdf1b853139`), downloaded locally with Member 2's approval, only its attribute table is read, never committed.
 
 ## 8. Expected outputs
 `pipeline/country_map.csv` with columns `firms_name, iso3, continent, method, note`; `method` is `NATURAL_EARTH` (matched by name, code and continent taken from Natural Earth) or `MANUAL` (resolved by hand, with a `note` saying why).
