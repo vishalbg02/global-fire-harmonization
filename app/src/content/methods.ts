@@ -11,7 +11,7 @@
  * - REFERENCES: docs/SCIENTIFIC_METHODOLOGY.md section 9, as written.
  * - DATASET_DOIS: SP_DOIS and NRT_DOIS in api/fire_api/export.py, copied exactly.
  *
- * Nothing here is computed. Baseline, probabilities and verdicts are not computed yet (T-014).
+ * Nothing here is computed. The baseline, probabilities and verdicts are those of the T-014 products (D-028).
  */
 
 export type Label = 'APPROVED' | 'PROPOSED' | 'VERIFIED' | 'LIMITATION' | 'OPEN' | 'NOT_BUILT_YET'
@@ -172,20 +172,20 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
     id: 'baseline-verdicts',
     title: 'The baseline and the five verdicts',
     paragraphs: [
-      'NOT_BUILT_YET: baseline, probabilities and verdicts are not computed yet. They belong to task T-014. Until then every month shows CANNOT_DETERMINE with the reason NOT_HARMONIZED, and the baseline and probability fields are empty.',
-      'PROPOSED (D-010): the baseline is the same calendar month over 2003 to 2022, using the harmonized estimates. Its 25th, 50th and 75th percentiles define the normal range. Sensitivity test S1 repeats the check with an Aqua-measured baseline (2003 to 2021).',
-      'PROPOSED: three probabilities come from the uncertainty of the estimate: above the 75th percentile, below the 25th percentile, and within the range between them. The thresholds below are to be locked at Gate G1.',
-      'LIMITATION: the uncertainty of the baseline percentiles is not carried into these probabilities in the first version.',
-      'Above normal (ABOVE_NORMAL): proposed when the probability of being above the baseline range is at least 0.8.',
-      'Below normal (BELOW_NORMAL): proposed when the probability of being below the baseline range is at least 0.8.',
-      'Within normal (WITHIN_NORMAL): proposed when the probability of being within the baseline range is at least 0.8.',
-      'Cannot determine (CANNOT_DETERMINE): any other case. Also used for an outage (too few days of data), a baseline that is too small, or too few overlap months. The reason codes say which. It means the data cannot support a verdict. It does not mean normal.',
-      'No detected activity (NO_DETECTED_ACTIVITY): no detections, and the baseline is also near zero. It is never shown as "below normal".',
+      'APPROVED (D-028, 2026-11-14): the baseline is the same calendar month over 2003 to 2022, taken from the harmonized estimates of the years that have one. Its 25th, 50th and 75th percentiles (empirical, linear interpolation) define the normal range. With fewer than 15 of the 20 years there is no baseline. Sensitivity test S1 repeats the check with an Aqua-measured baseline (2003 to 2021).',
+      'The estimate is treated as a normal distribution with the estimate as mean and its standard deviation, cut at 0. The probability above the 75th percentile, below the 25th and between them are computed from it.',
+      'The verdict follows in this order: no estimate (an outage): cannot determine, reason OUTAGE; fewer than 15 baseline years: cannot determine, INSUFFICIENT_BASELINE; an estimate of 0, no detection by any witness and a baseline 75th percentile of 1 cell-day or less: NO_DETECTED_ACTIVITY (never shown as below normal); a baseline median below 5 Aqua-equivalent cell-days: cannot determine, INSUFFICIENT_BASELINE; then ABOVE_NORMAL, BELOW_NORMAL or WITHIN_NORMAL when the probability is at least 0.8; otherwise cannot determine, WIDE_INTERVAL.',
+      'ABOVE_NORMAL means the estimate is above the baseline\'s 75th percentile with at least 80% probability. It does not mean an anomaly: about half of all months lie outside the middle half of their baseline by construction. BELOW_NORMAL is the same below the 25th percentile, and WITHIN_NORMAL is at least 80% probability of lying between the two.',
+      'CANNOT_DETERMINE means the data cannot support a verdict; it does not mean normal. The reason codes say which case it is. NO_DETECTED_ACTIVITY means no detections and a baseline that is also near zero.',
+      'Caveat codes never change a verdict: PROVISIONAL_NRT, SINGLE_WITNESS, WITNESS_DISAGREEMENT (S above 2), AQUA_DRIFT_ERA, POOLED_CALIBRATION (more than half of the converted cell-days use a region or global ratio) and DIURNAL_CAVEAT (India and Punjab and Haryana, October and November, from 2020).',
+      'VERIFIED (measured on the T-014 products, 293 months, 2002-07 to 2026-11): the share of months that can be judged as above, below or within normal is 29.6% for countries, 52.7% for continents, 34.1% for the world and 2.9% for grid cells. 65% of cell-months have no detected activity. 189 of the 293 world months are CANNOT_DETERMINE with WIDE_INTERVAL.',
+      'HYPOTHESIS, not investigated: the world\'s baseline range is narrow against the roughly 6% relative error of the estimate, so the probability of lying within it often stays below 0.8.',
+      'LIMITATION: the uncertainty of the baseline percentiles is not carried into these probabilities.',
       'Nothing is ever interpolated or filled. Missing data stays missing.',
     ],
-    labels: ['NOT_BUILT_YET', 'PROPOSED', 'LIMITATION'],
+    labels: ['APPROVED', 'VERIFIED', 'LIMITATION'],
     source:
-      'docs/SCIENTIFIC_METHODOLOGY.md, section 4.6; docs/DECISION_LOG.md, D-010; docs/DATA_CONTRACT.md, enumerations and section 3; pipeline/harmonize.py, module docstring; docs/TASK_TRACKER.md, T-014',
+      'docs/DECISION_LOG.md, D-028; docs/DATA_SOURCES.md, "Baseline, probabilities, verdicts and the real harmonized products (T-014)"; docs/DATA_CONTRACT.md, enumerations',
   },
   {
     id: 'custom-areas',
@@ -204,12 +204,12 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
     id: 'raw-only',
     title: 'Raw-only data and NOT_HARMONIZED',
     paragraphs: [
-      'APPROVED (D-026, 2026-11-14): while harmonization is not available, the products show raw satellite data only. Every harmonized field is empty, no witness is listed as used, the verdict is CANNOT_DETERMINE and the reason code is NOT_HARMONIZED.',
+      'APPROVED (D-026, 2026-11-14): while harmonization was not available, the products showed raw satellite data only. Every harmonized field is empty, no witness is listed as used, the verdict is CANNOT_DETERMINE and the reason code is NOT_HARMONIZED.',
       'The text shown to users is: "Harmonized values aren\'t computed yet; this shows raw satellite data only."',
       'The raw combined number adds satellites that see the same fires: Aqua, Terra and VIIRS. It is not comparable across years and is not a measure of fire activity.',
-      'The raw products are replaced when T-014 is delivered.',
+      'The raw-only products were replaced by the harmonized products (T-014). This section describes the earlier state (D-026) and the NOT_HARMONIZED code, which no longer appears in the products.',
     ],
-    labels: ['APPROVED', 'NOT_BUILT_YET'],
+    labels: ['APPROVED', 'VERIFIED'],
     source:
       'docs/DECISION_LOG.md, D-026; docs/DATA_CONTRACT.md, 0.1.1 additions; docs/DATA_SOURCES.md, "Raw-only products for the app (T-014a)"',
   },
