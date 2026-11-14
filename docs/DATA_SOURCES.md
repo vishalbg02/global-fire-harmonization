@@ -490,7 +490,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
   | Median relative sd | 0.23 | 0.22 |
   | Indonesia `S > 1` / `S > 2` | 43% / 8% | 58.5% / 13.6% |
 
-  This run was made before two small fixes (the disagreement scale of two witnesses that never cover the same part, and the data level of an excluded Aqua night row); they change only rare months and the `data_level`, not these shares **[ASSUMPTION: not re-run]**.
+  **[VERIFIED, re-run 2026-11-15]** `python pipeline/harmonize.py` was re-run with the final code of T-014 (both bug fixes, shared ratio errors, the `S > 2` rule) over all 66,218 country-months: `S > 1` 23.66%, `S > 2` 4.62%, `S > 3` 0.83%, `S > 5` 0.02%; 95th percentile of `S` 1.95 (99th 2.90); median relative sd 0.223; Indonesia `S > 1` 58.5% and `S > 2` 13.6%. These equal the "now" column above to the digits shown, so the two fixes did not move the shares. With `phi` only: `S > 1` 18.3%, `S > 2` 5.0%, median relative sd 0.345.
 
 **Reading it correctly (totals method):** the witnesses disagree beyond their stated uncertainty (`S > 1`) in 26% of the multi-witness country-months and beyond a factor of 2 in 6.8%, so the code `WITNESS_DISAGREEMENT` flags the exceptions. Whether the intervals are the right width is test D1: the Aqua-only years (2002-07 to 2011-12, inside the 2003 to 2022 baseline) have no second witness, so their width rests on `phi` and `kappa` alone.
 
@@ -761,7 +761,59 @@ A drift visible only at night, or only in the last months before the end of the 
 
 **Nothing is applied.** Figure: `docs/figures/aqua_drift.png`.
 
-### Raw-only products for the app (T-014a) **[VERIFIED 2026-11-14 unless labelled]**
+### Baseline, probabilities, verdicts and the real harmonized products (T-014) **[VERIFIED 2026-11-15 unless labelled]**
+
+`python pipeline/verdicts.py` (about 25 minutes) writes `cell_month_harmonized.parquet`, `entity_month.parquet`, `metadata.json` and `validation_results.json` into `data/products/` (Git LFS for the Parquet files, D-027), from the final T-011 products and the T-013 method. They replace the raw-only tables of T-014a. `method_version` is `0.1.0` (no `-raw-only`), `contract_version` 0.1.1. The rules are D-028 (approved by the Lead 2026-11-14), implemented without changing a threshold.
+
+**What is computed** (per cell, per country, per continent and for the world, every month with data):
+- **Estimate and interval:** the T-013 combination (`phi` and `kappa`, shared ratio errors, day and night combined separately, Aqua night excluded from 2024-05), vectorised in `pipeline/verdicts.py`; **tested equal to `harmonize.records_from`** on random inputs. The 90% interval is `estimate +/- 1.645 sd`, lower bound 0.
+- **Baseline:** the same calendar month over 2003 to 2022, empirical p25, p50, p75 (linear interpolation) of the estimates of the years that have one; fewer than 15 of the 20 years: no baseline. 98.6% of cell-months have a baseline.
+- **Probabilities:** the estimate is Normal(estimate, sd) truncated at 0; `p_above` = P(X > p75), `p_below` = P(X < p25), `p_within` = the rest. `pct_of_normal` = estimate / p50 x 100.
+- **Verdict**, in the order of D-028: no estimate (`OUTAGE`); fewer than 15 baseline years (`INSUFFICIENT_BASELINE`); estimate 0 and p75 at most 1 (`NO_DETECTED_ACTIVITY`); p50 below 5 (`INSUFFICIENT_BASELINE`); then `ABOVE_NORMAL`, `BELOW_NORMAL`, `WITHIN_NORMAL` at probability 0.8 or more; otherwise `CANNOT_DETERMINE` with `WIDE_INTERVAL`.
+- **Caveat codes:** `PROVISIONAL_NRT`, `SINGLE_WITNESS`, `WITNESS_DISAGREEMENT` (S above 2), `AQUA_DRIFT_ERA`, `POOLED_CALIBRATION` (more than 50% of the converted cell-days of the witnesses that count use a `REGION` or `GLOBAL` ratio), `DIURNAL_CAVEAT` (India and the cells with centres in 29.5 to 32.5 N, 73.8 to 77.5 E, October and November, from 2020). `INSUFFICIENT_OVERLAP` is not used.
+
+**Refinement of D-028 step 3 [APPROVED by the Lead 2026-11-15, D-028 amendment A].** The contract checker forbids `NO_DETECTED_ACTIVITY` where any witness, Terra included, detected something. Step 3 therefore also requires the raw combined cell-days to be 0. In a first run without that condition, 216,103 cell-months (2.0% of the `NO_DETECTED_ACTIVITY` rows), 545 country-months and 3 continent-months had an estimate of 0 but a raw detection (mostly Terra, or a witness that was not complete); they now go on to step 4 and get `INSUFFICIENT_BASELINE`.
+
+**The products** (293 months, 2002-07 to 2026-11; the months 2026-08 to 2026-11 are provisional):
+
+| Table | Rows | Contract check (real mode) |
+|---|---|---|
+| `cell_month_harmonized` | 16,477,734 (56,238 cells) | 0 errors, every row group |
+| `entity_month` | 68,562 (226 countries, 7 continents, the world) | 0 errors |
+
+**Verdicts by level** (all months):
+
+| Level | Rows | `ABOVE` | `BELOW` | `WITHIN` | `CANNOT_DETERMINE` | `NO_DETECTED_ACTIVITY` | Above, below or within | Not `CANNOT_DETERMINE` |
+|---|---|---|---|---|---|---|---|---|
+| Cells | 16,477,734 | 140,806 | 161,944 | 175,682 | 5,222,088 | 10,777,214 | 2.9% | 68.3% |
+| Countries | 66,218 | 5,776 | 5,937 | 7,864 | 32,658 | 13,983 | 29.6% | 50.7% |
+| Continents | 2,051 | 311 | 331 | 438 | 832 | 139 | 52.7% | 59.4% |
+| World | 293 | 32 | 50 | 18 | 193 | 0 | 34.1% | 34.1% |
+
+- **Most cells are quiet:** 65% of cell-months are `NO_DETECTED_ACTIVITY`, and the share of cell-months that can be judged is 2.9%, as the plan expected (about 9% of cell-months reach 5 Aqua cell-days); countries and continents are the main verdict levels.
+- **The share of country-months that can be judged grows with the years:** 25% to 27% in 2003 to 2011 (Aqua only), 29% to 34% in 2012 to 2022, 37% to 39% in 2023 to 2025 (three witnesses).
+- **Why most world months are `CANNOT_DETERMINE`:** 189 of the 293 carry `WIDE_INTERVAL`. **[HYPOTHESIS, not investigated]** the world's baseline range between p25 and p75 is narrow (about 10% around the median) against a relative error of about 6% from `kappa`, so `p_within` often stays below 0.8.
+- **Reading the verdicts correctly:** `ABOVE_NORMAL` means the estimate is above the baseline p75 with at least 80% probability, not that it is an anomaly: about half of all months lie outside the middle half of their baseline by construction. Hotspots are not fires or burned area.
+- **Reason codes, cell-months:** `SINGLE_WITNESS` 6,354,894; `INSUFFICIENT_BASELINE` 4,519,355; `AQUA_DRIFT_ERA` 1,687,140; `POOLED_CALIBRATION` 593,120; `WIDE_INTERVAL` 477,781; `OUTAGE` and `PROVISIONAL_NRT` 224,952 each; `DIURNAL_CAVEAT` 16,702; `WITNESS_DISAGREEMENT` 14,580.
+
+**Indonesia 2015** (country, estimate and sd in Aqua-equivalent cell-days; baseline p25 / p50 / p75 of the same calendar month in 2003 to 2022):
+
+| Month | Estimate (sd) | Baseline p25 / p50 / p75 | % of normal | `p_above` | Verdict |
+|---|---|---|---|---|---|
+| July | 4,229 (251) | 1,063 / 1,599 / 2,877 | 265 | 1.00 | `ABOVE_NORMAL` |
+| August | 10,627 (633) | 2,551 / 4,908 / 8,121 | 217 | 1.00 | `ABOVE_NORMAL` |
+| September | 19,069 (1,063) | 2,191 / 7,200 / 10,536 | 265 | 1.00 | `ABOVE_NORMAL` |
+| October | 17,203 (947) | 1,698 / 3,177 / 4,601 | 542 | 1.00 | `ABOVE_NORMAL` |
+| November | 3,039 (306) | 495 / 710 / 1,473 | 428 | 1.00 | `ABOVE_NORMAL` |
+| December | 1,085 (73) | 144 / 215 / 275 | 504 | 1.00 | `ABOVE_NORMAL` |
+
+Every month of the 2015 El Nino fire season is `ABOVE_NORMAL`, with no caveat code. (The case was not used to tune anything.) Over all 293 months Indonesia has 107 `WITHIN_NORMAL`, 62 `ABOVE_NORMAL`, 72 `BELOW_NORMAL` and 52 `CANNOT_DETERMINE`.
+
+**A quiet control country, Germany:** 293 months: 207 `CANNOT_DETERMINE` (`WIDE_INTERVAL` 120, `INSUFFICIENT_BASELINE` 83 in the reason counts of the country), 32 `ABOVE_NORMAL`, 24 `BELOW_NORMAL`, 17 `WITHIN_NORMAL`, 13 `NO_DETECTED_ACTIVITY`. Even a quiet country gets above and below verdicts in 19% of its months, because the verdict compares with the middle half of the baseline.
+
+**Limits [LIMITATION]:** the uncertainty of the baseline percentiles is not propagated (D-028); the products are in sample for `phi` and `kappa`; test D1 and the other validation tests are separate tasks.
+
+### Raw-only products for the app (T-014a) **[VERIFIED 2026-11-14 unless labelled; replaced by the T-014 products above]**
 
 `python pipeline/raw_only.py` writes `cell_month_harmonized.parquet`, `entity_month.parquet`, `metadata.json` and `validation_results.json` into `data/products/` (local, not committed), from `cell_month_witness.parquet` and `cells.parquet` (the final T-011 products). They have the exact shape of `docs/DATA_CONTRACT.md` v0.1.0 section 3, 4 and 7, so the API and app need no change. **They are not harmonized results**: every harmonized field is `null`, `witnesses_used` is `[]`, `n_witnesses` is 0, the verdict is `CANNOT_DETERMINE`, `reason_codes` is `["NOT_HARMONIZED"]` and `method_version` is `0.1.0-raw-only`. T-014 replaces them.
 

@@ -258,3 +258,6 @@ The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the 
 **6. Validation thresholds.** Locked exactly as written in `docs/VALIDATION_PLAN.md` §3 (A1, A2, B1, B2, B3, C1, D1, D2, E1, CTRL, S1). Cases and windows: T-050 in `docs/VALIDATION_PLAN.md` §2.
 
 - **Status:** **APPROVED** by the Lead, 2026-11-14 (G1 lock). D-010 is closed by this entry.
+
+**Amendment A (T-014, PR #52), approved by the Lead 2026-11-15: step 3 also requires no detection by any witness.** `NO_DETECTED_ACTIVITY` is given only when the estimate is 0, the baseline p75 is at most 1 cell-day **and the raw combined cell-days are 0** (any witness, Terra included). If any satellite saw something, the product does not say "nothing detected": such a row goes on to step 4 and gets `INSUFFICIENT_BASELINE`. Reason: the contract checker (`contract_check.py`) forbids `NO_DETECTED_ACTIVITY` where detections are present; the checker is kept as it is. Rows moved by this amendment in the first run without it: **216,103 cell-months** (2.0% of the `NO_DETECTED_ACTIVITY` rows), **545 country-months** and **3 continent-months**. No threshold of D-028 changed.
+
