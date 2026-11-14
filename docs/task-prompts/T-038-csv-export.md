@@ -132,3 +132,14 @@ Open questions for the Lead. None is decided here. Suggested defaults are what I
 8. **Header lines.** Default: `# key: value` lines for `entity`, `method_version`, `contract_version`, `synthetic`, `data_snapshot_zips_downloaded`, `data_snapshot_api_pulled`, `citation`, the NASA FIRMS data acknowledgement (from the project `README.md`), a pointer to FIRMS for raw hotspot points, and a note that the file includes uncertainty and verdict fields. Please edit the wording, especially the acknowledgement and the citation text, which are the Lead's to approve.
 9. **Where the button goes.** Default: in the area picker, under "Showing: <area>", because the export is of the selected area. Alternatives: the calendar header, or the witness panel. Which?
 10. **Streaming.** `docs/ARCHITECTURE.md` says the API streams the series. A series is at most a few hundred rows, so default: build the file in memory and return it in one response. Confirm.
+
+### Lead answers (PR #37) and how this prompt applies them
+
+The Lead approved the defaults with these changes, which supersede the matching §15 defaults:
+
+- **Byte-order mark:** the file is UTF-8 **with** a BOM, before the first `#` line (supersedes item 4).
+- **Formula injection:** text cells beginning with `=`, `+`, `-` or `@` are prefixed with an apostrophe; numeric cells are never prefixed (supersedes item 7).
+- **Header lines:** include `data_status` (SYNTHETIC or REAL), the fixed meaning line "Values are satellite-detected fire activity in fire-active cell-days (Aqua-equivalent scale); not fire counts or burned area.", the FIRMS acknowledgement, and the MODIS and VIIRS dataset DOIs copied from an official source, not written from memory (item 8).
+- Other defaults (file name by the API, all five `raw_<witness>` columns, `;` list separator, `bbox=W,S,E,N`, button in the area picker, in-memory build) stand.
+
+Added by me beyond the approved header list, for the Lead to keep or cut: an `area` line, the metadata `citation` line, the "raw hotspot points are not included" note and the uncertainty and verdict note.

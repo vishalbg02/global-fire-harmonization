@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import type { Bbox, EntityItem } from '../../api/contract.ts'
 import { WORLD } from '../../state/selection.ts'
 import type { Area } from '../../state/selection.ts'
+import { ExportButton } from '../export/ExportButton.tsx'
 import { CustomAreaForm } from './CustomAreaForm.tsx'
 import { filterEntities, matchEntity } from './countryFilter.ts'
 
@@ -18,6 +19,8 @@ interface Props {
   onToggleDrawing: () => void
   customMessage: string | null
   customLoading: boolean
+  /** True while the data are SYNTHETIC (used for the file name only if the server sends none). */
+  synthetic: boolean
 }
 
 /** Choose the area shown by the calendar and the evidence panel. */
@@ -33,6 +36,7 @@ export function AreaPicker({
   onToggleDrawing,
   customMessage,
   customLoading,
+  synthetic,
 }: Props) {
   const ids = useId()
   // While the user types, show their text; otherwise show the selected country's name.
@@ -58,6 +62,7 @@ export function AreaPicker({
       <p className="legend-note">
         {`Showing: ${area.entity_name}`}
       </p>
+      <ExportButton area={area} synthetic={synthetic} />
 
       <div className="area-row">
         <button type="button" onClick={onChooseWorld} aria-pressed={area.entity_type === 'GLOBAL'}>

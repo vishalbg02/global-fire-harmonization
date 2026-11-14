@@ -6,15 +6,16 @@ the D-022 envelope and error format are not approved. Status codes: 400 invalid 
 unavailable.
 """
 
+import math
 from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 
-from . import custom, products
+from . import custom, export, products
 from .custom import HarmonizeUnavailable
 from .models import (
     Anomaly,
@@ -88,9 +89,8 @@ def get_series(
     return products.series(EntityType(entity_type), entity_id)
 
 
-@app.post(CUSTOM_AREA_PATH, response_model=list[EntityMonth])
-def post_custom_series(body: CustomAreaRequest) -> list[EntityMonth]:
-    west, south, east, north = body.bbox
+def _custom_series(bbox: tuple[float, float, float, float]) -> list[EntityMonth]:
+    west, south, east, north = bbox
     if not (-180 <= west < east <= 180 and -90 <= south < north <= 90):
         raise HTTPException(
             422, "bbox must be [W, S, E, N] with -180 <= W < E <= 180 and -90 <= S < N <= 90."
@@ -105,6 +105,48 @@ def post_custom_series(body: CustomAreaRequest) -> list[EntityMonth]:
     records = harmonize_area(cell_ids, months=None)
     # Records come from the single implementation of the science and are validated, not altered.
     return [EntityMonth.model_validate(dict(r)) for r in records]
+
+
+@app.post(CUSTOM_AREA_PATH, response_model=list[EntityMonth])
+def post_custom_series(body: CustomAreaRequest) -> list[EntityMonth]:
+    return _custom_series(body.bbox)
+
+
+@app.get("/api/export.csv")
+def get_export_csv(
+    entity_type: Annotated[Literal["COUNTRY", "CONTINENT", "GLOBAL"] | None, Query()] = None,
+    entity_id: str | None = None,
+    bbox: str | None = None,
+) -> Response:
+    """The monthly series of one preset area (`entity_type` + `entity_id`) or of a custom
+    rectangle (`bbox=W,S,E,N`) as CSV. Exactly one of the two must be given."""
+    preset = entity_type is not None or entity_id is not None
+    if preset == (bbox is not None):
+        raise HTTPException(400, "Give either entity_type and entity_id, or bbox, not both.")
+    if preset:
+        if entity_type is None or entity_id is None:
+            raise HTTPException(400, "entity_type and entity_id are both required.")
+        meta = products.metadata()
+        records = products.series(EntityType(entity_type), entity_id)
+        subject = f"{entity_type} {entity_id}"
+        name = export.filename(entity_type, entity_id, meta)
+    else:
+        assert bbox is not None
+        try:
+            parts = tuple(float(p) for p in bbox.split(","))
+        except ValueError:
+            parts = ()
+        if len(parts) != 4 or not all(map(math.isfinite, parts)):
+            raise HTTPException(400, "bbox must be four numbers: W,S,E,N.")
+        meta = products.metadata()
+        records = _custom_series((parts[0], parts[1], parts[2], parts[3]))
+        subject = f"CUSTOM bbox {bbox}"
+        name = export.filename("CUSTOM", ",".join(f"{p:g}" for p in parts), meta)
+    return Response(
+        content=export.build_csv(records, meta, subject),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
 
 
 @app.get("/api/evidence", response_model=EntityEvidence)

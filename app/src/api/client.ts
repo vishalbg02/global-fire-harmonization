@@ -144,3 +144,62 @@ export async function fetchAnomalies(
   const query = new URLSearchParams({ year: String(year), month: String(month), limit: String(limit) })
   return parseAnomalies(await getJson(`${base}/api/anomalies?${query.toString()}`))
 }
+
+/** The query string of `GET /api/export.csv` for a preset area or a custom rectangle (W,S,E,N). */
+export function exportQuery(area: ExportArea): string {
+  if (area.entity_type === 'CUSTOM') {
+    return new URLSearchParams({ bbox: area.bbox.join(',') }).toString()
+  }
+  return new URLSearchParams({ entity_type: area.entity_type, entity_id: area.entity_id }).toString()
+}
+
+/** The area an export is made for: a preset entity or a custom rectangle. */
+export type ExportArea =
+  | { entity_type: SeriesEntityType; entity_id: string }
+  | { entity_type: 'CUSTOM'; entity_id: string; bbox: Bbox }
+
+/** The file name the server sent in `Content-Disposition`, or null when it sent none. */
+export function filenameFromDisposition(header: string | null): string | null {
+  if (header === null) return null
+  const quoted = /filename="([^"]+)"/i.exec(header)
+  const bare = /filename=([^;\s]+)/i.exec(header)
+  const name = (quoted?.[1] ?? bare?.[1] ?? '').trim()
+  return name === '' ? null : name
+}
+
+/** Used only when the server sends no file name. Marked SYNTHETIC while the data are. */
+export function fallbackFilename(area: ExportArea, synthetic: boolean): string {
+  const safe = (t: string) => t.replace(/[^A-Za-z0-9._-]+/g, '-')
+  return `${synthetic ? 'SYNTHETIC_' : ''}fire-harmonization_${safe(area.entity_type)}_${safe(area.entity_id)}.csv`
+}
+
+export interface CsvDownload {
+  blob: Blob
+  filename: string
+}
+
+/** GET /api/export.csv. Errors carry the server's message (for example the custom-area 503). */
+export async function fetchCsv(
+  area: ExportArea,
+  synthetic: boolean,
+  base: string = apiBaseUrl(),
+): Promise<CsvDownload> {
+  let response: Response
+  try {
+    response = await fetch(`${base}/api/export.csv?${exportQuery(area)}`)
+  } catch {
+    throw new ApiError('The data service could not be reached.', null)
+  }
+  if (!response.ok) {
+    let detail: string | null = null
+    try {
+      detail = errorDetail(await response.json())
+    } catch {
+      detail = null
+    }
+    throw new ApiError(`The data service returned status ${response.status}.`, response.status, detail)
+  }
+  const filename =
+    filenameFromDisposition(response.headers.get('Content-Disposition')) ?? fallbackFilename(area, synthetic)
+  return { blob: await response.blob(), filename }
+}

@@ -41,9 +41,10 @@ Responses are bare payloads (no envelope). Errors use FastAPI's default body, `{
 | `POST /api/series/custom` with `{"bbox": [W,S,E,N]}` | `entity_month`-shaped records from `harmonize_area()` | 422, 503 |
 | `GET /api/evidence?entity_type=&entity_id=&year=&month=` | One `entity_month` record with `raw_by_witness` decoded into an object | 400, 404, 503 |
 | `GET /api/anomalies?year=&month=&limit=` | Entities with an `ABOVE_NORMAL` or `BELOW_NORMAL` verdict, ordered by the larger of `p_above` and `p_below`, descending (default limit 20, maximum 500) | 400, 503 |
+| `GET /api/export.csv?entity_type=&entity_id=` or `?bbox=W,S,E,N` | The monthly series of one preset area, or of a custom rectangle, as a CSV download (UTF-8 with a byte-order mark; `#` metadata lines, then one row per month; all five `raw_<witness>` columns; empty cell = missing, never 0; `Content-Disposition` carries the file name, prefixed `SYNTHETIC_` while the data are) | 400 (neither or both of preset and `bbox`, malformed `bbox`), 404, 422, 503 |
 | `GET /api/validation` | `validation_results.json`, served as is | 503 |
 
-Status codes: `400` invalid parameters, `404` unknown entity or month, `422` invalid custom area, `503` products or the harmonization function unavailable (or a stored product that does not match the contract). `GET /api/export.csv` is T-038 and is not part of this API yet.
+Status codes: `400` invalid parameters, `404` unknown entity or month, `422` invalid custom area, `503` products or the harmonization function unavailable (or a stored product that does not match the contract).  A `bbox` export answers `503` until `harmonize_area()` is delivered, like the custom series.
 
 Notes on the choices the contract leaves open (all confirmed by the Lead on PR #16):
 

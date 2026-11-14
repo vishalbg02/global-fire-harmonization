@@ -34,6 +34,7 @@ Likelihood and impact: L (low) · M (medium) · H (high).
 | T10 | Drawing a rectangle needs a pointer (terra-draw with its MapLibre adapter, D-024) | M | L | The typed W/S/E/N form is the keyboard and screen-reader route to a custom area (T-035) |
 | T11 | The witness comparison chart (T-037) is a canvas, not keyboard-navigable; its Aqua-drift and provisional marks are shown as shaded bands, which a screen reader cannot read from the chart | M | L | A table view gives the same values with a Notes column stating outage, drift-era or provisional per month; not yet checked with a real screen reader |
 | T12 | The anomaly overview (T-040) cannot say how many areas were left out because they cannot be judged: the API returns only the above and below verdicts and gives no count of the others, so the app shows "N of M are in neither ranking" (which also includes areas that are within normal). An exact count would need an API addition | M | L | The wording says what the number includes; an API field for the excluded counts can be proposed to the Lead |
+| T13 | The CSV export (T-038) lists only the near-real-time FIRMS product DOIs; the standard-product DOIs were not found on an official FIRMS page and are not written from memory. A custom-rectangle export answers `503` until `harmonize_area()` exists | M | L | The header carries the FIRMS acknowledgement and the metadata citation; add the DOIs when the Lead supplies the citation source; verify the custom export when the function lands |
 
 ## 3. Performance risks
 

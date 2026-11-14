@@ -73,6 +73,7 @@ const picker = (overrides: Partial<Parameters<typeof AreaPicker>[0]> = {}) =>
       onChooseEntity={() => {}}
       onChooseWorld={() => {}}
       onChooseCustom={() => {}}
+      synthetic
       drawing={false}
       onToggleDrawing={() => {}}
       customMessage={null}
