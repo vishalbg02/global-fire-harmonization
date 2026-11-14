@@ -14,6 +14,7 @@ import { MapModeSelector } from './components/map/MapModeSelector.tsx'
 import { MapView } from './components/map/MapView.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
+import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { monthRange } from './state/months.ts'
@@ -196,6 +197,7 @@ export default function App() {
             onShowWorld={() => dispatch({ type: 'clear-entity' })}
           />
         </div>
+        <WitnessPanel area={area} onShowWorld={() => dispatch({ type: 'clear-entity' })} />
       </main>
     </div>
   )

@@ -282,6 +282,71 @@ aside section {
   font-size: 0.9rem;
 }
 
+/* ---- Witness comparison ---- */
+.witness-panel {
+  padding: 0 1rem 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.witness-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  align-items: start;
+}
+
+.witness-chart {
+  width: 100%;
+  border: 1px solid var(--border);
+}
+
+.witness-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+.witness-table {
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.witness-table th,
+.witness-table td {
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.4rem;
+  text-align: right;
+}
+
+.witness-table th[scope='col'],
+.witness-table th[scope='row'] {
+  text-align: left;
+}
+
+.satellite-timeline {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+}
+
+.satellite-timeline h3 {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+}
+
+.satellite-timeline ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+@media (max-width: 1100px) {
+  .witness-body {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---- Calendar and evidence ---- */
 .calendar-evidence {
   display: grid;
