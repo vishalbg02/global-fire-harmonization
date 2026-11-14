@@ -1,5 +1,5 @@
-import type { MapCell, MapLayer, Metadata } from './contract.ts'
-import { parseMapCells, parseMetadata } from './contract.ts'
+import type { EntityMonth, MapCell, MapLayer, Metadata } from './contract.ts'
+import { parseEntityMonths, parseMapCells, parseMetadata } from './contract.ts'
 
 // Contract v0.1.0 does not define a response envelope or error format (the D-022
 // additions are not approved), so these functions expect the bare payload.
@@ -43,4 +43,17 @@ export async function fetchMapCells(
 ): Promise<MapCell[]> {
   const query = new URLSearchParams({ year: String(year), month: String(month), layer })
   return parseMapCells(await getJson(`${base}/api/map?${query.toString()}`))
+}
+
+/** Entity types the series endpoint serves (the ones stored in entity_month). */
+export type SeriesEntityType = 'COUNTRY' | 'CONTINENT' | 'GLOBAL'
+
+/** GET /api/series: the monthly records of a preset entity. A 404 means the entity is unknown. */
+export async function fetchSeries(
+  entityType: SeriesEntityType,
+  entityId: string,
+  base: string = apiBaseUrl(),
+): Promise<EntityMonth[]> {
+  const query = new URLSearchParams({ entity_type: entityType, entity_id: entityId })
+  return parseEntityMonths(await getJson(`${base}/api/series?${query.toString()}`))
 }

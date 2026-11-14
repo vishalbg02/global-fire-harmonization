@@ -42,15 +42,8 @@ export type DataLevel = (typeof DATA_LEVELS)[number]
 export const MAP_LAYERS = ['verdict', 'raw', 'harmonized'] as const
 export type MapLayer = (typeof MAP_LAYERS)[number]
 
-/** One analysis cell for one month: cell bounds plus cell_month_harmonized fields. */
-export interface MapCell {
-  cell_id: string
-  lat_min: number
-  lat_max: number
-  lon_min: number
-  lon_max: number
-  year: number
-  month: number
+/** Fields shared by cell_month_harmonized (section 3) and entity_month (section 4). */
+export interface HarmonizedFields {
   estimate: number | null
   ci90_low: number | null
   ci90_high: number | null
@@ -70,6 +63,31 @@ export interface MapCell {
   reason_codes: ReasonCode[]
   data_level: DataLevel
   method_version: string
+}
+
+/** One analysis cell for one month: cell bounds plus cell_month_harmonized fields. */
+export interface MapCell extends HarmonizedFields {
+  cell_id: string
+  lat_min: number
+  lat_max: number
+  lon_min: number
+  lon_max: number
+  year: number
+  month: number
+}
+
+export const ENTITY_TYPES = ['CELL', 'COUNTRY', 'CONTINENT', 'GLOBAL', 'CUSTOM'] as const
+export type EntityType = (typeof ENTITY_TYPES)[number]
+
+/** One entity for one month (entity_month, section 4). `raw_by_witness` is a JSON string. */
+export interface EntityMonth extends HarmonizedFields {
+  entity_type: EntityType
+  entity_id: string
+  entity_name: string
+  year: number
+  month: number
+  n_cells: number
+  raw_by_witness: string | null
 }
 
 /** The fields of metadata.json that the app uses. */
@@ -150,17 +168,8 @@ function enumList<T extends string>(
   return v.map((item) => oneOf(item, allowed, key, what))
 }
 
-export function parseMapCell(raw: unknown): MapCell {
-  const what = 'map cell'
-  const o = asRecord(raw, what)
+function parseHarmonizedFields(o: Rec, what: string): HarmonizedFields {
   return {
-    cell_id: str(o, 'cell_id', what),
-    lat_min: num(o, 'lat_min', what),
-    lat_max: num(o, 'lat_max', what),
-    lon_min: num(o, 'lon_min', what),
-    lon_max: num(o, 'lon_max', what),
-    year: num(o, 'year', what),
-    month: num(o, 'month', what),
     estimate: numOrNull(o, 'estimate', what),
     ci90_low: numOrNull(o, 'ci90_low', what),
     ci90_high: numOrNull(o, 'ci90_high', what),
@@ -181,6 +190,45 @@ export function parseMapCell(raw: unknown): MapCell {
     data_level: oneOf(field(o, 'data_level', what), DATA_LEVELS, 'data_level', what),
     method_version: str(o, 'method_version', what),
   }
+}
+
+export function parseMapCell(raw: unknown): MapCell {
+  const what = 'map cell'
+  const o = asRecord(raw, what)
+  return {
+    cell_id: str(o, 'cell_id', what),
+    lat_min: num(o, 'lat_min', what),
+    lat_max: num(o, 'lat_max', what),
+    lon_min: num(o, 'lon_min', what),
+    lon_max: num(o, 'lon_max', what),
+    year: num(o, 'year', what),
+    month: num(o, 'month', what),
+    ...parseHarmonizedFields(o, what),
+  }
+}
+
+export function parseEntityMonth(raw: unknown): EntityMonth {
+  const what = 'entity month'
+  const o = asRecord(raw, what)
+  const rawByWitness = field(o, 'raw_by_witness', what)
+  if (rawByWitness !== null && typeof rawByWitness !== 'string') {
+    throw new ContractError(`${what}: "raw_by_witness" must be a JSON string or null`)
+  }
+  return {
+    entity_type: oneOf(field(o, 'entity_type', what), ENTITY_TYPES, 'entity_type', what),
+    entity_id: str(o, 'entity_id', what),
+    entity_name: str(o, 'entity_name', what),
+    year: num(o, 'year', what),
+    month: num(o, 'month', what),
+    n_cells: num(o, 'n_cells', what),
+    raw_by_witness: rawByWitness,
+    ...parseHarmonizedFields(o, what),
+  }
+}
+
+export function parseEntityMonths(raw: unknown): EntityMonth[] {
+  if (!Array.isArray(raw)) throw new ContractError('series response: expected a list of records')
+  return raw.map(parseEntityMonth)
 }
 
 export function parseMapCells(raw: unknown): MapCell[] {

@@ -3,6 +3,8 @@ import {
   ContractError,
   REASON_CODES,
   VERDICTS,
+  parseEntityMonth,
+  parseEntityMonths,
   parseMapCell,
   parseMapCells,
   parseMetadata,
@@ -115,5 +117,51 @@ describe('parseMetadata', () => {
     expect(() => parseMetadata(rawMeta({ synthetic: 'true' }))).toThrow(ContractError)
     expect(() => parseMetadata(rawMeta({ latest_month: '2026-13' }))).toThrow(ContractError)
     expect(() => parseMetadata(rawMeta({ provisional_months: ['Oct 2026'] }))).toThrow(ContractError)
+  })
+})
+
+// SYNTHETIC test data. Not NASA observations.
+function rawEntityMonth(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  const { cell_id: _cellId, lat_min: _a, lat_max: _b, lon_min: _c, lon_max: _d, ...harmonized } = rawCell()
+  return {
+    ...harmonized,
+    entity_type: 'COUNTRY',
+    entity_id: 'IDN',
+    entity_name: 'Indonesia',
+    n_cells: 10,
+    raw_by_witness: '{"AQUA_MODIS": 5}',
+    ...overrides,
+  }
+}
+
+describe('parseEntityMonth', () => {
+  it('parses a contract-shaped record and keeps raw_by_witness as a string', () => {
+    const r = parseEntityMonth(rawEntityMonth())
+    expect(r.entity_id).toBe('IDN')
+    expect(r.raw_by_witness).toBe('{"AQUA_MODIS": 5}')
+    expect(r.verdict).toBe('ABOVE_NORMAL')
+  })
+
+  it('keeps null as null and a real zero as zero', () => {
+    const r = parseEntityMonth(
+      rawEntityMonth({ pct_of_normal: null, estimate: 0, raw_by_witness: null, raw_combined_cell_days: 0 }),
+    )
+    expect(r.pct_of_normal).toBeNull()
+    expect(r.estimate).toBe(0)
+    expect(r.raw_by_witness).toBeNull()
+  })
+
+  it('rejects an unknown entity type or verdict, a missing field and a non-string raw_by_witness', () => {
+    expect(() => parseEntityMonth(rawEntityMonth({ entity_type: 'PLANET' }))).toThrow(ContractError)
+    expect(() => parseEntityMonth(rawEntityMonth({ verdict: 'MAYBE' }))).toThrow(ContractError)
+    const missing = rawEntityMonth()
+    delete missing.n_cells
+    expect(() => parseEntityMonth(missing)).toThrow(/missing field "n_cells"/)
+    expect(() => parseEntityMonth(rawEntityMonth({ raw_by_witness: { AQUA_MODIS: 5 } }))).toThrow(ContractError)
+  })
+
+  it('parses a list and rejects a non-list', () => {
+    expect(parseEntityMonths([rawEntityMonth(), rawEntityMonth({ month: 10 })])).toHaveLength(2)
+    expect(() => parseEntityMonths({})).toThrow(ContractError)
   })
 })

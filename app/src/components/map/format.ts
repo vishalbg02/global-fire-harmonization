@@ -1,4 +1,4 @@
-import type { MapCell } from '../../api/contract.ts'
+import type { HarmonizedFields } from '../../api/contract.ts'
 
 export const NO_DATA = 'no data'
 
@@ -16,7 +16,9 @@ function oneDecimal(v: number): string {
 }
 
 /** "12.3 (90% interval 8.1 to 16.4)"; null estimate is "no data", never 0. */
-export function formatEstimate(cell: MapCell): string {
+export function formatEstimate(
+  cell: Pick<HarmonizedFields, 'estimate' | 'ci90_low' | 'ci90_high'>,
+): string {
   if (cell.estimate === null) return NO_DATA
   if (cell.ci90_low === null || cell.ci90_high === null) {
     return `${oneDecimal(cell.estimate)} (interval not available)`
@@ -25,8 +27,10 @@ export function formatEstimate(cell: MapCell): string {
 }
 
 /** "82% likely above normal" for confident verdicts; null for the others. */
-export function verdictProbability(cell: MapCell): string | null {
-  const wording: Partial<Record<MapCell['verdict'], [number | null, string]>> = {
+export function verdictProbability(
+  cell: Pick<HarmonizedFields, 'verdict' | 'p_above' | 'p_below' | 'p_within'>,
+): string | null {
+  const wording: Partial<Record<HarmonizedFields['verdict'], [number | null, string]>> = {
     ABOVE_NORMAL: [cell.p_above, 'above normal'],
     BELOW_NORMAL: [cell.p_below, 'below normal'],
     WITHIN_NORMAL: [cell.p_within, 'within normal'],
