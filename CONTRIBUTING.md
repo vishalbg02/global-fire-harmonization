@@ -1,62 +1,115 @@
 # Contributing
 
-This is a three-person hackathon team. The rules are kept light, and they are followed.
+This is a three-person team with **one rule above all: every task goes through a Pull Request, and only the Project Lead merges into `main`.** The full process, from assignment to merge, is in [`docs/TEAM_WORKFLOW.md`](docs/TEAM_WORKFLOW.md).
 
-## Branches
+## 1. Before you start
 
-- `main`: stable, demo-ready work only. **No direct pushes.** Only the Project Lead merges into `main`.
-- Feature branches: `<area>/<task-id>-<short-name>`, for example:
-  - `data/T-003-normalize`
-  - `science/T-011-calibration`
-  - `app/T-031-global-map`
-  - `docs/T-051-g1-lock`
-- Keep branches short-lived (a few hours). Rebase on, or merge from, `main` before opening a PR.
+- Work only on a task assigned to you in `docs/TASK_TRACKER.md` (status `ASSIGNED`, with you as owner).
+- Your Claude session runs the startup checklist (`CLAUDE.md`) and generates the task prompt (`docs/TEAM_WORKFLOW.md` §4).
+- Enable the local push guard once per clone:
+  ```bash
+  git config core.hooksPath .githooks
+  ```
 
-> GitHub Free does not offer branch protection on private repositories. "No direct pushes to `main`" is therefore enforced by this agreement and by review, not by settings.
+## 2. Branches
 
-## Commits
+- `main`: stable and reviewed. **Nobody pushes to it directly.** Only the Lead merges, except for the Lead's bookkeeping commits (D-018).
+- One branch per task, created from the latest `main`. Use the name in the task's tracker row:
 
-Use Conventional Commits, and reference the task ID:
+| Prefix | Use |
+|---|---|
+| `data/` | Data acquisition and processing |
+| `science/` | Calibration, uncertainty, verdicts, validation |
+| `frontend/` | Web application UI |
+| `api/` | API endpoints |
+| `fix/` | Bug fixes |
+| `docs/` | Documentation-only changes |
+
+Format: `<prefix>/T-XXX-<short-name>`, e.g. `data/T-003-normalize` or `frontend/T-031-global-map`.
+
+```bash
+git switch main && git pull
+git switch -c data/T-003-normalize
+```
+
+## 3. Commits
+
+Use Conventional Commits and include the task ID:
 
 ```
-feat(app): render analysis-cell layer for selected month (T-031)
+feat(frontend): render analysis-cell layer for selected month (T-031)
 fix(science): exclude outage months from baseline percentiles (T-014)
-docs: lock G1 thresholds in VALIDATION_PLAN (T-051)
 data: add SYNTHETIC fixtures for contract v0.1.0 (T-010)
+docs: add task prompt for T-003
 ```
 
-Types: `feat`, `fix`, `docs`, `test`, `data`, `chore`, `refactor`.
+Types: `feat`, `fix`, `docs`, `test`, `data`, `chore`, `refactor`. Keep commits small and focused.
 
-## Pull requests
+### Attribution rule (D-020): applies to every teammate and every AI session
 
-1. Open a PR from your feature branch into `main`. Title: `T-0XX: <what>`.
-2. The description covers what changed, why, how it was tested, which docs were updated, and any contract or method impact.
-3. Update docs in the **same PR**: `TASK_TRACKER.md`, plus `ARCHITECTURE.md`, `DATA_CONTRACT.md`, `SCIENTIFIC_METHODOLOGY.md`, `VALIDATION_PLAN.md` or `DECISION_LOG.md` as relevant.
-4. Request the Project Lead's review. **Do not merge your own PR.** AI assistants never merge or approve on the Lead's behalf.
-5. Small PRs are reviewed faster. Aim for under about 400 changed lines, excluding fixtures.
+- **Never** include Claude's name, any AI assistant's name, or AI-generated attribution in:
+  - commit messages, including `Co-Authored-By` trailers and "Generated with …" lines
+  - PR titles or descriptions
+  - branch names
+  - code comments
+  - documentation credits
+  - project metadata
+- Commit with **your own** Git identity (`git config user.name` / `user.email`). Never change identity or impersonate another contributor.
+- Commit messages must describe the actual work performed.
+- Before each commit or PR, check that no AI names or attribution are included. The local `commit-msg` guard (enabled by `core.hooksPath .githooks`) blocks common AI trailers and tool names.
+- When a commit touches the assistant instructions file at the repository root, call it "assistant instructions" in the message instead of using its file name. The guard rejects the name.
 
-## Project Lead review checklist
+## 4. Pull Requests
 
-- [ ] Does the implementation meet the task's acceptance criteria in `TASK_TRACKER.md`?
-- [ ] Is the scientific interpretation correct (hotspots ≠ fires; no unsupported claims; uncertainty handled)?
-- [ ] Are data assumptions documented (filters, thresholds, units)?
-- [ ] Are edge cases handled (nulls, outages, zero baselines, no detections, provisional months)?
-- [ ] Are tests present and passing (science on synthetic data with known answers; contract validation)?
-- [ ] Does it integrate with the other workstream (conforms to `DATA_CONTRACT.md`)?
-- [ ] Are documentation files updated in the same PR?
-- [ ] Are there no secrets, `.env` files, credentials or large data files (anything over ~5 MB, raw/processed data)?
-- [ ] Does it avoid regressions (existing views and tests still work)?
-- [ ] For results shown to users: are the numbers traceable to products, and are synthetic fixtures clearly excluded?
+1. The first commit on the branch is the task prompt (`docs/task-prompts/T-XXX-*.md`).
+2. Push and open a **draft PR** against `main` early. Title: `T-XXX: <title>`.
+3. Implement only the assigned task. Run the required tests. Update docs **in the same PR**, including **only your own row** in `TASK_TRACKER.md`.
+4. Fill in the PR template (`.github/pull_request_template.md`):
+   - summary
+   - changed files
+   - tests run, with results
+   - documentation updated
+   - limitations
+   - scope issues
+   - screenshots (UI)
+5. Mark the PR *Ready for review* and set your tracker status to `IN_REVIEW`.
+6. **Wait for the Project Lead.**
+   - If changes are requested, fix them **in the same PR** and re-request review.
+   - Never merge your own PR. Never approve PRs. AI sessions never merge or approve.
 
-## Data and secrets
+## 5. Project Lead review checklist
 
-- NASA archives and generated products live under `data/` and are git-ignored. See `data/README.md`.
-- Only small `SYNTHETIC` fixtures (<5 MB total) may be committed, under `data/fixtures/`.
-- Secrets go in `.env`, which is ignored. Document required variables in `.env.example`.
-- If a secret is committed by mistake: tell the Lead immediately and rotate the key. Rewriting history alone is not enough.
+- [ ] Task requirements fulfilled (prompt plus tracker acceptance criteria)
+- [ ] Follows the approved architecture
+- [ ] Respects the data contract (fields, types, enums, `contract_version`)
+- [ ] Scientific calculations and interpretations are correct; no unsupported or unvalidated claims
+- [ ] Code is readable and maintainable
+- [ ] Appropriate tests were run, with results shown
+- [ ] Errors and edge cases handled (nulls, outages, zero baselines, no detections, provisional months)
+- [ ] Integrates with the other workstream
+- [ ] Documentation updated
+- [ ] No secrets, `.env` files, credentials or large/data files
+- [ ] No regressions
 
-## Resolving conflicts
+**Outcomes:**
+- **Approved:** the Lead merges personally (squash and merge, then deletes the branch).
+- **Changes requested:** fix in the same PR.
+- **Rejected:** the PR is closed and the task reconsidered.
 
-1. The owner proposes and the other member comments.
-2. The Lead decides, then logs it in `DECISION_LOG.md`.
-3. Contract changes need Lead approval and a `contract_version` bump before any code change.
+Details are in `docs/TEAM_WORKFLOW.md` §7–8.
+
+## 6. Out-of-scope changes
+
+Anything outside your task needs the Lead's approval. That includes the stack, architecture, methodology, data contract and the other workstream's files.
+
+Stop, describe it under "Scope issues" in the PR, set your task to `BLOCKED` if needed, and ask the Lead (`docs/TEAM_WORKFLOW.md` §6).
+
+## 7. Data and secrets
+
+- NASA archives and generated products live under `data/` and are git-ignored (`data/README.md`). Only small `SYNTHETIC` fixtures (<5 MB) may be committed, under `data/fixtures/`.
+- Secrets go in `.env`, which is ignored. Document variable names in `.env.example`.
+- If a secret is committed by mistake: tell the Lead immediately and **rotate the key**. Rewriting history alone is not enough.
+
+## 8. Protection of `main`: policy vs settings
+
+The no-direct-push rule is **documented policy plus an optional local guard**. GitHub branch protection is **not** configured (verified 2026-11-14) and collaborators can technically push. See `docs/TEAM_WORKFLOW.md` §10 and decision D-019.

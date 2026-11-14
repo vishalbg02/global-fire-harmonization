@@ -28,7 +28,9 @@ A hotspot is a satellite pixel flagged as containing fire. It is **not** a fire 
 | Document | Purpose |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Instructions for AI assistants and rules for resuming work |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Git workflow, PR process, review checklist |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branches, commits, PRs, review checklist |
+| [`docs/TEAM_WORKFLOW.md`](docs/TEAM_WORKFLOW.md) | **The complete process from task assignment to approved merge**; task prompt template |
+| [`docs/task-prompts/`](docs/task-prompts/) | One generated implementation prompt per assigned task |
 | [`docs/HANDOFF.md`](docs/HANDOFF.md) | **Start here when resuming**: exact current state |
 | [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) | Vision, scope, features, milestones, 36-hour schedule |
 | [`docs/TECH_STACK.md`](docs/TECH_STACK.md) | Technology recommendation (PROPOSED) |

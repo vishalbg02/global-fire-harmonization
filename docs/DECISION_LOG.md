@@ -15,11 +15,16 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-009 | 2026-11-14 | Regular lat/lon grid; analysis 0.5° (vs 0.25°), fine 0.05°/0.1°: final choice at G1 | PROPOSED / OPEN |
 | D-010 | 2026-11-14 | Baseline 2003–2022 + Aqua-only sensitivity test | PROPOSED |
 | D-011 | 2026-11-14 | Private GitHub repo; collaborators added by the Lead only | APPROVED |
-| D-012 | 2026-11-14 | Git workflow: feature branches, PRs, Lead-only merges | PROPOSED |
+| D-012 | 2026-11-14 | Git workflow: feature branches, PRs, Lead-only merges | SUPERSEDED by D-017 |
 | D-013 | 2026-11-14 | Demo is local-first plus a recorded video; deployment optional | PROPOSED |
 | D-014 | — | Repo visibility for judges at submission | OPEN |
 | D-015 | — | API owner: Member 3 (recommended if Python-capable) or Member 2 | OPEN |
 | D-016 | 2026-11-14 | Data contract v0.1.0 | PROPOSED |
+| D-017 | 2026-11-14 | Team workflow: Lead assigns tasks; individual Claude sessions generate task prompts; one branch + PR per task; Lead reviews every PR and alone merges | APPROVED (Lead's instruction); takes effect when the workflow PR is merged |
+| D-018 | 2026-11-14 | Lead bookkeeping commits allowed directly on `main` (tracker, decision log, progress log, handoff only) | PROPOSED |
+| D-019 | — | Technical protection of `main` (GitHub Pro branch protection vs policy + local guard) | OPEN |
+| D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
+| D-021 | — | Rewrite the 4 bootstrap commits on `main` to remove AI trailers (needs a force-push to `main`) | OPEN |
 
 ---
 
@@ -76,7 +81,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 
 ### D-012: Git workflow
 - **Decision:** see `CONTRIBUTING.md`. Branch protection is not available on private repos with GitHub Free, so the "no direct pushes to `main`" rule is enforced by convention.
-- **Status:** PROPOSED.
+- **Status:** SUPERSEDED by D-017 (2026-11-14).
 
 ### D-013: Demo and deployment
 - **Decision:** local-first demo plus a recorded video as the primary artifact. Public deployment is P1.
@@ -93,3 +98,44 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 
 ### D-016: Data contract v0.1.0
 - **Status:** PROPOSED. See `DATA_CONTRACT.md`.
+
+### D-017: Three-member team workflow
+- **Context:** three members, each possibly using a separate Claude account or session with no shared memory.
+- **Decision:**
+  - The Lead assigns tasks in `TASK_TRACKER.md`.
+  - The teammate's Claude session runs the startup checklist and generates a self-contained task prompt (template in `TEAM_WORKFLOW.md` §4), committed to `docs/task-prompts/`.
+  - One branch and one PR per task, with branch prefixes `data/`, `science/`, `frontend/`, `api/`, `fix/` and `docs/`.
+  - The Lead reviews every PR (approve / request changes / reject) and alone merges.
+  - No teammate or AI session merges, approves or pushes to `main`.
+- **Supersedes:** D-012.
+- **Status:** APPROVED by the Lead's instruction (2026-11-14). Effective once the PR introducing it is merged.
+
+### D-018: Lead bookkeeping exception
+- **Context:** routing every tracker or status update through a PR would slow the Lead down and cause conflicts.
+- **Decision (proposed):** the Lead may commit directly to `main` only for `TASK_TRACKER.md`, `DECISION_LOG.md`, `PROGRESS_LOG.md` and `HANDOFF.md`. Everything else goes through PRs.
+- **Alternative:** the Lead also uses PRs for bookkeeping (stricter, slower).
+- **Status:** PROPOSED.
+
+### D-019: Technical protection of `main`
+- **Facts (verified 2026-11-14):** `main` has no branch protection and no rulesets. On a personal-account repository, collaborators get write access, so they can technically push to `main`. Per GitHub's documentation, protected branches and rulesets on private repositories require a paid plan.
+- **Options:**
+  - (a) GitHub Pro, then protect `main`: require a PR with 1 approval and block force pushes. This costs money.
+  - (b) Make the repository public, where protection is free. This conflicts with D-011 (private).
+  - (c) Policy plus the local pre-push guard (`.githooks/pre-push`) plus the Lead checking `git log origin/main` at each review.
+- **Recommendation:** (c) for the hackathon; (a) if the Lead wants hard enforcement.
+- **Status:** OPEN. **No GitHub setting has been changed.**
+
+### D-020: No AI attribution
+- **Decision:**
+  - Never include Claude's name, any AI assistant's name, or AI-generated attribution in commit messages, PR titles or descriptions, branch names, source code comments, documentation authorship or credits, or project metadata.
+  - Commits and PRs use the human contributor's own Git identity and describe the work accurately.
+  - Never impersonate a contributor or alter Git identity without authorization.
+  - Applies to every teammate and every AI session. Check before each commit and PR. The local `commit-msg` guard helps.
+- **Status:** APPROVED by the Lead's instruction (2026-11-14).
+
+### D-021: Clean the bootstrap history on `main`
+- **Facts:** the 4 bootstrap commits on `main` (6670a4b, 92afa01, 343a874, 2d26909) contain AI `Co-Authored-By` trailers, and one subject line names the assistant. They were created before D-020.
+- **Options:**
+  - (a) Rewrite those commits and force-push `main`. Cheapest now, before collaborators clone. Destructive to remote history.
+  - (b) Leave the history as is and apply D-020 from now on.
+- **Status:** OPEN. The Lead decides. No history on `main` has been rewritten.

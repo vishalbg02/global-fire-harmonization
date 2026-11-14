@@ -12,6 +12,9 @@ There are three members. Handles are filled in by the Project Lead when collabor
 
 | Area | M1 Lead | M2 Data/Science | M3 App/UI |
 |---|---|---|---|
+| **Task assignment** (tracker: owner, branch, status) | **A/R** | I | I |
+| **Task prompt** for an assigned task (own Claude session) | Reviews in the draft PR | **R** (own tasks) | **R** (own tasks) |
+| **PR review and approve / request changes / reject** | **A/R** (every PR) | — | — |
 | Scope, priorities, cuts | **A/R** | C | C |
 | Tech stack (D-008) | **A** | C | C |
 | Data contract | **A** | **R** (producer) | **R** (consumer) |
@@ -81,16 +84,33 @@ There are three members. Handles are filled in by the Project Lead when collabor
 
 ## 4. Ownership boundaries
 
-- M2 owns `pipeline/` (or the equivalent approved directory) and `data/` conventions. M3 owns the app and API directories.
-- Neither edits the other's code without asking. Integration issues go to the Lead.
-- Cross-cutting files (`docs/DATA_CONTRACT.md`, `docs/ARCHITECTURE.md`) change only through Lead-approved PRs.
+| Owner | Owns | Must not modify without Lead approval |
+|---|---|---|
+| **M1 Lead** | Task assignment; `DECISION_LOG.md`; tracker statuses; `PROGRESS_LOG.md`; `HANDOFF.md`; `VALIDATION_PLAN.md` case definitions and thresholds; demo and submission | Teammates' implementation code (review only; request changes instead) |
+| **M2 Data & Science** | The pipeline directory (name set when the stack is approved, D-008/T-0D); `data/` conventions and fixtures; `SCIENTIFIC_METHODOLOGY.md` implementation details; validation results | App and API directories; the data contract; the methodology's approved decisions |
+| **M3 App & UI** | The app and API directories (API subject to D-015); UI text for reason codes (wording approved by M1) | Pipeline code; the data contract; scientific logic (the API **calls** `harmonize_area()`, it never reimplements it) |
+| **Shared, Lead-gated** | `DATA_CONTRACT.md`, `ARCHITECTURE.md`, `TECH_STACK.md`, `TEAM_WORKFLOW.md`, `CLAUDE.md`, `CONTRIBUTING.md` | Everyone: change only through a Lead-approved PR |
+
+- Integration issues between M2 and M3 go to the Lead, not to direct edits in each other's code.
+- Each member's Claude session is bound by the same boundaries (`CLAUDE.md`).
 
 ## 5. Review and approval process
 
-1. All work goes through feature branches and PRs (`CONTRIBUTING.md`).
-2. The Lead reviews using the checklist in `CONTRIBUTING.md` and is the **only** person who merges into `main`.
-3. Scientific changes need the Lead's explicit approval, logged in `DECISION_LOG.md`.
-4. Disagreements: the owner proposes, the other member comments, and the Lead decides within 30 minutes or picks the documented default.
+1. The Lead assigns a task in `TASK_TRACKER.md`.
+2. The teammate's Claude session generates the task prompt (`TEAM_WORKFLOW.md` §4).
+3. The teammate works on a task branch and opens a draft PR early.
+4. The PR is submitted for review.
+5. The Lead reviews **every** PR with the checklist in `CONTRIBUTING.md`. The outcome is **Approved**, **Changes requested** (fix in the same PR) or **Rejected** (the task is reconsidered).
+6. **Only the Lead merges into `main`,** and personally authorizes each merge. No teammate and no AI session merges or approves.
+7. Scientific, architectural, contract and stack changes need the Lead's explicit approval, logged in `DECISION_LOG.md`.
+8. Disagreements: the owner proposes, the other member comments, and the Lead decides within 30 minutes or picks the documented default.
+
+The full process is in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
+
+## 5a. Individual Claude sessions
+
+- Each member may use their own Claude account or session. Sessions share **no** memory, so the repository documents are the only shared context.
+- A session must run the startup checklist (`CLAUDE.md`). It works only on the member's assigned task and never expands scope.
 
 ## 6. Note for the Lead
 
