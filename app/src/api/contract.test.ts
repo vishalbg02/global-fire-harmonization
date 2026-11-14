@@ -3,6 +3,7 @@ import {
   ContractError,
   REASON_CODES,
   VERDICTS,
+  parseEntityEvidence,
   parseEntityMonth,
   parseEntityMonths,
   parseMapCell,
@@ -163,5 +164,34 @@ describe('parseEntityMonth', () => {
   it('parses a list and rejects a non-list', () => {
     expect(parseEntityMonths([rawEntityMonth(), rawEntityMonth({ month: 10 })])).toHaveLength(2)
     expect(() => parseEntityMonths({})).toThrow(ContractError)
+  })
+})
+
+
+describe('parseEntityEvidence', () => {
+  const evidence = (overrides: Record<string, unknown> = {}) =>
+    rawEntityMonth({ raw_by_witness: { AQUA_MODIS: 5, SNPP_VIIRS: 0 }, ...overrides })
+
+  it('parses a record with raw_by_witness decoded into an object and keeps a real zero', () => {
+    const r = parseEntityEvidence(evidence())
+    expect(r.raw_by_witness).toEqual({ AQUA_MODIS: 5, SNPP_VIIRS: 0 })
+    expect(r.verdict).toBe('ABOVE_NORMAL')
+  })
+
+  it('keeps a null raw_by_witness as null', () => {
+    expect(parseEntityEvidence(evidence({ raw_by_witness: null })).raw_by_witness).toBeNull()
+  })
+
+  it('rejects an unknown witness, a non-numeric contribution and a string raw_by_witness', () => {
+    expect(() => parseEntityEvidence(evidence({ raw_by_witness: { LANDSAT: 3 } }))).toThrow(ContractError)
+    expect(() => parseEntityEvidence(evidence({ raw_by_witness: { AQUA_MODIS: 'many' } }))).toThrow(ContractError)
+    expect(() => parseEntityEvidence(evidence({ raw_by_witness: '{"AQUA_MODIS": 5}' }))).toThrow(ContractError)
+  })
+
+  it('rejects an unknown verdict and a missing field', () => {
+    expect(() => parseEntityEvidence(evidence({ verdict: 'MAYBE' }))).toThrow(ContractError)
+    const missing = evidence()
+    delete missing.pct_of_normal
+    expect(() => parseEntityEvidence(missing)).toThrow(/missing field "pct_of_normal"/)
   })
 })
