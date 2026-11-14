@@ -1,7 +1,8 @@
 """Pull 2026 FIRMS detections through the area API (T-002).
 
-Standard library only. Reads FIRMS_MAP_KEY (and optionally FIRMS_MAP_KEY_2, _3, ...) from the environment or .env.
-With several keys, each request uses whichever key has quota left. Keys are never printed, logged or used in a file name.
+Standard library only. Reads a single FIRMS_MAP_KEY from the environment or .env and stays under
+that key's 5,000 transactions / 10 minutes limit by waiting when it is nearly used up. The key is
+never printed, logged or used in a file name.
 
     python pipeline/pull_api_2026.py             # pull everything missing
     python pipeline/pull_api_2026.py --force     # re-pull existing segments
@@ -15,7 +16,6 @@ import datetime as dt
 import io
 import json
 import os
-import re
 import sys
 import threading
 import time
@@ -41,29 +41,24 @@ FAMILIES = {
 LOG_COLUMNS = ["source", "start", "days", "level", "rows", "attempts", "status"]
 
 
-def load_keys() -> list[str]:
-    """FIRMS_MAP_KEY, FIRMS_MAP_KEY_2, FIRMS_MAP_KEY_3, ... from the environment and .env."""
-    found: dict[str, str] = {k: v for k, v in os.environ.items() if re.fullmatch(r"FIRMS_MAP_KEY(_\d+)?", k) and v}
+def load_key() -> str:
+    """The single FIRMS_MAP_KEY, from the environment or .env."""
+    key = os.environ.get("FIRMS_MAP_KEY", "").strip()
     env = ROOT / ".env"
-    if env.exists():
+    if not key and env.exists():
         for line in env.read_text(encoding="utf-8").splitlines():
-            m = re.fullmatch(r"(FIRMS_MAP_KEY(?:_\d+)?)=(.*)", line.strip())
-            if m and m.group(2).strip():
-                found.setdefault(m.group(1), m.group(2).strip())
-    keys = [v for _, v in sorted(found.items(), key=lambda kv: int(kv[0].rsplit("_", 1)[-1]) if kv[0] != "FIRMS_MAP_KEY" and kv[0].rsplit("_", 1)[-1].isdigit() else 1)]
-    if not keys:
+            if line.startswith("FIRMS_MAP_KEY="):
+                key = line.split("=", 1)[1].strip()
+    if not key:
         sys.exit("FIRMS_MAP_KEY is not set (put it in .env)")
-    return list(dict.fromkeys(keys))  # drop duplicates, keep order
+    return key
 
 
-KEYS: list[str] = []
-KEY = ""  # first key: used for availability and for the first status line
+KEY = ""
 
 
 def redact(text: str) -> str:
-    for k in KEYS:
-        text = text.replace(k, "[KEY]")
-    return text
+    return text.replace(KEY, "[KEY]") if KEY else text
 
 
 def get(url: str) -> tuple[str, int]:
@@ -94,31 +89,27 @@ def used_transactions(key: str) -> tuple[int, int]:
 
 
 LOCK = threading.Lock()
-PENDING: dict[str, int] = {}  # transactions reserved by in-flight requests, per key
-COST = 200  # assumed transactions per world request (measured 180 in this run); the 90% cap absorbs the rest
+PENDING = 0  # transactions reserved by in-flight requests
+COST = 200  # assumed transactions per world request (measured about 180); the 90% cap absorbs the rest
 
 
-def acquire_key() -> str:
-    """Block until some key can take one more request; reserve it. Picks the least-loaded key."""
+def acquire_budget() -> None:
+    """Block until one more request fits under 90% of the key's limit; reserve it."""
+    global PENDING
     while True:
+        cur, limit = used_transactions(KEY)
         with LOCK:
-            KEYS[:] = load_keys()  # pick up keys added to .env while running
-            keys = list(KEYS)
-        usage = {k: used_transactions(k) for k in keys}
-        with LOCK:
-            fits = [(cur + PENDING.get(k, 0), k) for k, (cur, limit) in usage.items()
-                    if cur + PENDING.get(k, 0) + COST <= 0.9 * limit]
-            if fits:
-                _, k = min(fits)
-                PENDING[k] = PENDING.get(k, 0) + COST
-                return k
-        print("  all keys near quota: " + ", ".join(f"{c}/{l}" for c, l in usage.values()) + "; waiting", flush=True)
+            if cur + PENDING + COST <= 0.9 * limit:
+                PENDING += COST
+                return
+        print(f"  quota {cur}/{limit}; waiting for the window to reset", flush=True)
         time.sleep(20)
 
 
-def release_key(key: str) -> None:
+def release_budget() -> None:
+    global PENDING
     with LOCK:
-        PENDING[key] = max(0, PENDING.get(key, 0) - COST)
+        PENDING = max(0, PENDING - COST)
 
 
 def fetch_availability(today: str) -> dict[str, tuple[dt.date, dt.date]]:
@@ -183,14 +174,13 @@ def check_coverage(avail: dict[str, tuple[dt.date, dt.date]]) -> bool:
 
 
 def main() -> int:
-    global KEY, KEYS
+    global KEY
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--workers", type=int, default=6, help="parallel requests (default 6)")
     args = ap.parse_args()
-    KEYS = load_keys()
-    KEY = KEYS[0]
+    KEY = load_key()
     today = dt.date.today().isoformat()
 
     if args.check:
@@ -199,7 +189,6 @@ def main() -> int:
         avail = {r["data_id"]: (dt.date.fromisoformat(r["min_date"]), dt.date.fromisoformat(r["max_date"])) for r in rows}
         return 0 if check_coverage(avail) else 1
 
-    print(f"keys in use: {len(KEYS)}", flush=True)
     avail = fetch_availability(today)
     OUT.mkdir(parents=True, exist_ok=True)
     new_log = not LOG.exists()
@@ -216,10 +205,11 @@ def main() -> int:
     def pull(seg: tuple[str, dt.date, int, str]) -> bool:
         source, start, days, level = seg
         print(f"{source} {start} +{days}d ({level})", flush=True)
-        key = ""
+        reserved = False
         try:
-            key = acquire_key()
-            body, attempts = get(f"{HOST}/api/area/csv/{key}/{source}/world/{days}/{start.isoformat()}")
+            acquire_budget()
+            reserved = True
+            body, attempts = get(f"{HOST}/api/area/csv/{KEY}/{source}/world/{days}/{start.isoformat()}")
             if not body.startswith("latitude,longitude"):
                 raise RuntimeError("response is not CSV: " + redact(" ".join(body[:80].split())))
             path = seg_path(source, start, days)
@@ -234,8 +224,8 @@ def main() -> int:
             print("  FAIL:", redact(str(e)), flush=True)
             ok = False
         finally:
-            if key:
-                release_key(key)
+            if reserved:
+                release_budget()
         with log_lock:
             w.writerow(row)
             log.flush()
@@ -244,7 +234,7 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         failed = sum(not r for r in pool.map(pull, todo))
     log.close()
-    print("transactions after:", [used_transactions(k)[0] for k in KEYS])
+    print("transactions after:", used_transactions(KEY)[0])
     print(f"failed segments: {failed}")
     return 0 if check_coverage(avail) and not failed else 1
 
