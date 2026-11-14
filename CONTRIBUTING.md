@@ -88,7 +88,7 @@ Types: `feat`, `fix`, `docs`, `test`, `data`, `chore`, `refactor`. Keep commits 
 - [ ] Errors and edge cases handled (nulls, outages, zero baselines, no detections, provisional months)
 - [ ] Integrates with the other workstream
 - [ ] Documentation updated
-- [ ] No secrets, `.env` files, credentials or large/data files
+- [ ] No secrets, `.env` files or credentials; no raw/interim data; products only through Git LFS (D-027)
 - [ ] No regressions
 
 **Outcomes:**
@@ -106,7 +106,7 @@ Stop, describe it under "Scope issues" in the PR, set your task to `BLOCKED` if 
 
 ## 7. Data and secrets
 
-- NASA archives and generated products live under `data/` and are git-ignored (`data/README.md`). Only small `SYNTHETIC` fixtures (<5 MB) may be committed, under `data/fixtures/`.
+- Contract products in `data/products/` are committed through **Git LFS** (D-027; `*.parquet` there is tracked by `.gitattributes`). NASA raw archives (`data/raw/`) and interim files (`data/interim/`) are never committed: they are far too large and are re-downloaded or regenerated. Small `SYNTHETIC` fixtures (<5 MB) are committed normally under `data/fixtures/`. Run `git lfs install` once per machine before cloning or pulling.
 - Secrets go in `.env`, which is ignored. Document variable names in `.env.example`.
 - If a secret is committed by mistake: tell the Lead immediately and **rotate the key**. Rewriting history alone is not enough.
 

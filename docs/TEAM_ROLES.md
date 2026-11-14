@@ -78,7 +78,7 @@ There are three members. Handles are filled in by the Project Lead when collabor
 | M1 → M2 | Validation case windows | H6 | `VALIDATION_PLAN.md` |
 | M2 → M1 | G1 evidence (raw-jump plot, QA counts) | H8 | PR + `PROGRESS_LOG.md` |
 | M2 → M3 | `harmonize_area()` signature and stub | H10 | Python module + docstring |
-| M2 → M3 | Real products | H22 | `data/products/` (not in Git; shared via a team drive or regenerated locally) |
+| M2 → M3 | Real products | H22 | `data/products/` (in Git through Git LFS, D-027) |
 | M2 → M3 | `validation_results.json` | H26 | Contract §6 |
 | M3 → M1 | Demo-ready build | H28 | Tagged commit |
 
