@@ -27,6 +27,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-022 | 2026-11-14 | Contract additions from the workstream prompts (cell_id, cell bounds, entity IDs, PRODUCTS_DIR, path rule); envelope and error format not adopted → contract 0.1.1 | **APPROVED** (2026-11-14) |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
 | D-021 | 2026-11-14 | Rewrite the 4 bootstrap commits on `main` to remove AI trailers | APPROVED and DONE (force-pushed 2026-11-14) |
+| D-028 | 2026-11-14 | G1 lock (T-051): baseline, probabilities, verdict and minimum-data thresholds, reason-code rules; validation thresholds locked as written | **DRAFT** (awaiting the Lead) |
 | D-027 | 2026-11-14 | Contract products in `data/products/` are committed through Git LFS; raw and interim data stay out of Git | **APPROVED** (2026-11-14) |
 | D-026 | 2026-11-14 | Reason code `NOT_HARMONIZED` and raw-only products (contract 0.1.1) | **APPROVED** (2026-11-14) |
 | D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
@@ -219,3 +220,41 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Not changed:** NASA raw archives (`data/raw/`, about 9.7 GB) and interim files (`data/interim/`, about 6.3 GB) are never committed. They are reproducible from FIRMS and the pipeline, and are too large for the LFS quota.
 - **Cost:** every committed version stays in LFS history and counts against the account's LFS storage and bandwidth quota, so products are committed only when they change.
 - **Status:** **APPROVED** by the Lead, 2026-11-14 (replaces the earlier "never commit products" rule).
+
+### D-028: G1 lock (T-051): baseline, verdicts, data thresholds and validation thresholds **[DRAFT, awaiting the Lead]**
+Fixed **before** any baseline, verdict or validation result exists (pre-registration). After approval, a change needs a new entry with its reason, and the original stays visible.
+
+**1. Baseline (closes D-010).**
+- Same calendar month, years **2003–2022** (20 years), from the harmonized estimates of `harmonize_area()` with the approved method (φ, κ, shared ratio errors, single day/night combination, D-005). 2003–2011 are Aqua-only; the D-005 cutoff does not touch these years.
+- Percentiles **p25, p50 and p75**: empirical, linear interpolation between order statistics, over the baseline years that have an estimate.
+- Sensitivity (test S1): an Aqua-measured baseline (2003–2021).
+- Limitation kept: the uncertainty of the percentiles is not propagated in v0.1.
+
+**2. Probabilities.** The estimate is treated as Normal(estimate, sd) truncated at 0. `p_above = P(X > p75)`, `p_below = P(X < p25)`, `p_within = 1 − p_above − p_below`.
+
+**3. Verdicts, applied in this order.**
+| Step | Condition | Verdict | Reason codes |
+|---|---|---|---|
+| 1 | No estimate (no witness with a complete month) | `CANNOT_DETERMINE` | `OUTAGE` |
+| 2 | Fewer than **15 of the 20** baseline years have an estimate | `CANNOT_DETERMINE` | `INSUFFICIENT_BASELINE` |
+| 3 | Estimate = 0 **and** baseline p75 ≤ **1** cell-day | `NO_DETECTED_ACTIVITY` | — (never "below normal") |
+| 4 | Baseline p50 < **5** Aqua-equivalent cell-days (too little normal activity to judge) | `CANNOT_DETERMINE` | `INSUFFICIENT_BASELINE` |
+| 5 | `p_above ≥ 0.8` | `ABOVE_NORMAL` | |
+| 6 | `p_below ≥ 0.8` | `BELOW_NORMAL` | |
+| 7 | `p_within ≥ 0.8` | `WITHIN_NORMAL` | |
+| 8 | Otherwise | `CANNOT_DETERMINE` | `WIDE_INTERVAL` |
+
+The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the method's proposed level (SCIENTIFIC_METHODOLOGY §4.6).
+
+**4. Caveat codes** (added to any verdict; they never change it):
+- `PROVISIONAL_NRT`: `data_level` is `NRT` or `MIXED`.
+- `SINGLE_WITNESS`, `WITNESS_DISAGREEMENT` (S > 2), `AQUA_DRIFT_ERA` (D-005): as already produced by T-013.
+- `POOLED_CALIBRATION`: more than 50% of the area's converted cell-days use `REGION` or `GLOBAL` ratios.
+- `DIURNAL_CAVEAT`: India and the cells in 29.5–32.5 N, 73.8–77.5 E (Punjab and Haryana), October–November, from 2020 (documented burning-time shift).
+- `INSUFFICIENT_OVERLAP`: reserved, not used in v0.1 (pooling covers thin overlap).
+
+**5. Levels.** Verdicts for cells, countries, continents and the world, all from `harmonize_area()`. The share of land cells with a determinable verdict is reported (test D2).
+
+**6. Validation thresholds.** Locked exactly as written in `docs/VALIDATION_PLAN.md` §3 (A1, A2, B1, B2, B3, C1, D1, D2, E1, CTRL, S1). Cases and windows: T-050 in `docs/VALIDATION_PLAN.md` §2.
+
+- **Status:** DRAFT, awaiting the Lead's approval.
