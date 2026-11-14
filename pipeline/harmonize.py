@@ -7,8 +7,10 @@ For any area (a list of analysis cells) and month, each witness gives an Aqua-eq
 (Aqua has ratio 1 and no ratio uncertainty; Terra is raw view only and never enters the estimate). Raw cell-days are summed per
 witness and stratum BEFORE they are converted (docs/SCIENTIFIC_METHODOLOGY.md 4.5). The variance of E_w has two parts:
 
-  * counting noise, per stratum and day/night:  phi_d x ratio^2 x cell_days.  phi_d is an overdispersion factor (phi = 1 is
-    Poisson), estimated once on the calibration fit periods only (`estimate_phi`) and applied to every witness;
+  * counting noise, per stratum and day/night:  phi_d x ratio^2 x cell_days, plus a term that grows with the size of the
+    estimate, kappa_d x E_d^2 (E_d: the witness estimate of the area for that day/night). phi_d is an overdispersion factor
+    (phi = 1 is Poisson) and kappa_d a relative error. Both are estimated once on the calibration fit periods only
+    (`estimate_dispersion`) and applied to every witness;
   * ratio error, shared: strata that take the same ratio share the same error, so their errors are added fully correlated.
     The groups are the ratio sources: each LOCAL stratum, each fire region's pooled estimate (strata with pooling level REGION)
     and the global estimate (GLOBAL), per witness, day/night and season:   (sum over the group of cell_days x ratio_sd)^2.
@@ -20,10 +22,10 @@ here the baseline fields are null and the verdict is CANNOT_DETERMINE, as the co
 
     from harmonize import harmonize_area
     records = harmonize_area(cell_ids, months=None)       # list of dicts in the shape of DATA_CONTRACT.md section 4
-    python pipeline/harmonize.py phi                       # re-estimate the overdispersion factors
+    python pipeline/harmonize.py phi                       # re-estimate phi and kappa
     python pipeline/harmonize.py                           # the real-data diagnostic
 
-Approved by the Lead 2026-11-14 (PR #43): day and night converted separately and added; a variance floor of one cell-day for
+Approved by the Lead 2026-11-14 (PR #43): the size-dependent term kappa x E^2 next to phi x count; day and night converted separately and added; a variance floor of one cell-day for
 a zero count; only complete witness-months count; a 90% normal interval with the lower bound at 0; no estimate for the
 2002-07 to 2002-09 outage months. Strata that share no ratio source are treated as independent (limitation).
 """
@@ -31,6 +33,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 
 import duckdb
@@ -82,7 +85,11 @@ def interval(estimate: float, sd: float) -> tuple[float, float]:
 
 # ------------------------------------------------------------------------------------------------ overdispersion
 # phi per day/night, estimated on the fit periods only by `estimate_phi` (python pipeline/harmonize.py phi); see docs/DATA_SOURCES.md
-PHI = {"D": 7.72, "N": 6.53}   # `python pipeline/harmonize.py phi` on the T-011 products, 2026-11-14, units of at least 20 cell-days
+PHI = {"D": 2.25, "N": 2.47}      # `python pipeline/harmonize.py phi` on the T-011 products, 2026-11-14 (see PHI_ONLY for the first version)
+KAPPA = {"D": 0.0084, "N": 0.0164}
+KAPPA0 = {"D": 0.0, "N": 0.0}
+PHI_ONLY = {"D": 7.72, "N": 6.53}  # phi alone, units of at least 20 cell-days (the first PR #43 version), kept for comparison
+SIZE_BANDS = (5.0, 20.0, 100.0, 500.0)   # lower edges of the size bands of a country-month, in cell-days
 
 
 def solve_phi(d: np.ndarray, vc: np.ndarray, vr: np.ndarray) -> float:
@@ -105,16 +112,15 @@ def solve_phi(d: np.ndarray, vc: np.ndarray, vr: np.ndarray) -> float:
     return float(np.sqrt(lo * hi))
 
 
-def estimate_phi(paths: Paths | None = None, min_cell_days: float = 20.0, fits: dict | None = None) -> dict:
-    """Estimate the overdispersion factor per day/night from country-months of the calibration fit periods only.
+def fit_units(paths: Paths, min_cell_days: float, fits: dict | None = None) -> tuple[dict, dict]:
+    """Country-month units of the calibration fit periods only: arrays per day/night pooled over the pairs.
 
     Each pair is Aqua against one VIIRS witness inside that witness's fit period (S-NPP 2012-01 to 2016-12; NOAA-20 2018-04 to
-    2021-12: S-NPP is not used after 2016, the held-out years are never read). Units are country-months where both converted
-    estimates are at least `min_cell_days`, so the counts are not tiny. The ratios were fitted on these months, so the
-    differences are smaller than out of sample and phi is a lower bound (test D1 checks the coverage).
+    2021-12: S-NPP is not used after 2016, the held-out years are never read). A unit is a country-month where both converted
+    estimates are at least `min_cell_days`. Per unit: d (VIIRS minus Aqua), vc (counting variance of both at phi = 1), vr (ratio
+    variance), s2 (the squares of the two estimates, for the kappa term) and size (their mean).
     """
     import calibration as cal
-    paths = paths or Paths()
     fits = fits or cal.FITS
     con = duckdb.connect()
     paths.tmp.mkdir(parents=True, exist_ok=True)
@@ -123,8 +129,8 @@ def estimate_phi(paths: Paths | None = None, min_cell_days: float = 20.0, fits: 
     con.execute(f"""CREATE TEMP TABLE members AS SELECT 'COUNTRY' AS entity_type, country_iso3 AS entity_id, country_iso3 AS entity_name, cell_id
                     FROM {cells} WHERE country_iso3 IS NOT NULL""")
     agg = aggregate(con, paths, "members", None)
-    out: dict = {"pairs": {}, "min_cell_days": min_cell_days}
     pooled: dict[str, list] = {"D": [], "N": []}
+    pairs: dict = {}
     for w, ((y0, m0), (y1, m1)) in fits.items():
         ym = agg.year * 100 + agg.month
         sub = agg[(ym >= y0 * 100 + m0) & (ym <= y1 * 100 + m1) & agg.complete]
@@ -132,14 +138,102 @@ def estimate_phi(paths: Paths | None = None, min_cell_days: float = 20.0, fits: 
         v = sub[sub.witness == w].set_index(["entity_id", "year", "month", "daynight"])
         j = a.join(v, lsuffix="_a", rsuffix="_w", how="inner")
         j = j[(j.e_a >= min_cell_days) & (j.e_w >= min_cell_days)]
-        out["pairs"][w] = {}
+        pairs[w] = {}
         for dn in ("D", "N"):
             jd = j[j.index.get_level_values("daynight") == dn]
-            d, vc, vr = (jd.e_w - jd.e_a).to_numpy(), (jd.vc_a + jd.vc_w).to_numpy(), jd.vr_w.to_numpy()
-            out["pairs"][w][dn] = {"units": len(jd), "phi": solve_phi(d, vc, vr)}
-            pooled[dn].append((d, vc, vr))
-    out["phi_estimate"] = {dn: solve_phi(*(np.concatenate(x) for x in zip(*pooled[dn], strict=True))) for dn in pooled}
+            arrays = ((jd.e_w - jd.e_a).to_numpy(), (jd.vc_a + jd.vc_w).to_numpy(), jd.vr_w.to_numpy(),
+                      (jd.e_a ** 2 + jd.e_w ** 2).to_numpy(), ((jd.e_a + jd.e_w) / 2).to_numpy())
+            pairs[w][dn] = arrays
+            pooled[dn].append(arrays)
+    units = {dn: tuple(np.concatenate(x) for x in zip(*pooled[dn], strict=True)) for dn in pooled}
+    return units, pairs
+
+
+def estimate_phi(paths: Paths | None = None, min_cell_days: float = 20.0, fits: dict | None = None) -> dict:
+    """The overdispersion factor alone (kappa = 0) per day/night from country-months of the fit periods only.
+
+    The first version of the estimator (PR #43); `estimate_dispersion` supersedes it. The ratios were fitted on these months,
+    so the differences are smaller than out of sample and phi is a lower bound (test D1 checks the coverage).
+    """
+    units, pairs = fit_units(paths or Paths(), min_cell_days, fits)
+    out: dict = {"pairs": {}, "min_cell_days": min_cell_days}
+    for w, per in pairs.items():
+        out["pairs"][w] = {dn: {"units": len(a[0]), "phi": solve_phi(a[0], a[1], a[2])} for dn, a in per.items()}
+    out["phi_estimate"] = {dn: solve_phi(u[0], u[1], u[2]) for dn, u in units.items()}
     out["phi"] = {dn: max(1.0, v) for dn, v in out["phi_estimate"].items()}      # never below Poisson
+    return out
+
+
+def band_medians(d, vc, vr, s2, size, phi: float, kappa: float, bands=SIZE_BANDS) -> list[dict]:
+    """Median of d^2 / expected variance per size band; near the chi-square(1) median (0.455) everywhere means a good fit."""
+    ok = np.isfinite(d) & (vc > 0)
+    expected = phi * vc + vr + kappa * s2
+    z = np.where(ok, d ** 2 / np.where(expected > 0, expected, np.nan), np.nan)
+    edges = list(bands) + [np.inf]
+    rows = []
+    for lo, hi in pairwise(edges):
+        sel = ok & (size >= lo) & (size < hi)
+        rows.append({"from": lo, "to": None if np.isinf(hi) else hi, "units": int(sel.sum()),
+                     "median": float(np.nanmedian(z[sel])) if sel.sum() else float("nan")})
+    return rows
+
+
+def solve_dispersion(d, vc, vr, s2, size, bands=SIZE_BANDS) -> tuple[float, float]:
+    """phi and kappa >= 0 for the variance  phi x vc + vr + kappa x s2  (jointly, chi-square(1) median criterion).
+
+    For each phi on a log grid, kappa is the value that puts the median of d^2 / expected over all units at the chi-square(1)
+    median (kappa = 0 if the median is already below it); phi is then the grid value whose size bands are closest to the target
+    (sum of squared log-medians). With kappa fixed at 0 this is `solve_phi`. Nan if there are too few units.
+    """
+    ok = np.isfinite(d) & np.isfinite(vc) & np.isfinite(vr) & np.isfinite(s2) & (vc > 0) & (s2 > 0)
+    d, vc, vr, s2, size = d[ok], vc[ok], vr[ok], s2[ok], size[ok]
+    if len(d) < 20:
+        return float("nan"), float("nan")
+    d2 = d ** 2
+    target = np.log(CHI2_1DF_MEDIAN)
+    edges = list(bands) + [np.inf]
+    masks = [(size >= lo) & (size < hi) for lo, hi in pairwise(edges)]
+    masks = [m for m in masks if m.sum() >= 10]
+
+    def kappa_for(phi: float) -> float:
+        if np.median(d2 / (phi * vc + vr)) <= CHI2_1DF_MEDIAN:
+            return 0.0
+        lo, hi = 0.0, 1e3
+        for _ in range(80):
+            mid = 0.5 * (lo + hi)
+            if np.median(d2 / (phi * vc + vr + mid * s2)) > CHI2_1DF_MEDIAN:
+                lo = mid
+            else:
+                hi = mid
+        return 0.5 * (lo + hi)
+
+    def loss(phi: float) -> float:
+        k = kappa_for(phi)
+        e = phi * vc + vr + k * s2
+        return float(sum((np.log(np.median(d2[m] / e[m])) - target) ** 2 for m in masks))
+
+    grid = np.exp(np.linspace(np.log(0.5), np.log(60.0), 90))
+    best = min(grid, key=loss)
+    fine = best * np.exp(np.linspace(-0.12, 0.12, 49))
+    best = min(fine, key=loss)
+    return float(best), float(kappa_for(best))
+
+
+def estimate_dispersion(paths: Paths | None = None, min_cell_days: float = SIZE_BANDS[0], fits: dict | None = None) -> dict:
+    """phi and kappa per day/night from country-months of the fit periods only, with the fit by size band.
+
+    Units are country-months where both converted estimates are at least `min_cell_days` (default 5 cell-days, the lowest band).
+    Returns the estimates, the number of units, and the median of d^2 / expected per size band for the phi-only model (the first
+    PR #43 version) and for the phi + kappa model: near 0.455 in every band means the size dependence is captured.
+    """
+    units, _ = fit_units(paths or Paths(), min_cell_days, fits)
+    out: dict = {"min_cell_days": min_cell_days, "method": "phi and kappa jointly, chi-square(1) median per size band",
+                 "phi": {}, "kappa": {}, "units": {}, "bands_phi_only": {}, "bands_phi_kappa": {}}
+    for dn, (d, vc, vr, s2, size) in units.items():
+        phi, kappa = solve_dispersion(d, vc, vr, s2, size)
+        out["phi"][dn], out["kappa"][dn], out["units"][dn] = max(1.0, phi), kappa, len(d)
+        out["bands_phi_only"][dn] = band_medians(d, vc, vr, s2, size, PHI_ONLY[dn], 0.0)
+        out["bands_phi_kappa"][dn] = band_medians(d, vc, vr, s2, size, phi, kappa)
     return out
 
 
@@ -193,9 +287,10 @@ def _level(lo: str, hi: str) -> str:
 
 
 def records_from(agg: pd.DataFrame, n_cells: dict[tuple[str, str], int], aqua_cutoff: tuple[int, int] | None = None,
-                 phi: dict[str, float] | None = None) -> list[dict]:
+                 phi: dict[str, float] | None = None, kappa: dict[str, float] | None = None) -> list[dict]:
     """Contract-shaped records from the aggregated table."""
     phi = phi or PHI
+    kappa = KAPPA if kappa is None else kappa
     out: list[dict] = []
     for (etype, eid, year, month), g in agg.groupby(["entity_type", "entity_id", "year", "month"], sort=True):
         raw_by = {w: int(g.loc[g.witness == w, "raw"].sum()) for w in RAW_WITNESSES if (g.witness == w).any()}
@@ -210,7 +305,7 @@ def records_from(agg: pd.DataFrame, n_cells: dict[tuple[str, str], int], aqua_cu
             if rows["missing"].sum():
                 raise ValueError(f"{etype} {eid} {year}-{month:02d}: {int(rows['missing'].sum())} stratum rows have no calibration ratio")
             est[0, j] = rows["e"].sum()
-            counting = sum(phi[r.daynight] * r.vc for r in rows.itertuples())
+            counting = sum(phi[r.daynight] * r.vc + kappa[r.daynight] * r.e ** 2 for r in rows.itertuples())
             floor = float(rows["rbar"].mean()) ** 2
             var[0, j] = max(counting + float(rows["vr"].sum()), floor)       # a zero count still carries one cell-day of variance
             use[0, j] = bool(rows["complete"].all())
@@ -248,12 +343,12 @@ def records_from(agg: pd.DataFrame, n_cells: dict[tuple[str, str], int], aqua_cu
 
 def harmonize_area(cell_ids: list[str], months: list[tuple[int, int]] | None = None, paths: Paths | None = None,
                    aqua_cutoff: tuple[int, int] | None = None, entity_id: str = "CUSTOM", entity_name: str = "Custom area",
-                   phi: dict[str, float] | None = None) -> list[dict]:
+                   phi: dict[str, float] | None = None, kappa: dict[str, float] | None = None) -> list[dict]:
     """The single implementation of the science for an area: `entity_month` records (DATA_CONTRACT.md section 4, 8).
 
     `cell_ids` are analysis cells of cells.parquet; `months` is a list of (year, month) or None for every month with data.
     `aqua_cutoff` (year, month): Aqua is not combined after it (the value comes from T-012; none by default).
-    `phi`: overdispersion per day/night (default: the estimate on the fit periods, `PHI`).
+    `phi`, `kappa`: overdispersion and relative error per day/night (default: the estimates on the fit periods, `PHI`, `KAPPA`).
     Deterministic for the same inputs and method_version; records are ordered by year and month.
     """
     paths = paths or Paths()
@@ -271,11 +366,12 @@ def harmonize_area(cell_ids: list[str], months: list[tuple[int, int]] | None = N
     con.register("members_df", members)
     con.execute("CREATE TEMP TABLE members AS SELECT * FROM members_df")
     agg = aggregate(con, paths, "members", months)
-    return records_from(agg, {("CUSTOM", entity_id): len(ids)}, aqua_cutoff, phi)
+    return records_from(agg, {("CUSTOM", entity_id): len(ids)}, aqua_cutoff, phi, kappa)
 
 
 # ------------------------------------------------------------------------------------------------ real-data report
-def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = None, phi: dict[str, float] | None = None) -> dict:
+def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = None, phi: dict[str, float] | None = None,
+           kappa: dict[str, float] | None = None) -> dict:
     """Run the combination over every country; summarise how the witnesses agree.
 
     A diagnostic for the T-013 review, not a product: it writes data/interim/qa/harmonize_report.json.
@@ -290,9 +386,10 @@ def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = Non
     counts = dict(con.execute("SELECT entity_id, count(*) FROM members GROUP BY 1").fetchall())
     agg = aggregate(con, paths, "members", None)
     n_cells = {("COUNTRY", k): v for k, v in counts.items()}
-    out: dict = {"phi": phi or PHI}
-    for label, ph in (("poisson_only", {"D": 1.0, "N": 1.0}), ("with_phi", phi or PHI)):
-        recs = pd.DataFrame(records_from(agg, n_cells, aqua_cutoff, ph))
+    out: dict = {"phi": phi or PHI, "kappa": KAPPA if kappa is None else kappa}
+    variants = (("phi_only", PHI_ONLY, KAPPA0), ("phi_and_kappa", phi or PHI, KAPPA if kappa is None else kappa))
+    for label, ph, ka in variants:
+        recs = pd.DataFrame(records_from(agg, n_cells, aqua_cutoff, ph, ka))
         two = recs[recs.n_witnesses >= 2]
         s = two.disagreement_scale.astype(float)
         rel_sd = (recs.sd / recs.estimate).replace([np.inf, -np.inf], np.nan)
@@ -302,6 +399,8 @@ def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = Non
                       "scale_quantiles": {str(q): float(s.quantile(q)) for q in (0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99)},
                       "share_scale_gt": {str(t): float((s > t).mean()) for t in (1.0, 1.5, 2.0, 3.0, 5.0)},
                       "relative_sd_median": float(rel_sd.median()),
+                      "indonesia_share_scale_gt": {str(t): float((recs[(recs.entity_id == "IDN") & (recs.n_witnesses >= 2)].disagreement_scale > t).mean())
+                                                   for t in (1.0, 2.0)},
                       "no_estimate_months": sorted({f"{r.year}-{r.month:02d}" for r in recs[recs.estimate.isna()].itertuples()})}
     wide = agg.groupby(["entity_id", "year", "month", "witness"]).e.sum().unstack()
     rel = {}
@@ -319,8 +418,8 @@ def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = Non
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["phi"]:
-        res = estimate_phi()
-        (Paths().products.parent / "interim" / "qa" / "harmonize_phi.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+        res = estimate_dispersion()
+        (Paths().products.parent / "interim" / "qa" / "harmonize_dispersion.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
         print(json.dumps(res, indent=1))
     else:
         print(json.dumps(report(), indent=1))
