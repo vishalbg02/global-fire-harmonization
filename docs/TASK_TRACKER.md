@@ -63,7 +63,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | [#56](https://github.com/vishalbg02/global-fire-harmonization/pull/56) | IN_REVIEW | PENDING | Recorded |
 | T-023 | Test A2 (same fire, two eras) | M2 | P1 | T-014, T-050 | `science/T-023-test-a2` | — | TODO | — | Recorded |
 | T-024 | Tests B2, C1, CTRL | M2 | P1 | T-014 | `science/T-024-test-b2-c1-ctrl` | — | TODO | — | Recorded |
-| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | — | TODO | — | Recorded |
+| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | [#57](https://github.com/vishalbg02/global-fire-harmonization/pull/57) | IN_REVIEW | PENDING | Recorded |
 | T-026 | Verify every number displayed in the app/demo against products | M2 + M1 | P0 | T-039 | `science/T-026-number-check` | — | TODO | — | Checklist signed off |
 
 ## Application and API (Member 3)
