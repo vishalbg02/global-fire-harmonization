@@ -203,7 +203,118 @@ aside section {
   padding-left: 0.5rem;
 }
 
+/* ---- Calendar ---- */
+.calendar-panel {
+  padding: 0 1rem 1rem;
+}
+
+.calendar-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: center;
+}
+
+.calendar-header h2 {
+  margin: 0;
+}
+
+.calendar-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.calendar-chart {
+  width: 100%;
+  border: 1px solid var(--border);
+}
+
+.calendar-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+.calendar-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.8rem;
+}
+
+.calendar-table caption {
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  font-weight: 600;
+}
+
+.calendar-table th,
+.calendar-table td {
+  border: 1px solid var(--border);
+  padding: 0;
+  text-align: center;
+  min-width: 4.4rem;
+  white-space: nowrap;
+}
+
+.calendar-table td.cal-outside,
+.calendar-table td.cal-nodata {
+  color: var(--text-muted);
+  background: #fff;
+}
+
+.calendar-table td.cal-nodata {
+  background: #e0e0e0;
+  color: #1b1b1f;
+}
+
+.cal-cell {
+  width: 100%;
+  min-height: 1.6rem;
+  padding: 0.1rem 0.3rem;
+  white-space: nowrap;
+  border: 2px solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cal-provisional {
+  border: 2px dashed #000;
+}
+
+.cal-selected {
+  border: 3px solid #0050c8;
+}
+
+.swatch-provisional {
+  border: 2px dashed #000;
+  background: #fff;
+}
+
+.swatch-selected {
+  border: 3px solid #0050c8;
+  background: #fff;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.table-toggle {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
 @media (max-width: 1100px) {
+  .calendar-body {
+    grid-template-columns: 1fr;
+  }
   .map-area {
     grid-template-columns: 1fr;
   }

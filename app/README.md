@@ -2,7 +2,7 @@
 
 Frontend for the Global Fire Harmonization project (working name: *Many Witnesses*). Owner: Member 3. Task: T-030 (setup and skeleton).
 
-**Status:** T-031 adds the global map (country layer, analysis-cell layer, month selector, layer modes, legend, tooltip). The calendar, charts and evidence panels are added by later tasks. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
+**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. The raw/harmonized toggle, evidence panel and witness charts are added by later tasks. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
 
 ## Prerequisites
 
@@ -22,6 +22,20 @@ Run all commands from this `app/` directory.
 | `npm test` | Run the Vitest tests once |
 | `npm run lint` | Run the template's default linter (Oxlint) |
 | `npm run preview` | Serve the built `dist/` locally |
+
+## Running against the API
+
+The web app reads data from the API in `api/` (see `api/README.md`). In development, Vite proxies `/api` to `http://127.0.0.1:8000`, so no CORS configuration is needed and `VITE_API_BASE_URL` can stay empty. With the SYNTHETIC fixtures:
+
+```bash
+cd ../api && PRODUCTS_DIR=../data/fixtures/v0.1.0 .venv/bin/uvicorn fire_api.main:app --port 8000
+```
+
+```bash
+npm run dev
+```
+
+Open the address Vite prints (use `localhost`). While `metadata.synthetic` is `true` the app shows the "SYNTHETIC DATA" banner. Without a running API the country layer still works and the other views report that data are not available.
 
 ## Configuration
 
@@ -48,7 +62,8 @@ app/
 │   ├── state/              selection state (selection.ts), month list (months.ts)
 │   ├── content/            verdict presentation and short reason labels
 │   ├── components/map/     map, legend, month and layer selectors, tooltip, colour scale
-│   ├── components/common/  synthetic banner, loading/error/empty states
+│   ├── components/calendar/ calendar grid, ECharts heatmap, table view, legend, scales, tooltip text
+│   ├── components/common/  synthetic banner, loading/error/empty states, error boundary
 │   └── **/*.test.ts(x)     Vitest tests (mock data inside test files is SYNTHETIC)
 ├── public/geo/             Natural Earth country boundaries
 └── package.json            scripts and dependencies

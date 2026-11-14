@@ -8,6 +8,7 @@ import { CellInfo } from './components/map/CellInfo.tsx'
 import { LayerSelector } from './components/map/LayerSelector.tsx'
 import { Legend } from './components/map/Legend.tsx'
 import { MapView } from './components/map/MapView.tsx'
+import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { monthRange } from './state/months.ts'
@@ -100,6 +101,15 @@ export default function App() {
             </section>
           </aside>
         </div>
+        <CalendarPanel
+          area={selection.area}
+          meta={meta.data ?? null}
+          selectedMonth={selection.month}
+          valueMode={selection.valueMode}
+          onValueModeChange={(valueMode) => dispatch({ type: 'set-value-mode', valueMode })}
+          onSelectMonth={(year, month) => dispatch({ type: 'set-month', year, month })}
+          onShowWorld={() => dispatch({ type: 'clear-entity' })}
+        />
       </main>
     </div>
   )
