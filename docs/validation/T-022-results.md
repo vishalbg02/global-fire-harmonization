@@ -74,7 +74,7 @@ Status **PASS**. Note: `entity_month` holds countries, continents and the globe,
 |---|---|---|---|---|---|
 | All cells | 16,477,734 | 2.9% | 68.3% | 21.4% | 99.8% |
 | Land cells | 16,206,123 | 3.0% | 67.8% | 21.8% | 99.8% |
-| Entity-months (countries, continents, globe) | 68,562 | 24.4% (ABOVE 6,119 + BELOW 6,318 + WITHIN 8,320 of 68,562) | 50.9% | | |
+| Entity-months (countries, continents, globe) | 68,562 | 30.3% (ABOVE 6,119 + BELOW 6,318 + WITHIN 8,320 of 68,562) | 50.9% | | |
 
 Reading it: most of the determinable cell-months are `NO_DETECTED_ACTIVITY` (10.8 million of 11.3 million); a normal-range verdict exists in only 3% of land cell-months (per calendar month between 0% and 6.4%), which is what D-028 anticipated for cells. Almost every cell has some determinable month (99.8%), but only about one in five ever gets a normal-range verdict. [VERIFIED as counts; the interpretation is mine.]
 
