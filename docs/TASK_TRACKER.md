@@ -59,7 +59,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-050 | Define case windows, bounding boxes, quiet months | M1 | P0 | — | `docs/T-050-validation-cases` | [#51](https://github.com/vishalbg02/global-fire-harmonization/pull/51) | MERGED (2026-11-14) | APPROVED | Table in `VALIDATION_PLAN.md` |
 | T-051 | **G1 lock**: grid, baseline, verdict and validation thresholds | M1 | P0 | T-006 | `docs/T-051-g1-lock` | [#51](https://github.com/vishalbg02/global-fire-harmonization/pull/51) | MERGED (2026-11-14) | APPROVED | Logged as approved before any results |
 | T-020 | Test A1 (two independent paths) | M2 | P0 | T-014, T-050 | `science/T-020-test-a1` | — | TODO | — | Results recorded, pass or fail |
-| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | — | TODO | — | Recorded |
+| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | [#54](https://github.com/vishalbg02/global-fire-harmonization/pull/54) | IN_REVIEW | PENDING | Recorded |
 | T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | — | TODO | — | Recorded |
 | T-023 | Test A2 (same fire, two eras) | M2 | P1 | T-014, T-050 | `science/T-023-test-a2` | — | TODO | — | Recorded |
 | T-024 | Tests B2, C1, CTRL | M2 | P1 | T-014 | `science/T-024-test-b2-c1-ctrl` | — | TODO | — | Recorded |
