@@ -120,6 +120,8 @@ def case_estimates(case: dict, paths: hz.Paths, factors: pd.DataFrame | None, ph
     paths.tmp.mkdir(parents=True, exist_ok=True)
     con = duckdb.connect()
     con.execute(f"SET temp_directory='{paths.tmp.as_posix()}'")
+    con.execute("SET memory_limit='6GB'")
+    con.execute("SET preserve_insertion_order=false")
     con.register("members_df", pd.DataFrame({"entity_type": "CUSTOM", "entity_id": "A1", "entity_name": "A1 box", "cell_id": ids}))
     con.execute("CREATE TEMP TABLE members AS SELECT * FROM members_df")
     agg = hz.aggregate(con, paths, "members", months, factors)
@@ -149,21 +151,32 @@ def a1_gap(rec: dict[str, pd.DataFrame], case: dict) -> dict:
 
 
 # ------------------------------------------------------------------------------------------------ the run
+def _stage(name: str, compute):
+    """Run one stage and keep its result in data/interim/v02/stage_<name>.json; a finished stage is read back, not recomputed."""
+    f = cv.V02_DIR / f"stage_{name}.json"
+    if f.exists():
+        return json.loads(f.read_text(encoding="utf-8"))
+    out = compute()
+    cv.V02_DIR.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(out, indent=1, default=str), encoding="utf-8")
+    return json.loads(f.read_text(encoding="utf-8"))
+
+
 def run(paths: hz.Paths | None = None) -> dict:
     paths = paths or hz.Paths()
     factors = cv.load_factors()
-    disp = hz.estimate_dispersion(paths, factors=factors)
+    disp = _stage("dispersion", lambda: hz.estimate_dispersion(paths, factors=factors))
     phi2, kappa2 = disp["phi"], disp["kappa"]
     print("v0.2 phi", phi2, "kappa", kappa2, flush=True)
     res: dict = {"factors": factors.to_dict(orient="records"), "dispersion_v02": disp}
-    res["v01"] = holdout_and_d1(paths, None, None, None)
+    res["v01"] = _stage("holdout_v01", lambda: holdout_and_d1(paths, None, None, None))
     print("v0.1 holdout done", flush=True)
-    res["v02"] = holdout_and_d1(paths, factors, phi2, kappa2)
+    res["v02"] = _stage("holdout_v02", lambda: holdout_and_d1(paths, factors, phi2, kappa2))
     print("v0.2 holdout done", flush=True)
     res["a1"] = {"v01": {}, "v02": {}}
     for cid in sorted(va.CASES):
         for key, f, ph, ka in (("v01", None, None, None), ("v02", factors, phi2, kappa2)):
-            res["a1"][key][cid] = a1_gap(case_estimates(va.CASES[cid], paths, f, ph, ka), va.CASES[cid])
+            res["a1"][key][cid] = _stage(f"a1_{key}_{cid}", lambda f=f, ph=ph, ka=ka, cid=cid: a1_gap(case_estimates(va.CASES[cid], paths, f, ph, ka), va.CASES[cid]))
         print(cid, "gap v0.1", res["a1"]["v01"][cid]["gap"], "v0.2", res["a1"]["v02"][cid]["gap"], flush=True)
     res["decision"] = decide({et: res["v01"]["holdout"][et]["male"]["T"] for et in ("REGION", "COUNTRY")},
                              {et: res["v02"]["holdout"][et]["male"]["T"] for et in ("REGION", "COUNTRY")},
