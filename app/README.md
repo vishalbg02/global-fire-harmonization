@@ -47,7 +47,7 @@ When `metadata.method_version` ends in `-raw-only` (real raw counts, no harmoniz
 
 ## Custom areas
 
-A custom rectangle is sent to `POST /api/series/custom`; the API returns the series, and the calendar and evidence panel show it. Until Member 2's `harmonize_area()` is delivered, the API answers `503` and the app shows that message. Boxes must have west less than east (boxes that cross the antimeridian are not supported) and south less than north. A rectangle can also be drawn on the map with two clicks (terra-draw with `terra-draw-maplibre-gl-adapter`, D-024); drawing needs a pointer, so the typed fields are the keyboard route.
+A custom rectangle is sent to `POST /api/series/custom`; the API returns the series, and the calendar and evidence panel show it. The API computes it with Member 2's `harmonize_area()` (verdict and baseline fields are empty until T-014); a country-sized box takes about 3 s on a local machine, the whole world about 13 s. If the function or the products are unavailable, the API answers `503` and the app shows that message. Boxes must have west less than east (boxes that cross the antimeridian are not supported) and south less than north. A rectangle can also be drawn on the map with two clicks (terra-draw with `terra-draw-maplibre-gl-adapter`, D-024); drawing needs a pointer, so the typed fields are the keyboard route.
 
 ## Configuration
 

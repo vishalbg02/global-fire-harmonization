@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from fire_api import custom, products
+from fire_api.custom import HarmonizeUnavailable
 from fire_api.main import app
 from fire_api.models import (
     Anomaly,
@@ -248,10 +249,16 @@ class TestAnomalies:
 class TestCustomArea:
     URL = "/api/series/custom"
 
-    def test_503_until_harmonize_area_exists(self, client: TestClient) -> None:
+    def test_503_when_harmonize_area_cannot_be_loaded(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def unavailable() -> Any:
+            raise HarmonizeUnavailable("Custom areas are not available right now: test.")
+
+        monkeypatch.setattr(custom, "load_harmonize_area", unavailable)
         response = client.post(self.URL, json={"bbox": [99, -1, 101, 2]})
         assert response.status_code == 503
-        assert "not available yet" in response.json()["detail"]
+        assert "not available" in response.json()["detail"]
 
     def test_calls_harmonize_area_with_the_cells_whose_centres_are_inside(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch

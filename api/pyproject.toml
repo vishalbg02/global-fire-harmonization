@@ -8,6 +8,9 @@ dependencies = [
   "fastapi==0.162.7",
   "uvicorn==0.54.0",
   "duckdb==2.0.0",
+  "numpy==2.5.4",
+  "pandas==3.1.1",
+  "pyarrow==26.0.1",
   "pydantic==2.14.3",
 ]
 

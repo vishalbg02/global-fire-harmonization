@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from fire_api import custom
+from fire_api.custom import HarmonizeUnavailable
 from fire_api.export import COLUMNS, RAW_COLUMNS, build_csv
 from fire_api.models import EntityMonth, Metadata
 from tests.conftest import METADATA
@@ -124,10 +125,16 @@ class TestParameters:
 
 
 class TestCustom:
-    def test_503_until_harmonize_area_exists(self, client: TestClient) -> None:
+    def test_503_when_harmonize_area_cannot_be_loaded(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def unavailable() -> Any:
+            raise HarmonizeUnavailable("Custom areas are not available right now: test.")
+
+        monkeypatch.setattr(custom, "load_harmonize_area", unavailable)
         r = client.get(URL, params={"bbox": "99,0,101,1"})
         assert r.status_code == 503
-        assert "not available yet" in r.json()["detail"]
+        assert "not available" in r.json()["detail"]
 
     def test_custom_rows_and_filename(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
