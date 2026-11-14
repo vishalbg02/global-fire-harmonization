@@ -1,6 +1,7 @@
 import type { Anomaly } from '../../api/contract.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { monthLabel } from '../../state/months.ts'
+import { NOT_AVAILABLE_YET, useRawOnly } from '../../content/rawOnly.ts'
 import { ErrorState, LoadingState } from '../common/States.tsx'
 import { PROVISIONAL_NOTICE } from '../evidence/EvidenceBody.tsx'
 import {
@@ -98,6 +99,7 @@ export function AnomalyPanel({
   onSelect,
 }: Props) {
   const shown = expanded ? EXPANDED_SIZE : PAGE_SIZE
+  const rawOnly = useRawOnly()
   const longest = Math.max(rankings.above.length, rankings.below.length)
   const unranked = totalAreas === null ? null : notRankedCount(totalAreas, rankings)
   const noneAtAll = rankings.above.length === 0 && rankings.below.length === 0
@@ -117,10 +119,11 @@ export function AnomalyPanel({
 
       {status === 'idle' && <p className="state state-empty">Choose a month to see the anomalies.</p>}
       {status === 'loading' && <LoadingState what="the anomalies" />}
-      {status === 'error' && (
+      {(status === 'error' || status === 'ready') && rawOnly && <p className="state state-empty">{NOT_AVAILABLE_YET}</p>}
+      {status === 'error' && !rawOnly && (
         <ErrorState message="Data are not available right now. The anomaly list could not be loaded." onRetry={onRetry} />
       )}
-      {status === 'ready' && (
+      {status === 'ready' && !rawOnly && (
         <div role="tabpanel">
           {noneAtAll ? (
             <p className="state state-empty">{EMPTY_MESSAGE}</p>

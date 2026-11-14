@@ -1,5 +1,6 @@
 import type { HarmonizedFields, Witness } from '../../api/contract.ts'
 import { ACTIVITY_UNITS } from '../../content/calendar.ts'
+import { NOT_AVAILABLE_YET, useRawOnly } from '../../content/rawOnly.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { WITNESS_NAMES } from '../../content/witnesses.ts'
@@ -21,6 +22,8 @@ interface Props {
 
 /** The evidence for one month, as stored: nothing here is computed. */
 export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
+  // Raw-only products: the harmonized parts are not available yet, so no verdict or caveat is shown.
+  const rawOnly = useRawOnly()
   const verdict = VERDICT_PRESENTATION[record.verdict]
   const probability = verdictProbability(record)
   const provisional = record.data_level !== 'SP'
@@ -32,12 +35,19 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
     <div className="evidence-body">
       <section aria-labelledby="ev-verdict">
         <h3 id="ev-verdict">Verdict</h3>
-        <p className="evidence-verdict">
-          <span aria-hidden="true">{`${verdict.icon} `}</span>
-          {verdict.label}
-        </p>
-        {probability !== null && <p>{probability}</p>}
-        <p className="evidence-note">{verdict.description}</p>
+        {rawOnly ? (
+          <p className="evidence-verdict">Not available yet</p>
+        ) : (
+          <>
+            <p className="evidence-verdict">
+              <span aria-hidden="true">{`${verdict.icon} `}</span>
+              {verdict.label}
+            </p>
+            {probability !== null && <p>{probability}</p>}
+            <p className="evidence-note">{verdict.description}</p>
+          </>
+        )}
+        {rawOnly && <p className="evidence-note">{NOT_AVAILABLE_YET}</p>}
         {provisional && <p className="evidence-provisional">{PROVISIONAL_NOTICE}</p>}
       </section>
 
@@ -45,16 +55,19 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
         <h3 id="ev-numbers">Numbers</h3>
         <dl>
           <dt>Compared with normal</dt>
-          <dd>{formatPctOfNormal(record.pct_of_normal)}</dd>
+          <dd>{rawOnly ? 'Not available yet' : formatPctOfNormal(record.pct_of_normal)}</dd>
           <dt>Harmonized estimate</dt>
           <dd>
             {record.estimate === null
-              ? NO_DATA
+              ? rawOnly
+                ? 'Not available yet'
+                : NO_DATA
               : `${formatEstimate(record)} (${ACTIVITY_UNITS})`}
           </dd>
         </dl>
       </section>
 
+      {!rawOnly && (
       <section aria-labelledby="ev-witnesses">
         <h3 id="ev-witnesses">Satellites used</h3>
         {record.witnesses_used.length === 0 ? (
@@ -72,6 +85,7 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
           </p>
         )}
       </section>
+      )}
 
       {rawByWitness !== undefined && (
         <section aria-labelledby="ev-raw">
@@ -91,6 +105,7 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
         </section>
       )}
 
+      {!rawOnly && (
       <section aria-labelledby="ev-reasons">
         <h3 id="ev-reasons">Why</h3>
         {record.reason_codes.length === 0 ? (
@@ -105,6 +120,7 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
           </ul>
         )}
       </section>
+      )}
 
       <p className="evidence-versions">
         {`Method version: ${record.method_version}`}
