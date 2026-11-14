@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useReducer, useRef } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchMapCells, fetchMeta } from './api/client.ts'
-import type { MapCell } from './api/contract.ts'
+import { ApiError, fetchEntities, fetchMapCells, fetchMeta } from './api/client.ts'
+import type { Bbox, EntityItem, MapCell } from './api/contract.ts'
+import { AreaPicker } from './components/area/AreaPicker.tsx'
+import { resolveArea } from './components/area/resolveArea.ts'
+import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
@@ -14,10 +17,46 @@ import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { monthRange } from './state/months.ts'
-import { effectiveLayer, initialSelection, rawAvailable, selectionReducer } from './state/selection.ts'
+import { customArea } from './state/bbox.ts'
+import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
+import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
 export default function App() {
-  const [selection, dispatch] = useReducer(selectionReducer, initialSelection)
+  // The selection starts from the link (area, month, source, map mode, value mode), if any.
+  const [selection, dispatch] = useReducer(selectionReducer, null, () => selectionFromUrl(window.location.search))
+  const [drawing, setDrawing] = useState(false)
+
+  // Keep the link in step with the selection, so the address bar can be shared.
+  useEffect(() => {
+    const query = encodeSelection(selection)
+    const url = `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`
+    window.history.replaceState(null, '', url)
+  }, [selection])
+
+  const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
+  const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
+  const area = resolveArea(selection.area, countries.data, continents.data)
+  const customSeries = useAreaSeries(area, { enabled: area.entity_type === 'CUSTOM' })
+  const customError = customSeries.error instanceof ApiError ? customSeries.error : null
+  const customMessage =
+    area.entity_type === 'CUSTOM' && customSeries.isError
+      ? (customError?.detail ?? 'Data are not available right now. The custom area could not be loaded.')
+      : null
+
+  const chooseEntity = (item: EntityItem) =>
+    dispatch({
+      type: 'select-entity',
+      entity: {
+        entity_type: item.entity_type === 'CONTINENT' ? 'CONTINENT' : 'COUNTRY',
+        entity_id: item.entity_id,
+        entity_name: item.entity_name,
+      },
+      fit: item.bbox,
+    })
+  const chooseCustom = (bbox: Bbox) => {
+    setDrawing(false)
+    dispatch({ type: 'select-entity', entity: customArea(bbox) })
+  }
 
   const meta = useQuery({ queryKey: ['meta'], queryFn: () => fetchMeta(), retry: false })
   const months = useMemo(
@@ -91,17 +130,31 @@ export default function App() {
             onSelectCountry={(iso3, name) =>
               dispatch({ type: 'select-entity', entity: { entity_type: 'COUNTRY', entity_id: iso3, entity_name: name } })
             }
+            fit={selection.fit}
+            customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
+            drawing={drawing}
+            onDrawn={chooseCustom}
           />
           <aside>
+            <AreaPicker
+              area={area}
+              countries={countries.data}
+              continents={continents.data}
+              listsFailed={countries.isError || continents.isError}
+              onChooseEntity={chooseEntity}
+              onChooseWorld={() => dispatch({ type: 'clear-entity' })}
+              onChooseCustom={chooseCustom}
+              drawing={drawing}
+              onToggleDrawing={() => setDrawing((d) => !d)}
+              customMessage={customMessage}
+              customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
+            />
             <Legend layer={layer} max={max} />
             <section aria-label="Selection" className="selection">
               <h2>Selection</h2>
-              {selection.entity === null && <EmptyState message="Select a cell or a country on the map." />}
-              {selection.entity?.entity_type === 'COUNTRY' && (
-                <p>
-                  Country: {selection.entity.entity_name} ({selection.entity.entity_id}). Country series are added in a
-                  later task.
-                </p>
+              {selection.entity === null && <EmptyState message="Select a cell or a country on the map, or choose an area above." />}
+              {selection.entity !== null && selection.entity.entity_type !== 'CELL' && (
+                <p>{`Area: ${area.entity_name}${area.entity_type === 'CUSTOM' ? '' : ` (${area.entity_id})`}`}</p>
               )}
               {selectedCell !== null && <CellInfo cell={selectedCell} layer={layer} />}
             </section>
@@ -118,7 +171,7 @@ export default function App() {
         </div>
         <div className="calendar-evidence">
           <CalendarPanel
-            area={selection.area}
+            area={area}
             meta={meta.data ?? null}
             selectedMonth={selection.month}
             valueMode={selection.valueMode}
@@ -131,7 +184,7 @@ export default function App() {
             onShowWorld={() => dispatch({ type: 'clear-entity' })}
           />
           <EvidencePanel
-            area={selection.area}
+            area={area}
             month={selection.month}
             cell={
               selection.entity?.entity_type === 'CELL'

@@ -33,6 +33,7 @@ When the task is done, the user can choose the area that the calendar and the ev
   - new and existing `*.test.ts(x)` files under `app/src/`
   - `app/package.json` / `package-lock.json` only for a package the Lead approves (see §15, item 2)
   - `app/README.md` (folder map)
+  - `docs/DECISION_LOG.md` (the D-024 entry), `docs/TECH_STACK.md` (§7 row) and `docs/RISKS_AND_LIMITATIONS.md`, as the Lead asked on PR #30 (see the Lead answers below)
   - `docs/task-prompts/T-035-area-selection.md` (this file)
 
 ## 5. Approved technologies
@@ -130,3 +131,14 @@ Open questions for the Lead. None is decided here. Suggested defaults are what I
 6. **Country search control.** Default: a text input with a native `<datalist>` over the countries returned by the API (built-in filtering, keyboard and screen-reader friendly), plus the existing click on the map. The list holds only countries present in the products (7 in the fixtures). Alternative: a custom accessible combobox. Which?
 7. **Map feedback.** Default: outline the custom rectangle on the map; no outline or zoom for a continent, and no automatic zoom to a chosen area. Should a chosen country or continent also fit the map to its box?
 8. **Box rules.** Default: the client rejects W not less than E, S not less than N, and values outside ±180 and ±90, with a message; a box crossing the antimeridian is not supported (the API requires W less than E). No size cap, because the API has none; if the server adds one, its message is shown. Confirm.
+
+### Lead answers (PR #30 comment) and how this prompt applies them
+
+1. **Tracker:** the Lead marks T-035 in PR #26 when this merges; the tracker is not edited here.
+2. **Adapter:** `terra-draw-maplibre-gl-adapter` is **approved**, pinned exactly to **1.5.0** (MIT). This PR adds a `D-024` entry to `docs/DECISION_LOG.md` ("Add terra-draw-maplibre-gl-adapter 1.5.0 to the frontend stack; approved by the Lead 2026-11-14") and a row in `docs/TECH_STACK.md` §7. `npm audit` must stay at 0 vulnerabilities.
+3. **`harmonize_area()` not delivered:** fine. The clear `503` "not available yet" state is shown; this acceptance item is verified when Member 2 delivers the function.
+4. **Custom areas in the calendar and evidence panel:** use the series returned by the custom call.
+5. **Link sharing:** included.
+6. **Country search:** a native input with a datalist.
+7. **Map feedback:** fit the map to a chosen country or continent, and outline the custom box.
+8. **Box rules:** client-side checks; boxes that cross the antimeridian are rejected with a clear message; no size cap.

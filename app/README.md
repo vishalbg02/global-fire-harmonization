@@ -2,7 +2,7 @@
 
 Frontend for the Global Fire Harmonization project (working name: *Many Witnesses*). Owner: Member 3. Task: T-030 (setup and skeleton).
 
-**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. A shared Raw / Harmonized control (T-033) switches the map and the calendar between the stored raw count and the harmonized estimate on one colour scale. An evidence panel (T-036) explains the verdict for the selected area and month, or for a selected map cell, in plain language. The witness charts are added by a later task. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
+**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. A shared Raw / Harmonized control (T-033) switches the map and the calendar between the stored raw count and the harmonized estimate on one colour scale. An evidence panel (T-036) explains the verdict for the selected area and month, or for a selected map cell, in plain language. The area picker (T-035) chooses the world, a country, a continent or a custom rectangle (typed, or drawn on the map), and the selection is kept in the link. The witness charts are added by a later task. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
 
 ## Prerequisites
 
@@ -37,6 +37,14 @@ npm run dev
 
 Open the address Vite prints (use `localhost`). While `metadata.synthetic` is `true` the app shows the "SYNTHETIC DATA" banner. Without a running API the country layer still works and the other views report that data are not available.
 
+## Links
+
+The address bar always holds the selection, so a link reproduces the view. Query parameters (all optional, defaults left out): `area` (`COUNTRY:IDN`, `CONTINENT:AS`, `GLOBAL`, or `CUSTOM:west,south,east,north`), `month` (`2015-09`), `source` (`raw` or `harmonized`), `map` (`verdict` or `activity`) and `value` (`pct` or `activity`). Unknown or malformed values are ignored. Raw with % of normal, or raw with the verdict map, cannot be selected together.
+
+## Custom areas
+
+A custom rectangle is sent to `POST /api/series/custom`; the API returns the series, and the calendar and evidence panel show it. Until Member 2's `harmonize_area()` is delivered, the API answers `503` and the app shows that message. Boxes must have west less than east (boxes that cross the antimeridian are not supported) and south less than north. A rectangle can also be drawn on the map with two clicks (terra-draw with `terra-draw-maplibre-gl-adapter`, D-024); drawing needs a pointer, so the typed fields are the keyboard route.
+
 ## Configuration
 
 - `VITE_API_BASE_URL`: base URL of the API (for example `http://localhost:8000`). Optional; it holds no secret. Without a reachable API the map still shows the country layer and reports that data are not available. Contract v0.1.0 defines no response envelope, so the client expects the bare payload of `GET /api/meta` and `GET /api/map`.
@@ -64,6 +72,8 @@ app/
 │   ├── components/map/     map, legend, month and layer selectors, tooltip, colour scale
 │   ├── components/calendar/ calendar grid, ECharts heatmap, table view, legend, scales, tooltip text
 │   ├── components/evidence/ evidence panel: verdict, numbers, satellites, raw contributions, reasons
+│   ├── components/area/    area picker, custom-area form, country search, shared series query
+│   ├── state/              selection, months, box checks (bbox.ts), link encoding (urlState.ts)
 │   ├── components/common/  synthetic banner, loading/error/empty states, error boundary, Raw / Harmonized control
 │   └── **/*.test.ts(x)     Vitest tests (mock data inside test files is SYNTHETIC)
 ├── public/geo/             Natural Earth country boundaries

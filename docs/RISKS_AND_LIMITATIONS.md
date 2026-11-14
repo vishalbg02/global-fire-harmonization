@@ -30,6 +30,8 @@ Likelihood and impact: L (low) · M (medium) · H (high).
 | T6 | Fire-region mask unavailable | M | L | UN-subregion fallback from country names |
 | T7 | Country name mapping errors | M | M | T-009 with 100% coverage check |
 | T8 | Node 20 (EOL) on team machines | H | L | Install Node 22/24 LTS at setup |
+| T9 | Custom areas wait on Member 2's `harmonize_area()`: until it is delivered, `POST /api/series/custom` answers `503` and the app shows that message. The custom-area flow has been tested only against mocked responses and a local stand-in, not against the real function (T-035) | H until delivered | M | The app shows the server's message; preset areas are unaffected; verify the custom flow as soon as the function lands |
+| T10 | Drawing a rectangle needs a pointer (terra-draw with its MapLibre adapter, D-024) | M | L | The typed W/S/E/N form is the keyboard and screen-reader route to a custom area (T-035) |
 
 ## 3. Performance risks
 

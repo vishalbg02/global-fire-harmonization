@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { monthKey, monthRange } from './months.ts'
-import { WORLD, effectiveLayer, initialSelection, rawAvailable, selectionReducer } from './selection.ts'
+import { WORLD, WORLD_BBOX, effectiveLayer, initialSelection, rawAvailable, selectionReducer } from './selection.ts'
 import type { Selection } from './selection.ts'
+import { customArea } from './bbox.ts'
 
 describe('monthRange', () => {
   it('spans first to latest inclusive and marks provisional months', () => {
@@ -26,6 +27,7 @@ describe('selectionReducer', () => {
     expect(initialSelection).toEqual({
       entity: null,
       area: WORLD,
+      fit: null,
       month: null,
       mapMode: 'verdict',
       source: 'harmonized',
@@ -46,6 +48,7 @@ describe('selectionReducer', () => {
     expect(s2).toEqual({
       entity: null,
       area: WORLD,
+      fit: null,
       month: { year: 2015, month: 9 },
       mapMode: 'activity',
       source: 'harmonized',
@@ -158,5 +161,47 @@ describe('raw / harmonized selection', () => {
       expect(state.valueMode === 'pct' && state.source === 'raw').toBe(false)
       expect(state.mapMode === 'verdict' && state.source === 'raw').toBe(false)
     }
+  })
+})
+
+
+// Area selection (T-035).
+describe('area selection and fitting the map', () => {
+  const country = { entity_type: 'COUNTRY' as const, entity_id: 'IDN', entity_name: 'Indonesia' }
+  const custom = customArea([100, 0, 101, 1])
+
+  it('asks the map to fit the chosen country, and not when a country is clicked on the map', () => {
+    const fitted = selectionReducer(initialSelection, { type: 'select-entity', entity: country, fit: [95, -11, 141, 6] })
+    expect(fitted.fit).toEqual({ bbox: [95, -11, 141, 6] })
+    expect(selectionReducer(initialSelection, { type: 'select-entity', entity: country }).fit).toBeNull()
+  })
+
+  it('makes a new fit request each time, so the same area can be fitted again', () => {
+    const a = selectionReducer(initialSelection, { type: 'select-entity', entity: country, fit: [1, 2, 3, 4] })
+    const b = selectionReducer(a, { type: 'select-entity', entity: country, fit: [1, 2, 3, 4] })
+    expect(b.fit).not.toBe(a.fit)
+    expect(b.fit).toEqual(a.fit)
+  })
+
+  it('keeps the last fit request when a selection brings none', () => {
+    const a = selectionReducer(initialSelection, { type: 'select-entity', entity: country, fit: [1, 2, 3, 4] })
+    const b = selectionReducer(a, { type: 'select-entity', entity: custom })
+    expect(b.fit).toEqual({ bbox: [1, 2, 3, 4] })
+  })
+
+  it('selects a custom rectangle as the area, with its box', () => {
+    const s = selectionReducer(initialSelection, { type: 'select-entity', entity: custom })
+    expect(s.area).toEqual(custom)
+    expect(s.area.entity_type).toBe('CUSTOM')
+    expect(s.entity).toEqual(custom)
+  })
+
+  it('goes back to the world and fits the world view when the selection is cleared', () => {
+    const s = selectionReducer(selectionReducer(initialSelection, { type: 'select-entity', entity: custom }), {
+      type: 'clear-entity',
+    })
+    expect(s.area).toEqual(WORLD)
+    expect(s.entity).toBeNull()
+    expect(s.fit).toEqual({ bbox: WORLD_BBOX })
   })
 })

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { ApiError, fetchSeries } from '../../api/client.ts'
+import { ApiError } from '../../api/client.ts'
 import type { Metadata } from '../../api/contract.ts'
 import type { Area, Source, ValueMode } from '../../state/selection.ts'
 import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
+import { useAreaSeries } from '../area/useAreaSeries.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { CalendarChart } from './CalendarChart.tsx'
 import { CalendarLegend } from './CalendarLegend.tsx'
@@ -34,11 +34,7 @@ export function CalendarPanel({
   onShowWorld,
 }: Props) {
   const [tableView, setTableView] = useState(false)
-  const series = useQuery({
-    queryKey: ['series', area.entity_type, area.entity_id],
-    queryFn: () => fetchSeries(area.entity_type, area.entity_id),
-    retry: false,
-  })
+  const series = useAreaSeries(area)
 
   const records = series.data
   const rows = useMemo(
@@ -50,12 +46,16 @@ export function CalendarPanel({
   )
   const maxActivity = useMemo(() => (records === undefined ? 0 : seriesMaxActivity(records)), [records])
 
-  const notFound = series.error instanceof ApiError && series.error.status === 404
+  const apiError = series.error instanceof ApiError ? series.error : null
+  const isCustom = area.entity_type === 'CUSTOM'
+  const notFound = apiError?.status === 404 && !isCustom
+  // A custom area shows the server's own message (for example a 422 or a 503).
+  const serverMessage = isCustom ? (apiError?.detail ?? null) : null
 
   return (
     <section className="calendar-panel" aria-label="Historical calendar">
       <header className="calendar-header">
-        <h2>Calendar: {area.entity_name}</h2>
+        <h2>{`Calendar: ${area.entity_name}`}</h2>
         <ValueModeSelector value={valueMode} onChange={onValueModeChange} />
         <label className="table-toggle">
           <input type="checkbox" checked={tableView} onChange={(e) => setTableView(e.target.checked)} />
@@ -80,7 +80,10 @@ export function CalendarPanel({
           )}
         </div>
       )}
-      {series.isError && !notFound && (
+      {series.isError && serverMessage !== null && (
+        <ErrorState message={serverMessage} onRetry={apiError?.status === 422 ? undefined : () => void series.refetch()} />
+      )}
+      {series.isError && !notFound && serverMessage === null && (
         <ErrorState
           message="Data are not available right now. The calendar could not be loaded."
           onRetry={() => void series.refetch()}

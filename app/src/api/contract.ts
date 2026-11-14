@@ -76,8 +76,19 @@ export interface MapCell extends HarmonizedFields {
   month: number
 }
 
+/** A bounding box [west, south, east, north] in degrees (WGS84). */
+export type Bbox = readonly [number, number, number, number]
+
 export const ENTITY_TYPES = ['CELL', 'COUNTRY', 'CONTINENT', 'GLOBAL', 'CUSTOM'] as const
 export type EntityType = (typeof ENTITY_TYPES)[number]
+
+/** One item of GET /api/entities: a preset area with the bounds of its grid cells. */
+export interface EntityItem {
+  entity_type: EntityType
+  entity_id: string
+  entity_name: string
+  bbox: Bbox
+}
 
 /**
  * GET /api/evidence: an entity_month record with `raw_by_witness` decoded into an object
@@ -266,6 +277,46 @@ export function parseEntityEvidence(raw: unknown): EntityEvidence {
     raw_by_witness: rawByWitness,
     ...parseHarmonizedFields(o, what),
   }
+}
+
+function parseBbox(value: unknown, what: string): Bbox {
+  if (!Array.isArray(value) || value.length !== 4 || !value.every((v) => typeof v === 'number' && Number.isFinite(v))) {
+    throw new ContractError(`${what}: "bbox" must be [west, south, east, north] numbers`)
+  }
+  return [value[0], value[1], value[2], value[3]]
+}
+
+export function parseEntityItem(raw: unknown): EntityItem {
+  const what = 'entity'
+  const o = asRecord(raw, what)
+  return {
+    entity_type: oneOf(field(o, 'entity_type', what), ENTITY_TYPES, 'entity_type', what),
+    entity_id: str(o, 'entity_id', what),
+    entity_name: str(o, 'entity_name', what),
+    bbox: parseBbox(field(o, 'bbox', what), what),
+  }
+}
+
+export function parseEntityItems(raw: unknown): EntityItem[] {
+  if (!Array.isArray(raw)) throw new ContractError('entities response: expected a list')
+  return raw.map(parseEntityItem)
+}
+
+/**
+ * An entity_month record (as returned by the series endpoints, with `raw_by_witness` as a JSON
+ * string) turned into evidence (with `raw_by_witness` decoded). Used for a custom area, which
+ * has no evidence endpoint. Decoding a stored string is not a computation.
+ */
+export function evidenceFromEntityMonth(record: EntityMonth): EntityEvidence {
+  let decoded: unknown = null
+  if (record.raw_by_witness !== null) {
+    try {
+      decoded = JSON.parse(record.raw_by_witness)
+    } catch {
+      throw new ContractError('series record: "raw_by_witness" is not valid JSON')
+    }
+  }
+  return parseEntityEvidence({ ...record, raw_by_witness: decoded })
 }
 
 export function parseEntityMonths(raw: unknown): EntityMonth[] {

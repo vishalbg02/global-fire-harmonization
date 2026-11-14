@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, fetchEvidence, fetchSeries } from './client.ts'
+import { ApiError, errorDetail, fetchCustomSeries, fetchEntities, fetchEvidence, fetchSeries } from './client.ts'
 import { ContractError } from './contract.ts'
 
 // SYNTHETIC test data. Not NASA observations.
@@ -97,5 +97,87 @@ describe('fetchEvidence', () => {
     expect((down as ApiError).status).toBe(503)
     stubFetch({ ok: true, status: 200, body: { ...RECORD, raw_by_witness: { LANDSAT: 1 } } })
     await expect(fetchEvidence('GLOBAL', 'GLOBAL', 2020, 1, '')).rejects.toBeInstanceOf(ContractError)
+  })
+})
+
+
+describe('fetchEntities', () => {
+  it('requests the list of one type and parses the boxes', async () => {
+    const fetchFn = stubFetch({
+      ok: true,
+      status: 200,
+      body: [{ entity_type: 'COUNTRY', entity_id: 'BRA', entity_name: 'Brazil', bbox: [-56, -12, -53, -9.5] }],
+    })
+    const items = await fetchEntities('COUNTRY', 'http://api.test')
+    expect(fetchFn).toHaveBeenCalledWith('http://api.test/api/entities?type=COUNTRY')
+    expect(items[0].bbox).toEqual([-56, -12, -53, -9.5])
+  })
+
+  it('rejects a list that breaks the contract', async () => {
+    stubFetch({ ok: true, status: 200, body: [{ entity_type: 'COUNTRY' }] })
+    await expect(fetchEntities('CONTINENT', '')).rejects.toBeInstanceOf(ContractError)
+  })
+})
+
+describe('errorDetail', () => {
+  it('reads a string detail and a list of messages, and nothing else', () => {
+    expect(errorDetail({ detail: 'No analysis cells have their centre inside this area.' })).toBe(
+      'No analysis cells have their centre inside this area.',
+    )
+    expect(errorDetail({ detail: [{ msg: 'a' }, { msg: 'b' }] })).toBe('a; b')
+    expect(errorDetail({ detail: '  ' })).toBeNull()
+    expect(errorDetail({ detail: [] })).toBeNull()
+    expect(errorDetail({ other: 1 })).toBeNull()
+    expect(errorDetail(null)).toBeNull()
+    expect(errorDetail('text')).toBeNull()
+  })
+})
+
+describe('fetchCustomSeries', () => {
+  const BOX = [100, 0, 101, 1] as const
+
+  it('posts the box as JSON and parses the returned records', async () => {
+    const fetchFn = stubFetch({ ok: true, status: 200, body: [{ ...RECORD, entity_type: 'CUSTOM', entity_id: 'custom_x', entity_name: 'Custom area' }] })
+    const records = await fetchCustomSeries(BOX, 'http://api.test')
+    expect(fetchFn).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('http://api.test/api/series/custom')
+    expect(init.method).toBe('POST')
+    expect(init.headers).toEqual({ 'Content-Type': 'application/json' })
+    expect(JSON.parse(init.body as string)).toEqual({ bbox: [100, 0, 101, 1] })
+    expect(records[0].entity_type).toBe('CUSTOM')
+  })
+
+  it('carries the server message of a 422 in ApiError.detail', async () => {
+    stubFetch({ ok: false, status: 422, body: { detail: 'No analysis cells have their centre inside this area.' } })
+    const error = await fetchCustomSeries(BOX, '').catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).status).toBe(422)
+    expect((error as ApiError).detail).toBe('No analysis cells have their centre inside this area.')
+  })
+
+  it('carries the server message of a 503 in ApiError.detail', async () => {
+    stubFetch({
+      ok: false,
+      status: 503,
+      body: { detail: 'Custom areas are not available yet: the harmonization function has not been delivered.' },
+    })
+    const error = await fetchCustomSeries(BOX, '').catch((e: unknown) => e)
+    expect((error as ApiError).status).toBe(503)
+    expect((error as ApiError).detail).toContain('not available yet')
+  })
+
+  it('has no detail when the error response has no readable body, and reports an unreachable service', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, json: () => Promise.reject(new Error('no body')) }))
+    const noBody = await fetchCustomSeries(BOX, '').catch((e: unknown) => e)
+    expect((noBody as ApiError).detail).toBeNull()
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network')))
+    const down = await fetchCustomSeries(BOX, '').catch((e: unknown) => e)
+    expect((down as ApiError).status).toBeNull()
+  })
+
+  it('rejects a record that breaks the contract instead of coercing it', async () => {
+    stubFetch({ ok: true, status: 200, body: [{ ...RECORD, verdict: 'MAYBE' }] })
+    await expect(fetchCustomSeries(BOX, '')).rejects.toBeInstanceOf(ContractError)
   })
 })
