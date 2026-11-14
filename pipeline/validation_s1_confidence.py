@@ -403,7 +403,8 @@ def baseline_status(qa: Path = QA) -> str | None:
     f = qa / "T-025_validation_entries.json"
     if not f.exists():
         return None
-    for t in json.loads(f.read_text(encoding="utf-8"))["tests"]:
+    doc = json.loads(f.read_text(encoding="utf-8"))
+    for t in (doc["tests"] if isinstance(doc, dict) else doc):
         if t["test_id"] == "S1-BASELINE":
             return t["status"]
     return None
