@@ -79,12 +79,12 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-036 | Evidence panel (verdict, probability, reason codes in plain language) | M3 | P0 | T-034 | `frontend/T-036-evidence-panel` | [#28](https://github.com/vishalbg02/global-fire-harmonization/pull/28) | MERGED (2026-11-14) | APPROVED | Every reason code has user-facing text approved by M1 |
 | T-037 | Witness comparison chart + satellite timeline + outages | M3 | P0 | T-034 | `frontend/T-037-witness-chart` | [#33](https://github.com/vishalbg02/global-fire-harmonization/pull/33) | MERGED (2026-11-14) | APPROVED | Per-witness raw and converted series |
 | T-038 | CSV export | M3 | P0 | T-034 | `api/T-038-csv-export` | [#37](https://github.com/vishalbg02/global-fire-harmonization/pull/37) | MERGED (2026-11-14) | APPROVED | Header with method version, snapshot date, citation |
-| T-039 | Real-data integration | M3 + M2 | P0 | T-014 | `frontend/T-039-real-data` | — | TODO | — | All views on real products |
+| T-039 | Real-data integration | M3 + M2 | P0 | T-014 | `frontend/T-039-real-data` | [#39](https://github.com/vishalbg02/global-fire-harmonization/pull/39), [#46](https://github.com/vishalbg02/global-fire-harmonization/pull/46), [#47](https://github.com/vishalbg02/global-fire-harmonization/pull/47), [#62](https://github.com/vishalbg02/global-fire-harmonization/pull/62) | IN_REVIEW (phase 1 MERGED; phase 2 in #62, Lead answered) | — | All views on real products |
 | T-040 | Global anomaly list | M3 | P0 | T-034 | `frontend/T-040-anomaly-list` | [#35](https://github.com/vishalbg02/global-fire-harmonization/pull/35) | MERGED (2026-11-14) | APPROVED | Ranked by probability; links to the entity |
-| T-041 | Methods + validation results page | M3 | P0 | T-020+ | `frontend/T-041-methods-page` | — | TODO | — | Shows PASS/FAIL/NOT_RUN faithfully |
-| T-042 | Performance and accessibility pass | M3 | P1 | T-039 | `frontend/T-042-perf-a11y` | — | TODO | — | Keyboard navigation; colour-blind-safe check |
-| T-043 | Static fallback build; optional deploy | M3 | P1 | T-039 | `frontend/T-043-static-build` | — | TODO | — | Preset views work without the API |
-| T-044 | Free-polygon custom area | M3 | P1 | T-035 | `frontend/T-044-polygon` | — | TODO | — | — |
+| T-041 | Methods + validation results page | M3 | P0 | T-020+ | `frontend/T-041-methods-page` | [#48](https://github.com/vishalbg02/global-fire-harmonization/pull/48) | MERGED (2026-11-15) | APPROVED | Shows PASS/FAIL/NOT_RUN faithfully |
+| T-042 | Performance and accessibility pass | M3 | P1 | T-039 | `frontend/T-042-perf-a11y` | [#49](https://github.com/vishalbg02/global-fire-harmonization/pull/49), [#60](https://github.com/vishalbg02/global-fire-harmonization/pull/60) | MERGED (2026-11-15) | APPROVED | Keyboard navigation; colour-blind-safe check |
+| T-043 | Static fallback build; optional deploy | M3 | P1 | T-039 | `frontend/T-043-static-build` | [#53](https://github.com/vishalbg02/global-fire-harmonization/pull/53) | MERGED (2026-11-15) | APPROVED | Preset views work without the API |
+| T-044 | Free-polygon custom area | M3 | P1 | T-035 | `frontend/T-044-polygon` | [#63](https://github.com/vishalbg02/global-fire-harmonization/pull/63) | IN PROGRESS (#63; Lead answered; merge by 12:00 IST or postpone) | — | — |
 
 ## Demo and submission (Member 1)
 
