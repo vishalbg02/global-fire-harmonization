@@ -1,4 +1,4 @@
-# Data Contract: `contract_version: 0.1.0` · **APPROVED (D-016, 2026-11-14)**
+# Data Contract: `contract_version: 0.1.1` · **APPROVED (D-016, 2026-11-14; 0.1.1 additions D-022 and D-026, 2026-11-14)**
 
 This document is the only interface between Member 2 (pipeline) and Member 3 (application). Change it first, with approval, then change the code. Bump `contract_version` on every change: patch for additions, minor for breaking changes.
 
@@ -19,7 +19,7 @@ This document is the only interface between Member 2 (pipeline) and Member 3 (ap
 | `daynight` | `D`, `N`, `ALL` |
 | `data_level` | `SP` (standard/science), `NRT` (provisional), `MIXED` |
 | `verdict` | `ABOVE_NORMAL`, `BELOW_NORMAL`, `WITHIN_NORMAL`, `CANNOT_DETERMINE`, `NO_DETECTED_ACTIVITY` |
-| `reason_code` | `OUTAGE`, `INSUFFICIENT_BASELINE`, `INSUFFICIENT_OVERLAP`, `WITNESS_DISAGREEMENT`, `WIDE_INTERVAL`, `PROVISIONAL_NRT`, `AQUA_DRIFT_ERA`, `SINGLE_WITNESS`, `POOLED_CALIBRATION`, `DIURNAL_CAVEAT` |
+| `reason_code` | `OUTAGE`, `INSUFFICIENT_BASELINE`, `INSUFFICIENT_OVERLAP`, `WITNESS_DISAGREEMENT`, `WIDE_INTERVAL`, `PROVISIONAL_NRT`, `AQUA_DRIFT_ERA`, `SINGLE_WITNESS`, `POOLED_CALIBRATION`, `DIURNAL_CAVEAT`, `NOT_HARMONIZED` (0.1.1: the row carries raw values only; every harmonized field is null) |
 | `entity_type` | `CELL`, `COUNTRY`, `CONTINENT`, `GLOBAL`, `CUSTOM` |
 | `pooling_level` | `LOCAL`, `REGION`, `GLOBAL` |
 | `test_status` | `PASS`, `FAIL`, `INCONCLUSIVE`, `NOT_RUN` |
@@ -96,7 +96,7 @@ Custom-area API responses use this same shape with `entity_type = "CUSTOM"`.
 
 ```json
 {
-  "contract_version": "0.1.0",
+  "contract_version": "0.1.1",
   "method_version": "string",
   "generated_at": "ISO-8601",
   "synthetic": false,
@@ -120,7 +120,7 @@ Custom-area API responses use this same shape with `entity_type = "CUSTOM"`.
 
 ```json
 {
-  "contract_version": "0.1.0",
+  "contract_version": "0.1.1",
   "method_version": "string",
   "synthetic": false,
   "generated_at": "ISO-8601",
@@ -143,17 +143,19 @@ harmonize_area(cell_ids: list[str], months: list[(year, month)] | None) -> list[
 
 The return shape is §4. It must be deterministic for the same inputs and `method_version`. It is used by both the batch entity aggregation and the custom-area API.
 
-## Status of additions
+## 0.1.1 additions (D-022 and D-026, approved by the Lead 2026-11-14)
 
-The workstream prompts (`docs/prompts/`, shared section §S) list items marked **[PROPOSED ADDITION]**:
-- `cell_id` format and cell-bound convention
-- entity IDs
-- API envelope and error format
-- `PRODUCTS_DIR`
-- the product path rule
+These were [PROPOSED ADDITION] items in the workstream prompts (§S). Both workstreams already build against them.
 
-They are **not part of v0.1.0** until the Lead approves them (D-022). Approving them means adding them here and bumping the contract to `0.1.1`.
+- **`cell_id` format:** `g{RRR}_r{row:04d}_c{col:04d}`. `RRR` is the resolution in hundredths of a degree (`050` = 0.5°, the approved analysis grid, D-009). `row = floor((lat + 90) / res)` from the south; `col = floor((lon + 180) / res)` from −180.
+- **Cell bounds:** the lower bound is inclusive and the upper bound exclusive, except the top row, which includes lat = 90.
+- **Entity IDs:** `COUNTRY` → ISO 3166-1 alpha-3, uppercase (Kosovo uses the user-assigned `XKX`, approved in T-009); `CONTINENT` → `AF`, `AN`, `AS`, `EU`, `NA`, `OC`, `SA` (`AN` is included because it has data); `GLOBAL` → `GLOBAL`. Cells with no country count in `GLOBAL` only.
+- **`PRODUCTS_DIR`:** the API reads products from this environment variable. Default `data/products`; for fixtures, `data/fixtures/v0.1.0`. It contains no secrets and is listed in `.env.example`.
+- **Product path rule:** a product is either a single file `<name>.parquet` or a directory `<name>/` of Parquet files partitioned by `year=YYYY`. Consumers accept both.
+- **Raw-only products (D-026):** before harmonization exists, `cell_month_harmonized` and `entity_month` may be published with only the raw fields filled. Then every harmonized field is `null`, `witnesses_used = []`, `verdict = CANNOT_DETERMINE`, `reason_codes = ["NOT_HARMONIZED"]`, and `method_version` ends in `-raw-only`. `raw_combined_cell_days` adds witnesses that see the same fires, so it is not comparable across years and must not be presented as fire activity.
+
+**Not adopted:** the API response envelope and the custom error format from §S. The API returns bare payloads and FastAPI's default error body (Lead's answer on T-034).
 
 ## Open items (decide at G1)
 
-`analysis_deg` and `fine_deg` (D-009); `season` definition; final `cell_id` format; whether `entity_month` includes continents and global from the start (recommended: yes).
+`season` definition (T-011 uses DJF / MAM / JJA / SON); the grid (D-009) and `cell_id` format (D-022) are decided; whether `entity_month` includes continents and global from the start (recommended: yes).
