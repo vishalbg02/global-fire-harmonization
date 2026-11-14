@@ -544,6 +544,17 @@ aside section {
   background: #fff;
 }
 
+/* "Outside the record" is hatched, so it is never told from the 100% colour by colour alone (T-042). */
+.calendar-table td.cal-outside,
+.swatch-outside {
+  background-image: repeating-linear-gradient(45deg, #6b6b6b 0 1px, transparent 1px 6px);
+}
+
+/* "No data" and "no detected activity" on the map carry a dark outline (T-042). */
+.swatch-marked {
+  border: 2px solid #1b1b1f;
+}
+
 .calendar-table td.cal-nodata {
   background: #e0e0e0;
   color: #1b1b1f;

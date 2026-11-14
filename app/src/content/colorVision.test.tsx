@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { divergingRgb, NO_DATA_RGB, OUTSIDE_RGB, PCT_CENTRE, PCT_HIGH, PCT_LOW, sequentialRgb } from '../components/calendar/scales.ts'
-import { NO_DATA_COLOR } from '../components/map/scale.ts'
+import { renderToString } from 'react-dom/server'
+import { CalendarLegend } from '../components/calendar/CalendarLegend.tsx'
+import { Legend } from '../components/map/Legend.tsx'
+import { buildHeatPoints } from '../components/calendar/chartOption.ts'
+import { NO_DATA_COLOR, needsOutline } from '../components/map/scale.ts'
 import {
   BASELINE_COLOR,
   HARMONIZED_COLOR,
@@ -367,7 +371,7 @@ describe('neutral fills that must not be mistaken for data', () => {
   it('calendar: no data, outside the record, and 100% of normal', () => {
     const set: Record<string, Item> = {
       NO_DATA: { rgb: NO_DATA_RGB, cue: 'no icon, grey' },
-      OUTSIDE: { rgb: OUTSIDE_RGB, cue: 'no icon, white' },
+      OUTSIDE: { rgb: OUTSIDE_RGB, cue: 'diagonal cross in the chart, hatching in the table and legend' },
       PCT_100: { rgb: at100(), cue: 'verdict icon' },
     }
     const { failures } = pairwise(set, MIN_DELTA_E)
@@ -375,12 +379,32 @@ describe('neutral fills that must not be mistaken for data', () => {
     // NO_DATA/OUTSIDE 6.5, NO_DATA/PCT_100 4.9, OUTSIDE/PCT_100 1.6 (all vision types).
     expect([...pairs].sort()).toEqual(['NO_DATA|OUTSIDE', 'NO_DATA|PCT_100', 'OUTSIDE|PCT_100'])
     expect(deltaE(OUTSIDE_RGB, PCT_NEUTRAL, 'normal')).toBeLessThan(2)
+    // The colour does not separate OUTSIDE from the 100% colour, so the cue must exist (T-042):
+    // the chart draws a diagonal cross on every outside cell and none on the others.
+    const rows = [
+      {
+        year: 2002,
+        cells: [
+          { year: 2002, month: 1, kind: 'outside', record: null, provisional: false },
+          { year: 2002, month: 8, kind: 'no-record', record: null, provisional: false },
+        ],
+      },
+    ] as unknown as Parameters<typeof buildHeatPoints>[0]
+    expect(buildHeatPoints(rows, 'activity', 1, null, 'raw').map((p) => p.outside)).toEqual([true, false])
   })
 
   it('map: low-contrast fills over the land colour (cell alpha 220 and 200)', () => {
     const over = (rgb: readonly number[], alpha: number) => deltaE(overLand(rgb, alpha), MAP_LAND, 'normal')
     expect(over(VERDICT_PRESENTATION.NO_DETECTED_ACTIVITY.color, 220)).toBeLessThan(3) // about 2.3
     expect(over(NO_DATA_COLOR, NO_DATA_COLOR[3])).toBeLessThan(3) // about 2.7
+    // These two are separated by a dark outline, not by colour (T-042): the cell layer draws it
+    // for exactly these cells (the verdict, or a null value in the activity layers).
+    const cell = (verdict: string, raw: number | null) =>
+      ({ verdict, raw_combined_cell_days: raw, estimate: null }) as unknown as Parameters<typeof needsOutline>[0]
+    expect(needsOutline(cell('NO_DETECTED_ACTIVITY', 0), 'verdict')).toBe(true)
+    expect(needsOutline(cell('CANNOT_DETERMINE', 0), 'verdict')).toBe(false)
+    expect(needsOutline(cell('WITHIN_NORMAL', null), 'raw')).toBe(true)
+    expect(needsOutline(cell('WITHIN_NORMAL', 0), 'raw')).toBe(false)
     expect(over(verdictRgb('CANNOT_DETERMINE'), 220)).toBeLessThan(MIN_DELTA_E) // about 8.4
     // The other verdicts and the ramp ends are well clear of the land colour in every mode.
     for (const mode of MODES) {
@@ -398,3 +422,18 @@ describe('neutral fills that must not be mistaken for data', () => {
 function at100(): Rgb {
   return divergingRgb(PCT_CENTRE)
 }
+
+describe('legends show the same non-colour cues as the map and the calendar (T-042)', () => {
+  it('the map legend marks "no detected activity" and "no data" with the dark outline', () => {
+    expect(renderToString(<Legend layer="verdict" max={0} />)).toContain('swatch swatch-marked')
+    expect(renderToString(<Legend layer="verdict" max={0} />)).toContain('dark outline')
+    expect(renderToString(<Legend layer="raw" max={10} />)).toContain('No data (dark outline)')
+  })
+
+  it('the calendar legend hatches "outside the record"', () => {
+    const html = renderToString(
+      <CalendarLegend mode="activity" maxActivity={10} source="raw" />,
+    )
+    expect(html).toContain('swatch-outside')
+  })
+})
