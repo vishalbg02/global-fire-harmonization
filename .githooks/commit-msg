@@ -1,0 +1,11 @@
+#!/bin/sh
+# Rejects commit messages that contain AI tool names or AI attribution (D-020).
+# Enable once per clone:   git config core.hooksPath .githooks
+
+msg_file="$1"
+if grep -qiE '(co-authored-by:.*(claude|anthropic|openai|chatgpt|copilot|gemini|noreply@anthropic))|generated (with|by) .*(claude|chatgpt|copilot|gemini|ai)|\b(claude|anthropic|chatgpt|copilot)\b' "$msg_file"; then
+  echo "commit-msg: AI tool names or AI attribution are not allowed in commit messages (D-020)." >&2
+  echo "Describe the work performed and commit with your own Git identity." >&2
+  exit 1
+fi
+exit 0
