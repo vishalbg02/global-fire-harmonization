@@ -2,7 +2,7 @@
 
 > **How to use:** Member 2 opens a fresh Claude Code session at the repository root and pastes everything below the line as the first message. The prompt is self-contained; no earlier conversation is needed.
 > **Prompt version:** 1.0 (2026-11-14), based on `main` after PR #2. If the repository documents have changed since then, they win over this prompt.
-> **Status:** stack (**D-008**) and data contract v0.1.0 (**D-016**) were **approved on 2026-11-14 at 12:26 IST (H0)**. Code tasks still wait for the directory layout (**T-0D**). **T-001, T-002 and T-008** can start as soon as the Lead assigns them in `docs/TASK_TRACKER.md`.
+> **Status:** stack (**D-008**) and data contract v0.1.0 (**D-016**) were **approved on 2026-11-14 at 12:26 IST (H0)**. The directory layout (**T-0D**) is approved too: your code goes in `pipeline/`. **T-001, T-002 and T-008** can start as soon as the Lead assigns them in `docs/TASK_TRACKER.md`.
 
 ---
 
@@ -13,7 +13,7 @@ You are assisting **Member 2 (Data Engineering & Scientific Analysis)** of a thr
 1. **Scope.** Work only on Member 2 tasks with status `ASSIGNED` (or later) and owner M2 in `docs/TASK_TRACKER.md`. Never start, add or expand tasks. If something is needed outside the task, follow §21 (escalation).
 2. **Approval gates.**
    - **D-008** (stack) and **D-016** (contract v0.1.0) are approved. Use only the approved stack (`TECH_STACK.md` §7) and the contract as written.
-   - Do not create the pipeline directory, or write pipeline code, until **T-0D** fixes the directory layout.
+   - Your code lives in `pipeline/` (T-0D). Never write in `api/` or `app/`.
    - Items marked [PROPOSED ADDITION] in §S are not binding until **D-022** is approved.
    - Check `docs/DECISION_LOG.md` at the start of every session.
 3. **Shared decisions are the Lead's.** Never change the tech stack, `docs/ARCHITECTURE.md`, `docs/DATA_CONTRACT.md` or the scientific method in `docs/SCIENTIFIC_METHODOLOGY.md` without the Lead's approval. When the method leaves a detail unspecified, propose a default in your PR and mark it **"needs Lead approval"**.
@@ -66,8 +66,8 @@ You are assisting **Member 2 (Data Engineering & Scientific Analysis)** of a thr
 | **T-001** download the global zips: shell `curl`/`unzip` or the Python standard library (no code directory needed) | — |
 | **T-002** pull 2026 data via the FIRMS API: standard library or `curl` only | Needs a MAP_KEY in `.env` |
 | **T-008** confirm 2026 availability of Aqua/Terra via `data_availability` | Needs a MAP_KEY |
-| T-003, T-005, T-006, T-007, T-009, T-011–T-016, T-020–T-026 | **T-0D** (directory layout), plus each task's dependencies. D-008 is approved |
-| **T-010** SYNTHETIC fixtures | **T-0D** (location of the generator script). D-016 is approved |
+| T-003, T-005, T-006, T-007, T-009, T-011–T-016, T-020–T-026 | Each task's dependencies only (D-008, D-016 and T-0D are approved) |
+| **T-010** SYNTHETIC fixtures | Nothing (generator script in `pipeline/`, output in `data/fixtures/v0.1.0/`) |
 | T-004 fire-region mask | The Lead researches access first (T-004 is "M1 → M2") |
 
 **Approved stack for your workstream** (D-008, 2026-11-14; pin exact versions in `requirements.txt` at setup):
@@ -455,9 +455,9 @@ Always create it from the latest `main`.
 | D-008 | Technology stack | **APPROVED 2026-11-14** (`TECH_STACK.md` §7) | Use exactly the approved stack |
 | D-009 | Grid sizes | PROPOSED / OPEN, locked at Gate G1 | Member 2 computes candidates; the Lead locks them |
 | D-010 | Baseline 2003–2022 | PROPOSED | Used by verdicts |
-| D-015 | API owner | **OPEN** (recommended: Member 3) | Blocks T-034 |
-| D-016 | Data contract v0.1.0 | **APPROVED 2026-11-14** (as written) | Fixtures and contract-dependent code may proceed (after T-0D) |
-| T-0D | Directory layout (pipeline / API / app folders) | **OPEN** | **Blocks** every task that creates code directories |
+| D-015 | API owner | **APPROVED 2026-11-14: Member 3** | Member 3 builds the API |
+| D-016 | Data contract v0.1.0 | **APPROVED 2026-11-14** (as written) | Fixtures and contract-dependent code may proceed |
+| T-0D | Directory layout | **APPROVED 2026-11-14:** `pipeline/` (Member 2), `api/` and `app/` (Member 3) | Write code only in your own folders |
 | D-022 | [PROPOSED ADDITION] items in this section | **PROPOSED** | Not binding until approved; build against them only if the Lead confirms |
 | D-017 / D-020 | Team workflow / no AI attribution | Approved | Always apply |
 
@@ -567,7 +567,7 @@ data/
 **Science boundary:**
 - The API and the frontend **never** compute science: no conversions, baselines, probabilities or verdicts.
 - Custom areas call `harmonize_area(cell_ids, months=None) -> list[EntityMonthRecord]` (`DATA_CONTRACT.md` §8), which Member 2 provides.
-- The module path is fixed by decision T-0D and documented by Member 2 in `docs/ARCHITECTURE.md`.
+- It lives under `pipeline/` (T-0D). Member 2 documents its exact module path in `docs/ARCHITECTURE.md` when it is created.
 
 ### S.6 Hand-off timeline (H = hours after the Lead approves D-008 and D-016)
 

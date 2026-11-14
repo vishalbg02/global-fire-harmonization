@@ -4,7 +4,7 @@ NASA Space Apps Challenge 2026 project for the challenge
 **[Harmonization of MODIS and VIIRS Hot Spots](https://www.spaceappschallenge.org/2026/challenges/modis-and-viirs-hot-spots/)**.
 
 > **Status (2026-11-14):** Planning and repository setup. **No application code yet.**
-> The technology stack (D-008) and data contract v0.1.0 (D-016) were **approved on 2026-11-14**. Implementation starts once the directory layout (T-0D) is decided.
+> The technology stack (D-008) and data contract v0.1.0 (D-016) were **approved on 2026-11-14**. The directory layout (`pipeline/`, `api/`, `app/`) is approved, and implementation starts as tasks are assigned.
 > See [`docs/HANDOFF.md`](docs/HANDOFF.md) for the exact current state.
 
 ## What we are building

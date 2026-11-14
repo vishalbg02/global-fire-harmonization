@@ -1,4 +1,4 @@
-# Architecture: **PROPOSED** (the stack it builds on was approved as D-008 on 2026-11-14; the directory layout T-0D and API owner D-015 are still open)
+# Architecture: **PROPOSED** (stack D-008, layout D-023/T-0D and API owner D-015 approved 2026-11-14; component design still proposed)
 
 ## 1. Overview
 
@@ -52,9 +52,19 @@ flowchart LR
 | Baseline & verdicts | M2 | Baseline percentiles; probabilities; verdicts and reason codes | harmonized | `cell_month_harmonized` (verdict fields) |
 | Entity aggregation | M2 | Country/continent/global series via `harmonize_area()` | raw sums + calibration | `entity_month` |
 | Validation | M2 (Lead reviews) | Witness Stand tests | all products | `validation_results.json` |
-| API | M3 (or M2; D-015) | Read-only endpoints; custom-area aggregation via `harmonize_area()`; CSV export | products | JSON / CSV |
+| API | M3 (D-015) | Read-only endpoints; custom-area aggregation via `harmonize_area()`; CSV export | products | JSON / CSV |
 | Web app | M3 | Map, selection, calendar, toggle, evidence, anomaly list, export, methods page | API or static JSON | UI |
 | Static export | M3 | Pre-render API responses for preset views | API | `public/data/*.json` |
+
+## 2a. Directory layout (approved, D-023)
+
+| Folder | Owner | Contents |
+|---|---|---|
+| `pipeline/` | Member 2 | Acquisition, normalization, gridding, calibration, harmonization (`harmonize_area()`), validation |
+| `api/` | Member 3 | FastAPI app; imports `harmonize_area()` from `pipeline/` |
+| `app/` | Member 3 | React/Vite web app |
+| `data/` | Member 2 (conventions) | Fixtures (committed) and raw/interim/products (ignored) |
+| `docs/` | Everyone (via PR) | Documentation |
 
 ## 3. Integration boundaries (the rules both workstreams follow)
 

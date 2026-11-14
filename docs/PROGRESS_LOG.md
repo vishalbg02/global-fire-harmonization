@@ -12,7 +12,9 @@ Newest entries first. Record completed work, pending work, blockers and decision
 
 - **D-008 (stack) and D-016 (contract v0.1.0) approved by the Lead at 12:26 IST (H0).** Recorded in `TECH_STACK.md` (§7 final table), `DATA_CONTRACT.md`, `DECISION_LOG.md`, the tracker (34 tasks moved from approval blocks to `BLOCKED (T-0D)`) and both prompts. The contract additions from the prompts were logged separately as D-022 (proposed).
 
-**Pending (Lead):** review and merge PR #3; decide T-0D, D-015 and D-022; assign T-001/T-002/T-008 to Member 2.
+- **T-0D and D-015 approved:** layout `pipeline/` / `api/` / `app/` (D-023); Member 3 owns the API. All tracker blocks removed.
+
+**Pending (Lead):** merge PR #4; decide D-022; assign T-001, T-002, T-008, T-010 (Member 2) and T-030 (Member 3).
 
 ## 2026-11-14: Team workflow documentation (T-0E)
 

@@ -5,7 +5,7 @@
 ## Exact current state
 
 - **Phase:** planning complete. **Stack (D-008) and data contract v0.1.0 (D-016) approved on 2026-11-14 at 12:26 IST (= H0 of the 36-hour schedule; submission target H34 ≈ 2026-11-15 22:26 IST, deadline 23:59 local).**
-- **Still blocking code:** the directory layout (T-0D) and, for API tasks, the API owner (D-015).
+- **Layout approved (D-023):** `pipeline/` (Member 2), `api/` and `app/` (Member 3). **Member 3 owns the API (D-015).** Nothing blocks code; tasks need only Lead assignment.
 - **No application code, no installed dependencies, no data downloaded into the repo.**
 - **Repository:** private GitHub repo `global-fire-harmonization` (URL and verification below).
 
@@ -26,7 +26,7 @@
 1. **Review the T-0G teammate-prompts PR**, and decide D-018 (Lead bookkeeping commits).
 2. ~~Approve the tech stack (D-008)~~: approved 2026-11-14.
 3. ~~Approve data contract v0.1.0 (D-016)~~: approved 2026-11-14. **Decide D-022** (the [PROPOSED ADDITION] items in the prompts' shared section).
-4. **Decide the directory layout (T-0D) and the API owner (D-015)**: these now block all code. Also confirm product direction D-003.
+4. ~~Directory layout and API owner~~: approved 2026-11-14 (D-023, D-015). Confirm product direction D-003.
 5. Add the two collaborators (Lead only).
 6. Decide on technical protection of `main` (D-019) and repo visibility for judges (D-014).
 7. ~~Rewrite the bootstrap commits on `main` (D-021)~~: done 2026-11-14. Anyone who cloned before this must re-clone or run `git fetch && git reset --hard origin/main` on `main`.
@@ -41,8 +41,8 @@ These are recommendations only; nothing is assigned until the Lead updates `TASK
 
 | Member | Prompt | What they can do first |
 |---|---|---|
-| Member 2 | [`docs/prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md`](prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md) | Once the Lead assigns them: **T-001** (global zip downloads), **T-002** (2026 API pull; needs a MAP_KEY), **T-008**. No code directory needed. Then code tasks after T-0D |
-| Member 3 | [`docs/prompts/MEMBER_3_APPLICATION_PROMPT.md`](prompts/MEMBER_3_APPLICATION_PROMPT.md) | Stack and contract approved. **Blocked on T-0D** (and D-015 for the API). Now: read the docs and install Node 22.12+/24 LTS. After T-0D: T-030 setup |
+| Member 2 | [`docs/prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md`](prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md) | Once the Lead assigns them: **T-001** (global zip downloads), **T-002** (2026 API pull; needs a MAP_KEY), **T-008**. Then **T-010** fixtures (generator in `pipeline/`) and T-003 onward |
+| Member 3 | [`docs/prompts/MEMBER_3_APPLICATION_PROMPT.md`](prompts/MEMBER_3_APPLICATION_PROMPT.md) | Fully unblocked once assigned: **T-030** setup first (`app/`), then T-031–T-033 on fixtures; T-034 API in `api/` |
 
 Paste the whole file (below its separator line) into a fresh Claude Code session at the repository root. Both prompts contain an identical "Shared integration handoff" section. If the two copies ever differ, stop and tell the Lead.
 
@@ -82,9 +82,9 @@ Paste the whole file (below its separator line) into a fresh Claude Code session
 
 All of these are the Lead's actions. Teammates start work only on tasks assigned in the tracker.
 1. Review and merge the T-0G teammate-prompts PR.
-2. Decide T-0D (directory layout) and D-015 (API owner). Recommended: `pipeline/`, `api/`, `app/`, with Member 3 owning the API.
+2. ~~Decide T-0D and D-015~~: approved.
 3. Assign T-001, T-002 and T-008 to Member 2 now (critical path; no code directory needed).
-4. After T-0D: assign T-030 (app setup, Member 3) and T-010 (fixtures, Member 2).
+4. Assign T-030 (app setup, Member 3) and T-010 (fixtures, Member 2) now.
 
 ## Important files
 

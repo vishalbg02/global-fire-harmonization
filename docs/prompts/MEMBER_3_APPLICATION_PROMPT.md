@@ -2,7 +2,7 @@
 
 > **How to use:** Member 3 opens a fresh Claude Code session at the repository root and pastes everything below the line as the first message. The prompt is self-contained; no earlier conversation is needed.
 > **Prompt version:** 1.0 (2026-11-14), based on `main` after PR #2. If the repository documents have changed since then, they win over this prompt.
-> **Status:** the technology stack (**D-008**) and data contract v0.1.0 (**D-016**) were **approved on 2026-11-14 at 12:26 IST (H0)**. Implementation still waits for the directory layout (**T-0D**). The API tasks also wait for the API-owner decision (**D-015**). Until then, only the preparation in §3 is allowed.
+> **Status:** the technology stack (**D-008**) and data contract v0.1.0 (**D-016**) were **approved on 2026-11-14 at 12:26 IST (H0)**. The directory layout (**T-0D**: `app/` and `api/`) and API ownership (**D-015**: Member 3) are approved too. You can start any task the Lead assigns.
 
 ---
 
@@ -13,9 +13,9 @@ You are assisting **Member 3 (Application Development & UI)** of a three-person 
 1. **Scope.** Work only on Member 3 tasks with status `ASSIGNED` (or later) and owner M3 in `docs/TASK_TRACKER.md`. Never start, add or expand tasks. If something is needed outside the task, follow §21 (escalation).
 2. **Approval gates.**
    - **D-008** (stack) and **D-016** (contract v0.1.0) are approved. Use only the approved stack (`TECH_STACK.md` §7) and the contract as written.
-   - No scaffolding and no app or API code until **T-0D** fixes the directory layout.
+   - Your code lives in `app/` (frontend) and `api/` (API) (T-0D). Never write in `pipeline/`.
    - Items marked [PROPOSED ADDITION] in §S are not binding until **D-022** is approved.
-   - API tasks (T-034, T-038) only once **D-015** names Member 3 as API owner.
+   - You own the API (D-015).
    - Check `docs/DECISION_LOG.md` at the start of every session.
 3. **Shared decisions are the Lead's.** Never change the tech stack, `docs/ARCHITECTURE.md`, `docs/DATA_CONTRACT.md` or the scientific method. Never edit Member 2's pipeline code.
 4. **No science in the app or API.**
@@ -66,12 +66,12 @@ You are assisting **Member 3 (Application Development & UI)** of a three-person 
 
 | Item | Status |
 |---|---|
-| T-030 setup and all frontend tasks | **BLOCKED** until **T-0D** (directory layout). D-008 is approved |
-| Any code consuming contract data | Allowed after T-0D. D-016 (v0.1.0) is approved; [PROPOSED ADDITION] items wait for D-022 |
-| T-034 API skeleton, T-038 CSV export (API side) | **BLOCKED** until **D-015** (API owner) + **T-0D** (directory layout) |
+| T-030 setup and all frontend tasks | Ready once assigned |
+| Any code consuming contract data | Allowed. [PROPOSED ADDITION] items wait for D-022 |
+| T-034 API skeleton, T-038 CSV export (API side) | Ready once assigned (you own the API) |
 | Real data (T-039) | After Member 2 delivers products (about H22) |
 
-**Allowed now, before T-0D (no repository changes unless a task is assigned):**
+**Before your first assignment (no repository changes unless a task is assigned):**
 - Read all the documents above.
 - Install Node.js **22.12+ or 24 LTS** on your machine (part of the approved stack; Node 20 is end-of-life and too old for Vitest 5).
 - Prepare questions for the Lead about any unclear UI requirement.
@@ -84,7 +84,7 @@ You are assisting **Member 3 (Application Development & UI)** of a three-person 
 - **Data fetching:** TanStack Query
 - **Tests:** Vitest
 - **Country boundaries:** Natural Earth admin-0 (public domain)
-- **API, if D-015 assigns it to you:** FastAPI + Uvicorn + DuckDB reading Parquet; Pydantic models mirroring the contract; pytest
+- **API (you own it, D-015):** FastAPI + Uvicorn + DuckDB reading Parquet; Pydantic models mirroring the contract; pytest
 
 The authoritative list is `docs/TECH_STACK.md` §7 "Final approved stack". Any change needs a new Lead decision.
 
@@ -100,7 +100,7 @@ The authoritative list is `docs/TECH_STACK.md` §7 "Final approved stack". Any c
 | F. Overview + methods | T-040 anomaly list, T-041 methods + validation page | H28 (**feature freeze**) | `validation_results.json` (~H26) |
 | G. Polish (P1) | T-042 performance + accessibility, T-043 static fallback build / optional deploy, T-044 polygon area | H32 | Lead decides |
 
-## 5. Application architecture (from `docs/ARCHITECTURE.md`; stack approved, directory layout pending T-0D)
+## 5. Application architecture (stack D-008 and layout T-0D approved)
 
 ```
 Member 2 products (Parquet + JSON) ──► API (Python; reads PRODUCTS_DIR; imports harmonize_area()) ──► Web app (SPA)
@@ -108,7 +108,7 @@ Member 2 products (Parquet + JSON) ──► API (Python; reads PRODUCTS_DIR; im
 ```
 
 - **The web app talks only to the API** (or to the static JSON export in fallback mode). It never reads Parquet directly.
-- **Proposed directory layout** (final decision T-0D; do not create it until it's decided):
+- **Directory layout (approved, T-0D):**
   - `app/` for the web app
   - `api/` for the API
   - Member 2's pipeline lives in its own directory, which you never edit.
@@ -252,7 +252,7 @@ A unit test must fail if any `reason_code` enum value has no text.
 - Implement the API and endpoint shapes exactly as in §S below and `docs/DATA_CONTRACT.md`.
 - Write TypeScript types that mirror the contract. If you own the API, write Pydantic models too.
 - Validate responses in development: unknown enum values and missing fields must surface as visible errors, never be silently coerced.
-- **If you own the API (D-015):**
+- **You own the API (D-015):**
   - It reads products from `PRODUCTS_DIR` (fixtures by default) using the product path rule in §S.2.
   - It imports `harmonize_area()` for custom areas, and **does not reimplement it**.
   - It returns the envelope and error format in §S.5.
@@ -380,9 +380,9 @@ Always create it from the latest `main`.
 | D-008 | Technology stack | **APPROVED 2026-11-14** (`TECH_STACK.md` §7) | Use exactly the approved stack |
 | D-009 | Grid sizes | PROPOSED / OPEN, locked at Gate G1 | Member 2 computes candidates; the Lead locks them |
 | D-010 | Baseline 2003–2022 | PROPOSED | Used by verdicts |
-| D-015 | API owner | **OPEN** (recommended: Member 3) | Blocks T-034 |
-| D-016 | Data contract v0.1.0 | **APPROVED 2026-11-14** (as written) | Fixtures and contract-dependent code may proceed (after T-0D) |
-| T-0D | Directory layout (pipeline / API / app folders) | **OPEN** | **Blocks** every task that creates code directories |
+| D-015 | API owner | **APPROVED 2026-11-14: Member 3** | Member 3 builds the API |
+| D-016 | Data contract v0.1.0 | **APPROVED 2026-11-14** (as written) | Fixtures and contract-dependent code may proceed |
+| T-0D | Directory layout | **APPROVED 2026-11-14:** `pipeline/` (Member 2), `api/` and `app/` (Member 3) | Write code only in your own folders |
 | D-022 | [PROPOSED ADDITION] items in this section | **PROPOSED** | Not binding until approved; build against them only if the Lead confirms |
 | D-017 / D-020 | Team workflow / no AI attribution | Approved | Always apply |
 
@@ -492,7 +492,7 @@ data/
 **Science boundary:**
 - The API and the frontend **never** compute science: no conversions, baselines, probabilities or verdicts.
 - Custom areas call `harmonize_area(cell_ids, months=None) -> list[EntityMonthRecord]` (`DATA_CONTRACT.md` §8), which Member 2 provides.
-- The module path is fixed by decision T-0D and documented by Member 2 in `docs/ARCHITECTURE.md`.
+- It lives under `pipeline/` (T-0D). Member 2 documents its exact module path in `docs/ARCHITECTURE.md` when it is created.
 
 ### S.6 Hand-off timeline (H = hours after the Lead approves D-008 and D-016)
 

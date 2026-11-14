@@ -18,7 +18,8 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-012 | 2026-11-14 | Git workflow: feature branches, PRs, Lead-only merges | SUPERSEDED by D-017 |
 | D-013 | 2026-11-14 | Demo is local-first plus a recorded video; deployment optional | PROPOSED |
 | D-014 | — | Repo visibility for judges at submission | OPEN |
-| D-015 | — | API owner: Member 3 (recommended if Python-capable) or Member 2 | OPEN |
+| D-015 | 2026-11-14 | API owner: Member 3 | **APPROVED** |
+| D-023 | 2026-11-14 | Directory layout: `pipeline/` (Member 2), `api/` and `app/` (Member 3), `data/`, `docs/` (T-0D) | **APPROVED** |
 | D-016 | 2026-11-14 | Data contract v0.1.0 | **APPROVED** (2026-11-14, as written) |
 | D-017 | 2026-11-14 | Team workflow: Lead assigns tasks; individual Claude sessions generate task prompts; one branch + PR per task; Lead reviews every PR and alone merges | APPROVED (Lead's instruction); **in effect** since PR #2 merged (2026-11-14) |
 | D-018 | 2026-11-14 | Lead bookkeeping commits allowed directly on `main` (tracker, decision log, progress log, handoff only) | PROPOSED |
@@ -96,7 +97,12 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 
 ### D-015: API ownership
 - **Options:** Member 3 builds the thin API calling Member 2's `harmonize_area()` (recommended, to offload the critical path), or Member 2 builds it.
-- **Status:** OPEN. Depends on Member 3's Python comfort.
+- **Decision:** Member 3 builds the thin API, which calls Member 2's `harmonize_area()`.
+- **Status:** **APPROVED** by the Lead, 2026-11-14.
+
+### D-023: Directory layout (T-0D)
+- **Decision:** `pipeline/` holds Member 2's data and science code. `api/` holds the API (Member 3). `app/` holds the web app (Member 3). `data/` and `docs/` are unchanged. Each member writes only in their own folders.
+- **Status:** **APPROVED** by the Lead, 2026-11-14.
 
 ### D-016: Data contract v0.1.0
 - **Decision:** `DATA_CONTRACT.md` v0.1.0 **as written**. Its "Open items" (grid sizes, season definition, final `cell_id` format) are still decided at G1.

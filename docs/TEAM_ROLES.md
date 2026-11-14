@@ -87,8 +87,8 @@ There are three members. Handles are filled in by the Project Lead when collabor
 | Owner | Owns | Must not modify without Lead approval |
 |---|---|---|
 | **M1 Lead** | Task assignment; `DECISION_LOG.md`; tracker statuses; `PROGRESS_LOG.md`; `HANDOFF.md`; `VALIDATION_PLAN.md` case definitions and thresholds; demo and submission | Teammates' implementation code (review only; request changes instead) |
-| **M2 Data & Science** | The pipeline directory (name set when the stack is approved, D-008/T-0D); `data/` conventions and fixtures; `SCIENTIFIC_METHODOLOGY.md` implementation details; validation results | App and API directories; the data contract; the methodology's approved decisions |
-| **M3 App & UI** | The app and API directories (API subject to D-015); UI text for reason codes (wording approved by M1) | Pipeline code; the data contract; scientific logic (the API **calls** `harmonize_area()`, it never reimplements it) |
+| **M2 Data & Science** | `pipeline/` (D-023); `data/` conventions and fixtures; `SCIENTIFIC_METHODOLOGY.md` implementation details; validation results | App and API directories; the data contract; the methodology's approved decisions |
+| **M3 App & UI** | `app/` and `api/` (D-015, D-023); UI text for reason codes (wording approved by M1) | Pipeline code; the data contract; scientific logic (the API **calls** `harmonize_area()`, it never reimplements it) |
 | **Shared, Lead-gated** | `DATA_CONTRACT.md`, `ARCHITECTURE.md`, `TECH_STACK.md`, `TEAM_WORKFLOW.md`, `CLAUDE.md`, `CONTRIBUTING.md` | Everyone: change only through a Lead-approved PR |
 
 - Integration issues between M2 and M3 go to the Lead, not to direct edits in each other's code.
