@@ -107,7 +107,15 @@ There are three members. Handles are filled in by the Project Lead when collabor
 
 The full process is in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 
-## 5a. Individual Claude sessions
+## 5a. Workstream prompts
+
+Each implementing member has a complete, self-contained workstream prompt to paste into their own session:
+- **Member 2:** [`prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md`](prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md). Acquisition, QA, gridding, calibration, combination, verdicts, validation, outputs and tests.
+- **Member 3:** [`prompts/MEMBER_3_APPLICATION_PROMPT.md`](prompts/MEMBER_3_APPLICATION_PROMPT.md). Map, selection, calendar, raw/harmonized toggle, charts, evidence panel, anomaly list, export, API integration, states, accessibility and tests.
+
+Both share an identical integration-handoff section (directory layout, conventions, fixtures, API expectations, timeline). For each assigned task, the member's session still writes a task prompt in `task-prompts/` (`TEAM_WORKFLOW.md` §4).
+
+## 5b. Individual Claude sessions
 
 - Each member may use their own Claude account or session. Sessions share **no** memory, so the repository documents are the only shared context.
 - A session must run the startup checklist (`CLAUDE.md`). It works only on the member's assigned task and never expands scope.

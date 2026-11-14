@@ -12,19 +12,22 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 - **Priority:** **P0** = MVP · **P1** = enhancement · **P2** = stretch
 - **H** = hours after stack approval
 
-> **No implementation task is assigned yet.** Tasks that depend on the tech stack (D-008) or the data contract (D-016) cannot be assigned until those are approved. Branch names below are the planned names; the Lead confirms them at assignment.
+> **No implementation task is assigned yet.** Tasks marked `BLOCKED (D-…)` cannot be assigned until the named decision is approved. **Stack-independent and assignable now:** T-001, T-002, T-008 (Member 2); T-004, T-050 (Lead). Branch names below are the planned names; the Lead confirms them at assignment.
+>
+> **Workstream prompts:** Member 2 → [`prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md`](prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md) · Member 3 → [`prompts/MEMBER_3_APPLICATION_PROMPT.md`](prompts/MEMBER_3_APPLICATION_PROMPT.md). For each assigned task, the teammate's session still writes a task prompt in `task-prompts/`.
 
 ## Setup and governance
 
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
 | T-000 | Planning docs + private repo created | M1 | P0 | — | `main` (bootstrap) | — | MERGED (2026-11-14) | n/a (bootstrap) | Repo private; docs pushed; no secrets |
-| T-0E | Team workflow docs (TEAM_WORKFLOW, PR template, push guard) | M1 | P0 | T-000 | `docs/team-workflow` | [#2](https://github.com/vishalbg02/global-fire-harmonization/pull/2) (supersedes #1) | IN_REVIEW | PENDING | Lead approves the workflow (D-017) |
+| T-0E | Team workflow docs (TEAM_WORKFLOW, PR template, push guard) | M1 | P0 | T-000 | `docs/team-workflow` | [#2](https://github.com/vishalbg02/global-fire-harmonization/pull/2) (supersedes #1) | MERGED (2026-11-14, merge commit cc940ba) | — (Lead-authored PR; GitHub does not allow self-approval) | Lead approves the workflow (D-017) |
 | T-0A | **Approve tech stack (D-008)** | M1 | P0 | T-000 | — | — | TODO | — | `TECH_STACK.md` marked APPROVED; D-008 logged |
 | T-0B | **Approve data contract v0.1.0 (D-016)** | M1 | P0 | T-000 | — | — | TODO | — | Contract status APPROVED |
 | T-0C | Add collaborators (Lead only) | M1 | P0 | T-000 | — | — | TODO | — | Both teammates have access |
 | T-0D | Decide API owner (D-015) and repo directory layout | M1 | P0 | T-0A | — | — | TODO | — | Logged |
 | T-0F | Decide technical protection of `main` (D-019) | M1 | P1 | — | — | — | TODO | — | Logged; any settings change made by the Lead |
+| T-0G | Teammate workstream prompts (Member 2, Member 3) + stale-status fixes | M1 | P0 | T-0E | `docs/T-0G-teammate-prompts` | [#3](https://github.com/vishalbg02/global-fire-harmonization/pull/3) | IN_REVIEW | PENDING | Lead approves both prompts; prompts consistent with DATA_CONTRACT v0.1.0 |
 
 ## Data and science (Member 2)
 
@@ -32,20 +35,20 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 |---|---|---|---|---|---|---|---|---|---|
 | T-001 | Download all global zips (MODIS 2002–2025, S-NPP 2012–2025, NOAA-20 2018–2025) | M2 | P0 | — (stack-independent) | `data/T-001-download-zips` | — | TODO | — | All files present; sizes match `DATA_SOURCES.md`; snapshot recorded in `data/README.md` |
 | T-002 | Pull 2026 data via the area API (world, 5-day windows) for MODIS, S-NPP, NOAA-20; fetch `missing_data` and `data_availability` | M2 | P0 | MAP_KEY | `data/T-002-api-2026` | — | TODO | — | Complete date coverage logged; retries recorded |
-| T-003 | Unzip and normalize to the unified schema (Parquet) | M2 | P0 | T-001, T-0A | `data/T-003-normalize` | — | TODO | — | Row counts per sensor and year recorded |
+| T-003 | Unzip and normalize to the unified schema (Parquet) | M2 | P0 | T-001, T-0A | `data/T-003-normalize` | — | BLOCKED (D-008) | — | Row counts per sensor and year recorded |
 | T-004 | Fire-region mask (GFED basis regions) or UN-subregion fallback | M1 → M2 | P0 | — | `science/T-004-region-mask` | — | TODO | — | Every analysis cell has a `fire_region` |
-| T-005 | Filters + static-source mask + QA summary | M2 | P0 | T-003 | `data/T-005-filters-qa` | — | TODO | — | QA table; estimates in `DATA_SOURCES.md` replaced with measurements |
-| T-006 | Fine-grid cell-days → analysis cell-month per witness × day/night | M2 | P0 | T-005, D-009 | `data/T-006-gridding` | — | TODO | — | `cell_month_witness` validates against the contract |
-| T-007 | Investigate MODIS `version` values (6.2 / 6.03 / 61.03) | M2 | P1 | T-003 | `data/T-007-modis-version` | — | TODO | — | Finding documented; any method impact logged |
+| T-005 | Filters + static-source mask + QA summary | M2 | P0 | T-003 | `data/T-005-filters-qa` | — | BLOCKED (D-008) | — | QA table; estimates in `DATA_SOURCES.md` replaced with measurements |
+| T-006 | Fine-grid cell-days → analysis cell-month per witness × day/night | M2 | P0 | T-005, D-009 | `data/T-006-gridding` | — | BLOCKED (D-008) | — | `cell_month_witness` validates against the contract |
+| T-007 | Investigate MODIS `version` values (6.2 / 6.03 / 61.03) | M2 | P1 | T-003 | `data/T-007-modis-version` | — | BLOCKED (D-008) | — | Finding documented; any method impact logged |
 | T-008 | Confirm Aqua/Terra 2026 availability via `data_availability` | M2 | P0 | MAP_KEY | `data/T-008-availability` | — | TODO | — | Result in `DATA_SOURCES.md` |
-| T-009 | FIRMS country name → ISO3 / continent mapping | M2 | P0 | T-003 | `data/T-009-country-mapping` | — | TODO | — | 100% of country files mapped |
-| T-010 | SYNTHETIC fixtures for all contract products | M2 | P0 | T-0B | `data/T-010-fixtures` | — | TODO | — | Labelled synthetic; <5 MB; validate against the contract |
-| T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | — | TODO | — | `calibration` product; pooling levels reported |
-| T-012 | Holdout evaluation 2017–2021; Aqua drift diagnostic | M2 | P0 | T-011 | `science/T-012-holdout-drift` | — | TODO | — | Scores and drift plot presented at R2 |
-| T-013 | Witness combination + disagreement inflation; `harmonize_area()` | M2 | P0 | T-011 | `science/T-013-combination` | — | TODO | — | Unit tests on synthetic data with known answers |
-| T-014 | Baseline, probabilities, verdicts, reason codes; entity aggregation | M2 | P0 | T-013, D-010 | `science/T-014-verdicts` | — | TODO | — | `cell_month_harmonized`, `entity_month`, `metadata.json` validate |
-| T-015 | Large-fire consistency check | M2 | P1 | T-006 | `science/T-015-large-fire` | — | TODO | — | Diagnostic series per entity |
-| T-016 | "MODIS blindness" indicator | M2 | P1 | T-011 | `science/T-016-blindness` | — | TODO | — | Per-region value with caveat text |
+| T-009 | FIRMS country name → ISO3 / continent mapping | M2 | P0 | T-003 | `data/T-009-country-mapping` | — | BLOCKED (D-008) | — | 100% of country files mapped |
+| T-010 | SYNTHETIC fixtures for all contract products | M2 | P0 | T-0B | `data/T-010-fixtures` | — | BLOCKED (D-016) | — | Labelled synthetic; <5 MB; validate against the contract |
+| T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | — | BLOCKED (D-008) | — | `calibration` product; pooling levels reported |
+| T-012 | Holdout evaluation 2017–2021; Aqua drift diagnostic | M2 | P0 | T-011 | `science/T-012-holdout-drift` | — | BLOCKED (D-008) | — | Scores and drift plot presented at R2 |
+| T-013 | Witness combination + disagreement inflation; `harmonize_area()` | M2 | P0 | T-011 | `science/T-013-combination` | — | BLOCKED (D-008) | — | Unit tests on synthetic data with known answers |
+| T-014 | Baseline, probabilities, verdicts, reason codes; entity aggregation | M2 | P0 | T-013, D-010 | `science/T-014-verdicts` | — | BLOCKED (D-008) | — | `cell_month_harmonized`, `entity_month`, `metadata.json` validate |
+| T-015 | Large-fire consistency check | M2 | P1 | T-006 | `science/T-015-large-fire` | — | BLOCKED (D-008) | — | Diagnostic series per entity |
+| T-016 | "MODIS blindness" indicator | M2 | P1 | T-011 | `science/T-016-blindness` | — | BLOCKED (D-008) | — | Per-region value with caveat text |
 
 ## Validation (Member 2 implements; Member 1 defines and reviews)
 
@@ -53,33 +56,33 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 |---|---|---|---|---|---|---|---|---|---|
 | T-050 | Define case windows, bounding boxes, quiet months | M1 | P0 | — | `docs/T-050-validation-cases` | — | TODO | — | Table in `VALIDATION_PLAN.md` |
 | T-051 | **G1 lock**: grid, baseline, verdict and validation thresholds | M1 | P0 | T-006 | `docs/T-051-g1-lock` | — | TODO | — | Logged as approved before any results |
-| T-020 | Test A1 (two independent paths) | M2 | P0 | T-014, T-050 | `science/T-020-test-a1` | — | TODO | — | Results recorded, pass or fail |
-| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | — | TODO | — | Recorded |
-| T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | — | TODO | — | Recorded |
-| T-023 | Test A2 (same fire, two eras) | M2 | P1 | T-014, T-050 | `science/T-023-test-a2` | — | TODO | — | Recorded |
-| T-024 | Tests B2, C1, CTRL | M2 | P1 | T-014 | `science/T-024-test-b2-c1-ctrl` | — | TODO | — | Recorded |
-| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | — | TODO | — | Recorded |
-| T-026 | Verify every number displayed in the app/demo against products | M2 + M1 | P0 | T-039 | `science/T-026-number-check` | — | TODO | — | Checklist signed off |
+| T-020 | Test A1 (two independent paths) | M2 | P0 | T-014, T-050 | `science/T-020-test-a1` | — | BLOCKED (D-008) | — | Results recorded, pass or fail |
+| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | — | BLOCKED (D-008) | — | Recorded |
+| T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | — | BLOCKED (D-008) | — | Recorded |
+| T-023 | Test A2 (same fire, two eras) | M2 | P1 | T-014, T-050 | `science/T-023-test-a2` | — | BLOCKED (D-008) | — | Recorded |
+| T-024 | Tests B2, C1, CTRL | M2 | P1 | T-014 | `science/T-024-test-b2-c1-ctrl` | — | BLOCKED (D-008) | — | Recorded |
+| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | — | BLOCKED (D-008) | — | Recorded |
+| T-026 | Verify every number displayed in the app/demo against products | M2 + M1 | P0 | T-039 | `science/T-026-number-check` | — | BLOCKED (D-008) | — | Checklist signed off |
 
 ## Application and API (Member 3)
 
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
-| T-030 | Environment setup per the approved stack; app skeleton | M3 | P0 | T-0A | `frontend/T-030-setup` | — | TODO | — | Runs locally for M1 and M3 |
-| T-031 | Global map: country layer + analysis-cell layer | M3 | P0 | T-030, T-010 | `frontend/T-031-global-map` | — | TODO | — | Selected month renders; tooltip per cell |
-| T-032 | Calendar (years × months; % of normal / activity) | M3 | P0 | T-010 | `frontend/T-032-calendar` | — | TODO | — | Accessible ramps; legend; null shown as "no data" |
-| T-033 | Raw vs harmonized toggle | M3 | P0 | T-032 | `frontend/T-033-toggle` | — | TODO | — | Switches calendar and map |
-| T-034 | API skeleton serving fixtures (all endpoints) | M3 (D-015) | P0 | T-010, T-0D | `api/T-034-api-skeleton` | — | TODO | — | Responses validate against the contract |
-| T-035 | Country/continent selection + rectangle custom area | M3 | P0 | T-034 | `frontend/T-035-area-selection` | — | TODO | — | Custom area returns a series via `harmonize_area()` |
-| T-036 | Evidence panel (verdict, probability, reason codes in plain language) | M3 | P0 | T-034 | `frontend/T-036-evidence-panel` | — | TODO | — | Every reason code has user-facing text approved by M1 |
-| T-037 | Witness comparison chart + satellite timeline + outages | M3 | P0 | T-034 | `frontend/T-037-witness-chart` | — | TODO | — | Per-witness raw and converted series |
-| T-038 | CSV export | M3 | P0 | T-034 | `api/T-038-csv-export` | — | TODO | — | Header with method version, snapshot date, citation |
-| T-039 | Real-data integration | M3 + M2 | P0 | T-014 | `frontend/T-039-real-data` | — | TODO | — | All views on real products |
-| T-040 | Global anomaly list | M3 | P0 | T-034 | `frontend/T-040-anomaly-list` | — | TODO | — | Ranked by probability; links to the entity |
-| T-041 | Methods + validation results page | M3 | P0 | T-020+ | `frontend/T-041-methods-page` | — | TODO | — | Shows PASS/FAIL/NOT_RUN faithfully |
-| T-042 | Performance and accessibility pass | M3 | P1 | T-039 | `frontend/T-042-perf-a11y` | — | TODO | — | Keyboard navigation; colour-blind-safe check |
-| T-043 | Static fallback build; optional deploy | M3 | P1 | T-039 | `frontend/T-043-static-build` | — | TODO | — | Preset views work without the API |
-| T-044 | Free-polygon custom area | M3 | P1 | T-035 | `frontend/T-044-polygon` | — | TODO | — | — |
+| T-030 | Environment setup per the approved stack; app skeleton | M3 | P0 | T-0A | `frontend/T-030-setup` | — | BLOCKED (D-008) | — | Runs locally for M1 and M3 |
+| T-031 | Global map: country layer + analysis-cell layer | M3 | P0 | T-030, T-010 | `frontend/T-031-global-map` | — | BLOCKED (D-008, D-016) | — | Selected month renders; tooltip per cell |
+| T-032 | Calendar (years × months; % of normal / activity) | M3 | P0 | T-010 | `frontend/T-032-calendar` | — | BLOCKED (D-008, D-016) | — | Accessible ramps; legend; null shown as "no data" |
+| T-033 | Raw vs harmonized toggle | M3 | P0 | T-032 | `frontend/T-033-toggle` | — | BLOCKED (D-008, D-016) | — | Switches calendar and map |
+| T-034 | API skeleton serving fixtures (all endpoints) | M3 (D-015) | P0 | T-010, T-0D | `api/T-034-api-skeleton` | — | BLOCKED (D-008, D-016, D-015, T-0D) | — | Responses validate against the contract |
+| T-035 | Country/continent selection + rectangle custom area | M3 | P0 | T-034 | `frontend/T-035-area-selection` | — | BLOCKED (D-008) | — | Custom area returns a series via `harmonize_area()` |
+| T-036 | Evidence panel (verdict, probability, reason codes in plain language) | M3 | P0 | T-034 | `frontend/T-036-evidence-panel` | — | BLOCKED (D-008) | — | Every reason code has user-facing text approved by M1 |
+| T-037 | Witness comparison chart + satellite timeline + outages | M3 | P0 | T-034 | `frontend/T-037-witness-chart` | — | BLOCKED (D-008) | — | Per-witness raw and converted series |
+| T-038 | CSV export | M3 | P0 | T-034 | `api/T-038-csv-export` | — | BLOCKED (D-008, D-016, D-015) | — | Header with method version, snapshot date, citation |
+| T-039 | Real-data integration | M3 + M2 | P0 | T-014 | `frontend/T-039-real-data` | — | BLOCKED (D-008) | — | All views on real products |
+| T-040 | Global anomaly list | M3 | P0 | T-034 | `frontend/T-040-anomaly-list` | — | BLOCKED (D-008) | — | Ranked by probability; links to the entity |
+| T-041 | Methods + validation results page | M3 | P0 | T-020+ | `frontend/T-041-methods-page` | — | BLOCKED (D-008) | — | Shows PASS/FAIL/NOT_RUN faithfully |
+| T-042 | Performance and accessibility pass | M3 | P1 | T-039 | `frontend/T-042-perf-a11y` | — | BLOCKED (D-008) | — | Keyboard navigation; colour-blind-safe check |
+| T-043 | Static fallback build; optional deploy | M3 | P1 | T-039 | `frontend/T-043-static-build` | — | BLOCKED (D-008) | — | Preset views work without the API |
+| T-044 | Free-polygon custom area | M3 | P1 | T-035 | `frontend/T-044-polygon` | — | BLOCKED (D-008) | — | — |
 
 ## Demo and submission (Member 1)
 
