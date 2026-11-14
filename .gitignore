@@ -63,3 +63,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 *.swp
+
+# ---- Static offline copy of the preset views (generated, T-043) ----
+app/public/data/

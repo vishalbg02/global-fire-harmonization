@@ -679,3 +679,12 @@ aside section {
 .skip-link:focus { top: 0.5rem; }
 .custom-computing { font-weight: 600; margin: 0.25rem 0; }
 main:focus { outline: none; }
+
+/* The offline copy notice (T-043). */
+.offline-note {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: #fff3cd;
+  border-bottom: 1px solid #8a6d00;
+  color: #1b1b1f;
+}
