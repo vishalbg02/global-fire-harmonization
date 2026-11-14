@@ -1,0 +1,217 @@
+// TypeScript mirror of docs/DATA_CONTRACT.md (contract_version 0.1.0).
+// Unknown enum values and missing fields throw ContractError; nothing is coerced.
+
+export const CONTRACT_VERSION = '0.1.0'
+
+export const VERDICTS = [
+  'ABOVE_NORMAL',
+  'BELOW_NORMAL',
+  'WITHIN_NORMAL',
+  'CANNOT_DETERMINE',
+  'NO_DETECTED_ACTIVITY',
+] as const
+export type Verdict = (typeof VERDICTS)[number]
+
+export const REASON_CODES = [
+  'OUTAGE',
+  'INSUFFICIENT_BASELINE',
+  'INSUFFICIENT_OVERLAP',
+  'WITNESS_DISAGREEMENT',
+  'WIDE_INTERVAL',
+  'PROVISIONAL_NRT',
+  'AQUA_DRIFT_ERA',
+  'SINGLE_WITNESS',
+  'POOLED_CALIBRATION',
+  'DIURNAL_CAVEAT',
+] as const
+export type ReasonCode = (typeof REASON_CODES)[number]
+
+export const WITNESSES = [
+  'AQUA_MODIS',
+  'TERRA_MODIS',
+  'SNPP_VIIRS',
+  'NOAA20_VIIRS',
+  'NOAA21_VIIRS',
+] as const
+export type Witness = (typeof WITNESSES)[number]
+
+export const DATA_LEVELS = ['SP', 'NRT', 'MIXED'] as const
+export type DataLevel = (typeof DATA_LEVELS)[number]
+
+/** Layer modes of GET /api/map. */
+export const MAP_LAYERS = ['verdict', 'raw', 'harmonized'] as const
+export type MapLayer = (typeof MAP_LAYERS)[number]
+
+/** One analysis cell for one month: cell bounds plus cell_month_harmonized fields. */
+export interface MapCell {
+  cell_id: string
+  lat_min: number
+  lat_max: number
+  lon_min: number
+  lon_max: number
+  year: number
+  month: number
+  estimate: number | null
+  ci90_low: number | null
+  ci90_high: number | null
+  sd: number | null
+  raw_combined_cell_days: number
+  witnesses_used: Witness[]
+  n_witnesses: number
+  disagreement_scale: number | null
+  baseline_median: number | null
+  baseline_p25: number | null
+  baseline_p75: number | null
+  pct_of_normal: number | null
+  p_above: number | null
+  p_below: number | null
+  p_within: number | null
+  verdict: Verdict
+  reason_codes: ReasonCode[]
+  data_level: DataLevel
+  method_version: string
+}
+
+/** The fields of metadata.json that the app uses. */
+export interface Metadata {
+  contract_version: string
+  method_version: string
+  synthetic: boolean
+  first_month: string
+  latest_month: string
+  provisional_months: string[]
+  citation: string
+}
+
+export class ContractError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ContractError'
+  }
+}
+
+type Rec = Record<string, unknown>
+
+function asRecord(value: unknown, what: string): Rec {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new ContractError(`${what}: expected an object`)
+  }
+  return value as Rec
+}
+
+function field(o: Rec, key: string, what: string): unknown {
+  if (!(key in o)) throw new ContractError(`${what}: missing field "${key}"`)
+  return o[key]
+}
+
+function num(o: Rec, key: string, what: string): number {
+  const v = field(o, key, what)
+  if (typeof v !== 'number' || !Number.isFinite(v)) {
+    throw new ContractError(`${what}: "${key}" must be a number`)
+  }
+  return v
+}
+
+function numOrNull(o: Rec, key: string, what: string): number | null {
+  const v = field(o, key, what)
+  if (v === null) return null
+  if (typeof v !== 'number' || !Number.isFinite(v)) {
+    throw new ContractError(`${what}: "${key}" must be a number or null`)
+  }
+  return v
+}
+
+function str(o: Rec, key: string, what: string): string {
+  const v = field(o, key, what)
+  if (typeof v !== 'string') throw new ContractError(`${what}: "${key}" must be a string`)
+  return v
+}
+
+function oneOf<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  key: string,
+  what: string,
+): T {
+  if (typeof value !== 'string' || !(allowed as readonly string[]).includes(value)) {
+    throw new ContractError(`${what}: unknown ${key} value ${JSON.stringify(value)}`)
+  }
+  return value as T
+}
+
+function enumList<T extends string>(
+  o: Rec,
+  key: string,
+  allowed: readonly T[],
+  what: string,
+): T[] {
+  const v = field(o, key, what)
+  if (!Array.isArray(v)) throw new ContractError(`${what}: "${key}" must be a list`)
+  return v.map((item) => oneOf(item, allowed, key, what))
+}
+
+export function parseMapCell(raw: unknown): MapCell {
+  const what = 'map cell'
+  const o = asRecord(raw, what)
+  return {
+    cell_id: str(o, 'cell_id', what),
+    lat_min: num(o, 'lat_min', what),
+    lat_max: num(o, 'lat_max', what),
+    lon_min: num(o, 'lon_min', what),
+    lon_max: num(o, 'lon_max', what),
+    year: num(o, 'year', what),
+    month: num(o, 'month', what),
+    estimate: numOrNull(o, 'estimate', what),
+    ci90_low: numOrNull(o, 'ci90_low', what),
+    ci90_high: numOrNull(o, 'ci90_high', what),
+    sd: numOrNull(o, 'sd', what),
+    raw_combined_cell_days: num(o, 'raw_combined_cell_days', what),
+    witnesses_used: enumList(o, 'witnesses_used', WITNESSES, what),
+    n_witnesses: num(o, 'n_witnesses', what),
+    disagreement_scale: numOrNull(o, 'disagreement_scale', what),
+    baseline_median: numOrNull(o, 'baseline_median', what),
+    baseline_p25: numOrNull(o, 'baseline_p25', what),
+    baseline_p75: numOrNull(o, 'baseline_p75', what),
+    pct_of_normal: numOrNull(o, 'pct_of_normal', what),
+    p_above: numOrNull(o, 'p_above', what),
+    p_below: numOrNull(o, 'p_below', what),
+    p_within: numOrNull(o, 'p_within', what),
+    verdict: oneOf(field(o, 'verdict', what), VERDICTS, 'verdict', what),
+    reason_codes: enumList(o, 'reason_codes', REASON_CODES, what),
+    data_level: oneOf(field(o, 'data_level', what), DATA_LEVELS, 'data_level', what),
+    method_version: str(o, 'method_version', what),
+  }
+}
+
+export function parseMapCells(raw: unknown): MapCell[] {
+  if (!Array.isArray(raw)) throw new ContractError('map response: expected a list of cells')
+  return raw.map(parseMapCell)
+}
+
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+
+function monthString(o: Rec, key: string, what: string): string {
+  const v = str(o, key, what)
+  if (!MONTH_RE.test(v)) throw new ContractError(`${what}: "${key}" must be YYYY-MM`)
+  return v
+}
+
+export function parseMetadata(raw: unknown): Metadata {
+  const what = 'metadata'
+  const o = asRecord(raw, what)
+  const synthetic = field(o, 'synthetic', what)
+  if (typeof synthetic !== 'boolean') throw new ContractError(`${what}: "synthetic" must be a boolean`)
+  const provisional = field(o, 'provisional_months', what)
+  if (!Array.isArray(provisional) || !provisional.every((m) => typeof m === 'string' && MONTH_RE.test(m))) {
+    throw new ContractError(`${what}: "provisional_months" must be a list of YYYY-MM`)
+  }
+  return {
+    contract_version: str(o, 'contract_version', what),
+    method_version: str(o, 'method_version', what),
+    synthetic,
+    first_month: monthString(o, 'first_month', what),
+    latest_month: monthString(o, 'latest_month', what),
+    provisional_months: provisional as string[],
+    citation: str(o, 'citation', what),
+  }
+}
