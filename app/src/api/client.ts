@@ -1,5 +1,6 @@
-import type { Bbox, EntityEvidence, EntityItem, EntityMonth, MapCell, MapLayer, Metadata } from './contract.ts'
+import type { Anomaly, Bbox, EntityEvidence, EntityItem, EntityMonth, MapCell, MapLayer, Metadata } from './contract.ts'
 import {
+  parseAnomalies,
   parseEntityEvidence,
   parseEntityItems,
   parseEntityMonths,
@@ -125,4 +126,21 @@ export async function fetchCustomSeries(bbox: Bbox, base: string = apiBaseUrl())
     body: JSON.stringify({ bbox }),
   })
   return parseEntityMonths(body)
+}
+
+/** The most anomalies the API returns in one call (its documented maximum). */
+export const ANOMALIES_MAX_LIMIT = 500
+
+/**
+ * GET /api/anomalies: the areas with an above- or below-normal verdict in a month, in the API's
+ * order. The app asks for the maximum so that it can rank per verdict and per type itself.
+ */
+export async function fetchAnomalies(
+  year: number,
+  month: number,
+  limit: number = ANOMALIES_MAX_LIMIT,
+  base: string = apiBaseUrl(),
+): Promise<Anomaly[]> {
+  const query = new URLSearchParams({ year: String(year), month: String(month), limit: String(limit) })
+  return parseAnomalies(await getJson(`${base}/api/anomalies?${query.toString()}`))
 }

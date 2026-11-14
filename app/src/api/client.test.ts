@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, errorDetail, fetchCustomSeries, fetchEntities, fetchEvidence, fetchSeries } from './client.ts'
+import { ANOMALIES_MAX_LIMIT, ApiError, errorDetail, fetchAnomalies, fetchCustomSeries, fetchEntities, fetchEvidence, fetchSeries } from './client.ts'
 import { ContractError } from './contract.ts'
 
 // SYNTHETIC test data. Not NASA observations.
@@ -179,5 +179,41 @@ describe('fetchCustomSeries', () => {
   it('rejects a record that breaks the contract instead of coercing it', async () => {
     stubFetch({ ok: true, status: 200, body: [{ ...RECORD, verdict: 'MAYBE' }] })
     await expect(fetchCustomSeries(BOX, '')).rejects.toBeInstanceOf(ContractError)
+  })
+})
+
+
+describe('fetchAnomalies', () => {
+  const item = { entity_type: 'COUNTRY', entity_id: 'IDN', entity_name: 'Indonesia', verdict: 'ABOVE_NORMAL', p_above: 0.9, p_below: 0, pct_of_normal: 250 }
+
+  it('asks for the month with the API maximum by default and parses the entries in the API order', async () => {
+    const fetchFn = stubFetch({ ok: true, status: 200, body: [item, { ...item, entity_id: 'BRA' }] })
+    const list = await fetchAnomalies(2015, 9, undefined, 'http://api.test')
+    expect(fetchFn).toHaveBeenCalledWith(`http://api.test/api/anomalies?year=2015&month=9&limit=${ANOMALIES_MAX_LIMIT}`)
+    expect(list.map((a) => a.entity_id)).toEqual(['IDN', 'BRA'])
+  })
+
+  it('passes an explicit limit', async () => {
+    const fetchFn = stubFetch({ ok: true, status: 200, body: [] })
+    await fetchAnomalies(2020, 1, 5, '')
+    expect(fetchFn).toHaveBeenCalledWith('/api/anomalies?year=2020&month=1&limit=5')
+  })
+
+  it('reports a 400 and a 503 as an ApiError with that status', async () => {
+    stubFetch({ ok: false, status: 400, body: { detail: [{ msg: 'bad month' }] } })
+    const bad = await fetchAnomalies(2020, 13, 5, '').catch((e: unknown) => e)
+    expect((bad as ApiError).status).toBe(400)
+    expect((bad as ApiError).detail).toBe('bad month')
+    stubFetch({ ok: false, status: 503, body: { detail: 'down' } })
+    const down = await fetchAnomalies(2020, 1, 5, '').catch((e: unknown) => e)
+    expect((down as ApiError).status).toBe(503)
+  })
+
+  it('reports an unreachable service and rejects a verdict the API should never send', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network')))
+    const unreachable = await fetchAnomalies(2020, 1, 5, '').catch((e: unknown) => e)
+    expect((unreachable as ApiError).status).toBeNull()
+    stubFetch({ ok: true, status: 200, body: [{ ...item, verdict: 'CANNOT_DETERMINE' }] })
+    await expect(fetchAnomalies(2020, 1, 5, '')).rejects.toBeInstanceOf(ContractError)
   })
 })
