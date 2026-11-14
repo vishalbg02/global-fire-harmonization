@@ -11,10 +11,10 @@
 | B1 | family (both dates) | **PASS** | |
 | B3 | drift as a ratio trend | **PASS** | night, both VIIRS witnesses: S-NPP onset 2024-05, NOAA-20 onset 2024-09, falling ratio; day not detected (section 4.1) |
 | B3 | outages, estimates | **PASS** | 60 of 60 entity-months in the 4 outage months have no estimate; 0 of 345 incomplete witness-month cases used |
-| B3 | outages, verdicts | **NOT_RUN** | needs the T-014 verdicts (section 5) |
-| B3 | family | **NOT_RUN** | one criterion of the plan (verdicts) has not run; the other two passed |
+| B3 | outages, verdicts | **PASS** | 936 of 936 entity-months in the 4 outage months are `CANNOT_DETERMINE` (100%), all with the reason `OUTAGE` (T-014 product, section 4.3) |
+| B3 | family | **PASS** | all three plan criteria ran and passed |
 
-B1 is complete on the estimates and does not depend on T-014. B3 is complete except for the verdict check.
+All parts have run. B1 and the drift and estimate-level checks ran first on the T-013 estimates; the verdict check ran afterwards on the T-014 `entity_month` product (`method_version` 0.1.0, from branch `science/T-014-verdicts`, PR #52; the product files were not committed here). Thresholds were not changed.
 
 ## 2. B1: the statistic as run
 
@@ -79,7 +79,7 @@ Harmonized estimate divided by the converted S-NPP series (day and night, months
 - **Yearly sums hide short offsets.** A step of a few months' length inside a 12-month window is averaged out. The same calendar months fall in both windows, so seasonal cycles cancel in the ratio, but years differ in activity; the Aqua-only denominator removes the common part.
 - The plan's tolerance is +-10% on a ratio of sums, with no uncertainty attached; a region near the boundary (MIDE 1.104) is not separated from noise here [OPEN: no interval is computed for the step].
 - 2012-01 is not a clean entry month: S-NPP data exist from 2012-01-20 (12 days available), so January 2012 has no S-NPP in the estimate while its raw series includes the partial detections. The windows include it as the plan reads literally [ASSUMPTION].
-- Test on `pct_of_normal`: the product does not exist yet. Under the plan's definition (series / Aqua-only), `pct_of_normal` divides numerator and denominator by the same baseline median, so it gives the same step; the harness also computes the shift of the median `pct_of_normal` (`pct_of_normal_shift`) as a supplementary figure once T-014 exists. No threshold exists for it, so it has no status.
+- Test on `pct_of_normal`: under the plan's definition (series / Aqua-only), `pct_of_normal` divides numerator and denominator by the same baseline median, so it gives the same step; the harness also computes the shift of the median `pct_of_normal` (`pct_of_normal_shift`) as a supplementary figure (section 4.3). No threshold exists for it, so it has no status.
 
 ## 4. B3
 
@@ -103,24 +103,28 @@ Outage month = a month in which no witness (Aqua, S-NPP, NOAA-20) has every day 
 - 15 entities (the 14 fire regions and `UNASSIGNED`) x 4 months = **60 entity-months; 0 have an estimate (100% without)**.
 - Incomplete witness-months with another witness present: Aqua 2022-04 (14 days); S-NPP 2012-01 (12), 2012-03 (30), 2022-07 (26), 2022-08 (21), 2024-05 (29), 2024-06 (27), 2024-07 (21), 2024-09 (29), 2024-11 (27), 2026-03 (28), 2026-04 (27), 2026-06 (28), 2026-07 (25); NOAA-20 2023-07 (27), 2023-09 (29), 2024-02 (28). **345 entity-month by incomplete-witness cases, 0 with the incomplete witness in `witnesses_used`.** Those months keep an estimate from the other witnesses; they are not outages in the D-028 sense (step 1 needs no witness with a complete month).
 
-### 4.3 Outages, verdicts: NOT_RUN
+### 4.3 Outages, verdicts: PASS [VERIFIED]
 
-The raw-only `entity_month.parquet` (`0.1.0-raw-only`, every row `CANNOT_DETERMINE` with `NOT_HARMONIZED`) has no verdict logic, and a 100% `CANNOT_DETERMINE` on it would say nothing. The check is coded (`evaluate_outage_verdicts`): it needs a product with baseline fields (T-014); for the outage months it requires 100% `CANNOT_DETERMINE` (plan) and also reports the share with the reason `OUTAGE` (D-028 step 1).
+On the T-014 `entity_month.parquet` (68,562 entity-months; 67,626 with a baseline): the same four outage months (2002-07, 2002-08, 2002-09, 2026-11; no complete witness) cover **936 entity-months (234 entities, all types) and every one is `CANNOT_DETERMINE`: 936 of 936 (100%)**, **all 936 with the reason `OUTAGE`** (D-028 step 1). Criterion: 100% `CANNOT_DETERMINE`; status **PASS**.
+
+Check of the product beyond the criterion: the 936 outage entity-months are also exactly the entity-months of the whole product without an estimate (936 of 68,562), and all of them carry `OUTAGE` (702 with `OUTAGE` only, 233 with `OUTAGE` and `PROVISIONAL_NRT`, 1 with `DIURNAL_CAVEAT`, `OUTAGE` and `PROVISIONAL_NRT`). So there is no month without an estimate that is not an outage, and no outage month with an estimate. Baseline fields are filled in outage rows too (the baseline does not depend on the month's estimate); they do not change the verdict.
+
+Supplementary shift of the median `pct_of_normal`, 12 months from the date minus the 12 before (percentage points; no threshold in the plan, no status): South Africa (ZAF) +5.2 at 2012-01 and -12.7 at 2018-04; Africa (AF) -3.5 at 2012-01 and +1.9 at 2018-04. These are level changes of a percent-of-normal in a real, varying series (a real change in fire activity between years is included) and are not a measure of an artifact; the B1 step above is the test.
 
 ### 4.4 S-NPP end 2026-11-02 (supplementary, no plan criterion) [VERIFIED]
 
 S-NPP's last complete month is 2026-10; in 2026-11 it has 2 days available, consistent with the documented end of 2026-11-02 15:40 UTC. No entity-month from 2026-11 uses S-NPP (15 checked). **[OPEN]** 2026-11 is partial for every witness (data to 2026-11-14), so in the harmonized series the S-NPP end cannot yet be told apart from the partial month; it will be visible as a month with Aqua and NOAA-20 only once 2026-12 is complete. The step test for it cannot be run before then.
 
-## 5. NOT_RUN until T-014, and the command
+## 5. What ran, and the command
 
-Not run: **B3 outages, verdicts**, and therefore the B3 family. Also not computed: the `pct_of_normal` supplementary shift. After T-014 writes the verdict product to `data/products/entity_month.parquet` (baseline fields filled), run, from the repository root:
+Everything ran; nothing is NOT_RUN. To reproduce, from the repository root with the T-014 products in `data/products/`:
 
 ```
 python pipeline/validation_b.py                                    # about 2.5 minutes; uses data/products/entity_month.parquet when present
 python pipeline/validation_b.py --entity-month PATH_TO_PRODUCT     # or name the product
 ```
 
-It rewrites `data/interim/qa/T-021_validation_entries.json` (contract section 6 shape) and `data/interim/qa/T-021_full_results.json` (both git-ignored). The B1 and drift results do not change (same code and data); the verdict entry becomes PASS or FAIL and the B3 family follows.
+It writes `data/interim/qa/T-021_validation_entries.json` (contract section 6 shape) and `data/interim/qa/T-021_full_results.json` (both git-ignored). B1 and the drift check use the estimates of `harmonize.records_from` on the real witnesses; the verdict check uses the product. The product is accepted as having verdicts when `baseline_median` is non-null for some rows (true for the T-014 product); no change to the harness was needed.
 
 ## 6. Other limits
 
