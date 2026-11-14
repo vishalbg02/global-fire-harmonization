@@ -1,6 +1,6 @@
 # Validation Plan: the Witness Stand
 
-> **No validation test has been run yet.** Every status below is `NOT_RUN`. Thresholds are **PROPOSED** and must be **locked by the Project Lead at Gate G1, before any results exist** (T-051). After that, any threshold change must be logged in `DECISION_LOG.md` with a reason, and the original threshold kept visible.
+> **No validation test has been run yet.** Every status below is `NOT_RUN`. Thresholds were **locked by the Project Lead at Gate G1 on 2026-11-14, before any results existed** (T-051, D-028). After that, any threshold change must be logged in `DECISION_LOG.md` with a reason, and the original threshold kept visible.
 
 ## 1. Principles
 
@@ -23,6 +23,23 @@
 | C8 | Southern African savanna (no event) | Savanna / S. Hemisphere Africa | Overlap | **Control:** no spurious anomalies at satellite-change dates |
 
 These are well-documented extreme seasons. **Their detected anomaly magnitudes in our record are unknown until computed.** The Lead defines the exact bounding boxes and months by H6 (T-050).
+
+### 2a. Case windows and boxes (T-050) **[APPROVED by the Lead 2026-11-14]**
+Fixed before any result. Boxes are approximate rectangles (W, S, E, N in degrees) evaluated through `harmonize_area()` on the cells they contain; "peak window" is what test A1 compares.
+
+| ID | Box (W, S, E, N) or entity | Analysis window | Peak window |
+|---|---|---|---|
+| C1 | Sumatra + Kalimantan: 95, −6, 119, 4 | 2015-06 to 2015-12 | 2015-09 to 2015-10 |
+| C2 | Brazilian Amazon: −70, −12, −45, 0 | 2019-05 to 2019-11 | 2019-08 to 2019-09 |
+| C3 | Pantanal: −59, −22, −54, −15 | 2020-06 to 2020-11 | 2020-08 to 2020-10 |
+| C4 | SE Australia: 145, −39, 154, −28 | 2019-09 to 2020-03 | 2019-12 to 2020-01 |
+| C5 | California: −124.5, 32.5, −114, 42 | 2020-06 to 2020-11 | 2020-08 to 2020-09 |
+| C6 | Sakha/Yakutia: 105, 58, 150, 72 | 2021-05 to 2021-09 | 2021-07 to 2021-08 |
+| C7 | Canada (entity `CAN`) | 2023-04 to 2023-10 | 2023-06 to 2023-07 |
+| C8 | Southern African savanna (control): 20, −20, 35, −8 | 2011-01 to 2013-12 and 2017-04 to 2019-04 | Satellite-change dates 2012-01 and 2018-04 (±12 months) |
+
+**Quiet months for test A2** (rule fixed now, not hand-picked): for each of C1, C4 and C6, the calendar month with the lowest baseline median in its box, in **2010** (pre-2012) and in **2023** (post-2022).
+
 
 ## 3. Tests and pass/fail criteria (PROPOSED; lock at G1)
 
