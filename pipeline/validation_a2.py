@@ -111,6 +111,7 @@ def plant_month(cmw: pd.DataFrame, cell_ids: list[str], event: Month, target: Mo
         return cmw, info
     own = cmw[in_box & is_target & (cmw["witness"] == witness) & cmw["data_level"].notna()]["data_level"]
     level = own.mode().iloc[0] if len(own) else None          # the quiet month's own level for this witness, else the event's
+    event_dim = int(src["days_in_month"].iloc[0])
     src["year"], src["month"] = target
     src["days_in_month"] = dim
     src["days_available"] = dim
@@ -118,7 +119,7 @@ def plant_month(cmw: pd.DataFrame, cell_ids: list[str], event: Month, target: Mo
         src["data_level"] = level
     keep = cmw[~(in_box & is_target)]
     out = pd.concat([keep, src[cmw.columns]], ignore_index=True)
-    info.update({"ok": True, "event_days_in_month": int(src["days_in_month"].iloc[0]), "cell_days": int(src["cell_days"].sum()), "detections": int(src["detections"].sum()),
+    info.update({"ok": True, "event_days_in_month": event_dim, "cell_days": int(src["cell_days"].sum()), "detections": int(src["detections"].sum()),
                  "frp_sum_mw": float(src["frp_sum_mw"].sum()), "data_level": str(src["data_level"].iloc[0]) if len(src) else None})
     return out, info
 
