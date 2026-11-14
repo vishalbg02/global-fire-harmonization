@@ -251,22 +251,32 @@ export function parseEntityMonth(raw: unknown): EntityMonth {
   }
 }
 
+/**
+ * Decodes a `raw_by_witness` value that is already a plain object (from JSON.parse, never a
+ * string) into the contract's witness-keyed map. Shared by `parseEntityEvidence` and by anything
+ * that decodes a series record's `raw_by_witness` string itself (T-036, T-037).
+ */
+export function decodeRawByWitness(
+  decoded: unknown,
+  what: string,
+): Partial<Record<Witness, number>> | null {
+  if (decoded === null) return null
+  const entries = asRecord(decoded, `${what}: raw_by_witness`)
+  const rawByWitness: Partial<Record<Witness, number>> = {}
+  for (const [witness, value] of Object.entries(entries)) {
+    const key = oneOf(witness, WITNESSES, 'raw_by_witness witness', what)
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      throw new ContractError(`${what}: raw_by_witness "${witness}" must be a number`)
+    }
+    rawByWitness[key] = value
+  }
+  return rawByWitness
+}
+
 export function parseEntityEvidence(raw: unknown): EntityEvidence {
   const what = 'evidence'
   const o = asRecord(raw, what)
-  const decoded = field(o, 'raw_by_witness', what)
-  let rawByWitness: Partial<Record<Witness, number>> | null = null
-  if (decoded !== null) {
-    const entries = asRecord(decoded, `${what}: raw_by_witness`)
-    rawByWitness = {}
-    for (const [witness, value] of Object.entries(entries)) {
-      const key = oneOf(witness, WITNESSES, 'raw_by_witness witness', what)
-      if (typeof value !== 'number' || !Number.isFinite(value)) {
-        throw new ContractError(`${what}: raw_by_witness "${witness}" must be a number`)
-      }
-      rawByWitness[key] = value
-    }
-  }
+  const rawByWitness = decodeRawByWitness(field(o, 'raw_by_witness', what), what)
   return {
     entity_type: oneOf(field(o, 'entity_type', what), ENTITY_TYPES, 'entity_type', what),
     entity_id: str(o, 'entity_id', what),
@@ -302,21 +312,31 @@ export function parseEntityItems(raw: unknown): EntityItem[] {
   return raw.map(parseEntityItem)
 }
 
+/** Parses the JSON string of `EntityMonth.raw_by_witness`, or returns null. Decoding a stored string is not a computation. */
+export function parseRawByWitness(
+  value: string | null,
+  what: string,
+): Partial<Record<Witness, number>> | null {
+  if (value === null) return null
+  let decoded: unknown
+  try {
+    decoded = JSON.parse(value)
+  } catch {
+    throw new ContractError(`${what}: "raw_by_witness" is not valid JSON`)
+  }
+  return decodeRawByWitness(decoded, what)
+}
+
 /**
  * An entity_month record (as returned by the series endpoints, with `raw_by_witness` as a JSON
  * string) turned into evidence (with `raw_by_witness` decoded). Used for a custom area, which
  * has no evidence endpoint. Decoding a stored string is not a computation.
  */
 export function evidenceFromEntityMonth(record: EntityMonth): EntityEvidence {
-  let decoded: unknown = null
-  if (record.raw_by_witness !== null) {
-    try {
-      decoded = JSON.parse(record.raw_by_witness)
-    } catch {
-      throw new ContractError('series record: "raw_by_witness" is not valid JSON')
-    }
+  return {
+    ...record,
+    raw_by_witness: parseRawByWitness(record.raw_by_witness, 'series record'),
   }
-  return parseEntityEvidence({ ...record, raw_by_witness: decoded })
 }
 
 export function parseEntityMonths(raw: unknown): EntityMonth[] {

@@ -2,7 +2,7 @@
 
 Frontend for the Global Fire Harmonization project (working name: *Many Witnesses*). Owner: Member 3. Task: T-030 (setup and skeleton).
 
-**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. A shared Raw / Harmonized control (T-033) switches the map and the calendar between the stored raw count and the harmonized estimate on one colour scale. An evidence panel (T-036) explains the verdict for the selected area and month, or for a selected map cell, in plain language. The area picker (T-035) chooses the world, a country, a continent or a custom rectangle (typed, or drawn on the map), and the selection is kept in the link. The witness charts are added by a later task. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
+**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. A shared Raw / Harmonized control (T-033) switches the map and the calendar between the stored raw count and the harmonized estimate on one colour scale. An evidence panel (T-036) explains the verdict for the selected area and month, or for a selected map cell, in plain language. The area picker (T-035) chooses the world, a country, a continent or a custom rectangle (typed, or drawn on the map), and the selection is kept in the link. The witness comparison chart (T-037) shows the area's whole monthly history: the harmonized line and its band, the baseline band and median, the raw combined line, a line per satellite, a static satellite timeline, and outage/drift/provisional marks, with an accessible table view. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
 
 ## Prerequisites
 
@@ -73,6 +73,7 @@ app/
 │   ├── components/calendar/ calendar grid, ECharts heatmap, table view, legend, scales, tooltip text
 │   ├── components/evidence/ evidence panel: verdict, numbers, satellites, raw contributions, reasons
 │   ├── components/area/    area picker, custom-area form, country search, shared series query
+│   ├── components/witness/ witness comparison chart, satellite timeline, table view, outage/drift marking
 │   ├── state/              selection, months, box checks (bbox.ts), link encoding (urlState.ts)
 │   ├── components/common/  synthetic banner, loading/error/empty states, error boundary, Raw / Harmonized control
 │   └── **/*.test.ts(x)     Vitest tests (mock data inside test files is SYNTHETIC)
