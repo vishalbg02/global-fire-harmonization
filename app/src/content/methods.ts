@@ -58,7 +58,7 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
     title: 'The witnesses and what each does',
     paragraphs: [
       'Each satellite sensor is called a witness. Each one reports what it saw. None is treated as the truth.',
-      'Aqua MODIS (record from July 2002): the display scale. Values are expressed on the Aqua-equivalent scale. Aqua enters the combination with a ratio of 1 and no ratio uncertainty. It is meant to leave the combination after a drift cutoff (see the Aqua drift section).',
+      'Aqua MODIS (record from July 2002): the display scale. Values are expressed on the Aqua-equivalent scale. Aqua enters the combination with a ratio of 1 and no ratio uncertainty. Aqua night is excluded from the combination from 2024-05 on; Aqua day stays (D-005, APPROVED; see the Aqua drift section).',
       'S-NPP VIIRS (20 January 2012 to 2 November 2026): converted to the Aqua-equivalent scale and combined.',
       'NOAA-20 VIIRS (from 1 April 2018, ongoing): converted to the Aqua-equivalent scale and combined.',
       'Terra MODIS (D-006, PROPOSED): shown in the raw view only. It never enters the harmonized estimate, because Terra samples the morning and would need a second calibration chain.',
@@ -66,7 +66,7 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
       'The harmonized record starts in 2002-07 (D-006, PROPOSED).',
       'The end dates of the Aqua and Terra missions are not known from FIRMS data.',
     ],
-    labels: ['PROPOSED', 'VERIFIED', 'OPEN'],
+    labels: ['APPROVED', 'PROPOSED', 'VERIFIED', 'OPEN'],
     source:
       'docs/DECISION_LOG.md, D-005, D-006, D-007; docs/DATA_SOURCES.md, section 4 "Satellite record dates"; docs/SCIENTIFIC_METHODOLOGY.md, sections 3 and 4.4',
   },
@@ -110,9 +110,9 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
       'Measured global ratios show why one factor does not fit: by day a VIIRS witness records about 3 to 4 times the Aqua cell-days. By night it records about 13 to 25 times.',
       'Calibration is fitted only on the overlap years and is never re-fitted per year. Per-year re-fitting would absorb real changes.',
       'LIMITATION: the ratios assume that the fire-size mix inside a stratum stays the same. If fires get systematically smaller or larger, the ratio drifts. This is not corrected.',
-      'OPEN: the low night ratios in savanna and agricultural fire regions are a hypothesis, not a verified fact. The idea is that VIIRS sees many small night fires that MODIS misses. The holdout evaluation (T-012) and validation test E1 are to check it, and T-012 is not done yet.',
+      'OPEN: the low night ratios in savanna and agricultural fire regions are a hypothesis, not a verified fact. The idea is that VIIRS sees many small night fires that MODIS misses. Validation test E1 is to check it. The holdout evaluation (T-012) is reported in its own section below.',
     ],
-    labels: ['VERIFIED', 'APPROVED', 'LIMITATION', 'OPEN', 'NOT_BUILT_YET'],
+    labels: ['VERIFIED', 'APPROVED', 'LIMITATION', 'OPEN'],
     source:
       'docs/DATA_SOURCES.md, "Calibration (T-011)"; docs/SCIENTIFIC_METHODOLOGY.md, sections 4.3 and 5; docs/RISKS_AND_LIMITATIONS.md, S2 and S15',
   },
@@ -141,14 +141,32 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
     title: 'The Aqua drift and the cutoff',
     paragraphs: [
       "Aqua's orbit is drifting because its fuel is exhausted. The time of day it samples is changing (LAADS).",
-      'OPEN: the date the drift starts to matter is not confirmed. A 2017 NASA plan suggested about 2021 to 2022.',
-      'PROPOSED (D-005): express values on the Aqua-equivalent scale as a display scale, not as truth, and remove Aqua from the combination after a cutoff that is measured from the data (the Aqua to VIIRS ratio over time).',
-      'NOT_BUILT_YET: the cutoff is not set. The drift diagnostic (T-012) has not been done, so Aqua is not removed from the combination at any date today. The reason code AQUA_DRIFT_ERA is defined for the period after the cutoff.',
+      'APPROVED (D-005, the Lead, 2026-11-14), as a documented deviation from the registered rule: Aqua night is excluded from the combination from 2024-05 on. Aqua day stays. Day and night are combined separately in every month and then added. The months from 2024-05 carry the reason code AQUA_DRIFT_ERA.',
+      'VERIFIED (T-012): the registered test used the global day series of S-NPP only. It found no drift (onset 2025-06 at the edge of the range, slope -5.4% per year, the flat model better by 6.1 BIC). It missed a drift visible only at night. Night drift was detected in S-NPP with onset 2024-05 (interval 2022-10 to 2025-04, -12.0% per year, delta BIC +28.9) and in NOAA-20 with onset 2024-09 (interval 2024-03 to 2025-02, -19.0% per year, delta BIC +50.7). The earlier onset, 2024-05, is used as the conservative choice. Values are expressed on the Aqua-equivalent scale as a display scale, not as truth.',
+      'LIMITATION: the cutoff date was chosen after seeing the results, because the registered primary series did not give it. It is therefore not a registered result. The choice of 2024-05 rests on the earlier of two overlapping onset intervals.',
+      'OPEN: the cause of the drift (a change in Aqua, in its processing, or in VIIRS) is not known. The diagnostic cannot separate them.',
       'LIMITATION: the drift era (2022 onward) cannot be validated against a stable reference. Test B3 shows the drift as a ratio trend and reports its onset estimate. It has not been run.',
     ],
-    labels: ['OPEN', 'PROPOSED', 'NOT_BUILT_YET', 'LIMITATION'],
+    labels: ['APPROVED', 'VERIFIED', 'LIMITATION', 'OPEN'],
     source:
-      'docs/DECISION_LOG.md, D-005; docs/SCIENTIFIC_METHODOLOGY.md, section 3; docs/DATA_SOURCES.md, "Combining the witnesses" (aqua_cutoff unset until T-012); docs/VALIDATION_PLAN.md, sections 3 and 6',
+      'docs/DECISION_LOG.md, D-005; docs/DATA_SOURCES.md, "Aqua drift diagnostic (T-012)" and "Combining the witnesses" (AQUA_FROM); docs/SCIENTIFIC_METHODOLOGY.md, section 3; docs/VALIDATION_PLAN.md, sections 3 and 6',
+  },
+  {
+    id: 'holdout-evaluation',
+    title: 'Holdout evaluation (T-012), measured',
+    paragraphs: [
+      'This is the holdout evaluation (T-012). It is not the recorded validation test D1, which stays "not run". The two are different checks and this one does not replace D1.',
+      'VERIFIED: the question is how well the converted S-NPP estimate predicts what Aqua counted in 2017 to 2021, months not used to fit the ratios. Units are fire-region-months and country-months, day and night separately, and the day+night total. A unit needs at least 20 Aqua cell-days. The actual value is the Aqua cell-day count, which is itself an estimate and not ground truth.',
+      'Median absolute log error (ours / naive raw merge / one global ratio), regions: day 0.090 / 1.347 / 0.265; night 0.209 / 2.979 / 0.447; day+night 0.086 / 1.526 / 0.224. Countries: day 0.149 / 1.434 / 0.316; night 0.224 / 2.949 / 0.569; day+night 0.100 / 1.439 / 0.213. Ours has a lower pooled error than both in every one of these rows.',
+      'VERIFIED: where ours does not win (groups with at least 30 units). Regions: EURO day (ours 0.146, global ratio 0.134) and EURO night (0.281 against 0.223). Countries, all against the global ratio: ESP day (0.177 vs 0.153), KAZ night (0.490 vs 0.383), PRY day (0.104 vs 0.103), SDN day (0.173 vs 0.142), SDN night (0.168 vs 0.136), URY day (0.208 vs 0.184), MLI day+night (0.080 vs 0.076), SDN day+night (0.108 vs 0.088). The raw merge never beats ours.',
+      'VERIFIED: coverage of the 90% interval (target 80% to 97%). Units, day and night together: 0.818 for regions (1,466 units) and 0.811 for countries (6,409 units). Day+night totals: 0.847 for regions and 0.826 for countries.',
+      'LIMITATION: night units are below 80%: 0.750 for regions (636 units) and 0.794 for countries (1,611 units). Roughly half of the individual regions and countries also fall below 80%: 7 of 14 region groups and 45 of 87 countries for day and night units. The 50% interval covers 0.471 (regions) and 0.439 (countries), so the intervals are slightly too narrow in the middle as well.',
+      'LIMITATION: Aqua and S-NPP see many of the same fires, so the two sides are not independent, and the interval ignores their covariance. The variance model was partly fitted on months that overlap this holdout (Aqua against NOAA-20), so the coverage is not a clean out-of-sample test. Aqua is the reference here but has errors and drift too. Agreement with Aqua is not agreement with the truth.',
+      'OPEN: test D1, the independent coverage check, has not been run.',
+    ],
+    labels: ['VERIFIED', 'LIMITATION', 'OPEN'],
+    source:
+      'docs/DATA_SOURCES.md, "Holdout evaluation 2017 to 2021 (T-012)" (tables "Main result", "Where ours does not beat a baseline", "Coverage of the 90% interval", "Coverage check asked by the Lead on PR #43" and "Reading it correctly")',
   },
   {
     id: 'baseline-verdicts',

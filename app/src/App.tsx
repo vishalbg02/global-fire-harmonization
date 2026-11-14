@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ApiError, fetchAnomalies, fetchEntities, fetchMapCells, fetchMeta } from './api/client.ts'
 import type { Anomaly, Bbox, EntityItem, MapCell } from './api/contract.ts'
@@ -9,7 +9,6 @@ import { AreaPicker } from './components/area/AreaPicker.tsx'
 import { resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
-import { MethodsPage } from './components/methods/MethodsPage.tsx'
 import { PAGE_PARAM, METHODS_PAGE, methodsHref, pageFromSearch } from './content/methodsLink.ts'
 import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
@@ -27,6 +26,8 @@ import { monthKey, monthRange } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
+
+const MethodsPage = lazy(() => import('./components/methods/MethodsPage.tsx').then((m) => ({ default: m.MethodsPage })))
 
 export default function App() {
   // The selection starts from the link (area, month, source, map mode, value mode), if any.
@@ -174,12 +175,14 @@ export default function App() {
         </p>
       )}
       {page === 'methods' ? (
-        <MethodsPage
-          onBack={() => {
-            setPage('map')
-            window.scrollTo(0, 0)
-          }}
-        />
+        <Suspense fallback={<LoadingState what="the methods page" />}>
+          <MethodsPage
+            onBack={() => {
+              setPage('map')
+              window.scrollTo(0, 0)
+            }}
+          />
+        </Suspense>
       ) : (
       <main>
         <div className="controls">
