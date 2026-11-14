@@ -51,6 +51,10 @@ function markLine(months: readonly string[], color: string, lineType: 'solid' | 
   }
 }
 
+function hasValues(s: Record<string, unknown>): boolean {
+  return (s.data as (number | null | undefined)[]).some((v) => v !== null && v !== undefined)
+}
+
 /** A band from `low` to `high`, drawn as a stacked invisible line plus a filled area on top. */
 function band(low: (number | null)[], high: (number | null)[], color: string, name: string) {
   const diff = low.map((l, i) => {
@@ -141,7 +145,8 @@ export function buildWitnessChartOption(records: readonly EntityMonth[]): EChart
       },
     },
     tooltip: { trigger: 'axis', confine: true },
-    legend: { type: 'scroll', bottom: 0 },
+    // Only series that hold at least one stored value are listed (a missing product leaves none).
+    legend: { type: 'scroll', bottom: 0, data: series.filter(hasValues).map((s) => s.name as string) },
     grid: { left: 56, right: 16, top: 24, bottom: 64 },
     xAxis: { type: 'category', data: categories, boundaryGap: false },
     yAxis: { type: 'value', name: 'fire-active cell-days' },

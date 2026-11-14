@@ -7,6 +7,7 @@ import { bboxLabel } from '../../state/bbox.ts'
 import { monthLabel } from '../../state/months.ts'
 import type { Area } from '../../state/selection.ts'
 import { useAreaSeries } from '../area/useAreaSeries.ts'
+import { RAW_ONLY_AREA_UNAVAILABLE, useRawOnly } from '../../content/rawOnly.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { EvidenceBody } from './EvidenceBody.tsx'
 
@@ -80,6 +81,9 @@ export function EvidencePanel({ area, month, cell, meta, headingRef, onShowWorld
   const when = month === null ? '' : monthLabel(month)
   const heading = cell !== null ? CELL_HEADING : `Evidence: ${area.entity_name}${when === '' ? '' : `, ${when}`}`
   const notFound = !custom && areaQuery.error instanceof ApiError && areaQuery.error.status === 404
+  const rawOnly = useRawOnly()
+  const areaUnavailable =
+    rawOnly && !custom && areaQuery.error instanceof ApiError && areaQuery.error.status === 503
 
   return (
     <section className="evidence-panel" aria-label="Evidence and uncertainty">
@@ -107,7 +111,10 @@ export function EvidencePanel({ area, month, cell, meta, headingRef, onShowWorld
       {cell === null && month !== null && !custom && areaQuery.isError && notFound && (
         <AreaNotFound area={area} month={month} onShowWorld={onShowWorld} />
       )}
-      {cell === null && !custom && areaQuery.isError && !notFound && (
+      {cell === null && !custom && areaQuery.isError && areaUnavailable && (
+        <EmptyState message={RAW_ONLY_AREA_UNAVAILABLE} />
+      )}
+      {cell === null && !custom && areaQuery.isError && !notFound && !areaUnavailable && (
         <ErrorState
           message="Data are not available right now. The evidence could not be loaded."
           onRetry={() => void areaQuery.refetch()}

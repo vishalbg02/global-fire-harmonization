@@ -401,7 +401,7 @@ data/
 │   └── validation_results.json      ← "synthetic": true
 ├── raw/                             ← git-ignored (downloads)
 ├── interim/                         ← git-ignored (normalized detections)
-└── products/                        ← git-ignored; REAL products, same file names as fixtures
+└── products/                        ← REAL products, same file names as fixtures; committed via Git LFS (D-027)
 ```
 
 - **Product path rule [PROPOSED ADDITION]:** each Parquet product is *either* a single file `<name>.parquet` *or* a directory `<name>/` of Parquet files, Hive-partitioned by `year=YYYY`. Consumers must accept both forms (read `<name>.parquet` if present, otherwise `<name>/**/*.parquet`).
@@ -500,7 +500,7 @@ data/
 |---|---|---|
 | H3 | M2 → M3 | SYNTHETIC fixtures + fixtures `README.md` (T-010) |
 | H10 | M2 → M3 | `harmonize_area()` **stub** with the final signature, returning fixture-derived records |
-| H22 | M2 → M3 | Real products in `data/products/` (shared through the team drive, never Git) + real `harmonize_area()` |
+| H22 | M2 → M3 | Real products in `data/products/` (committed via Git LFS, D-027) + real `harmonize_area()` |
 | H26 | M2 → M3 | Real `validation_results.json` with actual statuses |
 | Any time | M3 → Lead → M2 | Integration needs or contract gaps, raised as a PR comment or tracker note to the Lead. **Never** by editing the other workstream's code |
 

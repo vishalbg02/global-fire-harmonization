@@ -44,6 +44,8 @@ Responses are bare payloads (no envelope). Errors use FastAPI's default body, `{
 | `GET /api/export.csv?entity_type=&entity_id=` or `?bbox=W,S,E,N` | The monthly series of one preset area, or of a custom rectangle, as a CSV download (UTF-8 with a byte-order mark; `#` metadata lines, then one row per month; all five `raw_<witness>` columns; empty cell = missing, never 0; `Content-Disposition` carries the file name, prefixed `SYNTHETIC_` while the data are) | 400 (neither or both of preset and `bbox`, malformed `bbox`), 404, 422, 503 |
 | `GET /api/validation` | `validation_results.json`, served as is | 503 |
 
+Raw-only products (T-039 phase 1): with `method_version` ending in `-raw-only`, every harmonized field is `null` and every verdict is `CANNOT_DETERMINE`; the API serves them as stored. A missing product file gives `503` "Data are not available right now", never a fixture fallback (tested in `tests/test_missing_products.py`). On the full real set a `GET /api/map` month takes about 0.6 s and 28 MB; the series, evidence and export endpoints take about 0.02 s.
+
 Status codes: `400` invalid parameters, `404` unknown entity or month, `422` invalid custom area, `503` products or the harmonization function unavailable (or a stored product that does not match the contract).  A `bbox` export answers `503` until `harmonize_area()` is delivered, like the custom series.
 
 Notes on the choices the contract leaves open (all confirmed by the Lead on PR #16):

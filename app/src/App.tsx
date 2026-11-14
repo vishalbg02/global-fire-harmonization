@@ -9,6 +9,7 @@ import { AreaPicker } from './components/area/AreaPicker.tsx'
 import { resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
+import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly } from './content/rawOnly.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
 import { CellInfo } from './components/map/CellInfo.tsx'
@@ -116,7 +117,9 @@ export default function App() {
   }, [months, selection.month])
 
   // The API layer follows the shared Raw / Harmonized control and the map mode.
-  const layer = effectiveLayer(selection)
+  // Raw-only products have no harmonized values: the views show raw activity and say so.
+  const rawOnly = isRawOnly(meta.data)
+  const layer = effectiveLayer(rawOnly ? { ...selection, source: 'raw', mapMode: 'activity' } : selection)
   const cells = useQuery({
     queryKey: ['map', selection.month?.year, selection.month?.month, layer],
     queryFn: () => fetchMapCells(selection.month!.year, selection.month!.month, layer),
@@ -135,12 +138,18 @@ export default function App() {
       : null
 
   return (
+    <RawOnlyContext.Provider value={rawOnly}>
     <div className="app">
       <SyntheticBanner synthetic={meta.data?.synthetic === true} />
       <header>
         <h1>Global Fire Harmonization</h1>
         <p className="subtitle">Satellite-detected fire activity, harmonized across MODIS and VIIRS</p>
       </header>
+      {rawOnly && (
+        <p className="raw-only-note" role="status">
+          {RAW_ONLY_NOTE}
+        </p>
+      )}
       <main>
         <div className="controls">
           <MonthSelector
@@ -149,13 +158,15 @@ export default function App() {
             onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
           />
           <SourceToggle
-            value={selection.source}
+            value={rawOnly ? 'raw' : selection.source}
             onChange={(source) => dispatch({ type: 'set-source', source })}
-            rawDisabled={!rawAvailable(selection.valueMode)}
+            rawDisabled={!rawOnly && !rawAvailable(selection.valueMode)}
+            harmonizedDisabled={rawOnly}
           />
           <MapModeSelector
-            value={selection.mapMode}
+            value={rawOnly ? 'activity' : selection.mapMode}
             onChange={(mapMode) => dispatch({ type: 'set-map-mode', mapMode })}
+            verdictDisabled={rawOnly}
           />
         </div>
         <div className="map-area">
@@ -235,8 +246,8 @@ export default function App() {
             area={area}
             meta={meta.data ?? null}
             selectedMonth={selection.month}
-            valueMode={selection.valueMode}
-            source={selection.source}
+            valueMode={rawOnly ? 'activity' : selection.valueMode}
+            source={rawOnly ? 'raw' : selection.source}
             onValueModeChange={(valueMode) => dispatch({ type: 'set-value-mode', valueMode })}
             onSelectMonth={(year, month) => {
               dispatch({ type: 'set-month', year, month })
@@ -260,5 +271,6 @@ export default function App() {
         <WitnessPanel area={area} onShowWorld={() => dispatch({ type: 'clear-entity' })} />
       </main>
     </div>
+    </RawOnlyContext.Provider>
   )
 }

@@ -25,7 +25,7 @@ You are assisting **Member 2 (Data Engineering & Scientific Analysis)** of a thr
 6. **Secrets.** The FIRMS `MAP_KEY` lives only in `.env` (`FIRMS_MAP_KEY`).
    - It appears inside API URLs, so **redact it** from logs, saved file names, error messages and committed scripts.
    - Never commit `.env`.
-7. **Data.** Never commit NASA archives, interim files or products. Only small `SYNTHETIC` fixtures (< 5 MB) go in Git, under `data/fixtures/`.
+7. **Data.** Never commit NASA raw archives or interim files. Contract products in `data/products/` are committed **through Git LFS** (D-027): run `git lfs install` once, then `git add` them normally (`.gitattributes` routes them to LFS), and post SHA-256 checksums in the PR. Small `SYNTHETIC` fixtures (< 5 MB) go in Git normally, under `data/fixtures/`.
 8. **Scientific honesty.**
    - Hotspots ≠ fires, fire counts or burned area.
    - Never fill, interpolate or fabricate observations.
@@ -476,7 +476,7 @@ data/
 │   └── validation_results.json      ← "synthetic": true
 ├── raw/                             ← git-ignored (downloads)
 ├── interim/                         ← git-ignored (normalized detections)
-└── products/                        ← git-ignored; REAL products, same file names as fixtures
+└── products/                        ← REAL products, same file names as fixtures; committed via Git LFS (D-027)
 ```
 
 - **Product path rule [PROPOSED ADDITION]:** each Parquet product is *either* a single file `<name>.parquet` *or* a directory `<name>/` of Parquet files, Hive-partitioned by `year=YYYY`. Consumers must accept both forms (read `<name>.parquet` if present, otherwise `<name>/**/*.parquet`).
@@ -575,7 +575,7 @@ data/
 |---|---|---|
 | H3 | M2 → M3 | SYNTHETIC fixtures + fixtures `README.md` (T-010) |
 | H10 | M2 → M3 | `harmonize_area()` **stub** with the final signature, returning fixture-derived records |
-| H22 | M2 → M3 | Real products in `data/products/` (shared through the team drive, never Git) + real `harmonize_area()` |
+| H22 | M2 → M3 | Real products in `data/products/` (committed via Git LFS, D-027) + real `harmonize_area()` |
 | H26 | M2 → M3 | Real `validation_results.json` with actual statuses |
 | Any time | M3 → Lead → M2 | Integration needs or contract gaps, raised as a PR comment or tracker note to the Lead. **Never** by editing the other workstream's code |
 

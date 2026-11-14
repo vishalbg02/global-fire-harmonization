@@ -44,7 +44,7 @@ This repository is the single source of truth. **Do not rely on chat history, ac
 - **Never interpolate or fabricate observations.** Missing data must be shown as missing or "cannot determine". Synthetic fixtures must be labelled `SYNTHETIC` and never shown as results.
 - **Secrets and large files:**
   - Never commit keys, tokens, `.env` files or credentials; use `.env.example`.
-  - Never commit NASA archives or products; they belong in `data/` (`data/README.md`).
+  - Never commit NASA raw archives or interim files (`data/raw/`, `data/interim/`). Contract products in `data/products/` go in Git **only through Git LFS** (D-027, `data/README.md`). Run `git lfs install` once per machine.
 - Do not change GitHub settings, repository visibility or collaborators.
 - **No AI attribution (D-020):**
   - Never put Claude's name, any AI assistant's name, or AI-generated attribution in commit messages, PR titles or descriptions, branch names, code comments, documentation credits or project metadata. That includes `Co-Authored-By` trailers and "Generated with …" lines.

@@ -1,0 +1,2 @@
+# Git LFS (D-027): contract products are stored in LFS, never as normal Git objects.
+data/products/**/*.parquet filter=lfs diff=lfs merge=lfs -text
