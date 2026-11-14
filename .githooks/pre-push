@@ -1,0 +1,14 @@
+#!/bin/sh
+# Local safety net: blocks accidental pushes to main from this clone.
+# Enable once per clone:   git config core.hooksPath .githooks
+# This is NOT enforcement (bypassable with --no-verify). See docs/TEAM_WORKFLOW.md §10.
+# Project Lead bookkeeping commits only (D-018):   ALLOW_MAIN_PUSH=1 git push
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ] && [ "${ALLOW_MAIN_PUSH:-0}" != "1" ]; then
+    echo "pre-push: direct pushes to 'main' are not allowed." >&2
+    echo "Push your task branch and open a Pull Request instead (CONTRIBUTING.md)." >&2
+    exit 1
+  fi
+done
+exit 0
