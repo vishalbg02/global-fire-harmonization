@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OfflineNote } from '../components/common/OfflineNote.tsx'
 import { offlineNoteText } from '../content/offline.ts'
 import { CustomAreaForm } from '../components/area/CustomAreaForm.tsx'
-import { ApiError, fetchAnomalies, fetchCsv, fetchCustomSeries, fetchEvidence, fetchMapCells, fetchMeta, fetchSeries } from './client.ts'
+import { ApiError, fetchAnomalies, fetchCsv, fetchCustomSeries, fetchEvidence, fetchMapCells, fetchMeta, fetchSeries, fetchValidation } from './client.ts'
 import { parseMapCells } from './contract.ts'
 import { decodeMonth, enterStaticMode, resetStaticMode, STATIC_CUSTOM_MESSAGE } from './staticData.ts'
 import type { CellColumns, EncodedMonth } from './staticData.ts'
@@ -58,6 +58,7 @@ const RECORD = {
 }
 const FILES: Record<string, unknown> = {
   'manifest.json': MANIFEST,
+  'validation.json': { contract_version: '0.1.1', method_version: '0.1.0', generated_at: '2026-11-14T00:00:00Z', synthetic: true, tests: [] },
   'meta.json': META,
   'series/COUNTRY-BRA.json': [RECORD],
   'anomalies/2026-10.json': [],
@@ -110,6 +111,13 @@ describe('the offline copy (T-043)', () => {
       vi.stubGlobal('fetch', fakeFetch(mode))
       expect((await fetchMeta()).synthetic).toBe(true)
     }
+  })
+
+  it('serves the validation results from the copy too, as stored (the methods page, T-041)', async () => {
+    vi.stubGlobal('fetch', fakeFetch(false))
+    const results = await fetchValidation()
+    expect(results.tests).toEqual([])
+    expect(results.synthetic).toBe(true)
   })
 
   it('does not replace an answer of the API (404, 503) with the copy and does not enter offline mode', async () => {

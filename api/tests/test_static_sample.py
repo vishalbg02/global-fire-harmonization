@@ -60,3 +60,9 @@ def test_the_committed_sample_is_what_the_exporter_writes(
         assert json.loads((fresh / name).read_text()) == json.loads((SAMPLE / name).read_text()), (
             name
         )
+
+
+def test_the_sample_is_labelled_synthetic() -> None:
+    text = " ".join((SAMPLE / "README.md").read_text(encoding="utf-8").split())
+    assert text.startswith("# SYNTHETIC test sample")
+    assert "not NASA observations" in text

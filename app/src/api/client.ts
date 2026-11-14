@@ -130,7 +130,10 @@ export async function fetchMeta(base: string = apiBaseUrl()): Promise<Metadata> 
 }
 
 export async function fetchValidation(base: string = apiBaseUrl()): Promise<ValidationResults> {
-  return parseValidationResults(await getJson(`${base}/api/validation`))
+  return route(
+    async () => parseValidationResults(await getJson(`${base}/api/validation`)),
+    async () => parseValidationResults(await getStaticJson('validation.json')),
+  )
 }
 
 export async function fetchMapCells(
