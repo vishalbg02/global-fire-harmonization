@@ -34,17 +34,17 @@ function anomaly(id: string, verdict: 'ABOVE_NORMAL' | 'BELOW_NORMAL', p: number
 
 // The API's order is by the larger probability; the app ranks per verdict itself.
 const API_ORDER: Anomaly[] = [
+  anomaly('CCC', 'ABOVE_NORMAL', 0.99),
   anomaly('AAA', 'BELOW_NORMAL', 0.99),
   anomaly('BBB', 'ABOVE_NORMAL', 0.97),
-  anomaly('CCC', 'ABOVE_NORMAL', 0.99),
-  anomaly('DDD', 'BELOW_NORMAL', 0.6),
   anomaly('EEE', 'ABOVE_NORMAL', 0.7),
+  anomaly('DDD', 'BELOW_NORMAL', 0.6),
   anomaly('ASI', 'ABOVE_NORMAL', 0.8, { entity_type: 'CONTINENT', entity_name: 'Asia' }),
   anomaly('GLOBAL', 'BELOW_NORMAL', 0.9, { entity_type: 'GLOBAL', entity_name: 'World' }),
 ]
 
 describe('rankAnomalies', () => {
-  it('ranks "above" by p_above and "below" by p_below, highest first', () => {
+  it('splits the API order into above and below and keeps it', () => {
     const { above, below } = rankAnomalies(API_ORDER, 'COUNTRY')
     expect(above.map((a) => a.entity_id)).toEqual(['CCC', 'BBB', 'EEE'])
     expect(below.map((a) => a.entity_id)).toEqual(['AAA', 'DDD'])
@@ -60,9 +60,9 @@ describe('rankAnomalies', () => {
     }
   })
 
-  it('breaks ties by id and puts an entry without a probability last', () => {
-    const tied = [anomaly('ZZZ', 'ABOVE_NORMAL', 0.9), anomaly('AAA', 'ABOVE_NORMAL', 0.9), anomaly('MMM', 'ABOVE_NORMAL', null)]
-    expect(rankAnomalies(tied, 'COUNTRY').above.map((a) => a.entity_id)).toEqual(['AAA', 'ZZZ', 'MMM'])
+  it('never re-sorts: the API order (its tie-break included) is kept as given', () => {
+    const given = [anomaly('ZZZ', 'ABOVE_NORMAL', 0.9), anomaly('AAA', 'ABOVE_NORMAL', 0.9), anomaly('MMM', 'ABOVE_NORMAL', null), anomaly('BBB', 'ABOVE_NORMAL', 0.95)]
+    expect(rankAnomalies(given, 'COUNTRY').above.map((a) => a.entity_id)).toEqual(['ZZZ', 'AAA', 'MMM', 'BBB'])
   })
 
   it('does not change its input', () => {
@@ -80,7 +80,12 @@ describe('entry text', () => {
   it('uses the stored probability that belongs to the verdict, in whole percentages', () => {
     expect(entryProbability(anomaly('A', 'ABOVE_NORMAL', 0.824))).toBe(0.824)
     expect(probabilityText(anomaly('A', 'ABOVE_NORMAL', 0.824))).toBe('82% likely above normal')
-    expect(probabilityText(anomaly('B', 'BELOW_NORMAL', 0.995))).toBe('100% likely below normal')
+    expect(probabilityText(anomaly('B', 'BELOW_NORMAL', 0.995))).toBe('more than 99% likely below normal')
+    expect(probabilityText(anomaly('B', 'BELOW_NORMAL', 0.9999999))).toBe('more than 99% likely below normal')
+    expect(probabilityText(anomaly('B', 'BELOW_NORMAL', 0.994))).toBe('99% likely below normal')
+    expect(probabilityText(anomaly('D', 'ABOVE_NORMAL', 0.005))).toBe('less than 1% likely above normal')
+    expect(probabilityText(anomaly('D', 'ABOVE_NORMAL', 0))).toBe('less than 1% likely above normal')
+    expect(probabilityText(anomaly('D', 'ABOVE_NORMAL', 0.006))).toBe('1% likely above normal')
     expect(probabilityText(anomaly('C', 'ABOVE_NORMAL', null))).toBeNull()
   })
 
