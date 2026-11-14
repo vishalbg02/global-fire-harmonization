@@ -1,0 +1,64 @@
+# ---- Secrets & local environment ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials*.json
+
+# ---- Data (never commit NASA archives or generated products) ----
+data/*
+!data/README.md
+!data/fixtures/
+data/fixtures/**/*.zip
+*.zip
+*.duckdb
+*.duckdb.wal
+*.h5
+*.hdf
+*.nc
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.python-version
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# ---- Deploy tooling ----
+.vercel/
+.netlify/
+
+# ---- Temporary & logs ----
+tmp/
+temp/
+*.tmp
+*.log
+logs/
+
+# ---- OS / editors ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
