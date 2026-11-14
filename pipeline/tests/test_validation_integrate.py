@@ -143,3 +143,25 @@ def test_a_wrong_status_a_missing_run_date_a_not_run_with_a_result_and_a_missing
     assert any("no run date" in p for p in vi.check_plan_table(TABLE.replace("| 14 of 14 | PASS | 2026-11-15 |", "| 14 of 14 | PASS | — |"), d))
     assert any("must not show an actual result" in p for p in vi.check_plan_table(TABLE.replace("| A2 | x | — |", "| A2 | x | 50% |"), d))
     assert any("no row in section 4" in p for p in vi.check_plan_table(chr(10).join(x for x in TABLE.splitlines() if not x.startswith("| E1")), d))
+
+
+def test_a_harness_file_that_is_a_bare_list_of_entries_is_read(tmp_path):
+    (tmp_path / "x.json").write_text(json.dumps([entry("E1")]), encoding="utf-8")
+    entries, meta = vi.load_entries(tmp_path, ("x.json",))
+    assert [e["test_id"] for e in entries] == ["E1"] and meta["x.json"]["synthetic"] is False
+
+
+def test_a_null_measured_of_a_not_run_entry_becomes_an_empty_object():
+    e = entry("S1-CONFIDENCE-FILTER", "NOT_RUN", notes="why")
+    e["measured"] = None
+    out = vi.merge([*all_entries(), e])
+    assert next(t for t in out if t["test_id"] == "S1-CONFIDENCE-FILTER")["measured"] == {}
+
+
+def test_a_not_run_entry_may_list_the_statuses_of_its_parts_but_no_numbers():
+    d = doc_of(all_entries())
+    s1 = next(t for t in d["tests"] if t["test_id"] == "S1")
+    s1["status"], s1["notes"], s1["measured"] = "NOT_RUN", "half ran", {"S1-BASELINE": "FAIL", "S1-CONFIDENCE-FILTER": "NOT_RUN", "ok": True}
+    assert vi.check(d) == []
+    s1["measured"] = {"changed": {"n": 1}}
+    assert any("no measured numbers" in p for p in vi.check(d))

@@ -1,7 +1,1816 @@
 {
   "contract_version": "0.1.1",
   "method_version": "0.1.0",
-  "generated_at": "2026-11-14T18:46:44Z",
+  "generated_at": "2026-11-14T21:20:54Z",
   "synthetic": false,
-  "tests": []
+  "tests": [
+    {
+      "test_id": "A1-C1",
+      "family": "A",
+      "title": "Real anomaly preserved (two independent paths)",
+      "case": "Indonesia Sep-Oct 2015",
+      "criterion": "Same direction (both above or both below normal); peak month within +-1; 90% intervals overlap",
+      "threshold": "pre-registered at G1 (D-028), baseline of C2-C6 per D-029: same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
+      "measured": {
+        "aqua_only_pct_of_normal": 361.3,
+        "snpp_only_pct_of_normal": null,
+        "aqua_only_peak_month": "2015-10",
+        "snpp_only_peak_month": null,
+        "official_reading": "own_baseline",
+        "baseline": "D-028 as pre-registered, each path its own baseline",
+        "formal_reading": {
+          "status": "INCONCLUSIVE",
+          "same_direction": null,
+          "peak_within_tolerance": null,
+          "intervals_overlap": null,
+          "peak_month_distance": null,
+          "aqua_direction": "ABOVE",
+          "snpp_direction": null,
+          "aqua_pct_of_normal": 361.3,
+          "aqua_pct_90": [
+            328.6,
+            394.0
+          ],
+          "snpp_pct_of_normal": null,
+          "snpp_pct_90": [
+            null,
+            null
+          ],
+          "aqua_peak_month": "2015-10",
+          "snpp_peak_month": null,
+          "reasons": [
+            "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
+          ]
+        },
+        "other_readings": {
+          "shared_aqua_baseline": {
+            "status": "PASS",
+            "same_direction": true,
+            "peak_within_tolerance": true,
+            "intervals_overlap": true,
+            "peak_month_distance": 0,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": "ABOVE",
+            "aqua_pct_of_normal": 361.3,
+            "aqua_pct_90": [
+              328.6,
+              394.0
+            ],
+            "snpp_pct_of_normal": 328.2,
+            "snpp_pct_90": [
+              298.3,
+              358.0
+            ],
+            "aqua_peak_month": "2015-10",
+            "snpp_peak_month": "2015-10",
+            "reasons": []
+          },
+          "snpp_own_min10": {
+            "status": "FAIL",
+            "same_direction": true,
+            "peak_within_tolerance": true,
+            "intervals_overlap": false,
+            "peak_month_distance": 0,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": "ABOVE",
+            "aqua_pct_of_normal": 361.3,
+            "aqua_pct_90": [
+              328.6,
+              394.0
+            ],
+            "snpp_pct_of_normal": 588.9,
+            "snpp_pct_90": [
+              535.3,
+              642.4
+            ],
+            "aqua_peak_month": "2015-10",
+            "snpp_peak_month": "2015-10",
+            "reasons": [
+              "the 90% intervals do not overlap"
+            ]
+          }
+        },
+        "t014_product": {
+          "product_method_version": "0.1.0",
+          "context_combined_series": {
+            "entity": "COUNTRY:IDN",
+            "summary": {
+              "ok": true,
+              "reason": null,
+              "peak_month": "2015-10",
+              "direction": "ABOVE",
+              "pct_of_normal": 349.6,
+              "pct_low": 327.0,
+              "pct_high": 372.1,
+              "estimate": 36271.4,
+              "baseline_median": 10376.0,
+              "peak_month_pct_of_normal": 541.6
+            },
+            "months": [
+              {
+                "year": 2015,
+                "month": 6,
+                "estimate": 1456.4,
+                "pct_of_normal": 128.9,
+                "p_above": 0.0,
+                "verdict": "WITHIN_NORMAL",
+                "reason_codes": [],
+                "witnesses_used": [
+                  "AQUA_MODIS",
+                  "SNPP_VIIRS"
+                ]
+              },
+              {
+                "year": 2015,
+                "month": 7,
+                "estimate": 4229.3,
+                "pct_of_normal": 264.5,
+                "p_above": 1.0,
+                "verdict": "ABOVE_NORMAL",
+                "reason_codes": [],
+                "witnesses_used": [
+                  "AQUA_MODIS",
+                  "SNPP_VIIRS"
+                ]
+              },
+              {
+                "year": 2015,
+                "month": 8,
+                "estimate": 10627.3,
+                "pct_of_normal": 216.5,
+                "p_above": 1.0,
+                "verdict": "ABOVE_NORMAL",
+                "reason_codes": [],
+                "witnesses_used": [
+                  "AQUA_MODIS",
+                  "SNPP_VIIRS"
+                ]
+              },
+              {
+                "year": 2015,
+                "month": 9,
+                "estimate": 19068.7,
+                "pct_of_normal": 264.9,
+                "p_above": 1.0,
+                "verdict": "ABOVE_NORMAL",
+                "reason_codes": [],
+                "witnesses_used": [
+                  "AQUA_MODIS",
+                  "SNPP_VIIRS"
+                ]
+              },
+              {
+                "year": 2015,
+                "month": 10,
+                "estimate": 17202.7,
+                "pct_of_normal": 541.6,
+                "p_above": 1.0,
+                "verdict": "ABOVE_NORMAL",
+                "reason_codes": [],
+                "witnesses_used": [
+                  "AQUA_MODIS",
+                  "SNPP_VIIRS"
+                ]
+              },
+              {
+                "year": 2015,
+                "month": 11,
+                "estimate": 3039.2,
+                "pct_of_normal": 428.1,
+                "p_above": 1.0,
+                "verdict": "ABOVE_NORMAL",
+                "reason_codes": [],
+                "witnesses_used": [
+                  "AQUA_MODIS",
+                  "SNPP_VIIRS"
+                ]
+              },
+              {
+                "year": 2015,
+                "month": 12,
+                "estimate": 1084.9,
+                "pct_of_normal": 503.9,
+                "p_above": 1.0,
+                "verdict": "ABOVE_NORMAL",
+                "reason_codes": [],
+                "witnesses_used": [
+                  "AQUA_MODIS",
+                  "SNPP_VIIRS"
+                ]
+              }
+            ]
+          },
+          "crosscheck_aqua_only_baseline": {
+            "entity": "COUNTRY:IDN",
+            "n_cells": 1047,
+            "estimates_2003_2011": {
+              "n": 108,
+              "max_rel_diff": 0.0,
+              "median_rel_diff": 0.0
+            },
+            "baseline_2003_2011": {
+              "n_months": 12,
+              "max_rel_diff": 0.0
+            },
+            "baseline_2003_2022": {
+              "n_months": 12,
+              "ratio_min": 0.909,
+              "ratio_max": 1.023,
+              "ratio_median": 0.993,
+              "per_month": [
+                {
+                  "month": 1,
+                  "aqua_only_median": 308.0,
+                  "product_median": 305.8,
+                  "ratio": 1.007
+                },
+                {
+                  "month": 2,
+                  "aqua_only_median": 483.5,
+                  "product_median": 514.3,
+                  "ratio": 0.94
+                },
+                {
+                  "month": 3,
+                  "aqua_only_median": 601.5,
+                  "product_median": 606.5,
+                  "ratio": 0.992
+                },
+                {
+                  "month": 4,
+                  "aqua_only_median": 335.0,
+                  "product_median": 328.5,
+                  "ratio": 1.02
+                },
+                {
+                  "month": 5,
+                  "aqua_only_median": 612.0,
+                  "product_median": 616.0,
+                  "ratio": 0.994
+                },
+                {
+                  "month": 6,
+                  "aqua_only_median": 1130.0,
+                  "product_median": 1130.0,
+                  "ratio": 1.0
+                },
+                {
+                  "month": 7,
+                  "aqua_only_median": 1580.5,
+                  "product_median": 1598.7,
+                  "ratio": 0.989
+                },
+                {
+                  "month": 8,
+                  "aqua_only_median": 5020.5,
+                  "product_median": 4908.4,
+                  "ratio": 1.023
+                },
+                {
+                  "month": 9,
+                  "aqua_only_median": 7199.5,
+                  "product_median": 7199.5,
+                  "ratio": 1.0
+                },
+                {
+                  "month": 10,
+                  "aqua_only_median": 3120.5,
+                  "product_median": 3176.5,
+                  "ratio": 0.982
+                },
+                {
+                  "month": 11,
+                  "aqua_only_median": 645.0,
+                  "product_median": 709.9,
+                  "ratio": 0.909
+                },
+                {
+                  "month": 12,
+                  "aqua_only_median": 204.0,
+                  "product_median": 215.3,
+                  "ratio": 0.948
+                }
+              ]
+            }
+          }
+        }
+      },
+      "status": "INCONCLUSIVE",
+      "notes": "D-028 as pre-registered: each path its own baseline; the S-NPP-only path has at most 11 of 20 baseline years, so no baseline. Official result INCONCLUSIVE. D-029 (shared Aqua baseline) was adopted after this case was seen and is not applied to it; the readings under the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
+    },
+    {
+      "test_id": "A1-C2",
+      "family": "A",
+      "title": "Real anomaly preserved (two independent paths)",
+      "case": "Brazilian Amazon Aug 2019",
+      "criterion": "Same direction (both above or both below normal); peak month within +-1; 90% intervals overlap",
+      "threshold": "pre-registered at G1 (D-028), baseline of C2-C6 per D-029: same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
+      "measured": {
+        "aqua_only_pct_of_normal": 94.6,
+        "snpp_only_pct_of_normal": 86.1,
+        "aqua_only_peak_month": "2019-08",
+        "snpp_only_peak_month": "2019-06",
+        "official_reading": "shared_aqua_baseline",
+        "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
+        "formal_reading": {
+          "status": "INCONCLUSIVE",
+          "same_direction": false,
+          "peak_within_tolerance": false,
+          "intervals_overlap": true,
+          "peak_month_distance": 2,
+          "aqua_direction": "WITHIN",
+          "snpp_direction": "WITHIN",
+          "aqua_pct_of_normal": 94.6,
+          "aqua_pct_90": [
+            85.4,
+            103.8
+          ],
+          "snpp_pct_of_normal": 86.1,
+          "snpp_pct_90": [
+            77.7,
+            94.5
+          ],
+          "aqua_peak_month": "2019-08",
+          "snpp_peak_month": "2019-06",
+          "reasons": [
+            "both paths are within normal: there is no anomaly to preserve"
+          ]
+        },
+        "other_readings": {
+          "own_baseline": {
+            "status": "INCONCLUSIVE",
+            "same_direction": null,
+            "peak_within_tolerance": null,
+            "intervals_overlap": null,
+            "peak_month_distance": null,
+            "aqua_direction": "WITHIN",
+            "snpp_direction": null,
+            "aqua_pct_of_normal": 94.6,
+            "aqua_pct_90": [
+              85.4,
+              103.8
+            ],
+            "snpp_pct_of_normal": null,
+            "snpp_pct_90": [
+              null,
+              null
+            ],
+            "aqua_peak_month": "2019-08",
+            "snpp_peak_month": null,
+            "reasons": [
+              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
+            ]
+          },
+          "snpp_own_min10": {
+            "status": "INCONCLUSIVE",
+            "same_direction": false,
+            "peak_within_tolerance": true,
+            "intervals_overlap": true,
+            "peak_month_distance": 0,
+            "aqua_direction": "WITHIN",
+            "snpp_direction": "WITHIN",
+            "aqua_pct_of_normal": 94.6,
+            "aqua_pct_90": [
+              85.4,
+              103.8
+            ],
+            "snpp_pct_of_normal": 106.3,
+            "snpp_pct_90": [
+              95.9,
+              116.7
+            ],
+            "aqua_peak_month": "2019-08",
+            "snpp_peak_month": "2019-08",
+            "reasons": [
+              "both paths are within normal: there is no anomaly to preserve"
+            ]
+          }
+        }
+      },
+      "status": "INCONCLUSIVE",
+      "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
+    },
+    {
+      "test_id": "A1-C3",
+      "family": "A",
+      "title": "Real anomaly preserved (two independent paths)",
+      "case": "Pantanal 2020",
+      "criterion": "Same direction (both above or both below normal); peak month within +-1; 90% intervals overlap",
+      "threshold": "pre-registered at G1 (D-028), baseline of C2-C6 per D-029: same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
+      "measured": {
+        "aqua_only_pct_of_normal": 253.1,
+        "snpp_only_pct_of_normal": 191.9,
+        "aqua_only_peak_month": "2020-07",
+        "snpp_only_peak_month": "2020-07",
+        "official_reading": "shared_aqua_baseline",
+        "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
+        "formal_reading": {
+          "status": "FAIL",
+          "same_direction": true,
+          "peak_within_tolerance": true,
+          "intervals_overlap": false,
+          "peak_month_distance": 0,
+          "aqua_direction": "ABOVE",
+          "snpp_direction": "ABOVE",
+          "aqua_pct_of_normal": 253.1,
+          "aqua_pct_90": [
+            233.0,
+            273.2
+          ],
+          "snpp_pct_of_normal": 191.9,
+          "snpp_pct_90": [
+            176.2,
+            207.6
+          ],
+          "aqua_peak_month": "2020-07",
+          "snpp_peak_month": "2020-07",
+          "reasons": [
+            "the 90% intervals do not overlap"
+          ]
+        },
+        "other_readings": {
+          "own_baseline": {
+            "status": "INCONCLUSIVE",
+            "same_direction": null,
+            "peak_within_tolerance": null,
+            "intervals_overlap": null,
+            "peak_month_distance": null,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": null,
+            "aqua_pct_of_normal": 253.1,
+            "aqua_pct_90": [
+              233.0,
+              273.2
+            ],
+            "snpp_pct_of_normal": null,
+            "snpp_pct_90": [
+              null,
+              null
+            ],
+            "aqua_peak_month": "2020-07",
+            "snpp_peak_month": null,
+            "reasons": [
+              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
+            ]
+          },
+          "snpp_own_min10": {
+            "status": "FAIL",
+            "same_direction": true,
+            "peak_within_tolerance": true,
+            "intervals_overlap": false,
+            "peak_month_distance": 0,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": "ABOVE",
+            "aqua_pct_of_normal": 253.1,
+            "aqua_pct_90": [
+              233.0,
+              273.2
+            ],
+            "snpp_pct_of_normal": 211.8,
+            "snpp_pct_90": [
+              194.5,
+              229.2
+            ],
+            "aqua_peak_month": "2020-07",
+            "snpp_peak_month": "2020-07",
+            "reasons": [
+              "the 90% intervals do not overlap"
+            ]
+          }
+        }
+      },
+      "status": "FAIL",
+      "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
+    },
+    {
+      "test_id": "A1-C4",
+      "family": "A",
+      "title": "Real anomaly preserved (two independent paths)",
+      "case": "SE Australia Dec 2019-Jan 2020",
+      "criterion": "Same direction (both above or both below normal); peak month within +-1; 90% intervals overlap",
+      "threshold": "pre-registered at G1 (D-028), baseline of C2-C6 per D-029: same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
+      "measured": {
+        "aqua_only_pct_of_normal": 3962.9,
+        "snpp_only_pct_of_normal": 2313.9,
+        "aqua_only_peak_month": "2019-12",
+        "snpp_only_peak_month": "2019-12",
+        "official_reading": "shared_aqua_baseline",
+        "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
+        "formal_reading": {
+          "status": "FAIL",
+          "same_direction": true,
+          "peak_within_tolerance": true,
+          "intervals_overlap": false,
+          "peak_month_distance": 0,
+          "aqua_direction": "ABOVE",
+          "snpp_direction": "ABOVE",
+          "aqua_pct_of_normal": 3962.9,
+          "aqua_pct_90": [
+            3596.4,
+            4329.4
+          ],
+          "snpp_pct_of_normal": 2313.9,
+          "snpp_pct_90": [
+            2095.6,
+            2532.3
+          ],
+          "aqua_peak_month": "2019-12",
+          "snpp_peak_month": "2019-12",
+          "reasons": [
+            "the 90% intervals do not overlap"
+          ]
+        },
+        "other_readings": {
+          "own_baseline": {
+            "status": "INCONCLUSIVE",
+            "same_direction": null,
+            "peak_within_tolerance": null,
+            "intervals_overlap": null,
+            "peak_month_distance": null,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": null,
+            "aqua_pct_of_normal": 3962.9,
+            "aqua_pct_90": [
+              3596.4,
+              4329.4
+            ],
+            "snpp_pct_of_normal": null,
+            "snpp_pct_90": [
+              null,
+              null
+            ],
+            "aqua_peak_month": "2019-12",
+            "snpp_peak_month": null,
+            "reasons": [
+              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
+            ]
+          },
+          "snpp_own_min10": {
+            "status": "FAIL",
+            "same_direction": true,
+            "peak_within_tolerance": true,
+            "intervals_overlap": false,
+            "peak_month_distance": 0,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": "ABOVE",
+            "aqua_pct_of_normal": 3962.9,
+            "aqua_pct_90": [
+              3596.4,
+              4329.4
+            ],
+            "snpp_pct_of_normal": 2090.4,
+            "snpp_pct_90": [
+              1893.1,
+              2287.7
+            ],
+            "aqua_peak_month": "2019-12",
+            "snpp_peak_month": "2019-12",
+            "reasons": [
+              "the 90% intervals do not overlap"
+            ]
+          }
+        }
+      },
+      "status": "FAIL",
+      "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
+    },
+    {
+      "test_id": "A1-C5",
+      "family": "A",
+      "title": "Real anomaly preserved (two independent paths)",
+      "case": "California Aug-Sep 2020",
+      "criterion": "Same direction (both above or both below normal); peak month within +-1; 90% intervals overlap",
+      "threshold": "pre-registered at G1 (D-028), baseline of C2-C6 per D-029: same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
+      "measured": {
+        "aqua_only_pct_of_normal": 637.1,
+        "snpp_only_pct_of_normal": 375.6,
+        "aqua_only_peak_month": "2020-09",
+        "snpp_only_peak_month": "2020-09",
+        "official_reading": "shared_aqua_baseline",
+        "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
+        "formal_reading": {
+          "status": "FAIL",
+          "same_direction": true,
+          "peak_within_tolerance": true,
+          "intervals_overlap": false,
+          "peak_month_distance": 0,
+          "aqua_direction": "ABOVE",
+          "snpp_direction": "ABOVE",
+          "aqua_pct_of_normal": 637.1,
+          "aqua_pct_90": [
+            571.1,
+            703.1
+          ],
+          "snpp_pct_of_normal": 375.6,
+          "snpp_pct_90": [
+            334.6,
+            416.7
+          ],
+          "aqua_peak_month": "2020-09",
+          "snpp_peak_month": "2020-09",
+          "reasons": [
+            "the 90% intervals do not overlap"
+          ]
+        },
+        "other_readings": {
+          "own_baseline": {
+            "status": "INCONCLUSIVE",
+            "same_direction": null,
+            "peak_within_tolerance": null,
+            "intervals_overlap": null,
+            "peak_month_distance": null,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": null,
+            "aqua_pct_of_normal": 637.1,
+            "aqua_pct_90": [
+              571.1,
+              703.1
+            ],
+            "snpp_pct_of_normal": null,
+            "snpp_pct_90": [
+              null,
+              null
+            ],
+            "aqua_peak_month": "2020-09",
+            "snpp_peak_month": null,
+            "reasons": [
+              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
+            ]
+          },
+          "snpp_own_min10": {
+            "status": "FAIL",
+            "same_direction": true,
+            "peak_within_tolerance": true,
+            "intervals_overlap": false,
+            "peak_month_distance": 0,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": "ABOVE",
+            "aqua_pct_of_normal": 637.1,
+            "aqua_pct_90": [
+              571.1,
+              703.1
+            ],
+            "snpp_pct_of_normal": 377.1,
+            "snpp_pct_90": [
+              335.9,
+              418.3
+            ],
+            "aqua_peak_month": "2020-09",
+            "snpp_peak_month": "2020-09",
+            "reasons": [
+              "the 90% intervals do not overlap"
+            ]
+          }
+        }
+      },
+      "status": "FAIL",
+      "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
+    },
+    {
+      "test_id": "A1-C6",
+      "family": "A",
+      "title": "Real anomaly preserved (two independent paths)",
+      "case": "Siberia (Sakha/Yakutia) 2021",
+      "criterion": "Same direction (both above or both below normal); peak month within +-1; 90% intervals overlap",
+      "threshold": "pre-registered at G1 (D-028), baseline of C2-C6 per D-029: same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
+      "measured": {
+        "aqua_only_pct_of_normal": 805.2,
+        "snpp_only_pct_of_normal": 644.8,
+        "aqua_only_peak_month": "2021-08",
+        "snpp_only_peak_month": "2021-08",
+        "official_reading": "shared_aqua_baseline",
+        "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
+        "formal_reading": {
+          "status": "FAIL",
+          "same_direction": true,
+          "peak_within_tolerance": true,
+          "intervals_overlap": false,
+          "peak_month_distance": 0,
+          "aqua_direction": "ABOVE",
+          "snpp_direction": "ABOVE",
+          "aqua_pct_of_normal": 805.2,
+          "aqua_pct_90": [
+            733.3,
+            877.1
+          ],
+          "snpp_pct_of_normal": 644.8,
+          "snpp_pct_90": [
+            584.1,
+            705.6
+          ],
+          "aqua_peak_month": "2021-08",
+          "snpp_peak_month": "2021-08",
+          "reasons": [
+            "the 90% intervals do not overlap"
+          ]
+        },
+        "other_readings": {
+          "own_baseline": {
+            "status": "INCONCLUSIVE",
+            "same_direction": null,
+            "peak_within_tolerance": null,
+            "intervals_overlap": null,
+            "peak_month_distance": null,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": null,
+            "aqua_pct_of_normal": 805.2,
+            "aqua_pct_90": [
+              733.3,
+              877.1
+            ],
+            "snpp_pct_of_normal": null,
+            "snpp_pct_90": [
+              null,
+              null
+            ],
+            "aqua_peak_month": "2021-08",
+            "snpp_peak_month": null,
+            "reasons": [
+              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
+            ]
+          },
+          "snpp_own_min10": {
+            "status": "FAIL",
+            "same_direction": true,
+            "peak_within_tolerance": true,
+            "intervals_overlap": false,
+            "peak_month_distance": 0,
+            "aqua_direction": "ABOVE",
+            "snpp_direction": "ABOVE",
+            "aqua_pct_of_normal": 805.2,
+            "aqua_pct_90": [
+              733.3,
+              877.1
+            ],
+            "snpp_pct_of_normal": 284.7,
+            "snpp_pct_90": [
+              257.8,
+              311.5
+            ],
+            "aqua_peak_month": "2021-08",
+            "snpp_peak_month": "2021-08",
+            "reasons": [
+              "the 90% intervals do not overlap"
+            ]
+          }
+        }
+      },
+      "status": "FAIL",
+      "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
+    },
+    {
+      "test_id": "A1-FAMILY",
+      "family": "A",
+      "title": "Real anomaly preserved: family result",
+      "case": "C1 to C6",
+      "criterion": "At least 5 of the 6 clean-overlap cases C1-C6 PASS",
+      "threshold": "pre-registered at G1 (D-028); a case that is INCONCLUSIVE does not count as a PASS",
+      "measured": {
+        "case_status": {
+          "C1": "INCONCLUSIVE",
+          "C2": "INCONCLUSIVE",
+          "C3": "FAIL",
+          "C4": "FAIL",
+          "C5": "FAIL",
+          "C6": "FAIL"
+        },
+        "n_pass": 0,
+        "n_fail": 4,
+        "n_inconclusive": 2,
+        "n_not_run": 0
+      },
+      "status": "FAIL",
+      "notes": "C1 is officially INCONCLUSIVE (D-028 as pre-registered); C2 to C6 use the shared Aqua baseline (D-029). See docs/validation/T-020-results.md."
+    },
+    {
+      "test_id": "A2",
+      "family": "A",
+      "title": "Same fire, two eras",
+      "case": "C1, C4, C6",
+      "criterion": "Harmonized peaks overlap within 90% intervals and the raw record shows a mismatch (otherwise INCONCLUSIVE)",
+      "threshold": "pre-registered at G1 (D-028)",
+      "measured": {},
+      "status": "NOT_RUN",
+      "notes": "Not run: T-023 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+    },
+    {
+      "test_id": "B1-2012-01",
+      "family": "B",
+      "title": "Satellite-change step removed",
+      "case": "all fire regions, change date 2012-01",
+      "criterion": "Step ratio (series / Aqua-only), 12 months after vs before: raw step clearly present; harmonized within +-10% of 1 in >=80% of the regions with sufficient data",
+      "threshold": "within +-10% of 1 in >=80% of regions (G1, D-028)",
+      "measured": {
+        "regions_total": 14,
+        "regions_sufficient": 14,
+        "regions_within_tolerance": 14,
+        "fraction_within": 1.0,
+        "raw_outside_fraction": 1.0,
+        "tolerance": 0.1,
+        "pass_fraction": 0.8,
+        "median_harmonized_step": 0.9909998283842725,
+        "median_raw_step": 3.2929435349469625
+      },
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "test_id": "B1-2018-04",
+      "family": "B",
+      "title": "Satellite-change step removed",
+      "case": "all fire regions, change date 2018-04",
+      "criterion": "Step ratio (series / Aqua-only), 12 months after vs before: raw step clearly present; harmonized within +-10% of 1 in >=80% of the regions with sufficient data",
+      "threshold": "within +-10% of 1 in >=80% of regions (G1, D-028)",
+      "measured": {
+        "regions_total": 14,
+        "regions_sufficient": 14,
+        "regions_within_tolerance": 13,
+        "fraction_within": 0.9285714285714286,
+        "raw_outside_fraction": 1.0,
+        "tolerance": 0.1,
+        "pass_fraction": 0.8,
+        "median_harmonized_step": 1.0236834757068636,
+        "median_raw_step": 1.768608947738266
+      },
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "test_id": "B1",
+      "family": "B",
+      "title": "Satellite-change step removed (both dates)",
+      "case": "all fire regions, 2012-01 and 2018-04",
+      "criterion": "Step ratio (series / Aqua-only), 12 months after vs before: raw step clearly present; harmonized within +-10% of 1 in >=80% of the regions with sufficient data",
+      "threshold": "both dates PASS",
+      "measured": {
+        "2012-01": "PASS",
+        "2018-04": "PASS"
+      },
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "test_id": "B2",
+      "family": "B",
+      "title": "Planted sensor jump detected",
+      "case": "Random cells and regions",
+      "criterion": "Flagged within 3 months in at least 90% of at least 50 trials; false flags in under 5% of unplanted series",
+      "threshold": "pre-registered at G1 (D-028)",
+      "measured": {},
+      "status": "NOT_RUN",
+      "notes": "Not run: T-024 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+    },
+    {
+      "test_id": "B3-DRIFT",
+      "family": "B",
+      "title": "Aqua drift visible as a ratio trend",
+      "case": "global monthly Aqua / converted-VIIRS ratio, 2012-2026",
+      "criterion": "drift visible as a ratio trend, reported with its onset estimate",
+      "threshold": "T-012 detector fires for both VIIRS witnesses in one day/night part, negative slope, onset 2021 or later",
+      "measured": {
+        "series": {
+          "D|NOAA20_VIIRS": {
+            "onset_month": "2025-06",
+            "onset_lo_month": "2020-01",
+            "onset_hi_month": "2025-06",
+            "slope_pct_per_year": -6.1080487005849005,
+            "slope_lo_pct_per_year": -9.242750611260087,
+            "slope_hi_pct_per_year": -0.46067585702622704,
+            "delta_bic": -2.7287093546597703,
+            "detected": false,
+            "n": 99,
+            "status": "ok",
+            "qualifies": false
+          },
+          "D|SNPP_VIIRS": {
+            "onset_month": "2025-06",
+            "onset_lo_month": "2019-02",
+            "onset_hi_month": "2025-06",
+            "slope_pct_per_year": -5.364645232578846,
+            "slope_lo_pct_per_year": -8.472009382294033,
+            "slope_hi_pct_per_year": -0.3987909645696175,
+            "delta_bic": -6.114501502920575,
+            "detected": false,
+            "n": 164,
+            "status": "ok",
+            "qualifies": false
+          },
+          "N|NOAA20_VIIRS": {
+            "onset_month": "2024-09",
+            "onset_lo_month": "2024-03",
+            "onset_hi_month": "2025-02",
+            "slope_pct_per_year": -18.980547990637575,
+            "slope_lo_pct_per_year": -25.435450556210082,
+            "slope_hi_pct_per_year": -14.058059055830208,
+            "delta_bic": 50.739969221323236,
+            "detected": true,
+            "n": 99,
+            "status": "ok",
+            "qualifies": true
+          },
+          "N|SNPP_VIIRS": {
+            "onset_month": "2024-05",
+            "onset_lo_month": "2022-10",
+            "onset_hi_month": "2025-04",
+            "slope_pct_per_year": -11.965957928730619,
+            "slope_lo_pct_per_year": -22.8316726354607,
+            "slope_hi_pct_per_year": -5.473951378417741,
+            "delta_bic": 28.934612241887862,
+            "detected": true,
+            "n": 164,
+            "status": "ok",
+            "qualifies": true
+          }
+        },
+        "parts": {
+          "D": {
+            "fitted": true,
+            "qualifies": false
+          },
+          "N": {
+            "fitted": true,
+            "qualifies": true
+          }
+        },
+        "qualifying_parts": [
+          "N"
+        ]
+      },
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "test_id": "B3-OUTAGE-ESTIMATE",
+      "family": "B",
+      "title": "Outage months have no estimate",
+      "case": "months with no complete witness",
+      "criterion": "outage months 100% without an estimate; an incomplete witness-month is never used",
+      "threshold": "100%",
+      "measured": {
+        "outage_months": [
+          "2002-07",
+          "2002-08",
+          "2002-09",
+          "2026-11"
+        ],
+        "entity_months_in_outage": 60,
+        "with_estimate": 0,
+        "share_without_estimate": 1.0,
+        "incomplete_witness_entity_months": 345,
+        "incomplete_witness_used": 0,
+        "incomplete_witness_months": [
+          "2002-07 AQUA_MODIS",
+          "2002-08 AQUA_MODIS",
+          "2002-09 AQUA_MODIS",
+          "2012-01 SNPP_VIIRS",
+          "2012-03 SNPP_VIIRS",
+          "2022-04 AQUA_MODIS",
+          "2022-07 SNPP_VIIRS",
+          "2022-08 SNPP_VIIRS",
+          "2023-07 NOAA20_VIIRS",
+          "2023-09 NOAA20_VIIRS",
+          "2024-02 NOAA20_VIIRS",
+          "2024-05 SNPP_VIIRS",
+          "2024-06 SNPP_VIIRS",
+          "2024-07 SNPP_VIIRS",
+          "2024-09 SNPP_VIIRS",
+          "2024-11 SNPP_VIIRS",
+          "2026-03 SNPP_VIIRS",
+          "2026-04 SNPP_VIIRS",
+          "2026-06 SNPP_VIIRS",
+          "2026-07 SNPP_VIIRS",
+          "2026-11 AQUA_MODIS",
+          "2026-11 NOAA20_VIIRS",
+          "2026-11 SNPP_VIIRS"
+        ]
+      },
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "test_id": "B3-OUTAGE-VERDICT",
+      "family": "B",
+      "title": "Outage months are CANNOT_DETERMINE",
+      "case": "months with no complete witness",
+      "criterion": "outage months 100% CANNOT_DETERMINE",
+      "threshold": "100%",
+      "measured": {
+        "outage_months": [
+          "2002-07",
+          "2002-08",
+          "2002-09",
+          "2026-11"
+        ],
+        "entity_months_in_outage": 936,
+        "cannot_determine": 936,
+        "share_cannot_determine": 1.0,
+        "with_outage_code": 936,
+        "share_with_outage_code": 1.0
+      },
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "test_id": "B3",
+      "family": "B",
+      "title": "Known real artifacts surfaced",
+      "case": "global",
+      "criterion": "drift visible as a ratio trend; outage months 100% CANNOT_DETERMINE",
+      "threshold": "all parts PASS",
+      "measured": {
+        "B3-DRIFT": "PASS",
+        "B3-OUTAGE-ESTIMATE": "PASS",
+        "B3-OUTAGE-VERDICT": "PASS"
+      },
+      "status": "PASS",
+      "notes": "NOT_RUN while any part is not run"
+    },
+    {
+      "test_id": "C1",
+      "family": "C",
+      "title": "Cross-satellite agreement",
+      "case": "All fire regions, 2018 to 2021",
+      "criterion": "At least 85% of region-months agree within the combined 90% intervals (converted S-NPP against converted NOAA-20)",
+      "threshold": "pre-registered at G1 (D-028)",
+      "measured": {},
+      "status": "NOT_RUN",
+      "notes": "Not run: T-024 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+    },
+    {
+      "test_id": "CTRL",
+      "family": "C",
+      "title": "Control",
+      "case": "C8 (southern African savanna), satellite-change dates",
+      "criterion": "No ABOVE or BELOW verdict at the change dates that is absent from the Aqua-only series",
+      "threshold": "pre-registered at G1 (D-028)",
+      "measured": {},
+      "status": "NOT_RUN",
+      "notes": "Not run: T-024 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+    },
+    {
+      "test_id": "D1-REGIONS",
+      "family": "D",
+      "title": "Uncertainty honest (coverage), pooled over all fire regions",
+      "case": "Fire-region-months 2017-2021, Aqua against converted S-NPP, day/night units with at least 20 Aqua cell-days",
+      "criterion": "Holdout 2017-2021: share of actual Aqua values inside the predicted 90% intervals (pooled over all fire-region day/night units)",
+      "threshold": "between 80% and 97% (locked at G1, D-028)",
+      "measured": {
+        "units": 1466,
+        "coverage_90": 0.8178717598908595,
+        "coverage_50": 0.4713506139154161,
+        "day": 0.8698795180722891,
+        "night": 0.75,
+        "day_night_total": 0.8474842767295597,
+        "widening_factor_reported_not_applied": {
+          "fitted_on": "2017-2018 only",
+          "c_for_90": 1.261652933738922,
+          "applied": false,
+          "coverage_2019_2021_unchanged": 0.8111490329920364,
+          "coverage_2019_2021_with_c": 0.8771331058020477
+        }
+      },
+      "status": "PASS",
+      "notes": "Pooled reading of the criterion [ASSUMPTION]. Not a clean out-of-sample test: phi and kappa were fitted on fit-period months and the NOAA-20 pair overlaps these months on the Aqua side. No widening factor applied (Lead decision). The 50% interval covers less than 50%: the intervals are slightly too narrow in the middle. Known limits in D1-NIGHT and D1-REGIONS-EACH (risk S16)."
+    },
+    {
+      "test_id": "D1-REGIONS-TOTAL",
+      "family": "D",
+      "title": "Coverage, fire-region day+night totals (supplementary)",
+      "case": "Fire-region-months 2017-2021, day+night total",
+      "criterion": "Holdout 2017-2021: share of actual Aqua values inside the predicted 90% intervals (day+night totals)",
+      "threshold": "between 80% and 97% (locked at G1, D-028)",
+      "measured": {
+        "units": 636,
+        "coverage_90": 0.8474842767295597,
+        "coverage_50": 0.4968553459119497,
+        "regions_judged": 14,
+        "regions_inside": 7,
+        "regions_outside": [
+          "BONA",
+          "CEAM",
+          "EURO",
+          "MIDE",
+          "NHSA",
+          "SHAF",
+          "TENA"
+        ]
+      },
+      "status": "PASS",
+      "notes": "Supplementary; the status uses the same range as the locked criterion."
+    },
+    {
+      "test_id": "D1-NIGHT",
+      "family": "D",
+      "title": "Coverage, night units alone, fire regions (supplementary, known limit)",
+      "case": "Fire-region-months 2017-2021, night units",
+      "criterion": "Holdout 2017-2021: share of actual Aqua values inside the predicted 90% intervals (night units only)",
+      "threshold": "between 80% and 97% (locked at G1, D-028)",
+      "measured": {
+        "units": 636,
+        "coverage_90": 0.75,
+        "coverage_50": 0.41352201257861637
+      },
+      "status": "FAIL",
+      "notes": "Not part of the locked criterion; reported because night intervals are too narrow. Recorded as a known limit (risk S16)."
+    },
+    {
+      "test_id": "D1-REGIONS-EACH",
+      "family": "D",
+      "title": "Coverage in each fire region separately (supplementary, stricter reading)",
+      "case": "Fire regions with at least 30 D/N units, 2017-2021",
+      "criterion": "Every judged fire region has 90% coverage inside 80% to 97%",
+      "threshold": "each judged region between 80% and 97% (a stricter reading than the locked criterion)",
+      "measured": {
+        "regions_judged": 14,
+        "regions_inside": 7,
+        "regions_outside": [
+          "AUST",
+          "BOAS",
+          "BONA",
+          "CEAS",
+          "EURO",
+          "MIDE",
+          "TENA"
+        ],
+        "lowest": 0.7043478260869566,
+        "highest": 0.9591836734693877
+      },
+      "status": "FAIL",
+      "notes": "Not the locked criterion. Shown so the pooled PASS cannot hide that regions are below 80%."
+    },
+    {
+      "test_id": "D1-COUNTRIES",
+      "family": "D",
+      "title": "Coverage, pooled over all countries (supplementary)",
+      "case": "Country-months 2017-2021, day/night units with at least 20 Aqua cell-days",
+      "criterion": "Holdout 2017-2021: share of actual Aqua values inside the predicted 90% intervals (pooled over country day/night units)",
+      "threshold": "between 80% and 97% (locked at G1, D-028)",
+      "measured": {
+        "units": 6409,
+        "coverage_90": 0.8110469652051803,
+        "coverage_50": 0.43875799656732717,
+        "day": 0.8167986661108795,
+        "night": 0.7939168218497827,
+        "day_night_total": 0.82625,
+        "countries_judged": 87,
+        "countries_inside": 45
+      },
+      "status": "PASS",
+      "notes": "Supplementary: the criterion names fire regions; countries are the T-012 second level."
+    },
+    {
+      "test_id": "D2-ESTIMATES",
+      "family": "D",
+      "title": "Gaps: outage months have no estimate (estimate level, a part of D2)",
+      "case": "Every country, fire region and the globe, every month 2002-07 to the latest",
+      "criterion": "A month without a complete witness has no estimate; a partial witness does not enter an estimate",
+      "threshold": "100% (0 violations)",
+      "measured": {
+        "entity_months": 70906,
+        "months_expected_without_estimate": 968,
+        "months_with_a_partial_witness": 5082,
+        "estimate_without_usable_witness": 0,
+        "missing_estimate_despite_usable_witness": 0,
+        "uses_witness_without_complete_month": 0,
+        "violations": 0,
+        "perturbation": {
+          "entity_months_with_incomplete_row": 6292,
+          "changed": 0,
+          "with_estimate": 5324,
+          "without_estimate": 968
+        }
+      },
+      "status": "PASS",
+      "notes": "Estimate-level part only; the verdict part needs T-014 (D2-VERDICTS). Examples of violations, if any, are in the run output."
+    },
+    {
+      "test_id": "D2-VERDICTS",
+      "family": "D",
+      "title": "Gaps and insufficiency: verdicts CANNOT_DETERMINE with OUTAGE",
+      "case": "entity_month table of T-014",
+      "criterion": "Outage months and cells below the data thresholds: 100% CANNOT_DETERMINE / NO_DETECTED_ACTIVITY; report the share determinable",
+      "threshold": "100%",
+      "measured": {
+        "rows": 16477734,
+        "rows_without_estimate": 224952,
+        "rows_with_outage_code": 224952,
+        "outage_rows_ok": 224952,
+        "violations": {
+          "no_estimate_but_not_cannot_determine_outage": 0,
+          "outage_code_with_an_estimate": 0,
+          "insufficient_or_wide_but_determinable": 0,
+          "no_detected_activity_without_zero_estimate": 0
+        },
+        "determinable_rows": 11255646,
+        "determinable_share": 0.6830821519512331,
+        "cell_level": {
+          "all": {
+            "cell_months": 16477734,
+            "cells": 56238,
+            "cell_months_normal_share": 0.029035060281953816,
+            "cell_months_not_cannot_determine_share": 0.6830821519512331,
+            "cells_with_any_normal_verdict": 0.2140545538603791,
+            "cells_with_any_not_cd_verdict": 0.997883993029624,
+            "cell_months_without_estimate": 224952,
+            "outage_rule_violations": 0
+          },
+          "land": {
+            "cell_months": 16206123,
+            "cells": 55311,
+            "cell_months_normal_share": 0.029521681403997736,
+            "cell_months_not_cannot_determine_share": 0.6780853755089974,
+            "cells_with_any_normal_verdict": 0.2176420603496592,
+            "cells_with_any_not_cd_verdict": 0.9978485292256514,
+            "cell_months_without_estimate": 221244,
+            "outage_rule_violations": 0
+          }
+        }
+      },
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "test_id": "D2",
+      "family": "D",
+      "title": "Gaps and insufficiency",
+      "case": "Outage months; cells below the data thresholds",
+      "criterion": "100% shown as CANNOT_DETERMINE / NO_DETECTED_ACTIVITY; report % of land cells with a determinable verdict",
+      "threshold": "100%",
+      "measured": {
+        "estimates": "PASS",
+        "verdicts": "PASS"
+      },
+      "status": "PASS",
+      "notes": "Both halves: D2-ESTIMATES (no estimate without a complete witness) and D2-VERDICTS (CANNOT_DETERMINE with OUTAGE)."
+    },
+    {
+      "test_id": "E1",
+      "family": "E",
+      "title": "Generalization (leave one fire region out)",
+      "case": "14 GFED fire regions, 2017-2021 Aqua series predicted from S-NPP converted with a calibration fitted without the region",
+      "criterion": "Our method beats the naive raw merge (lower median absolute log error, day and night) in at least 11 of 14 regions; all regions reported",
+      "threshold": ">= 11 of 14 regions (locked at G1, D-028)",
+      "measured": {
+        "wins": 14,
+        "losses": 0,
+        "not_evaluable": 0,
+        "per_region": {
+          "AUST": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 60,
+              "T": 60
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.3426591066829692,
+                "raw": 0.9046881383591618,
+                "glob": 0.33463256098285166,
+                "gloo": 0.3426591066829691
+              },
+              "N": {
+                "ours": 0.5582695159843309,
+                "raw": 2.6359009052553537,
+                "glob": 0.5094125204640001,
+                "gloo": 0.5582695159843309
+              },
+              "T": {
+                "ours": 0.39850812787723167,
+                "raw": 1.2390486719313878,
+                "glob": 0.37232819633647163,
+                "gloo": 0.3985081278772319
+              }
+            }
+          },
+          "BOAS": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 50,
+              "N": 38,
+              "T": 38
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.3669509798673619,
+                "raw": 0.8746612437778616,
+                "glob": 0.35170699625207014,
+                "gloo": 0.3669509798673619
+              },
+              "N": {
+                "ours": 0.49361676331198634,
+                "raw": 2.9566955297923276,
+                "glob": 0.46080584479879866,
+                "gloo": 0.4936167633119863
+              },
+              "T": {
+                "ours": 0.40928769085283306,
+                "raw": 1.159378142880124,
+                "glob": 0.3856905662291611,
+                "gloo": 0.40928769085283306
+              }
+            }
+          },
+          "BONA": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 56,
+              "N": 30,
+              "T": 30
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.2929528660795268,
+                "raw": 0.9378254620468864,
+                "glob": 0.29211951454044405,
+                "gloo": 0.29295286607952664
+              },
+              "N": {
+                "ours": 0.6247835464434859,
+                "raw": 2.5782597595789936,
+                "glob": 0.6219425052147949,
+                "gloo": 0.6247835464434859
+              },
+              "T": {
+                "ours": 0.35037355014584676,
+                "raw": 1.2175952818119695,
+                "glob": 0.3461594884240702,
+                "gloo": 0.35037355014584676
+              }
+            }
+          },
+          "CEAM": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 43,
+              "T": 43
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.37270156298705504,
+                "raw": 1.6311310255545175,
+                "glob": 0.3667227576038938,
+                "gloo": 0.372701562987055
+              },
+              "N": {
+                "ours": 0.3114741862468547,
+                "raw": 2.961364630049783,
+                "glob": 0.30931930788876105,
+                "gloo": 0.3114741862468547
+              },
+              "T": {
+                "ours": 0.27466680379923214,
+                "raw": 1.6950651492538644,
+                "glob": 0.2705858749829556,
+                "gloo": 0.27466680379923214
+              }
+            }
+          },
+          "CEAS": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 55,
+              "T": 55
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.1261283033783347,
+                "raw": 1.2040910715625988,
+                "glob": 0.12132745749812088,
+                "gloo": 0.12612830337833464
+              },
+              "N": {
+                "ours": 0.8180417874233588,
+                "raw": 3.541749525579815,
+                "glob": 0.7953217622393366,
+                "gloo": 0.818041787423359
+              },
+              "T": {
+                "ours": 0.11656734597738636,
+                "raw": 1.4901015892611285,
+                "glob": 0.108834773289007,
+                "gloo": 0.11656734597738636
+              }
+            }
+          },
+          "EQAS": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 31,
+              "T": 31
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.43756108442596925,
+                "raw": 1.6400843810943253,
+                "glob": 0.432553835667794,
+                "gloo": 0.4375610844259692
+              },
+              "N": {
+                "ours": 0.4308880122480488,
+                "raw": 2.7944077696344207,
+                "glob": 0.407908077877145,
+                "gloo": 0.4308880122480488
+              },
+              "T": {
+                "ours": 0.3372560229249497,
+                "raw": 1.7040151403830994,
+                "glob": 0.3346759309616734,
+                "gloo": 0.3372560229249499
+              }
+            }
+          },
+          "EURO": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 33,
+              "T": 33
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.1344277409209297,
+                "raw": 1.347972043996863,
+                "glob": 0.13440025066578964,
+                "gloo": 0.1344277409209298
+              },
+              "N": {
+                "ours": 0.2257518924286631,
+                "raw": 2.916376615031493,
+                "glob": 0.22261527908746484,
+                "gloo": 0.2257518924286628
+              },
+              "T": {
+                "ours": 0.13619946707900693,
+                "raw": 1.5776146740935622,
+                "glob": 0.13508236741072485,
+                "gloo": 0.13619946707900693
+              }
+            }
+          },
+          "MIDE": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 57,
+              "T": 57
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.3479756456698934,
+                "raw": 1.5739046700596768,
+                "glob": 0.34717501814343665,
+                "gloo": 0.3479756456698934
+              },
+              "N": {
+                "ours": 0.27077219279602516,
+                "raw": 3.038291887972787,
+                "glob": 0.26880025177051536,
+                "gloo": 0.27077219279602516
+              },
+              "T": {
+                "ours": 0.3155454705113407,
+                "raw": 1.966711181081548,
+                "glob": 0.31495472334805225,
+                "gloo": 0.3155454705113407
+              }
+            }
+          },
+          "NHAF": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 50,
+              "T": 50
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.31044592031291685,
+                "raw": 1.4220966742871197,
+                "glob": 0.16438840652548656,
+                "gloo": 0.3104459203129165
+              },
+              "N": {
+                "ours": 0.2573128931913501,
+                "raw": 3.0247099081434623,
+                "glob": 0.2052705888110105,
+                "gloo": 0.2573128931913501
+              },
+              "T": {
+                "ours": 0.18569222386313874,
+                "raw": 1.4734656352195858,
+                "glob": 0.1380906119022527,
+                "gloo": 0.1856922238631386
+              }
+            }
+          },
+          "NHSA": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 38,
+              "T": 38
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.305695493303619,
+                "raw": 1.5464577741679644,
+                "glob": 0.2949569272395307,
+                "gloo": 0.305695493303619
+              },
+              "N": {
+                "ours": 0.3223372757038524,
+                "raw": 2.7488467432687607,
+                "glob": 0.2903659648038728,
+                "gloo": 0.3223372757038526
+              },
+              "T": {
+                "ours": 0.1981309030443068,
+                "raw": 1.5846061590513378,
+                "glob": 0.19281539665408742,
+                "gloo": 0.1981309030443068
+              }
+            }
+          },
+          "SEAS": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 41,
+              "T": 41
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.39708406217495407,
+                "raw": 1.6272831232841765,
+                "glob": 0.35887300001192407,
+                "gloo": 0.39708406217495407
+              },
+              "N": {
+                "ours": 0.9756470325625999,
+                "raw": 3.908141253205087,
+                "glob": 0.9239049504903858,
+                "gloo": 0.9756470325625995
+              },
+              "T": {
+                "ours": 0.38425851151405876,
+                "raw": 1.806068838451215,
+                "glob": 0.3440911380580869,
+                "gloo": 0.3842585115140586
+              }
+            }
+          },
+          "SHAF": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 58,
+              "T": 58
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.27309407175599076,
+                "raw": 1.559197005816765,
+                "glob": 0.26293862578167637,
+                "gloo": 0.2730940717559909
+              },
+              "N": {
+                "ours": 0.6598942042243735,
+                "raw": 3.154306570800447,
+                "glob": 0.4759676750953009,
+                "gloo": 0.6598942042243736
+              },
+              "T": {
+                "ours": 0.28765180166557863,
+                "raw": 1.6169415230347692,
+                "glob": 0.27115697443668574,
+                "gloo": 0.2876518016655786
+              }
+            }
+          },
+          "SHSA": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 60,
+              "T": 60
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.11672374812183747,
+                "raw": 1.168352688869775,
+                "glob": 0.11985978036235878,
+                "gloo": 0.11672374812183739
+              },
+              "N": {
+                "ours": 0.6668558466289398,
+                "raw": 2.277288812338589,
+                "glob": 0.5415953273320435,
+                "gloo": 0.6668558466289398
+              },
+              "T": {
+                "ours": 0.13140966001231594,
+                "raw": 1.3391350599374197,
+                "glob": 0.13215610066405614,
+                "gloo": 0.13140966001231594
+              }
+            }
+          },
+          "TENA": {
+            "win": true,
+            "evaluable": true,
+            "parts": {
+              "D": true,
+              "N": true
+            },
+            "units": {
+              "D": 60,
+              "N": 42,
+              "T": 42
+            },
+            "median_abs_log_error": {
+              "D": {
+                "ours": 0.2661154824044191,
+                "raw": 0.9953473711350685,
+                "glob": 0.25956911026566076,
+                "gloo": 0.2661154824044193
+              },
+              "N": {
+                "ours": 0.7312416181517605,
+                "raw": 3.116051639184472,
+                "glob": 0.707758509305531,
+                "gloo": 0.7312416181517604
+              },
+              "T": {
+                "ours": 0.29123184059945617,
+                "raw": 1.2701652223382616,
+                "glob": 0.28668201501758084,
+                "gloo": 0.29123184059945617
+              }
+            }
+          }
+        }
+      },
+      "status": "PASS",
+      "notes": "S-NPP fit 2012-01 to 2016-12 only; a region left out is converted with the global ratio of the fit without it. See docs/validation/T-025-results.md."
+    },
+    {
+      "test_id": "S1-BASELINE",
+      "family": "S",
+      "title": "Sensitivity: Aqua-measured baseline (2003-2021) instead of the harmonized baseline (2003-2022)",
+      "case": "Verdicts (D-028 rules) of fire regions, Canada and case boxes C1-C6, months 2012-01 to 2021-12; peak windows of C1-C6",
+      "criterion": "Verdict unchanged in every peak-window month of C1-C6 (any change is reported)",
+      "threshold": "no change in any C1-C6 peak-window month",
+      "measured": {
+        "peak_months": 13,
+        "changed": 1,
+        "summary": {
+          "CASE": {
+            "entity_months": 720,
+            "agree": 0.85,
+            "changed": 108,
+            "median_rel_diff_p50_aqua_vs_harmonized": 0.005957332096664381,
+            "p95_abs_rel_diff_p50": 1.0,
+            "transitions": {
+              "ABOVE_NORMAL -> CANNOT_DETERMINE": 10,
+              "ABOVE_NORMAL -> WITHIN_NORMAL": 2,
+              "BELOW_NORMAL -> CANNOT_DETERMINE": 14,
+              "CANNOT_DETERMINE -> ABOVE_NORMAL": 3,
+              "CANNOT_DETERMINE -> BELOW_NORMAL": 12,
+              "CANNOT_DETERMINE -> NO_DETECTED_ACTIVITY": 1,
+              "CANNOT_DETERMINE -> WITHIN_NORMAL": 47,
+              "WITHIN_NORMAL -> BELOW_NORMAL": 1,
+              "WITHIN_NORMAL -> CANNOT_DETERMINE": 18
+            }
+          },
+          "COUNTRY": {
+            "entity_months": 120,
+            "agree": 0.8833333333333333,
+            "changed": 14,
+            "median_rel_diff_p50_aqua_vs_harmonized": 0.014460306185380523,
+            "p95_abs_rel_diff_p50": 0.18709310257042722,
+            "transitions": {
+              "ABOVE_NORMAL -> CANNOT_DETERMINE": 1,
+              "BELOW_NORMAL -> CANNOT_DETERMINE": 3,
+              "CANNOT_DETERMINE -> ABOVE_NORMAL": 1,
+              "CANNOT_DETERMINE -> BELOW_NORMAL": 2,
+              "CANNOT_DETERMINE -> WITHIN_NORMAL": 6,
+              "WITHIN_NORMAL -> CANNOT_DETERMINE": 1
+            }
+          },
+          "REGION": {
+            "entity_months": 1680,
+            "agree": 0.8529761904761904,
+            "changed": 247,
+            "median_rel_diff_p50_aqua_vs_harmonized": 0.00735085393902879,
+            "p95_abs_rel_diff_p50": 0.12125043015018266,
+            "transitions": {
+              "ABOVE_NORMAL -> CANNOT_DETERMINE": 13,
+              "ABOVE_NORMAL -> WITHIN_NORMAL": 1,
+              "BELOW_NORMAL -> CANNOT_DETERMINE": 21,
+              "CANNOT_DETERMINE -> ABOVE_NORMAL": 34,
+              "CANNOT_DETERMINE -> BELOW_NORMAL": 47,
+              "CANNOT_DETERMINE -> WITHIN_NORMAL": 84,
+              "WITHIN_NORMAL -> CANNOT_DETERMINE": 47
+            }
+          }
+        }
+      },
+      "status": "FAIL",
+      "notes": "The estimate judged is the harmonized one in both runs; only the baseline changes."
+    },
+    {
+      "test_id": "S1-CONFIDENCE-FILTER",
+      "family": "S",
+      "title": "Sensitivity: A1 and B1 without the confidence filter",
+      "case": "C1-C6 (A1) and all fire regions (B1)",
+      "criterion": "Conclusions unchanged (report any that change)",
+      "threshold": "pre-registered at G1",
+      "measured": {},
+      "status": "NOT_RUN",
+      "notes": "Needs the raw archive regridded without the T-005 confidence filter, and the A1 and B1 tests it re-runs; neither exists yet."
+    },
+    {
+      "test_id": "S1",
+      "family": "S",
+      "title": "Sensitivity (A1 and B1 without the confidence filter, and with the Aqua-measured baseline)",
+      "case": "C1-C6",
+      "criterion": "Conclusions unchanged (report any that change)",
+      "threshold": "pre-registered at G1",
+      "measured": {
+        "baseline_half": "FAIL",
+        "confidence_filter_half": "NOT_RUN"
+      },
+      "status": "NOT_RUN",
+      "notes": "Overall NOT_RUN: half of S1 cannot run yet. The baseline half ran and is reported as S1-BASELINE; its verdict-agreement check against the T-014 verdict column is also NOT_RUN until T-014 products exist."
+    }
+  ]
 }

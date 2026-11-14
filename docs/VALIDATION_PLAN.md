@@ -1,6 +1,6 @@
 # Validation Plan: the Witness Stand
 
-> **No validation test has been run yet.** Every status below is `NOT_RUN`. Thresholds were **locked by the Project Lead at Gate G1 on 2026-11-14, before any results existed** (T-051, D-028). After that, any threshold change must be logged in `DECISION_LOG.md` with a reason, and the original threshold kept visible.
+> **Validation status (method 0.1.0, 2026-11-15):** the tests of section 4 that have a status other than `NOT_RUN` actually ran; every one that did not run is `NOT_RUN`, and failures are recorded in section 5. The machine-readable results are in `data/products/validation_results.json`. Thresholds were **locked by the Project Lead at Gate G1 on 2026-11-14, before any results existed** (T-051, D-028). After that, any threshold change must be logged in `DECISION_LOG.md` with a reason, and the original threshold kept visible.
 
 ## 1. Principles
 
@@ -59,23 +59,32 @@ Fixed before any result. Boxes are approximate rectangles (W, S, E, N in degrees
 
 ## 4. Expected vs actual results
 
+All results are for method 0.1.0 on the committed products, run 2026-11-14/15 (reports in `docs/validation/`, entries in `data/products/validation_results.json`). A status is `NOT_RUN` unless the test actually ran. No threshold was changed after a result.
+
 | Test | Expected (hypothesis) | Actual | Status | Run date | Notes |
 |---|---|---|---|---|---|
-| A1 | Pass in most clean-overlap cases | — | NOT_RUN | — | |
-| A2 | Raw shows a large post-2022 inflation; harmonized matches | — | NOT_RUN | — | |
-| B1 | Raw steps at 2012 and 2018; harmonized flat | — | NOT_RUN | — | |
-| B2 | High detection rate | — | NOT_RUN | — | |
-| B3 | Aqua drift visible after ~2021 | — | NOT_RUN | — | |
-| C1 | High agreement | — | NOT_RUN | — | |
-| D1 | Coverage possibly below 90% (correlated errors) | — | NOT_RUN | — | |
-| D2 | 100% by construction | — | NOT_RUN | — | |
-| E1 | Most regions beat naive | — | NOT_RUN | — | |
-| CTRL | No spurious verdicts | — | NOT_RUN | — | |
-| S1 | Robust | — | NOT_RUN | — | |
+| A1 | Pass in most clean-overlap cases | 0 of 6 cases PASS: C1 and C2 INCONCLUSIVE, C3 to C6 FAIL (converted S-NPP-only is 58% to 80% of Aqua-only in the peak windows; the 90% intervals do not overlap) | **FAIL** | 2026-11-15 | Family result. C1 is officially INCONCLUSIVE (the D-028 S-NPP-only path has no baseline); C2 to C6 under D-029 (shared Aqua baseline). `docs/validation/T-020-results.md`, risk S19. |
+| A2 | Raw shows a large post-2022 inflation; harmonized matches | — | NOT_RUN | — | Not run (T-023, assigned). |
+| B1 | Raw steps at 2012 and 2018; harmonized flat | 2012-01: 14 of 14 regions within ±10% (0.955 to 1.007); 2018-04: 13 of 14 (0.952 to 1.104); raw steps 2.60 to 4.28 and 1.60 to 2.05 | PASS | 2026-11-15 | One region (MIDE, small) outside at 2018-04. `docs/validation/T-021-results.md`. |
+| B2 | High detection rate | — | NOT_RUN | — | Not run (T-024, assigned). |
+| B3 | Aqua drift visible after ~2021 | Drift visible as a ratio trend at night only (S-NPP onset 2024-05, NOAA-20 2024-09); 60 of 60 outage entity-months without estimate; 936 of 936 `CANNOT_DETERMINE` with `OUTAGE` | PASS | 2026-11-15 | PASS as written; the registered day-only drift method found none (T-021, section 4.1). |
+| C1 | High agreement | — | NOT_RUN | — | Not run (T-024, assigned). |
+| D1 | Coverage possibly below 90% (correlated errors) | Pooled 90% coverage 0.818 of 1,466 fire-region day/night units (50% interval 0.471) | PASS | 2026-11-15 | D1 read as the pooled share as defined; per-region and night shares reported separately (both below 80%): D1-REGIONS-EACH FAIL (7 of 14 regions inside), D1-NIGHT FAIL (0.750). Widening factor 1.262 reported, not applied. |
+| D2 | 100% by construction | Estimate level: 0 violations in 70,906 entity-months; verdict level: 224,952 of 224,952 rows without an estimate are `CANNOT_DETERMINE` with `OUTAGE` (0 violations) | PASS | 2026-11-15 | Both halves ran. `docs/validation/T-022-results.md`. |
+| E1 | Most regions beat naive | Our conversion beats the naive raw merge in 14 of 14 regions (threshold 11 of 14) | PASS | 2026-11-15 | A weak bar: the raw merge is the unconverted S-NPP count. A left-out region's 90% interval covers only 10% to 80% of its units (risk S18). `docs/validation/T-025-results.md`. |
+| CTRL | No spurious verdicts | — | NOT_RUN | — | Not run (T-024, assigned). |
+| S1 | Robust | — | NOT_RUN | 2026-11-15 | Overall S1 is NOT_RUN because half of it could not run (T-025b, assigned). The half that ran is its own entry: S1-BASELINE FAIL by the strict rule (12 of 13 peak-window verdicts unchanged, 1 changes). |
 
 ## 5. Failed tests
 
-*None recorded. No tests have run.* When a test fails, record what failed, by how much, the suspected cause, and what claim we withdraw or narrow.
+Every failure and every test that could not give a verdict, with what failed, by how much, the suspected cause and what claim we withdraw or narrow. Suspected causes are **hypotheses** unless marked verified.
+
+- **A1, family FAIL (0 of 6; needed 5).** C3 Pantanal (S-NPP-only 192% against Aqua-only 253% of normal), C4 SE Australia (2,314% against 3,963%), C5 California (376% against 637%) and C6 Sakha (645% against 805%): the intervals do not overlap and the converted S-NPP estimate is 20% to 42% below Aqua in the peak windows. C1 (INCONCLUSIVE) and C2 (INCONCLUSIVE) had both paths within normal (94.6% and 86.1% of normal), so there was no anomaly to preserve. Direction and peak month agree in the failed cases, so the failure is a **bias of magnitude in extreme months**. T-020b confirmed by a pre-set rule that the Aqua/VIIRS ratio rises with activity (cell-day saturation is one hypothesis); a v0.2 activity factor (T-020c, D-030) moved the gaps by only 0.01 to 0.03 in log terms and did not meet the adoption rule, so v0.1 stays. **Claim withdrawn:** that the harmonized series preserves the **magnitude** of very large fire events; narrowed to: direction and timing are preserved, magnitude is under-stated by 20% to 40% in extreme months. Risk S19.
+- **D1-NIGHT, FAIL (0.750).** Night intervals are too narrow. **Narrowed:** night-only intervals are not shown as 90% intervals; risk S16.
+- **D1-REGIONS-EACH, FAIL (7 of 14 regions inside 80% to 97%).** The pooled PASS hides it. **Narrowed:** coverage is a property of the pooled collection, not of each region; per-region intervals can be too narrow.
+- **S1-BASELINE, FAIL by the strict rule fixed in advance (1 of 13 peak-window verdicts of C1 to C6 changes when the Aqua-measured baseline replaces the harmonized baseline).** Overall S1 is `NOT_RUN` because the confidence-filter half could not run.
+- **A1 C1 and C2, INCONCLUSIVE.** C1: under D-028 the S-NPP-only path has no baseline (at most 11 of the 20 baseline years). C2: both paths are within normal, so there is no anomaly to preserve. Neither counts as a PASS.
+- **Not run:** A2 (T-023), B2, C1 and CTRL (T-024), and the confidence-filter half of S1 (T-025b) are assigned and are `NOT_RUN` here. No result is implied.
 
 ## 6. Limitations of this validation
 

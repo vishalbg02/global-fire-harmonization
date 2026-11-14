@@ -64,6 +64,8 @@ def load_entries(qa: Path = QA, files: tuple[str, ...] = ENTRY_FILES) -> tuple[l
         if not f.exists():
             raise FileNotFoundError(f"{f} is missing: run the harness first (see docs/task-prompts/validation-integration.md)")
         doc = json.loads(f.read_text(encoding="utf-8"))
+        if isinstance(doc, list):                      # the T-025 harness writes the bare list of entries
+            doc = {"tests": doc, "synthetic": False}
         meta[name] = {k: doc.get(k) for k in ("contract_version", "method_version", "generated_at", "synthetic")}
         entries.extend(doc["tests"])
     return entries, meta
@@ -73,6 +75,8 @@ def merge(entries: list[dict]) -> list[dict]:
     """Harness entries in plan order (A1 ... S1), the plan tests nobody ran appended as NOT_RUN entries in their place."""
     by_plan: dict[str, list[dict]] = {p: [] for p in PLAN_ORDER}
     for e in entries:
+        if e.get("measured") is None:                  # a harness may write null for a test that did not run: the contract wants an object
+            e = {**e, "measured": {}}
         p = plan_test(e["test_id"])
         if p not in by_plan:
             raise ValueError(f"entry {e['test_id']} belongs to no test of the plan {PLAN_ORDER}")
@@ -84,6 +88,19 @@ def merge(entries: list[dict]) -> list[dict]:
         elif p in NOT_RUN_TESTS:
             out.append(not_run_entry(p))
     return out
+
+
+def _has_number(x) -> bool:
+    """True if a measured value holds a number anywhere (a status string or a boolean is not a measurement)."""
+    if isinstance(x, bool) or x is None:
+        return False
+    if isinstance(x, (int, float)):
+        return True
+    if isinstance(x, dict):
+        return any(_has_number(v) for v in x.values())
+    if isinstance(x, (list, tuple)):
+        return any(_has_number(v) for v in x)
+    return False
 
 
 def check(doc: dict) -> list[str]:
@@ -105,7 +122,7 @@ def check(doc: dict) -> list[str]:
             continue
         if t["status"] not in STATUSES:
             problems.append(f"{t['test_id']}: status {t['status']!r} is not one of {STATUSES}")
-        if t["status"] == "NOT_RUN" and t["measured"] not in ({}, None) and any(v is not None for v in t["measured"].values()):
+        if t["status"] == "NOT_RUN" and _has_number(t["measured"]):
             problems.append(f"{t['test_id']}: a NOT_RUN entry must carry no measured numbers")
         if not isinstance(t["measured"], dict):
             problems.append(f"{t['test_id']}: measured must be an object")
