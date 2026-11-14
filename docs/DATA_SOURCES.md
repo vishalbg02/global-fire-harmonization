@@ -490,7 +490,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
   | Median relative sd | 0.23 | 0.22 |
   | Indonesia `S > 1` / `S > 2` | 43% / 8% | 58.5% / 13.6% |
 
-  This run was made before two small fixes (the disagreement scale of two witnesses that never cover the same part, and the data level of an excluded Aqua night row); they change only rare months and the `data_level`, not these shares **[ASSUMPTION: not re-run]**.
+  **[VERIFIED, re-run 2026-11-15]** `python pipeline/harmonize.py` was re-run with the final code of T-014 (both bug fixes, shared ratio errors, the `S > 2` rule) over all 66,218 country-months: `S > 1` 23.66%, `S > 2` 4.62%, `S > 3` 0.83%, `S > 5` 0.02%; 95th percentile of `S` 1.95 (99th 2.90); median relative sd 0.223; Indonesia `S > 1` 58.5% and `S > 2` 13.6%. These equal the "now" column above to the digits shown, so the two fixes did not move the shares. With `phi` only: `S > 1` 18.3%, `S > 2` 5.0%, median relative sd 0.345.
 
 **Reading it correctly (totals method):** the witnesses disagree beyond their stated uncertainty (`S > 1`) in 26% of the multi-witness country-months and beyond a factor of 2 in 6.8%, so the code `WITNESS_DISAGREEMENT` flags the exceptions. Whether the intervals are the right width is test D1: the Aqua-only years (2002-07 to 2011-12, inside the 2003 to 2022 baseline) have no second witness, so their width rests on `phi` and `kappa` alone.
 
