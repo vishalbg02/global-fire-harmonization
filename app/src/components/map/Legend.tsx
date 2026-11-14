@@ -24,7 +24,11 @@ export function Legend({ layer, max }: { layer: MapLayer; max: number }) {
             )
           })}
         </ul>
-        <p className="legend-note">Each verdict is also given as an icon and text, not colour alone.</p>
+        <p className="legend-note">
+          Each verdict is also given as an icon and text, not colour alone. The icons appear on the
+          map when you zoom in far enough for a cell to hold one; the verdict is always in the
+          tooltip and in the evidence panel.
+        </p>
       </section>
     )
   }

@@ -438,3 +438,13 @@ describe('legends show the same non-colour cues as the map and the calendar (T-0
     expect(html).toContain('swatch-outside')
   })
 })
+
+describe('the verdict icons are drawn only when a cell can hold one (T-042)', () => {
+  it('uses a zoom at which a 0.5 degree cell is about as wide as the 13 px icon', async () => {
+    const { ICON_MIN_ZOOM } = await import('../components/map/MapView.tsx')
+    // A 0.5 degree cell is 0.5/360 of the world width, which is 512 x 2^zoom pixels.
+    const cellPixels = (zoom: number) => (0.5 / 360) * 512 * 2 ** zoom
+    expect(cellPixels(1.2)).toBeLessThan(2) // world zoom: a glyph per cell would cover the land
+    expect(cellPixels(ICON_MIN_ZOOM)).toBeGreaterThanOrEqual(13)
+  })
+})
