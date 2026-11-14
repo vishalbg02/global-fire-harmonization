@@ -10,7 +10,8 @@ Grids (D-009, locked at G1): analysis 0.5 degrees, fine 0.05 degrees. A fine cel
 analysis cell that holds its centre, which for these sizes is simply (fine row // 10, fine column // 10).
 
 Kept detections: confidence MODIS 30 or more and VIIRS n or h; type 0 for SP rows (NRT rows have no type);
-and not in the approved static-source mask (applied to every row, as in the D-009 test).
+and not in the static-source mask (applied to every row, as in the D-009 test). Since D-025 that is the approved T-005
+mask plus the persistent night sources of pipeline/night_mask.py (build it first with `python pipeline/night_mask.py`).
 
     python pipeline/gridding.py build      # writes both products (about 10 to 20 minutes)
     python pipeline/gridding.py validate   # contract and integrity checks on the products
@@ -47,7 +48,7 @@ EARTH_RADIUS_KM = 6371.0088
 @dataclass
 class Paths:
     detections: Path = ROOT / "data" / "interim" / "detections"
-    mask: Path = ROOT / "data" / "interim" / "qa" / "static_mask_fine0.05_share0.5_min10.parquet"
+    mask: Path = ROOT / "data" / "interim" / "qa" / "static_mask_plus_night_sources.parquet"  # D-025
     fire_regions: Path = ROOT / "data" / "interim" / "fire_regions" / "fire_region_g050.parquet"
     country_map: Path = ROOT / "pipeline" / "country_map.csv"
     missing_json: Path | None = None  # default: the newest data/raw/availability/missing_data_*.json
@@ -405,8 +406,11 @@ def monthly_totals(paths: Paths | None = None) -> list[tuple]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["build", "validate"])
+    ap.add_argument("--mask", type=Path, help="static mask (r, c) Parquet to use instead of the D-025 mask, for comparisons")
     args = ap.parse_args()
     paths = Paths()
+    if args.mask is not None:
+        paths.mask = args.mask
     if args.cmd == "build":
         print(build(paths))
     else:
