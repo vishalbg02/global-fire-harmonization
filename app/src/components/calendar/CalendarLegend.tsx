@@ -63,7 +63,7 @@ export function CalendarLegend({
           No data
         </li>
         <li>
-          <span className="swatch" style={{ background: toCss(OUTSIDE_RGB) }} aria-hidden="true" />
+          <span className="swatch swatch-outside" style={{ backgroundColor: toCss(OUTSIDE_RGB) }} aria-hidden="true" />
           Outside the record
         </li>
         <li>

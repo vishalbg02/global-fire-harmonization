@@ -139,6 +139,12 @@ describe('CustomAreaForm', () => {
       />,
     )
 
+  it('says that a new area is being computed, and can take several seconds, while it loads (T-042)', () => {
+    expect(form({ loading: true })).toContain('A new area can take several seconds.')
+    expect(form({ loading: true })).toContain('aria-busy="true"')
+    expect(form({ loading: false })).not.toContain('Computing this area')
+  })
+
   it('has four labelled fields with units, and the grid-cell note', () => {
     const html = form()
     for (const label of ['West (degrees)', 'South (degrees)', 'East (degrees)', 'North (degrees)']) {
