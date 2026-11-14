@@ -19,7 +19,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
 | T-000 | Planning docs + private repo created | M1 | P0 | — | `main` (bootstrap) | — | MERGED (2026-11-14) | n/a (bootstrap) | Repo private; docs pushed; no secrets |
-| T-0E | Team workflow docs (TEAM_WORKFLOW, PR template, push guard) | M1 | P0 | T-000 | `docs/team-workflow` | [#1](https://github.com/vishalbg02/global-fire-harmonization/pull/1) | IN_REVIEW | PENDING | Lead approves the workflow (D-017) |
+| T-0E | Team workflow docs (TEAM_WORKFLOW, PR template, push guard) | M1 | P0 | T-000 | `docs/team-workflow` | [#2](https://github.com/vishalbg02/global-fire-harmonization/pull/2) (supersedes #1) | IN_REVIEW | PENDING | Lead approves the workflow (D-017) |
 | T-0A | **Approve tech stack (D-008)** | M1 | P0 | T-000 | — | — | TODO | — | `TECH_STACK.md` marked APPROVED; D-008 logged |
 | T-0B | **Approve data contract v0.1.0 (D-016)** | M1 | P0 | T-000 | — | — | TODO | — | Contract status APPROVED |
 | T-0C | Add collaborators (Lead only) | M1 | P0 | T-000 | — | — | TODO | — | Both teammates have access |

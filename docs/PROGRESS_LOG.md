@@ -12,7 +12,7 @@ Newest entries first. Record completed work, pending work, blockers and decision
 
 - Applied the Lead's no-AI-attribution rule (D-020): removed AI authorship credits from docs, added the rule to the workflow docs and PR template, and added a `.githooks/commit-msg` guard (tested: it blocks AI trailers and tool names, allows normal messages). This branch's commits were recreated without AI trailers before the PR was opened.
 
-- D-021 approved and executed: the 4 bootstrap commits on `main` were rebuilt without AI trailers (identical trees; authorship and dates preserved), `main` was force-pushed with a lease, and this PR was rebased onto it.
+- D-021 approved and executed: the 4 bootstrap commits on `main` were rebuilt without AI trailers (identical trees; authorship and dates preserved), `main` was force-pushed with a lease, and the branch was rebased onto it. GitHub auto-closed PR #1 on the base force-push; PR #2 replaces it.
 
 **Pending (Lead):** review and merge this PR; decide D-018 and D-019.
 

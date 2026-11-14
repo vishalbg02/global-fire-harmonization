@@ -143,6 +143,6 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
   - The commits were rebuilt with identical file trees and with the original author, committer and dates preserved. Only the messages changed: AI `Co-Authored-By` trailers removed; the tool's name replaced with "assistant instructions".
   - Force-pushed with a lease on the old tip.
   - Mapping: 6670a4b→8daabd3, 92afa01→5c0d8b4, 343a874→348ef2d, 2d26909→00c9f7f.
-  - PR #1 was rebased onto the new `main`.
+  - The PR branch was rebased onto the new `main`. GitHub auto-closed PR #1 on the base force-push and would not reopen it, so PR #2 replaces it (same branch).
 - **Note:** the *file contents* of those historical commits still contain the old "Claude / M1" owner credit in `TASK_TRACKER.md`. It is corrected going forward by PR #1. Rewriting historical file contents was not part of this decision.
 - **Status:** APPROVED and DONE.
