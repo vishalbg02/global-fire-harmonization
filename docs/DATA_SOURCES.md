@@ -420,9 +420,10 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
   1. **Counting noise**, per stratum and day/night: `phi x ratio^2 x cell_days`, plus a term that grows with the size of the estimate, `kappa x E^2` (`E`: the witness estimate of the area for that day/night). `phi` is the overdispersion factor and `kappa` a relative error (below); both are the same for every witness, including single-witness months.
   2. **Ratio error, shared.** Strata that take the same ratio share its error, so the errors are added **fully correlated** inside each *ratio source*: a `LOCAL` stratum is its own source, the strata with pooling level `REGION` of one fire region form one source, the strata with level `GLOBAL` form one source (per witness, day/night and season). Each source adds `(sum of cell_days x ratio_sd)^2` (the Lead's `(sum cell_days)^2 x ratio_sd^2`, with each stratum's own `ratio_sd`; the two agree when the `ratio_sd` of a source is common). Different sources are independent **[LIMITATION]**: the region estimates share the global one, and `LOCAL` strata are partly shrunk toward their region, which this grouping by the dominant level does not capture, so the interval of a very large area can still be too narrow.
 - **Zero counts:** the variance of a witness is never below `mean(ratio)^2` (one cell-day).
-- **Combination:** a precision-weighted mean of the witnesses that count. `S = sqrt(chi^2 / (N - 1))` multiplies the combined sd whenever `S > 1`; `disagreement_scale` is `max(S, 1)` with 2 or more witnesses and `null` with one. **The code `WITNESS_DISAGREEMENT` is given only when `S > 2`** (Lead's decision); `SINGLE_WITNESS` with one witness.
-- **Witnesses that count:** only those with every day of the month available. If none counts, the estimate is `null` and `n_witnesses` is 0. The Aqua drift cutoff (D-005, approved by the Lead 2026-11-14) is `AQUA_FROM = {"D": None, "N": (2024, 5)}`: **Aqua night is not combined from 2024-05 on, Aqua day stays** (reason `AQUA_DRIFT_ERA`). For those months the witnesses are combined separately for day and for night and the two combined estimates are added (the variances add; `S` is pooled over both parts); a month with no witness left for the night has no estimate. Months before 2024-05 use the unchanged method of the first version.
+- **Combination (one method for every month):** the witnesses are combined **separately for day and for night** (a precision-weighted mean of the witnesses that count in that part) and the two combined estimates are **added**; the variances add. `S = sqrt(chi^2 / (N - 1))` is **pooled over both parts** (the `chi^2` and the degrees of freedom are summed) and multiplies the combined sd whenever `S > 1`; `disagreement_scale` is `max(S, 1)` with 2 or more witnesses and `null` with one. **The code `WITNESS_DISAGREEMENT` is given only when `S > 2`** (Lead's decision); `SINGLE_WITNESS` with one witness.
+- **Witnesses that count:** only those with every day of the month available. If none counts, the estimate is `null` and `n_witnesses` is 0. The Aqua drift cutoff (D-005, approved by the Lead 2026-11-14) is `AQUA_FROM = {"D": None, "N": (2024, 5)}`: **Aqua night is not combined from 2024-05 on, Aqua day stays** (reason `AQUA_DRIFT_ERA`). The method is the same for every month: days and nights are combined separately and added, `S` is pooled over both with the degrees of freedom summed, and a night or day part that has data but no witness that counts gives no estimate for the month.
 - **Interval:** 90% normal, `estimate +/- 1.645 sd`, lower bound at 0. `data_level` follows the witnesses that count, with the reason `PROVISIONAL_NRT` for `NRT` and `MIXED`.
+- **First version ("totals method"):** summing day and night per witness and then combining the witnesses is kept as `separate=False`, only for the seam check below. The Indonesia 2015 table and the country shares in this section were computed with the totals method and are labelled "totals method"; the numbers of the method now used are in the subsection "The seam at 2024-05" below.
 
 **Overdispersion `phi` and the size-dependent term `kappa`** (`estimate_dispersion`, fit periods only). **Approved by the Lead 2026-11-14.**
 - **Model:** the variance of a witness estimate for one day/night is `phi x count + kappa x estimate^2`, plus the shared ratio variance. `phi` = 1, `kappa` = 0 is Poisson. The `kappa` term is a relative error: it grows with the square of the size, as the extra-Poisson variance does.
@@ -440,7 +441,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - **Lower bound:** the ratios were fitted on these months, so the two witnesses agree better in them than out of sample, and `phi` and `kappa` are lower bounds. Test D1 (coverage on the holdout years) is the final check.
 - **Compare with the first version:** a single `phi` of 7.7 (day) and 6.5 (night) estimated on units of at least 20 cell-days. The estimate rose with the size of the unit (5.5, 7.7, 14.0 and 24.8 by day for minimum sizes of 5, 20, 100 and 500 cell-days), which is why a constant factor was replaced.
 
-**Tests** (`pipeline/tests/test_harmonize.py`, 27 tests on synthetic data with answers computed by hand):
+**Tests** (`pipeline/tests/test_harmonize.py`; 27 tests of the first version, 38 now, listed in the T-012 subsections below; synthetic data with answers computed by hand):
 - the weighted mean, `chi^2` and sd; equal witnesses are not inflated and conflicting ones are; the stratum-first sum;
 - **shared ratio errors:** two strata on the same pooled region ratio get a larger area variance (74.47) than two `LOCAL` strata (58.37); `GLOBAL` strata of different regions form one source, `REGION` strata of different regions do not;
 - **`phi`:** it scales the counting variance of every witness, including a single one; `solve_phi` recovers planted values and ignores 5% outliers;
@@ -450,7 +451,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - Breaking the code on purpose (regions not shared, `GLOBAL` not shared, ratio errors independent, `phi` ignored or not applied to Aqua, `kappa` ignored, not squared, not applied to Aqua, never positive, size bands ignored, code threshold at 1, fit window ignored, wrong chi-square target) makes tests fail (checked).
 
 **On the real products** (final T-011 products):
-- **Indonesia 2015** (`harmonize_area`). Raw Aqua cell-days are 4,118, 10,761, 20,370, 17,386 and 2,800.
+- **Indonesia 2015, totals method** (`harmonize_area` with `separate=False`; the numbers of the method now used are below). Raw Aqua cell-days are 4,118, 10,761, 20,370, 17,386 and 2,800.
 
   | Month | Poisson only, independent strata | `phi` only (7.72 / 6.53) | **`phi` and `kappa`** | `S` | Code |
   |---|---|---|---|---|---|
@@ -461,7 +462,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
   | November | 3,132 (275) | 3,218 (243) | **3,044 (278)** | 1.48 | none |
 
   Estimate (sd). The September interval (17,155 to 20,975) contains the raw Aqua value. Over all 176 Indonesian months with 2 or more witnesses: `S > 1` in 43% and `S > 2` in 8% (with `phi` only: 54% and 26%).
-- **Every country** (66,218 country-months, 39,776 with 2 or more witnesses):
+- **Every country, totals method** (66,218 country-months, 39,776 with 2 or more witnesses):
 
   | | Poisson only | `phi` only | **`phi` and `kappa`** |
   |---|---|---|---|
@@ -477,7 +478,21 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - **No estimate:** 904 country-months: 2002-07 to 2002-09 (Aqua outage days) and 2026-11 (a partial month).
 - **Run time:** one area takes seconds; `python pipeline/harmonize.py` (every country, two variance variants) takes about 15 minutes; `python pipeline/harmonize.py phi` takes 10 seconds.
 
-**Reading it correctly:** the witnesses disagree beyond their stated uncertainty (`S > 1`) in 26% of the multi-witness country-months and beyond a factor of 2 in 6.8%, so the code `WITNESS_DISAGREEMENT` flags the exceptions. Whether the intervals are the right width is test D1: the Aqua-only years (2002-07 to 2011-12, inside the 2003 to 2022 baseline) have no second witness, so their width rests on `phi` and `kappa` alone.
+- **Every country with the method now used (day and night combined separately), `phi` and `kappa`** (66,218 country-months, 39,776 with 2 or more witnesses; 65,314 with an estimate; the 904 without are the same months as before):
+
+  | | Totals method (first version) | **Day and night separately (now)** |
+  |---|---|---|
+  | `S > 1` | 26% | **23.7%** |
+  | `S > 2` (the code) | 6.8% | **4.6%** |
+  | `S > 3` | 1.9% | 0.83% |
+  | `S > 5` | 0.15% | 0.02% |
+  | 95th percentile of `S` | 2.23 | 1.95 |
+  | Median relative sd | 0.23 | 0.22 |
+  | Indonesia `S > 1` / `S > 2` | 43% / 8% | 58.5% / 13.6% |
+
+  This run was made before two small fixes (the disagreement scale of two witnesses that never cover the same part, and the data level of an excluded Aqua night row); they change only rare months and the `data_level`, not these shares **[ASSUMPTION: not re-run]**.
+
+**Reading it correctly (totals method):** the witnesses disagree beyond their stated uncertainty (`S > 1`) in 26% of the multi-witness country-months and beyond a factor of 2 in 6.8%, so the code `WITNESS_DISAGREEMENT` flags the exceptions. Whether the intervals are the right width is test D1: the Aqua-only years (2002-07 to 2011-12, inside the 2003 to 2022 baseline) have no second witness, so their width rests on `phi` and `kappa` alone.
 
 ### Holdout evaluation 2017 to 2021 (T-012) **[VERIFIED 2026-11-14 unless labelled]**
 
@@ -707,11 +722,38 @@ Near 1 by construction, because T-011 fitted the ratios on these years.
 
 #### Effect of the cutoff in `harmonize_area` [VERIFIED]
 
-`AQUA_FROM = {"D": None, "N": (2024, 5)}` is the module default. Checked on the real products:
-- **Months before 2024-05 are unchanged** (Indonesia, Brazil and Australia, 262 months each: identical to 1e-12, the floating-point order of the sums); Indonesia 2015 is as before (September 19,065, sd 1,161, `S` 1.09).
-- **2024-05 to 2026-10** (31 months; the month 2026-11 is partial): every estimate moves, by +0.64% on average for Indonesia, +0.23% for Brazil and +0.47% for Australia; the sd moves by a few percent in either direction; the months carry `AQUA_DRIFT_ERA`.
+`AQUA_FROM = {"D": None, "N": (2024, 5)}` is the module default. There is one method for every month (days and nights combined separately and added, see T-013 above), so the cutoff changes only which witnesses enter. Checked on the real products:
+- **Months before 2024-05 are identical with and without the cutoff**: the same method and the same witnesses (Indonesia, Brazil and Australia, 262 months each: identical to 1e-12, the floating-point order of the sums).
+- **2024-05 to 2026-10** (31 months; the month 2026-11 is partial): the estimates change only through the exclusion of Aqua night; the months carry `AQUA_DRIFT_ERA`. **Size of the change [VERIFIED], default against no cutoff, with the single method:** the estimate moves by +1.18% on average for Indonesia, +0.68% for Brazil and +0.85% for Australia, and the sd by -19.2%, -0.6% and -11.8% (the sd falls where Aqua night, with its large variance, no longer enters the night part). Months before 2024-05 differ by at most 1.5e-11 (the order of floating-point sums).
 - **The holdout does not move:** its window is 2017 to 2021 and Aqua is the target there, not a combined witness (90% coverage 0.818 for regions and 0.811 for countries, as before).
-- **Tests** (`pipeline/tests/test_harmonize.py`): the default is night from 2024-05 and no day cutoff; night excluded from 2024-05 with Aqua day kept, by hand (the estimate 30.0 and the sd of the day combination plus the S-NPP-only night); the code `AQUA_DRIFT_ERA` present and absent; a month before 2024-05 equal to the no-cutoff record; Aqua day still weighs in after the cutoff (and Aqua night's 500 does not); a night with no other witness gives no estimate; the disagreement pooled over day and night. Six deliberate breakages make tests fail (checked).
+- **Tests** (`pipeline/tests/test_harmonize.py`, 38 tests, all pass): the default is night from 2024-05 and no day cutoff; night excluded from 2024-05 with Aqua day kept, by hand; the code `AQUA_DRIFT_ERA` present and absent; two months, before and after 2024-05, with identical inputs differ only through the Aqua night exclusion (with no Aqua night rows the two months are identical; May equals the data without Aqua night; April keeps it); Aqua day still weighs in after the cutoff (and Aqua night's 500 does not); a night with no other witness gives no estimate; the disagreement is pooled over day and night; the two ways of combining agree exactly when day and night agree, and the totals method (`separate=False`) differs when they disagree.
+
+#### The seam at 2024-05: both ways of combining (Lead review, PR #45) [VERIFIED]
+
+**Concern:** switching the combination method at the cutoff month could create an artificial step. **Rule (fixed by the Lead before the run):** compute both ways for 2012-01 to 2024-04, every country-month and fire-region-month. If the median of the absolute value of log(separate / totals) of the estimate is at most 1% **and** its 95th percentile is at most 5%, keep the code as it was; otherwise use the separate day/night combination for all months and re-run the holdout coverage and Indonesia 2015. Run: `python pipeline/harmonize.py seam` (`data/interim/qa/harmonize_seam.json`). 29,542 entity-months, 29,229 of them with 2 or more witnesses.
+
+| | Entity-months | Median abs. log ratio | 95th pct | 99th pct | Max | sd ratio, median | sd ratio, 5th to 95th pct |
+|---|---|---|---|---|---|---|---|
+| All | 29,542 | 0.0035 | 0.280 | 0.894 | 4.30 | 1.000 | 0.71 to 1.70 |
+| Country | 27,322 | 0.0039 | 0.315 | 0.907 | 4.30 | 1.000 | 0.71 to 1.70 |
+| Fire region | 2,220 | 0.0012 | 0.041 | 0.259 | 0.72 | 1.000 | 0.73 to 1.77 |
+
+(log units; `python pipeline/harmonize.py seam`, `data/interim/qa/harmonize_seam.json`.) Over the 29,229 entity-months with 2 or more witnesses the figures are the same to the third decimal.
+
+- **Decision:** the median is within 1% but the 95th percentile (0.280, about 28%) is far above 5%, so by the rule **the separate day/night combination is used for all months**. This is the method described in T-013 above.
+- **Holdout re-run:** unchanged, because it does not use the combined estimate (Aqua is its target): 90% coverage 0.818 (regions) and 0.811 (countries); 50% coverage 0.471 and 0.439; 2019 to 2021 0.811 and 0.803.
+- **Indonesia 2015, new method vs totals method** (estimate (sd), `S`):
+
+  | Month | New method | `S` | Totals method | `S` |
+  |---|---|---|---|---|
+  | July | 4,229.3 (251.4) | 1.00 | 4,229.0 (251.5) | 1.00 |
+  | August | 10,627.3 (633.4) | 1.00 | 10,627.6 (633.4) | 1.00 |
+  | September | 19,068.7 (1,063.0) | 1.00 | 19,065.3 (1,161.3) | 1.09 |
+  | October | 17,202.7 (946.7) | 1.00 | 17,204.0 (946.9) | 1.00 |
+  | November | 3,039.2 (306.2) | 1.63 | 3,044.3 (277.6) | 1.48 |
+
+  Raw Aqua cell-days in September: 20,370; the new September interval (17,320 to 20,817) contains it. Over all 176 Indonesian months with 2 or more witnesses: `S > 1` in 58.5% and `S > 2` in 13.6% (totals method: 43% and 8%); median relative sd 0.093.
+- **Why the tail is large [HYPOTHESIS, not investigated]:** the two ways differ most where day and night disagree differently across the witnesses, so that weighting the witnesses once for the total and weighting them separately for day and night give different answers.
 
 #### Problem of the registered design [VERIFIED as a property of the design]
 

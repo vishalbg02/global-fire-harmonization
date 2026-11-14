@@ -105,11 +105,16 @@ def test_equal_witnesses_are_not_inflated_and_conflicting_ones_are(tmp_path):
     assert jan["estimate"] == pytest.approx(30.0) and jan["disagreement_scale"] == 1.0 and "WITNESS_DISAGREEMENT" not in jan["reason_codes"]
     assert jan["n_witnesses"] == 2 and jan["witnesses_used"] == ["AQUA_MODIS", "SNPP_VIIRS"]
     assert feb["disagreement_scale"] > 1.0 and "WITNESS_DISAGREEMENT" in feb["reason_codes"] and "SINGLE_WITNESS" not in feb["reason_codes"]
-    # the inflated sd is the plain combined sd times the scale
-    v_aqua, v_snpp = 30.0 + 0.0, (0.25 * 200 + 40000 * 0.0025) + (0.01 * 200 + 40000 * 0.0001)
-    plain = np.sqrt(1 / (1 / v_aqua + 1 / v_snpp))
+    # day and night are combined separately and added; the inflated sd is the plain combined sd times the pooled scale
+    vd_a, vd_s = 25.0, 0.25 * 200 + (200 * 0.05) ** 2                       # day: Aqua 25, S-NPP 100
+    vn_a, vn_s = 5.0, 0.01 * 200 + (200 * 0.01) ** 2                        # night: Aqua 5, S-NPP 20
+    day = (25 / vd_a + 100 / vd_s) / (1 / vd_a + 1 / vd_s)
+    night = (5 / vn_a + 20 / vn_s) / (1 / vn_a + 1 / vn_s)
+    chi2 = (25 - 100) ** 2 / (vd_a + vd_s) + (5 - 20) ** 2 / (vn_a + vn_s)
+    plain = np.sqrt(1 / (1 / vd_a + 1 / vd_s) + 1 / (1 / vn_a + 1 / vn_s))
+    assert feb["disagreement_scale"] == pytest.approx(np.sqrt(chi2 / 2))              # one degree of freedom for day and one for night
     assert feb["sd"] == pytest.approx(plain * feb["disagreement_scale"]) and feb["ci90_low"] < feb["estimate"] < feb["ci90_high"]
-    assert feb["estimate"] == pytest.approx((30 / v_aqua + 120 / v_snpp) / (1 / v_aqua + 1 / v_snpp))
+    assert feb["estimate"] == pytest.approx(day + night)
 
 
 def test_a_partial_month_witness_is_not_used_and_a_month_without_one_has_no_estimate(tmp_path):
@@ -485,7 +490,8 @@ def test_aqua_day_still_counts_in_the_day_part_after_the_cutoff(tmp_path):
     day = (25 / v_aqua_d + 50 / v_snpp_d) / (1 / v_aqua_d + 1 / v_snpp_d)
     assert cut["estimate"] == pytest.approx(day + 5.0)                                     # night: S-NPP only, Aqua's 500 is not used
     (kept,) = hz.harmonize_area(["A1"], paths=paths, aqua_from=NO_CUT, phi=PHI1, kappa=K0)
-    assert kept["estimate"] > cut["estimate"] + 50                                        # without the cutoff Aqua night would dominate
+    night_with_aqua = (500 / 500.0 + 5 / 0.75) / (1 / 500.0 + 1 / 0.75)                      # Aqua night (500, variance 500) weighs little
+    assert kept["estimate"] == pytest.approx(day + night_with_aqua) and kept["estimate"] > cut["estimate"]
     # excluding day as well removes Aqua entirely, as the first T-013 version did after a cutoff
     (both,) = hz.harmonize_area(["A1"], paths=paths, aqua_from={"D": (2024, 5), "N": (2024, 5)}, phi=PHI1, kappa=K0)
     assert both["witnesses_used"] == ["SNPP_VIIRS"] and both["estimate"] == pytest.approx(55.0)
@@ -508,3 +514,88 @@ def test_the_disagreement_is_pooled_over_day_and_night_after_the_cutoff(tmp_path
     assert rec["disagreement_scale"] == pytest.approx(max(np.sqrt(chi2), 1.0))
     assert ("WITNESS_DISAGREEMENT" in rec["reason_codes"]) == (np.sqrt(chi2) > 2.0)
     assert set(rec) == set(cc.SPEC["entity_month"])
+
+
+# ------------------------------------------------------------------ the seam at 2024-05 (Lead review, PR #45)
+def test_the_two_ways_of_combining_agree_exactly_when_day_and_night_agree(tmp_path):
+    spec = {**AQUA_WORLD, **SNPP_WORLD}                       # Aqua and S-NPP both give D = 25 and N = 5
+    paths = make(tmp_path, month_rows(2024, 4, spec))
+    (totals,) = hz.harmonize_area(["A1"], paths=paths, aqua_from=NO_CUT, phi=PHI1, kappa=K0)
+    (separate,) = hz.harmonize_area(["A1"], paths=paths, aqua_from=NO_CUT, phi=PHI1, kappa=K0, separate=True)
+    assert totals["estimate"] == pytest.approx(30.0) and separate["estimate"] == pytest.approx(30.0)        # no step in the estimate
+    assert separate["witnesses_used"] == totals["witnesses_used"] and separate["n_witnesses"] == 2
+
+
+def test_a_month_before_and_after_2024_05_with_identical_inputs_differs_only_through_the_aqua_night(tmp_path):
+    aqua = {("A1", "AQUA_MODIS", "D"): 25, ("A1", "AQUA_MODIS", "N"): 40}                 # Aqua night 40 against S-NPP night 5
+    snpp = {("A1", "SNPP_VIIRS", "D"): 50, ("A1", "SNPP_VIIRS", "N"): 50}
+    full = {**aqua, **snpp}
+    no_aqua_night = {k: v for k, v in full.items() if k != ("A1", "AQUA_MODIS", "N")}
+    (tmp_path / "full").mkdir()
+    (tmp_path / "gone").mkdir()
+    p_full = make(tmp_path / "full", month_rows(2024, 4, full) + month_rows(2024, 5, full))
+    p_gone = make(tmp_path / "gone", month_rows(2024, 4, no_aqua_night) + month_rows(2024, 5, no_aqua_night))
+    april, may = hz.harmonize_area(["A1"], paths=p_full, phi=PHI1, kappa=K0)               # the module default cutoff
+    assert "AQUA_DRIFT_ERA" not in april["reason_codes"] and "AQUA_DRIFT_ERA" in may["reason_codes"]
+    # one method for every month: with no Aqua night at all, the two months are identical (no step from the method or the cutoff)
+    a2, m2 = hz.harmonize_area(["A1"], paths=p_gone, phi=PHI1, kappa=K0)
+    assert (a2["estimate"], a2["sd"], a2["disagreement_scale"]) == (m2["estimate"], m2["sd"], m2["disagreement_scale"])
+    # so the step in the full data is only the Aqua night exclusion: May equals the data without Aqua night, April keeps it
+    assert may["estimate"] == pytest.approx(m2["estimate"]) and may["sd"] == pytest.approx(m2["sd"])
+    assert april["estimate"] > may["estimate"] and april["sd"] != may["sd"]
+    # months before the cutoff are never touched by the default: April equals the no-cutoff record
+    assert april == hz.harmonize_area(["A1"], months=[(2024, 4)], paths=p_full, aqua_from=NO_CUT, phi=PHI1, kappa=K0)[0]
+
+
+def test_the_earlier_totals_method_is_kept_for_the_seam_check_and_differs_when_day_and_night_disagree(tmp_path):
+    aqua = {("A1", "AQUA_MODIS", "D"): 25, ("A1", "AQUA_MODIS", "N"): 5}
+    snpp = {("A1", "SNPP_VIIRS", "D"): 200, ("A1", "SNPP_VIIRS", "N"): 200}
+    paths = make(tmp_path, month_rows(2020, 2, {**aqua, **snpp}))
+    (sep,) = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)
+    (tot,) = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0, separate=False)
+    v_aqua, v_snpp = 30.0, (0.25 * 200 + 40000 * 0.0025) + (0.01 * 200 + 40000 * 0.0001)             # the totals variances
+    assert tot["estimate"] == pytest.approx((30 / v_aqua + 120 / v_snpp) / (1 / v_aqua + 1 / v_snpp))
+    assert tot["estimate"] != pytest.approx(sep["estimate"], rel=1e-3) and tot["disagreement_scale"] != sep["disagreement_scale"]
+
+
+# ------------------------------------------------------------ cases found in the independent review of the combination code
+def contract_errors(recs):
+    df = pd.DataFrame(recs)
+    for col in ("estimate", "ci90_low", "ci90_high", "sd", "disagreement_scale", "baseline_median", "baseline_p25", "baseline_p75",
+                "pct_of_normal", "p_above", "p_below", "p_within"):
+        df[col] = df[col].astype(float)
+    errors: list[str] = []
+    cc.check_harmonized_rows("entity_month", df, errors)
+    return errors
+
+
+def test_two_witnesses_that_never_cover_the_same_part_have_a_scale_of_one_and_no_single_witness_code(tmp_path):
+    rows = [("A1", 2024, 6, "SNPP_VIIRS", "D", 100, 31, 31, "SP"), ("A1", 2024, 6, "NOAA20_VIIRS", "N", 100, 31, 31, "SP")]
+    paths = make(tmp_path, rows)
+    (rec,) = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)
+    assert rec["n_witnesses"] == 2 and rec["witnesses_used"] == ["SNPP_VIIRS", "NOAA20_VIIRS"]
+    assert rec["disagreement_scale"] == 1.0 and "SINGLE_WITNESS" not in rec["reason_codes"]
+    assert contract_errors([rec]) == []
+
+
+def test_the_data_level_follows_the_rows_that_were_used_not_an_excluded_aqua_night_row(tmp_path):
+    rows = month_rows(2024, 6, {("A1", "AQUA_MODIS", "D"): 25, **SNPP_WORLD}) + [("A1", 2024, 6, "AQUA_MODIS", "N", 5, 31, 31, "NRT")]
+    paths = make(tmp_path, rows)
+    (rec,) = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)
+    assert "AQUA_DRIFT_ERA" in rec["reason_codes"] and rec["data_level"] == "SP" and "PROVISIONAL_NRT" not in rec["reason_codes"]
+    (kept,) = hz.harmonize_area(["A1"], paths=paths, aqua_from=NO_CUT, phi=PHI1, kappa=K0)               # with Aqua night used the month is MIXED
+    assert kept["data_level"] == "MIXED"
+
+
+def test_records_satisfy_the_contract_in_every_cutoff_and_witness_situation(tmp_path):
+    a_d, a_n, s_d, s_n = ("A1", "AQUA_MODIS", "D"), ("A1", "AQUA_MODIS", "N"), ("A1", "SNPP_VIIRS", "D"), ("A1", "SNPP_VIIRS", "N")
+    n_d, n_n = ("A1", "NOAA20_VIIRS", "D"), ("A1", "NOAA20_VIIRS", "N")
+    cases = [(2024, 4, {a_d: 25, a_n: 5, s_d: 50, s_n: 50}), (2024, 5, {a_d: 25, a_n: 5, s_d: 50, s_n: 50}),
+             (2024, 6, {a_d: 25, a_n: 5}), (2024, 7, {a_d: 25, a_n: 5, s_d: 50, s_n: 50, n_d: 60, n_n: 40}),
+             (2023, 3, {s_d: 50, s_n: 50}), (2020, 2, {a_d: 25, a_n: 5, s_d: 200, s_n: 200})]
+    rows = []
+    for y, m, spec in cases:
+        rows += month_rows(y, m, spec)
+    paths = make(tmp_path, rows)
+    recs = hz.harmonize_area(["A1"], paths=paths)                                                       # the module defaults
+    assert len(recs) == len(cases) and contract_errors(recs) == []
