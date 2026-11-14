@@ -32,7 +32,7 @@ data/
 
 Products are committed to `data/products/` through **Git LFS** (D-027), so a normal `git pull` brings them.
 
-1. Once per machine: install Git LFS (macOS `brew install git-lfs`; Windows: included with Git for Windows) and run `git lfs install`.
+1. Once per machine: install Git LFS (macOS `brew install git-lfs`; Windows: included with Git for Windows) and run `git lfs install --skip-repo`. This repository uses `core.hooksPath .githooks`; those hooks already forward to Git LFS (pre-push uploads LFS files), so LFS doesn't need to install its own hooks. If Git LFS is missing, the pre-push hook stops the push with a message.
 2. Member 2 regenerates the products and commits them in the task's PR with `git add data/products/...`. `.gitattributes` sends every `data/products/**/*.parquet` file to LFS automatically. Check with `git lfs ls-files` before pushing.
 3. Post SHA-256 checksums in the PR (`shasum -a 256 data/products/*` on macOS/Linux, `certutil -hashfile <file> SHA256` on Windows).
 4. Everyone else runs `git pull` (and `git lfs pull` if a file shows as a small pointer).
