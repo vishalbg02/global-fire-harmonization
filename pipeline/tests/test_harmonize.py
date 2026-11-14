@@ -130,7 +130,7 @@ def test_the_aqua_cutoff_removes_aqua_after_it(tmp_path):
     snpp = {("A1", "SNPP_VIIRS", "D"): 50, ("A1", "SNPP_VIIRS", "N"): 50}
     paths = make(tmp_path, month_rows(2020, 1, {**aqua, **snpp}) + month_rows(2020, 2, {**aqua, **snpp}))
     both = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)
-    cut = hz.harmonize_area(["A1"], paths=paths, aqua_cutoff=(2020, 1), phi=PHI1, kappa=K0)
+    cut = hz.harmonize_area(["A1"], paths=paths, aqua_from={"D": (2020, 2), "N": (2020, 2)}, phi=PHI1, kappa=K0)
     assert [r["witnesses_used"] for r in both] == [["AQUA_MODIS", "SNPP_VIIRS"]] * 2
     assert cut[0]["witnesses_used"] == ["AQUA_MODIS", "SNPP_VIIRS"] and "AQUA_DRIFT_ERA" not in cut[0]["reason_codes"]
     assert cut[1]["witnesses_used"] == ["SNPP_VIIRS"] and {"AQUA_DRIFT_ERA", "SINGLE_WITNESS"} <= set(cut[1]["reason_codes"])
@@ -450,3 +450,61 @@ def test_estimate_dispersion_gives_kappa_zero_without_a_size_effect_and_never_re
     clean = hz.estimate_dispersion(dispersion_world(tmp_path / "b", 3.0, 0.02), fits=FIT_SNPP)
     spoiled = hz.estimate_dispersion(dispersion_world(tmp_path / "c", 3.0, 0.02, holdout_outlier=True), fits=FIT_SNPP)   # S-NPP + 5000 from 2017
     assert spoiled["phi"] == clean["phi"] and spoiled["kappa"] == clean["kappa"] and spoiled["bands_phi_kappa"] == clean["bands_phi_kappa"]
+
+
+# ------------------------------------------------------------- the Aqua night cutoff (D-005, approved by the Lead 2026-11-14)
+NO_CUT = {"D": None, "N": None}
+AQUA_WORLD = {("A1", "AQUA_MODIS", "D"): 25, ("A1", "AQUA_MODIS", "N"): 5}
+SNPP_WORLD = {("A1", "SNPP_VIIRS", "D"): 50, ("A1", "SNPP_VIIRS", "N"): 50}      # converted: D 25 (variance 18.75), N 5 (variance 0.75)
+
+
+def test_the_default_cutoff_is_night_from_2024_05_and_day_has_none():
+    assert hz.AQUA_FROM == {"D": None, "N": (2024, 5)}
+
+
+def test_aqua_night_is_excluded_from_2024_05_and_aqua_day_stays_with_the_code(tmp_path):
+    spec = {**AQUA_WORLD, **SNPP_WORLD}
+    paths = make(tmp_path, month_rows(2024, 4, spec) + month_rows(2024, 5, spec))
+    april, may = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)               # the module default cutoff
+    # a month before 2024-05 is unchanged: the same record as with no cutoff at all
+    assert april == hz.harmonize_area(["A1"], months=[(2024, 4)], paths=paths, aqua_from=NO_CUT, phi=PHI1, kappa=K0)[0]
+    assert "AQUA_DRIFT_ERA" not in april["reason_codes"] and april["witnesses_used"] == ["AQUA_MODIS", "SNPP_VIIRS"]
+    # May: day combines Aqua (25, variance 25) and S-NPP (25, variance 18.75); night is S-NPP alone (5, variance 0.75)
+    assert "AQUA_DRIFT_ERA" in may["reason_codes"] and may["witnesses_used"] == ["AQUA_MODIS", "SNPP_VIIRS"]
+    assert may["estimate"] == pytest.approx(30.0)
+    assert may["sd"] == pytest.approx(np.sqrt(1.0 / (1 / 25.0 + 1 / 18.75) + 0.75))
+    assert may["disagreement_scale"] == 1.0 and "SINGLE_WITNESS" not in may["reason_codes"]
+
+
+def test_aqua_day_still_counts_in_the_day_part_after_the_cutoff(tmp_path):
+    aqua = {("A1", "AQUA_MODIS", "D"): 25, ("A1", "AQUA_MODIS", "N"): 500}               # Aqua night would pull the total up: E = 500
+    snpp = {("A1", "SNPP_VIIRS", "D"): 100, ("A1", "SNPP_VIIRS", "N"): 50}                # D: E = 50 (variance 25 + 25), N: E = 5
+    paths = make(tmp_path, month_rows(2024, 6, {**aqua, **snpp}))
+    (cut,) = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)
+    v_aqua_d, v_snpp_d = 25.0, 0.25 * 100 + (100 * 0.05) ** 2
+    day = (25 / v_aqua_d + 50 / v_snpp_d) / (1 / v_aqua_d + 1 / v_snpp_d)
+    assert cut["estimate"] == pytest.approx(day + 5.0)                                     # night: S-NPP only, Aqua's 500 is not used
+    (kept,) = hz.harmonize_area(["A1"], paths=paths, aqua_from=NO_CUT, phi=PHI1, kappa=K0)
+    assert kept["estimate"] > cut["estimate"] + 50                                        # without the cutoff Aqua night would dominate
+    # excluding day as well removes Aqua entirely, as the first T-013 version did after a cutoff
+    (both,) = hz.harmonize_area(["A1"], paths=paths, aqua_from={"D": (2024, 5), "N": (2024, 5)}, phi=PHI1, kappa=K0)
+    assert both["witnesses_used"] == ["SNPP_VIIRS"] and both["estimate"] == pytest.approx(55.0)
+
+
+def test_a_night_part_with_no_other_witness_gives_no_estimate_after_the_cutoff(tmp_path):
+    paths = make(tmp_path, month_rows(2024, 4, AQUA_WORLD) + month_rows(2024, 6, AQUA_WORLD))
+    april, june = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)
+    assert april["estimate"] == pytest.approx(30.0) and april["witnesses_used"] == ["AQUA_MODIS"]
+    assert june["estimate"] is None and june["n_witnesses"] == 0 and june["witnesses_used"] == []
+    assert june["verdict"] == "CANNOT_DETERMINE" and "AQUA_DRIFT_ERA" in june["reason_codes"]
+
+
+def test_the_disagreement_is_pooled_over_day_and_night_after_the_cutoff(tmp_path):
+    spec = {("A1", "AQUA_MODIS", "D"): 25, ("A1", "SNPP_VIIRS", "D"): 100, ("A1", "SNPP_VIIRS", "N"): 50, ("A1", "AQUA_MODIS", "N"): 5}
+    paths = make(tmp_path, month_rows(2024, 7, spec))
+    (rec,) = hz.harmonize_area(["A1"], paths=paths, phi=PHI1, kappa=K0)
+    v_a, v_s = 25.0, 0.25 * 100 + (100 * 0.05) ** 2                                           # day: E = 25 and 50
+    chi2 = (25 - 50) ** 2 / (v_a + v_s)                                                       # one degree of freedom; night has one witness
+    assert rec["disagreement_scale"] == pytest.approx(max(np.sqrt(chi2), 1.0))
+    assert ("WITNESS_DISAGREEMENT" in rec["reason_codes"]) == (np.sqrt(chi2) > 2.0)
+    assert set(rec) == set(cc.SPEC["entity_month"])
