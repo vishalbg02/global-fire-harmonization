@@ -56,9 +56,9 @@ The ratio of VIIRS to MODIS detections **varies by region and fire regime**, bec
 - Satellite codes in the data **[VERIFIED 2026-11-14]**: `Terra`, `Aqua`, `N` (S-NPP), `N20` (NOAA-20).
 
 ### 4.2 Spatial and temporal aggregation
-- **Fine grid:** a detection marks its fine cell as fire-active for that UTC day, per witness and per day/night. This removes multiple points per fire and same-day duplicates. Fine-cell size **[OPEN, D-009]** candidates are 0.05° and 0.1°. The fine cell should be no smaller than a MODIS edge pixel.
-- **Analysis grid:** monthly sums of fine-cell-days on a regular latitude/longitude grid. Candidates are **0.5° (recommended)** and 0.25°. Larger cells hold more activity, which means more cells get a determinable verdict.
-- **Choose at Gate G1** the pair that maximizes Aqua vs S-NPP agreement in the 2012–2016 overlap. Lock it before any validation is run.
+- **Fine grid:** a detection marks its fine cell as fire-active for that UTC day, per witness and per day/night. This removes multiple points per fire and same-day duplicates. Fine-cell size **0.05° [APPROVED, D-009, 2026-11-14]** (0.1° was the other candidate; it scored slightly lower at G1).
+- **Analysis grid:** monthly sums of fine-cell-days on a regular latitude/longitude grid. Size **0.5° [APPROVED, D-009, 2026-11-14]** (0.25° was the other candidate). Larger cells hold more activity, which means more cells get a determinable verdict.
+- **Chosen at Gate G1** as the pair that maximizes Aqua vs S-NPP agreement in the 2012–2016 overlap, before any validation was run (evidence in `DECISION_LOG.md` D-009).
 
 ### 4.3 Calibration (conversion of each VIIRS witness to the Aqua-equivalent scale)
 - Fit periods: S-NPP on 2012-01 → 2016-12 (2017–2021 held out). NOAA-20 on 2018-04 → 2021-12.
