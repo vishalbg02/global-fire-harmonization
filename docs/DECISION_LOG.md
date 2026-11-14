@@ -195,4 +195,5 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
   The cells are added to the approved T-005 mask, which applies to every witness, both day and night, and all years. Built by `pipeline/night_mask.py`; `pipeline/gridding.py` uses the combined mask by default, and `--mask` remains for comparisons.
 - **Decision 2: one-off events get no local weight.** In calibration, a stratum x witness x day/night x season whose single largest overlap month holds more than 50% of its overlap cell-days (Aqua or witness) takes its region's estimate. This is a general rule instead of a volcano list (`MAX_MONTH_SHARE` in `pipeline/calibration.py`).
 - **Not changed:** the low night ratios in savanna and agricultural fire regions are accepted as a hypothesis (real regional differences: VIIRS sees more small night fires than MODIS). T-012 and validation test E1 by region are to check it.
-- **Status:** **APPROVED in principle** by the Lead on PR #36, 2026-11-14. Final approval waits on the Lead's re-run of the reworked PR.
+- **Limitations accepted:** the 8 Bolivian cells still flagged (cause open) and the Fagradalsfjall NOAA-20 JJA night ratio (a season-year test would move about 23% of `LOCAL` rows). Both are recorded in `docs/RISKS_AND_LIMITATIONS.md` (S12 to S15).
+- **Status:** **APPROVED by the Lead 2026-11-14** (PR #36, after the re-run).

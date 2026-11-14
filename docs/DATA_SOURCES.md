@@ -333,7 +333,7 @@ The 10 most extreme `LOCAL` ratios (largest distance from the global ratio, in l
   - **Hypothesis, accepted by the Lead as such (2026-11-14):** VIIRS (375 m) detects many small night fires that MODIS (1 km) misses, more so where small agricultural and savanna fires dominate. These would then be real regional differences. **For T-012 and validation test E1 (by region) to confirm.**
   - The mask is not tightened for them.
 
-#### Persistent night-source mask (D-025) **[APPROVED in principle by the Lead 2026-11-14; final approval after the Lead's re-run]**
+#### Persistent night-source mask (D-025) **[APPROVED by the Lead 2026-11-14]**
 
 `python pipeline/night_mask.py` builds the mask. A 0.05 degree fine cell is a persistent night source if its kept VIIRS night detections (S-NPP or NOAA-20; SP, type 0, confidence n or h, not already in the T-005 mask) meet all four conditions:
 1. they light it on at least 1% of nights;
@@ -390,7 +390,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - `TENA_b055_030` (Bakken) has S-NPP JJA at 0.15 of global.
 - **Hypothesis:** the rule does not catch flares lit on fewer than 1% of nights or in fewer than 10 months.
 
-**Fagradalsfjall after the burst rule.** NOAA-20 MAM night now takes the region's estimate. NOAA-20 JJA stays `LOCAL` at 8.6 times global, because the 2021 eruption lasted from March to September and no single summer month holds more than half of the cell-days. **[OPEN, for the Lead.]**
+**Fagradalsfjall after the burst rule.** NOAA-20 MAM night now takes the region's estimate. NOAA-20 JJA stays `LOCAL` at 8.6 times global, because the 2021 eruption lasted from March to September and no single summer month holds more than half of the cell-days. **[Accepted as a limitation by the Lead, 2026-11-14.]**
 - **Option, not applied:** run the same test on one season-year instead of one month.
 - It would catch Fagradalsfjall, because all its NOAA-20 night cell-days fall in 2021.
 - It would also move 3,345 of the 14,422 day and night `LOCAL` rows.
@@ -404,7 +404,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - **One-month burst:** a stratum with 4 overlap months, one holding 4/7 of the cell-days, is not `LOCAL`. A stratum with 4 equal months stays `LOCAL`.
 - **Breaking the rule on purpose makes the tests fail.** Checked by requiring 13 months, dropping condition 4, and dropping the burst test.
 
-**If the Lead does not give final approval**, the T-005-mask products are kept locally in `C:\IgnisLine-data\products_T006_T011v2\`. `--mask data/interim/qa/static_mask_fine0.05_share0.5_min10.parquet` rebuilds them.
+**Accepted limitations (Lead, 2026-11-14):** the 8 Bolivian cells and Fagradalsfjall NOAA-20 JJA night, because a general fix would discard far more good data. They are in `docs/RISKS_AND_LIMITATIONS.md` (S12 to S15). The T-005-mask products are kept locally in `C:\IgnisLine-data\products_T006_T011v2\`; `--mask data/interim/qa/static_mask_fine0.05_share0.5_min10.parquet` rebuilds them.
 
 **Not done here:** the holdout evaluation and the Aqua drift diagnostic (T-012), the combination (T-013) and any validation test.
 
