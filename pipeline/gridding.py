@@ -405,8 +405,11 @@ def monthly_totals(paths: Paths | None = None) -> list[tuple]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["build", "validate"])
+    ap.add_argument("--mask", type=Path, help="static mask (r, c) Parquet to use instead of the approved T-005 mask")
     args = ap.parse_args()
     paths = Paths()
+    if args.mask is not None:
+        paths.mask = args.mask
     if args.cmd == "build":
         print(build(paths))
     else:

@@ -291,7 +291,95 @@ The 10 most extreme `LOCAL` ratios (largest distance from the global ratio of th
 | `SEAS_b043_103` | SEAS | S-NPP | N | DJF | 0.005 | 0.050 | 0.10 | 0.001 | 6 |
 | `EQAS_b028_139` | EQAS | S-NPP | N | MAM | 0.383 | 0.041 | 9.45 | 0.153 | 5 |
 
-All 10 are night (`N`) rows. Eight have a ratio of about one tenth of the global night ratio (the VIIRS witness sees many more night cell-days than usual relative to Aqua); for example `TENA_b047_032` covers 27.5 to 30.0 N and 100.0 to 97.5 W. Two have a ratio about ten times the global one (`EURO_b061_063`, 62.5 to 65.0 N and 22.5 to 20.0 W, in Iceland; `EQAS_b028_139`, 20.0 to 17.5 S and 167.5 to 170.0 E). Their cause is not investigated here **[OPEN]**. **Hypothesis:** persistent night-time heat sources that the static mask does not remove (for example gas flaring) for the low ones, and few, unusual night detections for the high ones. T-013 should treat night conversions in these strata with care; their `ratio_sd` is small, so the spread between strata, not the bootstrap, is what flags them.
+All 10 are night (`N`) rows. Eight have a ratio of about one tenth of the global night ratio (the VIIRS witness sees many more night cell-days than usual relative to Aqua); for example `TENA_b047_032` covers 27.5 to 30.0 N and 100.0 to 97.5 W. Two have a ratio about ten times the global one (`EURO_b061_063`, 62.5 to 65.0 N and 22.5 to 20.0 W, in Iceland; `EQAS_b028_139`, 20.0 to 17.5 S and 167.5 to 170.0 E). Their `ratio_sd` is small, so the spread between strata, not the bootstrap, is what flags them. The causes are examined below.
+
+#### Extreme ratios: causes (T-011 review) **[VERIFIED 2026-11-14 unless labelled]**
+
+`python pipeline/night_sources.py` diagnoses every `LOCAL` row more than 3 times, or less than a third of, the global ratio of the same witness, day/night and season. On the approved mask there are **977 such rows in 560 strata** (822 night, 155 day; 603 low, 374 high). The diagnostic compares them with a control sample of 600 ordinary `LOCAL` rows. Nothing in the method was changed by it.
+
+- **Persistent night sources (flares, industrial heat).** The low night ratios with the largest volumes include the Permian (`TENA_b048_030`), the Bakken (`TENA_b055_030`) and the Eagle Ford (`TENA_b047_032`). Persistence alone does not separate them from fires, because many fire fields burn every year. A year-round test does (rule below). The cells it flags cluster in oil, gas and industrial areas: the Permian, Bakken, Eagle Ford, South African Highveld, Basra and Khuzestan, Vaca Muerta, Shanxi, Indian coal fields, Ghawar, Kirkuk, Hassi Messaoud and West Siberia **[location of the boxes VERIFIED; their identification as flaring or industrial areas is an ASSUMPTION from known geography]**. One cluster in Bolivia (20 to 15 S, 62.5 to 60 W) is unexplained **[OPEN]**.
+- **Volcanoes** (volcano coordinates are **ASSUMPTIONS** from public catalogues, not read from a dataset):
+  - `EQAS_b028_139` (Yasur, Tanna): 95% of its S-NPP SP detections are FIRMS type 1 (volcano). S-NPP night ratios were 7 to 9 times global.
+  - `EURO_b061_063` (Fagradalsfjall, Iceland): FIRMS gives no type 1, but 56% of the spring NOAA-20 night cell-days fall in one month, an eruption signature (2021). NOAA-20 night ratios are 8 to 11 times global.
+  - In total, 12 extreme rows have more than 10% type 1 detections; Fagradalsfjall adds 2.
+  - Holuhraun (2014 to 2015) does not appear among the extreme rows.
+- **Classification of the 977 rows** (before the mask change):
+
+  | Cause | Rows |
+  |---|---|
+  | Stratum contains a proposed night-source cell | 459 |
+  | Volcano: FIRMS type 1 above 10% | 12 |
+  | Volcano: Fagradalsfjall | 2 |
+  | Neither | 504 |
+
+  "Contains" only means the cell is there; it does not show that the cell causes the extreme ratio. The re-run below is the evidence.
+- **The rest: seasonal fire regions.** After the re-run, most of the remaining low night ratios are in peak fire seasons: SE Asia (`SEAS`) in DJF and SON, southern Africa (`SHAF`) in JJA and northern Africa (`NHAF`) in DJF. The countries are an **ASSUMPTION** from the block coordinates: Myanmar, Thailand and Laos; Zambia, Angola and Mozambique; the Sahel. Their static share and persistence are low, like the control rows. **Hypothesis:** VIIRS (375 m) detects many small night fires that MODIS (1 km) misses, and that difference is larger where small agricultural and savanna fires dominate. That would make these ratios real regional differences, not artefacts. The mask is not tightened for them.
+
+**Proposed rule: persistent night sources** (`pipeline/night_mask.py`). **PROPOSAL, not approved; for the Lead's decision.**
+
+A 0.05 degree fine cell becomes a night source if its kept VIIRS night detections (S-NPP or NOAA-20; type 0, confidence n or h, not already masked) meet all three conditions:
+- they light it on at least 1% of nights,
+- in at least 10 of the 12 calendar months,
+- with at least half of those nights outside its 3 busiest calendar months.
+
+The new cells are added to the approved static mask. Like the approved mask, the result applies to every witness, both day and night, and all years.
+
+- **Held-out check:** the rule was built on 2012 to 2023 (4,123 cells) and evaluated on 2024 and 2025 SP detections that the approved mask does not remove.
+
+  | Rows | Static (type 2 or 3) removed | Type 0 removed |
+  |---|---|---|
+  | VIIRS night | 34.3% | 1.26% |
+  | VIIRS day | 21.5% | 0.14% |
+  | Aqua day | 3.7% | 0.11% |
+  | Aqua night | 28.7% | 0.70% |
+
+  The type 0 column is an upper bound on vegetation fires lost, because unlabelled flares are type 0.
+- **Combined mask:** built on 2012 to 2025, the rule flags 4,768 cells. The combined mask has 15,697 cells; the approved mask has 10,929. It is written to `data/interim/qa/static_mask_plus_night_sources.parquet`.
+- **Re-run with the combined mask:** `python pipeline/gridding.py build --mask <combined>`, then `validate` and `calibration.py`.
+  - The independent recount matches: 482,375,234 kept detections and 219,077,612 fine-cell-days.
+  - `cell_month_witness` has 146,609,859 rows (before: 146,625,501) and 56,237 cells (before: 56,243).
+  - The calibration has 96,384 rows and passes the contract check.
+  - Global ratios change by at most 0.002.
+
+| Witness | Day/night | LOCAL rows before / after | LOCAL 5th / median / 95th after | Extreme LOCAL rows before / after (low / high after) |
+|---|---|---|---|---|
+| S-NPP | D | 5,833 / 5,808 | 0.134 / 0.286 / 0.529 | 71 / 69 (68 / 1) |
+| S-NPP | N | 3,191 / 3,077 | 0.018 / 0.064 / 0.186 | 411 / 370 (185 / 185) |
+| NOAA-20 | D | 5,413 / 5,388 | 0.124 / 0.274 / 0.530 | 84 / 82 (82 / 0) |
+| NOAA-20 | N | 2,700 / 2,573 | 0.017 / 0.062 / 0.197 | 411 / 355 (195 / 160) |
+
+Extreme `LOCAL` rows fall from 977 in 560 strata to 876 in 515 strata. The named strata change as follows:
+- **Flare strata:** 11 extreme `LOCAL` night rows before, 2 after.
+  - `TENA_b047_032` (Eagle Ford) has no extreme row left.
+  - `TENA_b048_030` (Permian) still has one: NOAA-20 MAM at 0.28 of global. Its NOAA-20 JJA row is 0.42 and its other seasons take the region's estimate.
+  - `TENA_b055_030` (Bakken) still has one: S-NPP JJA at 0.14 of global.
+  - The rule removes most but not all of the flare signal, probably flares that are lit on fewer than 1% of nights or in fewer than 10 months **[HYPOTHESIS]**.
+- **Yasur (`EQAS_b028_139`):** S-NPP night goes to `REGION` (1.3 to 1.9 times global).
+- **Fagradalsfjall (`EURO_b061_063`):** stays extreme (10.1 times global in NOAA-20 MAM). A single eruption is not year-round, so the rule does not touch it **[OPEN: for the Lead; options are a dated volcano mask or leaving it to pooling]**.
+
+The 10 most extreme `LOCAL` ratios after the re-run:
+
+| Stratum | Fire region | Witness | Day/night | Season | Ratio | Global ratio | Ratio / global | `ratio_sd` | Overlap months |
+|---|---|---|---|---|---|---|---|---|---|
+| `EURO_b061_063` | EURO | NOAA-20 | N | MAM | 0.409 | 0.040 | 10.11 | 0.090 | 3 |
+| `SEAS_b044_110` | SEAS | NOAA-20 | N | DJF | 0.005 | 0.046 | 0.10 | 0.001 | 7 |
+| `SEAS_b043_103` | SEAS | S-NPP | N | DJF | 0.005 | 0.050 | 0.11 | 0.001 | 6 |
+| `SHAF_b029_081` | SHAF | NOAA-20 | N | JJA | 0.008 | 0.076 | 0.11 | 0.002 | 5 |
+| `SHAF_b030_078` | SHAF | S-NPP | N | JJA | 0.008 | 0.071 | 0.12 | 0.001 | 12 |
+| `SHAF_b030_083` | SHAF | NOAA-20 | N | JJA | 0.009 | 0.076 | 0.12 | 0.002 | 10 |
+| `SEAS_b049_101` | SEAS | NOAA-20 | N | SON | 0.009 | 0.075 | 0.12 | 0.002 | 4 |
+| `SEAS_b044_111` | SEAS | NOAA-20 | N | DJF | 0.006 | 0.046 | 0.12 | 0.001 | 5 |
+| `NHAF_b040_069` | NHAF | NOAA-20 | N | DJF | 0.006 | 0.046 | 0.12 | 0.001 | 9 |
+| `SEAS_b047_102` | SEAS | NOAA-20 | N | SON | 0.009 | 0.075 | 0.12 | 0.002 | 4 |
+
+Every row except the Icelandic one is a peak fire season in a savanna or agricultural fire region (see the hypothesis above).
+
+**Test:** `pipeline/tests/test_night_mask.py` plants three flares lit every night in one synthetic stratum, among fires scattered over many fine cells and random days.
+- Without the new cells, that stratum's S-NPP night ratio is `LOCAL` and below a third of global in all four seasons.
+- With them, the rule finds exactly the three flare cells, and the ratio is within a factor of 3 of global.
+- Breaking the rule (requiring 13 months) makes the test fail.
+
+**If the Lead does not approve the rule**, the approved-mask products are kept in `C:\IgnisLine-data\products_T006_T011v2\` (local), and the tables above the proposal remain the results.
 
 **Not done here:** the holdout evaluation and the Aqua drift diagnostic (T-012), the combination (T-013) and any validation test.
 
