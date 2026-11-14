@@ -254,17 +254,60 @@ def test_month_range_across_a_year_boundary():
 
 
 # ------------------------------------------------------------------------------------------------ the recorded entry
-def test_entry_has_the_contract_test_shape_and_stays_not_run():
-    frames = {"formal": (frame({9: 300, 10: 400}), frame({9: 350, 10: 300})),
-              "shared_aqua_baseline": (frame({9: 300, 10: 400}), frame({9: 350, 10: 300}))}
-    e = va.entry_for("C1", va.CASES["C1"], frames) | {}
+SYN_CASE = {"label": "synthetic", "analysis": ANALYSIS, "peak": PEAK}      # the formal reading is chosen by the case id passed
+
+
+def _frames(aqua_est, snpp_est):
+    """Three readings: own baseline (no S-NPP baseline), shared baseline (S-NPP judged), and the min-10 reading."""
+    a, s = frame(aqua_est), frame(snpp_est)
+    return {va.OWN: (a, frame(snpp_est, baseline=False)), va.SHARED: (a, s), va.OWN_MIN10: (a, s)}
+
+
+def test_entry_has_the_contract_test_shape():
+    e = va.entry_for("C2", SYN_CASE, _frames({9: 300, 10: 400}, {9: 350, 10: 300}))
     for k in ("test_id", "family", "title", "case", "criterion", "threshold", "measured", "status", "notes"):
         assert k in e
-    assert e["test_id"] == "A1-C1" and e["family"] == "A" and e["status"] == "NOT_RUN"
-    assert e["measured"]["provisional_status"] == "PASS"
+    assert e["test_id"] == "A1-C2" and e["family"] == "A"
     assert e["measured"]["aqua_only_pct_of_normal"] == pytest.approx(350.0) and e["measured"]["snpp_only_pct_of_normal"] == pytest.approx(325.0)
-    assert "shared_aqua_baseline" in e["measured"]["exploratory"]
-    assert "NOT_RUN" in e["notes"] and "T-014" in e["notes"]
+    assert "D-029" in e["notes"]
+
+
+def test_formal_reading_is_explicit_c1_keeps_d028_and_c2_to_c6_use_the_shared_baseline():
+    assert va.FORMAL_READING["C1"] == va.OWN
+    assert all(va.FORMAL_READING[c] == va.SHARED for c in ("C2", "C3", "C4", "C5", "C6"))
+    assert set(va.FORMAL_READING) == set(va.CASES)
+
+
+def test_c1_official_status_is_the_pre_registered_inconclusive_even_though_the_shared_reading_passes():
+    frames = _frames({9: 300, 10: 400}, {9: 350, 10: 300})
+    c1 = va.entry_for("C1", SYN_CASE, frames)
+    assert c1["status"] == "INCONCLUSIVE" and c1["measured"]["official_reading"] == va.OWN
+    assert c1["measured"]["other_readings"][va.SHARED]["status"] == "PASS"          # published beside it, not the official result
+    assert "D-029" in c1["notes"] and "after this case was seen" in c1["notes"]
+    assert c1["measured"]["snpp_only_pct_of_normal"] is None
+    c3 = va.entry_for("C3", SYN_CASE, frames)
+    assert c3["status"] == "PASS" and c3["measured"]["official_reading"] == va.SHARED
+    assert c3["measured"]["other_readings"][va.OWN]["status"] == "INCONCLUSIVE"
+
+
+def _entries(statuses: dict[str, str]) -> list[dict]:
+    return [{"test_id": f"A1-{c}", "status": st} for c, st in statuses.items()]
+
+
+def test_family_needs_5_of_6_passes_and_c1_inconclusive_is_not_a_pass():
+    ok = {"C1": "INCONCLUSIVE", "C2": "PASS", "C3": "PASS", "C4": "PASS", "C5": "PASS", "C6": "PASS"}
+    assert va.family_entry(_entries(ok))["status"] == "PASS"                                    # 5 passes, C1 not counted
+    assert va.family_entry(_entries({**ok, "C6": "FAIL"}))["status"] == "FAIL"                  # 4 passes, all decided: not met
+    assert va.family_entry(_entries({**ok, "C6": "INCONCLUSIVE"}))["status"] == "FAIL"          # an inconclusive case is final, not a pass
+
+
+def test_family_is_inconclusive_only_while_cases_not_run_could_still_reach_5():
+    assert va.family_entry(_entries({"C1": "PASS", "C2": "PASS", "C3": "PASS", "C4": "PASS"}))["status"] == "INCONCLUSIVE"   # 4 + 2 not run
+    assert va.family_entry(_entries({"C1": "PASS", "C2": "PASS", "C3": "PASS", "C4": "FAIL", "C5": "FAIL"}))["status"] == "FAIL"   # 3 + 1 < 5
+    f = va.family_entry(_entries({"C1": "INCONCLUSIVE", "C2": "FAIL", "C3": "FAIL", "C4": "FAIL", "C5": "FAIL", "C6": "PASS"}))
+    assert f["status"] == "FAIL" and f["measured"]["n_pass"] == 1 and f["measured"]["n_fail"] == 4 and f["measured"]["n_inconclusive"] == 1
+    assert va.family_entry(_entries({"C1": "PASS"}))["measured"]["n_not_run"] == 5              # cases not run are never passes
+
 
 
 # ------------------------------------------------------------------------------------------------ the T-014 product

@@ -9,6 +9,10 @@ is filtered to one witness before the records are built (`restrict_witness`). Th
 from each path's own estimates. It is a STAND-IN for the T-014 products: `compare_paths()` takes two `entity_month`-shaped frames, so
 the same criterion re-runs unchanged on the T-014 products.
 
+Official reading per case: C1 was run first with the baseline of D-028 as pre-registered (each path its own baseline) and is officially
+INCONCLUSIVE; D-029 (adopted after C1, before C2 to C6) makes the shared Aqua-measured 2003-2022 baseline the official reading for
+C2 to C6. `FORMAL_READING` holds this choice explicitly; every case reports all three readings.
+
 Definitions (each is an [ASSUMPTION] where the plan is silent; see docs/validation/T-020-results.md):
   * baseline: same calendar month, years 2003-2022, empirical p25/p50/p75 (linear interpolation) over the years that have an estimate;
     fewer than 15 of the 20 years, or a median below 5 Aqua-equivalent cell-days, gives no baseline (D-028 steps 2 and 4);
@@ -45,6 +49,11 @@ MIN_BASELINE_MEDIAN = 5.0      # D-028 step 4: below 5 Aqua-equivalent cell-days
 PEAK_MONTH_TOLERANCE = 1       # A1: peak months within +/- 1 month
 PATH_WITNESS = {"aqua": "AQUA_MODIS", "snpp": "SNPP_VIIRS"}
 ABOVE, BELOW, WITHIN = "ABOVE", "BELOW", "WITHIN"
+OWN, SHARED, OWN_MIN10 = "own_baseline", "shared_aqua_baseline", "snpp_own_min10"
+FAMILY_PASS_NEEDED = 5         # A1 family pass: at least 5 of the 6 clean-overlap cases C1-C6
+# Which reading is the OFFICIAL one for each case. C1 keeps the pre-registered D-028 reading (INCONCLUSIVE); D-029 (2026-11-15,
+# adopted after C1 and before C2-C6) uses the shared Aqua baseline for C2-C6.
+FORMAL_READING = {"C1": OWN, "C2": SHARED, "C3": SHARED, "C4": SHARED, "C5": SHARED, "C6": SHARED}
 Month = tuple[int, int]
 
 # VALIDATION_PLAN.md section 2a (approved by the Lead 2026-11-14): box (W, S, E, N), analysis window, peak window (inclusive)
@@ -254,10 +263,10 @@ def compare_paths(aqua: pd.DataFrame, snpp: pd.DataFrame, analysis: tuple[Month,
 def build_case_frames(case: dict, paths: hz.Paths | None = None) -> tuple[dict[str, tuple[pd.DataFrame, pd.DataFrame]], int]:
     """The (Aqua-only, S-NPP-only) frames of a case and the number of cells in its box, for the formal reading and two exploratory variants (all from the data).
 
-    formal                the D-028 baseline built from each path's own estimates (the S-NPP-only path has 11 baseline years at most,
-                          so it has no baseline: fewer than 15 of 20);
-    shared_aqua_baseline  [exploratory] the S-NPP-only estimates against the Aqua-only path's baseline (the converted S-NPP is on the
-                          Aqua-equivalent scale, D-005);
+    own_baseline          the D-028 baseline built from each path's own estimates (the S-NPP-only path has 11 baseline years at most,
+                          so it has no baseline: fewer than 15 of 20); official for C1 only;
+    shared_aqua_baseline  the S-NPP-only estimates against the Aqua-only path's baseline (the converted S-NPP is on the Aqua-equivalent
+                          scale, D-005); official for C2-C6 (D-029);
     snpp_own_min10        [exploratory] the S-NPP-only path against its own 2012-2022 baseline with the minimum lowered from 15 to 10.
     """
     paths = paths or hz.Paths()
@@ -271,9 +280,9 @@ def build_case_frames(case: dict, paths: hz.Paths | None = None) -> tuple[dict[s
     aq_win = _window(aq, case["analysis"]) if not aq.empty else aq
     sn_win = _window(sn, case["analysis"]) if not sn.empty else sn
     aq_f = attach_baseline(aq_win, aq)
-    return ({"formal": (aq_f, attach_baseline(sn_win, sn)),
-             "shared_aqua_baseline": (aq_f, attach_baseline(sn_win, aq)),
-             "snpp_own_min10": (aq_f, attach_baseline(sn_win, sn, min_years=10))}, len(ids))
+    return ({OWN: (aq_f, attach_baseline(sn_win, sn)),
+             SHARED: (aq_f, attach_baseline(sn_win, aq)),
+             OWN_MIN10: (aq_f, attach_baseline(sn_win, sn, min_years=10))}, len(ids))
 
 
 def _r(x, nd: int = 1):
@@ -336,10 +345,19 @@ def crosscheck_aqua_baseline(product: pd.DataFrame, aqua: pd.DataFrame, years: t
     return out
 
 
-def entry_for(case_id: str, case: dict, frames: dict[str, tuple[pd.DataFrame, pd.DataFrame]], t014: dict | None = None) -> dict:
-    """The contract section 6 test entry. `status` is NOT_RUN: the formal status needs the T-014 products (see `provisional_status`)."""
+NOTES_OWN = ("D-028 as pre-registered: each path its own baseline; the S-NPP-only path has at most 11 of 20 baseline years, so no baseline. "
+             "Official result INCONCLUSIVE. D-029 (shared Aqua baseline) was adopted after this case was seen and is not applied to it; "
+             "the readings under the other baselines are in measured.other_readings.")
+NOTES_SHARED = ("Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); "
+                "the other baselines are in measured.other_readings.")
+
+
+def entry_for(case_id: str, case: dict, frames: dict[str, tuple[pd.DataFrame, pd.DataFrame]], t014: dict | None = None,
+              formal_key: str | None = None) -> dict:
+    """The contract section 6 test entry. `status` is the status of the official reading (`FORMAL_READING`, or `formal_key`)."""
+    formal_key = formal_key or FORMAL_READING.get(case_id, SHARED)
     results = {k: compare_paths(a, s, case["analysis"], case["peak"]) for k, (a, s) in frames.items() }
-    formal = results["formal"]
+    formal = results[formal_key]
 
     def block(r: dict) -> dict:
         return {"status": r["status"], "same_direction": r["same_direction"], "peak_within_tolerance": r["peak_within_tolerance"],
@@ -355,17 +373,17 @@ def entry_for(case_id: str, case: dict, frames: dict[str, tuple[pd.DataFrame, pd
         "title": "Real anomaly preserved (two independent paths)",
         "case": case["label"],
         "criterion": "Same direction (both above or both below normal); peak month within +-1; 90% intervals overlap",
-        "threshold": "pre-registered at G1 (D-028): same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
+        "threshold": "pre-registered at G1 (D-028), baseline of C2-C6 per D-029: same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
         "measured": {"aqua_only_pct_of_normal": _r(formal["aqua"]["pct_of_normal"]), "snpp_only_pct_of_normal": _r(formal["snpp"]["pct_of_normal"]),
                      "aqua_only_peak_month": formal["aqua"]["peak_month"], "snpp_only_peak_month": formal["snpp"]["peak_month"],
-                     "provisional_status": formal["status"], "baseline": "built in pipeline/validation_a1.py per path (D-028 rules); the T-014 product has no single-witness series",
+                     "official_reading": formal_key,
+                     "baseline": ("D-028 as pre-registered, each path its own baseline" if formal_key == OWN
+                                  else "D-029: shared Aqua-measured 2003-2022 baseline for both paths"),
                      "formal_reading": block(formal),
-                     "exploratory": {k: block(v) for k, v in results.items() if k != "formal"},
+                     "other_readings": {k: block(v) for k, v in results.items() if k != formal_key},
                      **({"t014_product": t014} if t014 else {})},
-        "status": "NOT_RUN",
-        "notes": ("The two single-witness paths and their baselines are built in this module (the T-014 product holds only the combined "
-                  "series); the combined T-014 product is used as context and to cross-check the Aqua-only baseline. The formal status stays "
-                  "NOT_RUN until the Lead decides how the S-NPP-only path gets a baseline. See docs/validation/T-020-results.md."),
+        "status": formal["status"],
+        "notes": (NOTES_OWN if formal_key == OWN else NOTES_SHARED) + " See docs/validation/T-020-results.md.",
     }
 
 
@@ -395,29 +413,53 @@ def t014_check(case: dict, paths: hz.Paths | None = None) -> dict | None:
     return out
 
 
-def run(case_id: str = "C1", paths: hz.Paths | None = None, out_dir: Path = QA_DIR) -> dict:
-    case = CASES[case_id]
-    frames, n_cells = build_case_frames(case, paths)
-    entry = entry_for(case_id, case, frames, t014_check(case, paths))
+def family_entry(entries: list[dict]) -> dict:
+    """The A1 family entry: PASS with at least 5 of the 6 cases C1-C6 PASS; FAIL if 5 passes can no longer be reached; otherwise (cases
+    still NOT_RUN could reach 5) INCONCLUSIVE.
+
+    A decided case that is FAIL or INCONCLUSIVE is final and is not a PASS (the Lead: C1 counts as INCONCLUSIVE, not PASS).
+    """
+    by_case = {e["test_id"].removeprefix("A1-"): e["status"] for e in entries if e["test_id"] != "A1-FAMILY"}
+    statuses = [by_case.get(c, "NOT_RUN") for c in sorted(CASES)]
+    n_pass = statuses.count("PASS")
+    n_open = statuses.count("NOT_RUN")
+    status = "PASS" if n_pass >= FAMILY_PASS_NEEDED else ("FAIL" if n_pass + n_open < FAMILY_PASS_NEEDED else "INCONCLUSIVE")
+    return {"test_id": "A1-FAMILY", "family": TEST_FAMILY, "title": "Real anomaly preserved: family result", "case": "C1 to C6",
+            "criterion": f"At least {FAMILY_PASS_NEEDED} of the 6 clean-overlap cases C1-C6 PASS",
+            "threshold": "pre-registered at G1 (D-028); a case that is INCONCLUSIVE does not count as a PASS",
+            "measured": {"case_status": dict(zip(sorted(CASES), statuses, strict=True)), "n_pass": n_pass, "n_fail": statuses.count("FAIL"),
+                         "n_inconclusive": statuses.count("INCONCLUSIVE"), "n_not_run": statuses.count("NOT_RUN")},
+            "status": status,
+            "notes": "C1 is officially INCONCLUSIVE (D-028 as pre-registered); C2 to C6 use the shared Aqua baseline (D-029). See docs/validation/T-020-results.md."}
+
+
+def run(case_ids: list[str] | None = None, paths: hz.Paths | None = None, out_dir: Path = QA_DIR) -> list[dict]:
+    """Run the cases (default all, C1 to C6), write the entries file (with the family entry) and one tables file per case."""
+    case_ids = case_ids or sorted(CASES)
     out_dir.mkdir(parents=True, exist_ok=True)
-    doc = {"contract_version": CONTRACT_VERSION, "method_version": hz.METHOD_VERSION + "+a1-provisional-baseline",
-           "generated_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "synthetic": False, "tests": [entry]}
+    entries = []
+    for cid in case_ids:
+        case = CASES[cid]
+        frames, n_cells = build_case_frames(case, paths)
+        entries.append(entry_for(cid, case, frames, t014_check(case, paths)))
+        tables = {k: {"aqua": table(a), "snpp": table(s)} for k, (a, s) in frames.items()}
+        tables["n_cells"] = n_cells
+        (out_dir / f"T-020_a1_tables_{cid}.json").write_text(json.dumps(tables, indent=2), encoding="utf-8")
+    if set(case_ids) == set(CASES):
+        entries.append(family_entry(entries))
+    doc = {"contract_version": CONTRACT_VERSION, "method_version": hz.METHOD_VERSION + "+a1",
+           "generated_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "synthetic": False, "tests": entries}
     (out_dir / "T-020_validation_entries.json").write_text(json.dumps(doc, indent=2), encoding="utf-8")
-    tables = {k: {"aqua": table(a), "snpp": table(s)} for k, (a, s) in frames.items()}
-    tables["n_cells"] = n_cells
-    (out_dir / "T-020_a1_tables.json").write_text(json.dumps(tables, indent=2), encoding="utf-8")
-    return entry
+    return entries
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--case", default="C1", choices=sorted(CASES))
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--case", action="append", choices=sorted(CASES), help="a case to run (repeatable); default: all of C1 to C6")
     args = ap.parse_args()
-    entry = run(args.case)
-    m = entry["measured"]
-    print(json.dumps({"test_id": entry["test_id"], "status": entry["status"], "provisional_status": m["provisional_status"],
-                      "aqua_only_pct_of_normal": m["aqua_only_pct_of_normal"], "snpp_only_pct_of_normal": m["snpp_only_pct_of_normal"],
-                      "formal_reading": m["formal_reading"], "exploratory": m["exploratory"]}, indent=2))
+    for e in run(args.case):
+        m = e["measured"]
+        print(e["test_id"], e["status"], {k: m[k] for k in ("aqua_only_pct_of_normal", "snpp_only_pct_of_normal") if k in m} or m)
 
 
 if __name__ == "__main__":
