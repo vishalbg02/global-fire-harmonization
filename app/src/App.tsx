@@ -10,6 +10,7 @@ import { resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { useStaticManifest } from './api/staticData.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
+import { NO_OFFLINE_MAP, offlineMapNote } from './content/offline.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
 import { PAGE_PARAM, METHODS_PAGE, methodsHref, pageFromSearch } from './content/methodsLink.ts'
 import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
@@ -23,7 +24,7 @@ import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
-import { monthKey, monthRange } from './state/months.ts'
+import { hasOfflineMap, monthKey, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
@@ -119,6 +120,12 @@ export default function App() {
     [meta.data],
   )
 
+  // The offline copy may have the map for some months only (a web-host copy): the month picker lists
+  // those, and a month without a map says so. The calendar, series, evidence and CSVs cover every month.
+  const mapMonths = useMemo(() => offlineMapMonths(months, offline?.months ?? null), [months, offline])
+  const offlineMapNoteText = offline === null ? null : offlineMapNote(offline, months)
+  const mapAvailable = hasOfflineMap(offline?.months ?? null, selection.month)
+
   // Start on the latest month once the available months are known.
   useEffect(() => {
     const latest = months[months.length - 1]
@@ -139,7 +146,7 @@ export default function App() {
   const cells = useQuery({
     queryKey: ['map', selection.month?.year, selection.month?.month, layer],
     queryFn: () => fetchMapCells(selection.month!.year, selection.month!.month, layer),
-    enabled: selection.month !== null && page === 'map',
+    enabled: selection.month !== null && page === 'map' && mapAvailable,
     retry: false,
   })
 
@@ -160,7 +167,7 @@ export default function App() {
         Skip to the controls and the map
       </a>
       <SyntheticBanner synthetic={meta.data?.synthetic === true} />
-      <OfflineNote manifest={offline} />
+      <OfflineNote manifest={offline} mapNote={offlineMapNoteText} />
       <header>
         <h1>Global Fire Harmonization</h1>
         <p className="subtitle">Satellite-detected fire activity, harmonized across MODIS and VIIRS</p>
@@ -196,7 +203,7 @@ export default function App() {
       <main id="main-content" tabIndex={-1}>
         <div className="controls">
           <MonthSelector
-            months={months}
+            months={mapMonths}
             value={selection.month}
             onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
           />
@@ -276,12 +283,17 @@ export default function App() {
               {selectedCell !== null && <CellInfo cell={selectedCell} layer={layer} />}
             </section>
             <section aria-label="Data status" className="status">
-              {(meta.isPending || cells.isPending) && selection.month !== null && <LoadingState what="map data" />}
+              {(meta.isPending || (cells.isPending && mapAvailable)) && selection.month !== null && (
+                <LoadingState what="map data" />
+              )}
+              {!mapAvailable && <EmptyState message={NO_OFFLINE_MAP} />}
               {meta.isPending && <LoadingState what="data information" />}
               {meta.isError && (
                 <ErrorState message="Data are not available right now. The country layer still works." onRetry={() => void meta.refetch()} />
               )}
-              {cells.isError && <ErrorState message="The map cells could not be loaded." onRetry={() => void cells.refetch()} />}
+              {cells.isError && mapAvailable && (
+                <ErrorState message="The map cells could not be loaded." onRetry={() => void cells.refetch()} />
+              )}
               {cellList !== null && cellList.length === 0 && <EmptyState message="No cells for this month." />}
             </section>
           </aside>

@@ -46,7 +46,11 @@ def test_every_file_is_the_apis_own_answer(client: TestClient, export_dir: Path)
             assert json.loads((export_dir / "series" / f"{key}.json").read_text()) == expected
             csv = client.get(f"/api/export.csv?entity_type={kind}&entity_id={item['entity_id']}")
             assert (export_dir / "export" / f"{key}.csv").read_bytes() == csv.content
-    for label in manifest["months"]:
+    # Every month of the data has an anomaly list, also the months without a map (latest_months=3).
+    meta = json.loads((export_dir / "meta.json").read_text())
+    labels = {meta["first_month"], meta["latest_month"], *manifest["months"]}
+    assert len(manifest["months"]) == 3 and meta["first_month"] not in manifest["months"]
+    for label in labels:
         year, month = label.split("-")
         expected = client.get(f"/api/anomalies?year={year}&month={month}&limit=500").json()
         assert json.loads((export_dir / "anomalies" / f"{label}.json").read_text()) == expected

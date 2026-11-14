@@ -241,14 +241,17 @@ def export_static(
         if index != list(range(len(index))):
             encoded["cell_index"] = index  # not simply the first n cells of the shared list
         map_bytes += _write_json(out / "map" / f"{label}.json", encoded)
-        anomalies = _get(
-            client, f"/api/anomalies?year={year}&month={month}&limit={ANOMALIES_LIMIT}"
-        ).json()
-        anomalies_bytes += _write_json(out / "anomalies" / f"{label}.json", anomalies)
         written.append(label)
         if len(written) % 25 == 0:
             say(f"{len(written)} of {len(months)} months written")
 
+    # The anomaly lists are small, and the calendar can select any month, so every month of the data
+    # has one even when the map covers fewer months.
+    for year, month in _months(meta["first_month"], meta["latest_month"]):
+        url = f"/api/anomalies?year={year}&month={month}&limit={ANOMALIES_LIMIT}"
+        anomalies_bytes += _write_json(
+            out / "anomalies" / f"{year}-{month:02d}.json", _get(client, url).json()
+        )
     sizes["cells.json"] = _write_json(out / "cells.json", cells.columns())
     sizes.update(
         {
