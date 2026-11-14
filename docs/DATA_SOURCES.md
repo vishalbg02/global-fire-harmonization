@@ -408,32 +408,70 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 
 **Not done here:** the holdout evaluation and the Aqua drift diagnostic (T-012), the combination (T-013) and any validation test.
 
-### Combining the witnesses and `harmonize_area()` (T-013) **[PROPOSAL for the Lead; VERIFIED where marked]**
+### Combining the witnesses and `harmonize_area()` (T-013) **[VERIFIED where marked]**
 
-`pipeline/harmonize.py` holds the single implementation of the science for an area (`harmonize_area(cell_ids, months=None)`, `docs/DATA_CONTRACT.md` section 8). `python pipeline/harmonize.py` runs the diagnostic below and writes `data/interim/qa/harmonize_report.json`. The records have the shape of `entity_month` (section 4). The baseline fields are `null` and the verdict is `CANNOT_DETERMINE`, as the contract requires without a baseline; T-014 adds them. `method_version` is `0.1.0-combined-no-baseline`.
+`pipeline/harmonize.py` holds the single implementation of the science for an area (`harmonize_area(cell_ids, months=None)`, `docs/DATA_CONTRACT.md` section 8). `python pipeline/harmonize.py phi` re-estimates the overdispersion factors and `python pipeline/harmonize.py` runs the diagnostic below (it writes `data/interim/qa/harmonize_report.json` and takes about 15 minutes). The records have the shape of `entity_month` (section 4). The baseline fields are `null` and the verdict is `CANNOT_DETERMINE`, as the contract requires without a baseline; T-014 adds them. `method_version` is `0.1.0-combined-no-baseline`.
+
+**Approved by the Lead 2026-11-14 (PR #43):** day and night converted separately and added; the variance floor of one cell-day for a zero count; only complete witness-months count; a 90% normal interval with the lower bound at 0; no estimate for the 2002-07 to 2002-09 outage months; `aqua_cutoff` stays unset until T-012. **Changes asked by the Lead (done):** shared ratio errors, an overdispersion factor, and the `WITNESS_DISAGREEMENT` threshold (below).
 
 **The estimator** (per area and month):
-- **Per witness:** `E_w` = the sum, over strata and day/night, of `ratio x cell_days`. Raw cell-days are summed per witness and stratum first, then converted. `D` and `N` are converted separately with their own ratios and added (`ALL` is not used); the ratio is the one of the stratum, witness, day/night and season of the month. Aqua has ratio 1 and no ratio uncertainty. Terra is raw view only.
-- **Variance** per stratum and day/night: `ratio^2 x cell_days + cell_days^2 x ratio_sd^2`, added over strata and day/night. The first term is a **Poisson approximation** (`var(cell_days) = cell_days`); overdispersion makes it optimistic, which test D1 measures **[ASSUMPTION]**. Strata are treated as independent: errors shared through the pooling parents (region and global ratios) are not propagated, so the interval of a large area is too narrow **[LIMITATION]**.
-- **Zero counts [PROPOSAL]:** the variance of a witness is never below `mean(ratio)^2`, the variance of one cell-day, so a zero count does not get infinite weight.
-- **Combination:** a precision-weighted mean of the witnesses that count. `S = sqrt(chi^2 / (N - 1))` multiplies the combined sd only when `S > 1`. `disagreement_scale` is `max(S, 1)` with 2 or more witnesses and `null` with one; the reason code `WITNESS_DISAGREEMENT` is given whenever `S > 1` and `SINGLE_WITNESS` with one witness.
-- **Which witnesses count [PROPOSAL]:** only a witness with every day of the month available (`days_available = days_in_month`), as in the calibration fit. A partial month would undercount, so it is left out of the estimate and stays in the raw view. If none counts, the estimate is `null` and `n_witnesses` is 0.
-- **Aqua drift:** the optional `aqua_cutoff` removes Aqua from the combination after a month (reason `AQUA_DRIFT_ERA`). It is **not set**: its value comes from the drift diagnostic in T-012 (D-005).
-- **Interval [PROPOSAL]:** 90% normal, `estimate +/- 1.645 sd`, lower bound at 0. `data_level` follows the witnesses that count (`MIXED` when they differ), with the reason `PROVISIONAL_NRT` for `NRT` and `MIXED`.
+- **Per witness:** `E_w` = the sum, over strata and day/night, of `ratio x cell_days`. Raw cell-days are summed per witness and stratum first, then converted. `D` and `N` have their own ratios (`ALL` is not used); the ratio is the one of the stratum, witness, day/night and season of the month. Aqua has ratio 1 and no ratio uncertainty. Terra is raw view only.
+- **Variance** has two parts, added:
+  1. **Counting noise**, per stratum and day/night: `phi x ratio^2 x cell_days`. `phi` is the overdispersion factor (below), the same for every witness, including single-witness months.
+  2. **Ratio error, shared.** Strata that take the same ratio share its error, so the errors are added **fully correlated** inside each *ratio source*: a `LOCAL` stratum is its own source, the strata with pooling level `REGION` of one fire region form one source, the strata with level `GLOBAL` form one source (per witness, day/night and season). Each source adds `(sum of cell_days x ratio_sd)^2` (the Lead's `(sum cell_days)^2 x ratio_sd^2`, with each stratum's own `ratio_sd`; the two agree when the `ratio_sd` of a source is common). Different sources are independent **[LIMITATION]**: the region estimates share the global one, and `LOCAL` strata are partly shrunk toward their region, which this grouping by the dominant level does not capture, so the interval of a very large area can still be too narrow.
+- **Zero counts:** the variance of a witness is never below `mean(ratio)^2` (one cell-day).
+- **Combination:** a precision-weighted mean of the witnesses that count. `S = sqrt(chi^2 / (N - 1))` multiplies the combined sd whenever `S > 1`; `disagreement_scale` is `max(S, 1)` with 2 or more witnesses and `null` with one. **The code `WITNESS_DISAGREEMENT` is given only when `S > 2`** (Lead's decision); `SINGLE_WITNESS` with one witness.
+- **Witnesses that count:** only those with every day of the month available. If none counts, the estimate is `null` and `n_witnesses` is 0. The optional `aqua_cutoff` (reason `AQUA_DRIFT_ERA`) is not set; its value comes from T-012 (D-005).
+- **Interval:** 90% normal, `estimate +/- 1.645 sd`, lower bound at 0. `data_level` follows the witnesses that count, with the reason `PROVISIONAL_NRT` for `NRT` and `MIXED`.
 
-**Tests** (`pipeline/tests/test_harmonize.py`, 12 tests on synthetic data with answers computed by hand): the weighted mean, `chi^2` and sd; equal witnesses are not inflated and conflicting ones are; the stratum-first sum and variance; a partial-month witness is dropped; the Aqua cutoff; NRT flags and Terra excluded; seasonal ratios; the `months` filter, order and determinism; contract shape (checked with `contract_check`). Breaking the code on purpose (no inflation, no floor on the scale, partial months used, no variance floor, ratio uncertainty ignored, season ignored, cutoff reason dropped, night dropped) makes tests fail (checked).
+**Overdispersion `phi`** (`estimate_phi`, fit periods only):
+- **Method:** for Aqua against one VIIRS witness inside that witness's fit period (S-NPP 2012-01 to 2016-12; NOAA-20 2018-04 to 2021-12; **S-NPP is not used after 2016**, so no held-out year is read), take the difference `d` of the converted estimates in each country-month where both are at least 20 cell-days. Then find `phi` such that the median of `d^2 / (phi x counting variance + ratio variance)` equals the median of a chi-square variable with one degree of freedom (0.455). This is the Lead's "median of `S^2`", written for a pair. `phi` is computed per day/night from both pairs and never taken below 1.
+- **Result [VERIFIED]:** `phi` = **7.72 by day and 6.53 by night**.
 
-**On the real products** (final T-011 products; Indonesia, all 293 months, 1.9 s; `python pipeline/harmonize.py` takes 2.5 minutes for every country):
-- **Indonesia 2015:** September 19,693 cell-days (sd 1,060, `S` = 8.8), October 17,279 (sd 164, `S` = 1.5), against 20,370 and 17,386 raw Aqua cell-days. The converted S-NPP estimate and Aqua agree on the level, as the calibration intends; the intervals reflect how much they differ.
-- **Every country** (66,218 country-months): 65,314 have an estimate. The 904 without one are the months 2002-07, 2002-08, 2002-09 (Aqua has outage days: 26 of 31, 24 of 31 and 29 of 30 days) and 2026-11 (a partial month: 14 days for Aqua and NOAA-20, 2 for S-NPP). The month 2026-11 has `n_witnesses = 0` by the complete-month rule.
-- **Converted witness against Aqua** (country-months where both are at least 100 cell-days): S-NPP 8,785 country-months, median 1.011, 5th to 95th percentile 0.71 to 1.53; NOAA-20 5,006 country-months, median 1.005, 0.72 to 1.58.
-- **Disagreement** (39,776 country-months with at least 2 witnesses): `S > 1` in 45%, `S > 2` in 24%, `S > 3` in 14%, `S > 5` in 5.4%; the median is 1.0 and the 90th percentile 3.7.
+  | Pair | Day: `phi` (country-months) | Night: `phi` (country-months) |
+  |---|---|---|
+  | Aqua and S-NPP, 2012 to 2016 | 7.52 (4,580) | 6.08 (1,498) |
+  | Aqua and NOAA-20, 2018-04 to 2021-12 | 7.91 (3,467) | 7.36 (1,128) |
 
-**Reading it correctly:**
-- A 24% share with `S > 2` and a 5 to 95% spread of a factor of 2 between the converted witnesses mean that the Poisson variance alone is far too small: the witnesses differ by more than counting noise. The disagreement inflation exists for this case and widens those intervals; it does not explain the differences.
-- **Open question for the Lead:** `WITNESS_DISAGREEMENT` is given for any `S > 1`, which is 45% of the multi-witness country-months, so the code carries little information. An alternative is a threshold (for example `S > 2`, 24%) for the code while the sd is inflated whenever `S > 1`. Not applied.
-- **Open question for the Lead:** the three early months (2002-07 to 2002-09) have no estimate because Aqua has outage days. The baseline (2003 to 2022, D-010) is not affected; T-014 decides what an outage month means for the verdict.
-- Test D1 (coverage) and the Aqua drift (T-012) will show whether the intervals are the right width.
+  The two witnesses agree, and so do day and night (the factors are kept separate, as the Lead allowed).
+- **`phi` depends on the size of the unit [VERIFIED; important].** With the minimum size of a country-month raised, the estimate grows: at least 5 cell-days: 5.5 (day), 4.7 (night); at least 20: 7.7, 6.5; at least 100: 14.0, 9.2; at least 500: 24.8, 24.7. So the extra-Poisson variance grows faster than the count: a constant factor is too small for large areas and too large for small ones. The 20 cell-day threshold is my choice. **Proposal for the Lead, not applied:** add a term proportional to the square of the estimate (`variance = phi x count + kappa x estimate^2`), estimated the same way.
+- **Lower bound:** the ratios were fitted on these months, so the two witnesses agree better in them than out of sample, and `phi` is a lower bound. Test D1 measures the coverage.
+
+**Tests** (`pipeline/tests/test_harmonize.py`, 20 tests on synthetic data with answers computed by hand):
+- the weighted mean, `chi^2` and sd; equal witnesses are not inflated and conflicting ones are; the stratum-first sum;
+- **shared ratio errors:** two strata on the same pooled region ratio get a larger area variance (74.47) than two `LOCAL` strata (58.37); `GLOBAL` strata of different regions form one source, `REGION` strata of different regions do not;
+- **`phi`:** it scales the counting variance of every witness, including a single one; it is the module default; `solve_phi` recovers planted values (1, 3, 8) and ignores 5% outliers; `estimate_phi` recovers 1.0 and 4.0 from synthetic negative-binomial country-months and **does not change when 5,000 cell-days are added to S-NPP from 2017**;
+- **the code:** `S` of 1.35 inflates the sd but gives no `WITNESS_DISAGREEMENT`; `S` of 2.9 gives it;
+- partial months, the Aqua cutoff, NRT flags, Terra, seasons, the `months` filter, order, determinism and contract shape.
+- Breaking the code on purpose (regions not shared, `GLOBAL` not shared, ratio errors independent, `phi` ignored, `phi` not applied to Aqua, code threshold at 1, fit window ignored, wrong chi-square target, and the earlier ones) makes tests fail (checked).
+
+**On the real products** (final T-011 products):
+- **Indonesia 2015** (`harmonize_area`, 293 months in 3.7 s). Raw Aqua cell-days are 4,118, 10,761, 20,370, 17,386 and 2,800.
+
+  | Month | Estimate (sd), Poisson only, independent strata | Estimate (sd), after review | `S` after | Code |
+  |---|---|---|---|---|
+  | July | 4,249 (114), `S` = 2.7 | 4,289 (100) | 1.12 | none |
+  | August | 10,660 (127), `S` = 1.6 | 10,583 (160) | 1.00 | none |
+  | September | 19,693 (1,060), `S` = 8.8 | 18,869 (1,121) | 4.80 | yes |
+  | October | 17,279 (164), `S` = 1.5 | 17,157 (216) | 1.00 | none |
+  | November | 3,132 (275), `S` = 8.1 | 3,218 (243) | 3.31 | yes |
+
+  The September interval (17,025 to 20,713) contains the raw Aqua value. Over all 176 Indonesian months with 2 or more witnesses `S > 1` in 54% and `S > 2` in 26%: Indonesia has high counts, where the constant `phi` is too small (see above).
+- **Every country** (66,218 country-months, 39,776 with 2 or more witnesses):
+
+  | | Poisson only, shared ratio errors | With `phi` |
+  |---|---|---|
+  | `S > 1` | 45% | **19%** |
+  | `S > 2` (code) | 24% | **6.2%** |
+  | `S > 3` | 14% | 2.7% |
+  | `S > 5` | 5.2% | 0.76% |
+  | 95th percentile of `S` | 5.1 | 2.2 |
+  | Median relative sd | 0.17 | 0.35 |
+
+- **Level check (unchanged, the estimates do not depend on the variance):** converted witness against Aqua, country-months where both are at least 100 cell-days: S-NPP median 1.011 (5th to 95th percentile 0.71 to 1.53, 8,785); NOAA-20 median 1.005 (0.72 to 1.58, 5,006).
+- **No estimate:** 904 country-months: 2002-07 to 2002-09 (Aqua outage days) and 2026-11 (a partial month).
+
+**Reading it correctly:** with `phi` the witnesses disagree beyond their stated uncertainty in 19% of the multi-witness country-months, and beyond a factor of 2 in 6%: the code `WITNESS_DISAGREEMENT` now flags the exceptions. What the code does not show is whether the intervals are the right width, which is test D1. The Aqua-only years (2002-07 to 2011-12, inside the 2003 to 2022 baseline) have no second witness, so their width rests on `phi` alone.
 
 ## 2. NASA FIRMS area API: **2026 data**
 
