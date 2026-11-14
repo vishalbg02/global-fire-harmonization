@@ -7,4 +7,6 @@ This folder holds one implementation prompt per assigned task: `T-XXX-<short-nam
 - **Scope:** a prompt never adds work beyond the tracker entry. Ambiguities are listed in its §15 for the Lead to resolve.
 - **Self-contained:** a prompt must work in any Claude Code session or account without chat history.
 
-No prompts exist yet. No implementation task has been assigned, because the tech stack (D-008) is not approved.
+- **Relation to the workstream prompts:** `../prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md` and `../prompts/MEMBER_3_APPLICATION_PROMPT.md` describe each member's whole workstream. A task prompt here may reference their sections instead of repeating them, but it must still state the task's exact files, outputs, tests and acceptance criteria.
+
+No task prompts exist yet. No implementation task has been assigned. Stack-dependent tasks wait for D-008, and contract-dependent tasks for D-016.

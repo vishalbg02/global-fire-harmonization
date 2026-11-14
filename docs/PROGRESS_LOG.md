@@ -2,6 +2,16 @@
 
 Newest entries first. Record completed work, pending work, blockers and decisions.
 
+## 2026-11-14: Teammate workstream prompts (T-0G)
+
+**Completed**
+- Read-only audit of PR #2 and the repository: PR #2 merged as `cc940ba`; protected docs unchanged; history clean on `main`.
+- Added `docs/prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md` and `docs/prompts/MEMBER_3_APPLICATION_PROMPT.md`. They are self-contained and share an identical integration-handoff section (verified byte-identical). Field names were cross-checked against `DATA_CONTRACT.md`.
+- Tracker: stack-dependent tasks marked `BLOCKED (D-008)`, fixtures `BLOCKED (D-016)`, API tasks also blocked on D-015/T-0D. T-0E set to `MERGED`.
+- Fixed stale statuses in `HANDOFF.md` and `DECISION_LOG.md` (D-017 in effect; PR #1 → PR #2 reference).
+
+**Pending (Lead):** review the T-0G PR; approve D-008, D-016, D-015 and T-0D; assign T-001/T-002/T-008 to Member 2.
+
 ## 2026-11-14: Team workflow documentation (T-0E)
 
 **Completed**

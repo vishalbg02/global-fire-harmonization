@@ -20,7 +20,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-014 | — | Repo visibility for judges at submission | OPEN |
 | D-015 | — | API owner: Member 3 (recommended if Python-capable) or Member 2 | OPEN |
 | D-016 | 2026-11-14 | Data contract v0.1.0 | PROPOSED |
-| D-017 | 2026-11-14 | Team workflow: Lead assigns tasks; individual Claude sessions generate task prompts; one branch + PR per task; Lead reviews every PR and alone merges | APPROVED (Lead's instruction); takes effect when the workflow PR is merged |
+| D-017 | 2026-11-14 | Team workflow: Lead assigns tasks; individual Claude sessions generate task prompts; one branch + PR per task; Lead reviews every PR and alone merges | APPROVED (Lead's instruction); **in effect** since PR #2 merged (2026-11-14) |
 | D-018 | 2026-11-14 | Lead bookkeeping commits allowed directly on `main` (tracker, decision log, progress log, handoff only) | PROPOSED |
 | D-019 | — | Technical protection of `main` (GitHub Pro branch protection vs policy + local guard) | OPEN |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
@@ -108,7 +108,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
   - The Lead reviews every PR (approve / request changes / reject) and alone merges.
   - No teammate or AI session merges, approves or pushes to `main`.
 - **Supersedes:** D-012.
-- **Status:** APPROVED by the Lead's instruction (2026-11-14). Effective once the PR introducing it is merged.
+- **Status:** APPROVED by the Lead's instruction (2026-11-14). In effect since PR #2 merged (merge commit `cc940ba`).
 
 ### D-018: Lead bookkeeping exception
 - **Context:** routing every tracker or status update through a PR would slow the Lead down and cause conflicts.
@@ -144,5 +144,5 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
   - Force-pushed with a lease on the old tip.
   - Mapping: 6670a4b→8daabd3, 92afa01→5c0d8b4, 343a874→348ef2d, 2d26909→00c9f7f.
   - The PR branch was rebased onto the new `main`. GitHub auto-closed PR #1 on the base force-push and would not reopen it, so PR #2 replaces it (same branch).
-- **Note:** the *file contents* of those historical commits still contain the old "Claude / M1" owner credit in `TASK_TRACKER.md`. It is corrected going forward by PR #1. Rewriting historical file contents was not part of this decision.
+- **Note:** the *file contents* of those historical commits still contain the old "Claude / M1" owner credit in `TASK_TRACKER.md`. It is corrected going forward by PR #2. Rewriting historical file contents was not part of this decision.
 - **Status:** APPROVED and DONE.
