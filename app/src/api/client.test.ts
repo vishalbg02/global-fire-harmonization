@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, fetchSeries } from './client.ts'
+import { ApiError, fetchEvidence, fetchSeries } from './client.ts'
 import { ContractError } from './contract.ts'
 
 // SYNTHETIC test data. Not NASA observations.
@@ -70,5 +70,32 @@ describe('fetchSeries', () => {
   it('rejects a record that breaks the contract instead of coercing it', async () => {
     stubFetch({ ok: true, status: 200, body: [{ ...RECORD, verdict: 'MAYBE' }] })
     await expect(fetchSeries('GLOBAL', 'GLOBAL', '')).rejects.toBeInstanceOf(ContractError)
+  })
+})
+
+
+describe('fetchEvidence', () => {
+  it('requests /api/evidence with the entity, year and month and parses the decoded record', async () => {
+    const fetchFn = stubFetch({ ok: true, status: 200, body: { ...RECORD, raw_by_witness: { SNPP_VIIRS: 7 } } })
+    const evidence = await fetchEvidence('COUNTRY', 'IDN', 2015, 9, 'http://api.test')
+    expect(fetchFn).toHaveBeenCalledWith(
+      'http://api.test/api/evidence?entity_type=COUNTRY&entity_id=IDN&year=2015&month=9',
+    )
+    expect(evidence.raw_by_witness).toEqual({ SNPP_VIIRS: 7 })
+  })
+
+  it('reports an unknown entity or month as an ApiError with status 404', async () => {
+    stubFetch({ ok: false, status: 404, body: { detail: 'Unknown entity' } })
+    const error = await fetchEvidence('COUNTRY', 'ZZZ', 2020, 1, '').catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).status).toBe(404)
+  })
+
+  it('reports a service failure as an ApiError and rejects a record that breaks the contract', async () => {
+    stubFetch({ ok: false, status: 503, body: { detail: 'down' } })
+    const down = await fetchEvidence('GLOBAL', 'GLOBAL', 2020, 1, '').catch((e: unknown) => e)
+    expect((down as ApiError).status).toBe(503)
+    stubFetch({ ok: true, status: 200, body: { ...RECORD, raw_by_witness: { LANDSAT: 1 } } })
+    await expect(fetchEvidence('GLOBAL', 'GLOBAL', 2020, 1, '')).rejects.toBeInstanceOf(ContractError)
   })
 })

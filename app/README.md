@@ -2,7 +2,7 @@
 
 Frontend for the Global Fire Harmonization project (working name: *Many Witnesses*). Owner: Member 3. Task: T-030 (setup and skeleton).
 
-**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. A shared Raw / Harmonized control (T-033) switches the map and the calendar between the stored raw count and the harmonized estimate on one colour scale. The evidence panel and witness charts are added by later tasks. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
+**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. A shared Raw / Harmonized control (T-033) switches the map and the calendar between the stored raw count and the harmonized estimate on one colour scale. An evidence panel (T-036) explains the verdict for the selected area and month, or for a selected map cell, in plain language. The witness charts are added by a later task. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
 
 ## Prerequisites
 
@@ -60,9 +60,10 @@ app/
 │   ├── index.css           styles and visible focus
 │   ├── api/                contract types and parsers (contract.ts), typed client (client.ts)
 │   ├── state/              selection state (selection.ts), month list (months.ts)
-│   ├── content/            verdict presentation and short reason labels
+│   ├── content/            verdict presentation, reason texts (approved), witness names, wording
 │   ├── components/map/     map, legend, month and layer selectors, tooltip, colour scale
 │   ├── components/calendar/ calendar grid, ECharts heatmap, table view, legend, scales, tooltip text
+│   ├── components/evidence/ evidence panel: verdict, numbers, satellites, raw contributions, reasons
 │   ├── components/common/  synthetic banner, loading/error/empty states, error boundary, Raw / Harmonized control
 │   └── **/*.test.ts(x)     Vitest tests (mock data inside test files is SYNTHETIC)
 ├── public/geo/             Natural Earth country boundaries

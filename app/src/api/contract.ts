@@ -79,6 +79,20 @@ export interface MapCell extends HarmonizedFields {
 export const ENTITY_TYPES = ['CELL', 'COUNTRY', 'CONTINENT', 'GLOBAL', 'CUSTOM'] as const
 export type EntityType = (typeof ENTITY_TYPES)[number]
 
+/**
+ * GET /api/evidence: an entity_month record with `raw_by_witness` decoded into an object
+ * (witness to raw fire-active cell-days), or null when the record has none.
+ */
+export interface EntityEvidence extends HarmonizedFields {
+  entity_type: EntityType
+  entity_id: string
+  entity_name: string
+  year: number
+  month: number
+  n_cells: number
+  raw_by_witness: Partial<Record<Witness, number>> | null
+}
+
 /** One entity for one month (entity_month, section 4). `raw_by_witness` is a JSON string. */
 export interface EntityMonth extends HarmonizedFields {
   entity_type: EntityType
@@ -213,6 +227,34 @@ export function parseEntityMonth(raw: unknown): EntityMonth {
   const rawByWitness = field(o, 'raw_by_witness', what)
   if (rawByWitness !== null && typeof rawByWitness !== 'string') {
     throw new ContractError(`${what}: "raw_by_witness" must be a JSON string or null`)
+  }
+  return {
+    entity_type: oneOf(field(o, 'entity_type', what), ENTITY_TYPES, 'entity_type', what),
+    entity_id: str(o, 'entity_id', what),
+    entity_name: str(o, 'entity_name', what),
+    year: num(o, 'year', what),
+    month: num(o, 'month', what),
+    n_cells: num(o, 'n_cells', what),
+    raw_by_witness: rawByWitness,
+    ...parseHarmonizedFields(o, what),
+  }
+}
+
+export function parseEntityEvidence(raw: unknown): EntityEvidence {
+  const what = 'evidence'
+  const o = asRecord(raw, what)
+  const decoded = field(o, 'raw_by_witness', what)
+  let rawByWitness: Partial<Record<Witness, number>> | null = null
+  if (decoded !== null) {
+    const entries = asRecord(decoded, `${what}: raw_by_witness`)
+    rawByWitness = {}
+    for (const [witness, value] of Object.entries(entries)) {
+      const key = oneOf(witness, WITNESSES, 'raw_by_witness witness', what)
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        throw new ContractError(`${what}: raw_by_witness "${witness}" must be a number`)
+      }
+      rawByWitness[key] = value
+    }
   }
   return {
     entity_type: oneOf(field(o, 'entity_type', what), ENTITY_TYPES, 'entity_type', what),

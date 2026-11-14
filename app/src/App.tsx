@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer } from 'react'
+import { useEffect, useMemo, useReducer, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchMapCells, fetchMeta } from './api/client.ts'
 import type { MapCell } from './api/contract.ts'
@@ -10,6 +10,7 @@ import { Legend } from './components/map/Legend.tsx'
 import { MapModeSelector } from './components/map/MapModeSelector.tsx'
 import { MapView } from './components/map/MapView.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
+import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { monthRange } from './state/months.ts'
@@ -43,6 +44,9 @@ export default function App() {
     enabled: selection.month !== null,
     retry: false,
   })
+
+  // Clicking a calendar cell sets the month and moves focus to the evidence panel's heading.
+  const evidenceHeading = useRef<HTMLHeadingElement>(null)
 
   const cellList: readonly MapCell[] | null = cells.data ?? null
   const max = cellList === null ? 0 : sharedMax(cellList)
@@ -112,16 +116,33 @@ export default function App() {
             </section>
           </aside>
         </div>
-        <CalendarPanel
-          area={selection.area}
-          meta={meta.data ?? null}
-          selectedMonth={selection.month}
-          valueMode={selection.valueMode}
-          source={selection.source}
-          onValueModeChange={(valueMode) => dispatch({ type: 'set-value-mode', valueMode })}
-          onSelectMonth={(year, month) => dispatch({ type: 'set-month', year, month })}
-          onShowWorld={() => dispatch({ type: 'clear-entity' })}
-        />
+        <div className="calendar-evidence">
+          <CalendarPanel
+            area={selection.area}
+            meta={meta.data ?? null}
+            selectedMonth={selection.month}
+            valueMode={selection.valueMode}
+            source={selection.source}
+            onValueModeChange={(valueMode) => dispatch({ type: 'set-value-mode', valueMode })}
+            onSelectMonth={(year, month) => {
+              dispatch({ type: 'set-month', year, month })
+              evidenceHeading.current?.focus()
+            }}
+            onShowWorld={() => dispatch({ type: 'clear-entity' })}
+          />
+          <EvidencePanel
+            area={selection.area}
+            month={selection.month}
+            cell={
+              selection.entity?.entity_type === 'CELL'
+                ? { id: selection.entity.entity_id, record: selectedCell, loading: cells.isPending }
+                : null
+            }
+            meta={meta.data ?? null}
+            headingRef={evidenceHeading}
+            onShowWorld={() => dispatch({ type: 'clear-entity' })}
+          />
+        </div>
       </main>
     </div>
   )
