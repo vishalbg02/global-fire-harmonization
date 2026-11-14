@@ -23,7 +23,7 @@ Real, local products `cell_month_harmonized.parquet` and `entity_month.parquet` 
   - `pipeline/tests/test_raw_only.py`
   - `pipeline/contract_check.py` (a `--real` mode only; the synthetic checks are unchanged)
   - `docs/DATA_SOURCES.md` (a short section)
-  - `docs/TASK_TRACKER.md` (one new row, T-014a)
+  - no tracker edit: only the Lead adds task rows (`TASK_TRACKER.md`); the PR asks the Lead to add T-014a
 - Not committed: everything under `data/products/`
 
 ## 5. Approved technologies
@@ -63,7 +63,7 @@ Python, DuckDB, pyarrow, pandas, pytest, ruff (D-008). No new dependency.
 `python -m pytest pipeline/tests/test_raw_only.py -q` on a small synthetic `cell_month_witness`/`cells` pair with known sums: the cell and entity sums match by hand; `GLOBAL` equals the sum of the countries plus the cells without a country; `CONTINENT` equals the sum of its countries; every harmonized field is null and `witnesses_used` is empty; `method_version` ends in `-raw-only`; `data_level` is `MIXED` for a mixed month; the output passes `contract_check --real` and a corrupted copy does not. `ruff` passes on the files of this task. Then the run on the real products, with the report.
 
 ## 13. Documentation updates
-`docs/TASK_TRACKER.md` (new row T-014a); `docs/DATA_SOURCES.md`.
+`docs/DATA_SOURCES.md`. The tracker row is the Lead's to add.
 
 ## 14. Git branch and PR instructions
 - Branch: `science/T-014a-raw-only-products` created from the latest `main`
@@ -73,7 +73,7 @@ Python, DuckDB, pyarrow, pandas, pytest, ruff (D-008). No new dependency.
 - Commit with your own Git identity (D-020)
 
 ## 15. Out-of-scope or blocking issues
-- **Task ID:** T-014a is not in the tracker. The Lead confirms or renames it.
+- **Task ID:** T-014a is not in the tracker, and a teammate does not add rows. The Lead confirms or renames it and adds the row.
 - **Reason code:** a code meaning "not yet harmonized" is proposed (`NOT_HARMONIZED`, contract 0.1.1). Until it is approved, `reason_codes` stays empty.
 - **Entity IDs:** D-022 (entity ID scheme) is PROPOSED. This task uses the fixtures' convention (ISO3, continent codes `AF AN AS EU NA OC SA`, `GLOBAL`). If the Lead approves a different scheme, only the IDs change.
 - **Entity coverage:** cells without a country (927 of 56,238) enter `GLOBAL` only.

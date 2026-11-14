@@ -5,6 +5,7 @@ SYNTHETIC labelling. Returns a list of problems (empty means the folder conforms
 
     python pipeline/contract_check.py                    # data/fixtures/v0.1.0
     python pipeline/contract_check.py path/to/products
+    python pipeline/contract_check.py path/to/products --real    # real products: synthetic must be false (T-014a)
 """
 from __future__ import annotations
 
@@ -175,10 +176,11 @@ def _guard(label: str, errors: list[str], fn) -> None:
         errors.append(f"{label}: checks skipped because a required field is missing or unreadable ({e})")
 
 
-def check_dir(folder: Path = DEFAULT_DIR) -> list[str]:
+def check_dir(folder: Path = DEFAULT_DIR, real: bool = False, only: tuple[str, ...] | None = None) -> list[str]:
+    """`real`: the folder holds real products (synthetic must be false). `only`: check just these tables."""
     folder = Path(folder)
     errors: list[str] = []
-    frames = {n: check_table(n, folder / f"{n}.parquet", errors) for n in SPEC}
+    frames = {n: check_table(n, folder / f"{n}.parquet", errors) if only is None or n in only else None for n in SPEC}
     cells, cmw, harm, ent, cal = (frames[n] for n in ("cells", "cell_month_witness", "cell_month_harmonized",
                                                        "entity_month", "calibration"))
     if cells is not None:
@@ -191,7 +193,7 @@ def check_dir(folder: Path = DEFAULT_DIR) -> list[str]:
         _guard("entity_month", errors, lambda: _check_entity(ent, errors))
     if cal is not None:
         _guard("calibration", errors, lambda: _check_calibration(cal, cells, errors))
-    _guard("json files", errors, lambda: check_json(folder, errors))
+    _guard("json files", errors, lambda: check_json(folder, errors, real))
     return errors
 
 
@@ -255,7 +257,7 @@ def _check_calibration(cal: pd.DataFrame, cells: pd.DataFrame | None, errors: li
         errors.append("calibration: a stratum_id used by cells has no calibration rows")
 
 
-def check_json(folder: Path, errors: list[str]) -> None:
+def check_json(folder: Path, errors: list[str], real: bool = False) -> None:
     for name in ("metadata.json", "validation_results.json"):
         if not (folder / name).exists():
             errors.append(f"{name} is missing")
@@ -268,8 +270,8 @@ def check_json(folder: Path, errors: list[str]) -> None:
             errors.append(f"metadata.json: missing {k}")
     if meta.get("contract_version") != "0.1.0":
         errors.append("metadata.json: contract_version is not 0.1.0")
-    if meta.get("synthetic") is not True:
-        errors.append("metadata.json: synthetic must be true in fixtures")
+    if meta.get("synthetic") is not (not real):
+        errors.append(f"metadata.json: synthetic must be {'false' if real else 'true'}" + ("" if real else " in fixtures"))
     for k in ("first_month", "latest_month"):
         if not MONTH_STR.match(str(meta.get(k, ""))):
             errors.append(f"metadata.json: {k} is not YYYY-MM")
@@ -278,23 +280,25 @@ def check_json(folder: Path, errors: list[str]) -> None:
     if not set(meta.get("witnesses", [])) <= ENUMS["witness"]:
         errors.append("metadata.json: witnesses outside the enumeration")
     val = json.loads((folder / "validation_results.json").read_text(encoding="utf-8"))
-    if val.get("synthetic") is not True or val.get("contract_version") != "0.1.0":
-        errors.append("validation_results.json: needs synthetic true and contract_version 0.1.0")
+    if val.get("synthetic") is not (not real) or val.get("contract_version") != "0.1.0":
+        errors.append(f"validation_results.json: needs synthetic {'false' if real else 'true'} and contract_version 0.1.0")
     for t in val.get("tests", []):
         for k in ("test_id", "family", "title", "case", "criterion", "threshold", "measured", "status", "notes"):
             if k not in t:
                 errors.append(f"validation_results.json: test missing {k}")
         if t.get("status") not in ENUMS["test_status"]:
             errors.append(f"validation_results.json: bad status {t.get('status')}")
-        if not str(t.get("test_id", "")).startswith("SYNTHETIC-"):
+        if not real and not str(t.get("test_id", "")).startswith("SYNTHETIC-"):
             errors.append("validation_results.json: test_id must start with SYNTHETIC-")
-        if "SYNTHETIC EXAMPLE" not in str(t.get("notes", "")):
+        if not real and "SYNTHETIC EXAMPLE" not in str(t.get("notes", "")):
             errors.append("validation_results.json: notes must say SYNTHETIC EXAMPLE")
 
 
 def main() -> int:
-    folder = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DIR
-    errors = check_dir(folder)
+    args = [a for a in sys.argv[1:] if a != "--real"]
+    real = "--real" in sys.argv[1:]
+    folder = Path(args[0]) if args else DEFAULT_DIR
+    errors = check_dir(folder, real=real)
     for e in errors:
         print("FAIL", e)
     print(f"{folder}: {'conforms to contract 0.1.0' if not errors else f'{len(errors)} problem(s)'}")
