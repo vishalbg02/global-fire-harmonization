@@ -189,6 +189,7 @@ export default function App() {
               onToggleDrawing={() => setDrawing((d) => !d)}
               customMessage={customMessage}
               customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
+              synthetic={meta.data?.synthetic === true}
             />
             <AnomalyPanel
               month={selection.month}

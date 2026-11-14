@@ -610,3 +610,8 @@ aside section {
     transition: none !important;
   }
 }
+
+/* ---- CSV export ---- */
+.export-csv {
+  margin: 0.5rem 0;
+}
