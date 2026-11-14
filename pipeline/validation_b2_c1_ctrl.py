@@ -428,6 +428,27 @@ def judge(records: pd.DataFrame, base: pd.DataFrame, raw: dict[tuple[int, int], 
     return pd.DataFrame(rows)
 
 
+def explain_months(harm: pd.DataFrame, aqua: pd.DataFrame, base_h: pd.DataFrame, base_a: pd.DataFrame, months: list[dict]) -> list[dict]:
+    """Diagnostic only (no status): for each listed {'month': 'YYYY-MM'} the estimates and sds of both series, the baseline percentiles used
+    for each, and the D-028 probabilities p_above / p_below of each series, so that a verdict that differs can be traced to the number that
+    crossed the 0.8 line. The harmonized series is read against `base_h`, the Aqua-only series against `base_a`."""
+    out = []
+    for m in months:
+        y, mo = int(m["month"][:4]), int(m["month"][5:])
+        row = {"month": m["month"], "date": m.get("date")}
+        for name, rec, base in (("harmonized", harm, base_h), ("aqua_only", aqua, base_a)):
+            r = rec[(rec.year == y) & (rec.month == mo)]
+            b = base[base.month == mo]
+            if r.empty or b.empty or pd.isna(r.estimate.iloc[0]):
+                row[name] = None
+                continue
+            est, sd, bb = float(r.estimate.iloc[0]), float(r.sd.iloc[0]), b.iloc[0]
+            above, below, within = e1.probabilities(est, sd, float(bb.p25), float(bb.p75))
+            row[name] = {"estimate": est, "sd": sd, "p25": float(bb.p25), "p50": float(bb.p50), "p75": float(bb.p75), "p_above": above, "p_below": below, "p_within": within}
+        out.append(row)
+    return out
+
+
 def eval_months(dates=CTRL_DATES, half: int = CTRL_HALF_WINDOW) -> dict[str, list[int]]:
     """The month indices from `half` before to `half` after each change date, keyed by the date."""
     return {label(midx(*d)): list(range(midx(*d) - half, midx(*d) + half + 1)) for d in dates}
@@ -483,7 +504,9 @@ def run_ctrl(agg_box: pd.DataFrame, n_cells: dict) -> dict:
     for i, (a, b) in enumerate(CTRL_ANALYSIS_WINDOWS):
         idxs = {f"analysis_window_{i + 1}": list(range(midx(*a), midx(*b) + 1))}
         whole.update(ctrl_compare(judge(harm, base_h, raw), judge(aqua, base_a, raw), idxs)["per_date"])
-    return {"key": list(key), "n_cells": n_cells[key], "official": {**official, "status": ctrl_status(official["spurious_total"], official["determinable_harmonized"])},
+    detail = {"official": explain_months(harm, aqua, base_h, base_a, official["spurious"]),
+              "shared_baseline": explain_months(harm, aqua, base_a, base_a, shared["spurious"])}
+    return {"key": list(key), "n_cells": n_cells[key], "spurious_detail": detail, "official": {**official, "status": ctrl_status(official["spurious_total"], official["determinable_harmonized"])},
             "shared_baseline": {**shared, "status": ctrl_status(shared["spurious_total"], shared["determinable_harmonized"])},
             "analysis_windows_whole": whole, "baseline_years": list(BASE_YEARS),
             "baseline_months_harmonized": len(base_h), "baseline_months_aqua": len(base_a)}

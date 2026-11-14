@@ -285,6 +285,15 @@ def test_ctrl_compare_spurious_logic():
     assert miss["spurious_total"] == 3
 
 
+def test_explain_months_gives_the_probabilities_behind_a_verdict():
+    harm = rec_series([100.0, 20.0], year=2012).assign(month=[3, 4])
+    aqua = rec_series([20.0, 20.0], year=2012).assign(month=[3, 4])
+    bh = base_table()
+    out = v.explain_months(harm, aqua, bh, bh, [{"month": "2012-03", "date": "2012-01"}, {"month": "2012-09"}])
+    assert out[0]["harmonized"]["p_above"] > 0.99 and out[0]["aqua_only"]["p_within"] > 0.5 and out[0]["harmonized"]["p75"] == 30.0
+    assert out[1]["harmonized"] is None and out[1]["aqua_only"] is None            # no record for that month
+
+
 def test_ctrl_status_logic():
     assert v.ctrl_status(1, 100) == "FAIL" and v.ctrl_status(0, 12) == "PASS" and v.ctrl_status(0, 11) == "INCONCLUSIVE"
 
