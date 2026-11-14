@@ -1,5 +1,19 @@
 import type { Anomaly, Bbox, EntityEvidence, EntityItem, EntityMonth, MapCell, MapLayer, Metadata } from './contract.ts'
 import {
+  decodeMonth,
+  enterStaticMode,
+  getStaticBlob,
+  getStaticJson,
+  monthLabel,
+  STATIC_CUSTOM_MESSAGE,
+  STATIC_ONLY,
+  StaticFileError,
+  staticCells,
+  staticManifest,
+} from './staticData.ts'
+import type { EncodedMonth } from './staticData.ts'
+import {
+  decodeRawByWitness,
   parseAnomalies,
   parseEntityEvidence,
   parseEntityItems,
@@ -15,11 +29,18 @@ export class ApiError extends Error {
   readonly status: number | null
   /** The server's own message (FastAPI's `detail`), when the response carried one. */
   readonly detail: string | null
-  constructor(message: string, status: number | null, detail: string | null = null) {
+  /**
+   * True when nothing that speaks for the API answered: the network failed, or the host sent an
+   * error that is not the API's own (no JSON `detail`, for example a static host's 404 page or a
+   * gateway's 502). Only then may the offline copy stand in (T-043).
+   */
+  readonly unreachable: boolean
+  constructor(message: string, status: number | null, detail: string | null = null, unreachable?: boolean) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.detail = detail
+    this.unreachable = unreachable ?? status === null
   }
 }
 
@@ -56,15 +77,55 @@ async function request(url: string, init?: RequestInit): Promise<unknown> {
     } catch {
       detail = null
     }
-    throw new ApiError(`The data service returned status ${response.status}.`, response.status, detail)
+    throw new ApiError(`The data service returned status ${response.status}.`, response.status, detail, detail === null)
   }
   return response.json()
 }
 
 const getJson = (url: string) => request(url)
 
+// ---------------------------------------------------------------- the offline copy (T-043)
+/** A missing static file is a 404 like the API's; anything else is "not reachable". */
+function staticError(error: unknown): ApiError {
+  if (error instanceof StaticFileError) {
+    return new ApiError(
+      error.status === 404 ? 'The data service returned status 404.' : error.message,
+      error.status,
+    )
+  }
+  return error instanceof ApiError ? error : new ApiError('The data service could not be reached.', null)
+}
+
+/**
+ * Answers from the API, or from the offline copy: always from the copy in a static-only build or
+ * once the copy is in use; otherwise from the API, and from the copy only when the API cannot be
+ * reached and a copy exists. An API error that is an answer (404, 422, 503) is never replaced.
+ */
+async function route<T>(fromApi: () => Promise<T>, fromStatic: () => Promise<T>): Promise<T> {
+  if (STATIC_ONLY || staticManifest() !== null) return fromStatic().catch((e: unknown) => Promise.reject(staticError(e)))
+  try {
+    return await fromApi()
+  } catch (error) {
+    if (!(error instanceof ApiError) || !error.unreachable) throw error
+    try {
+      await enterStaticMode()
+    } catch {
+      throw error // no offline copy: the original "could not be reached"
+    }
+    return fromStatic().catch((e: unknown) => Promise.reject(staticError(e)))
+  }
+}
+
+const staticMeta = async () => {
+  await enterStaticMode() // the manifest also switches the app to the offline copy
+  return parseMetadata(await getStaticJson('meta.json'))
+}
+
 export async function fetchMeta(base: string = apiBaseUrl()): Promise<Metadata> {
-  return parseMetadata(await getJson(`${base}/api/meta`))
+  return route(
+    async () => parseMetadata(await getJson(`${base}/api/meta`)),
+    staticMeta,
+  )
 }
 
 export async function fetchMapCells(
@@ -74,7 +135,17 @@ export async function fetchMapCells(
   base: string = apiBaseUrl(),
 ): Promise<MapCell[]> {
   const query = new URLSearchParams({ year: String(year), month: String(month), layer })
-  return parseMapCells(await getJson(`${base}/api/map?${query.toString()}`))
+  return route(
+    async () => parseMapCells(await getJson(`${base}/api/map?${query.toString()}`)),
+    async () => {
+      // The same stored values in the compact layout: every layer has the same fields.
+      const [cells, encoded] = await Promise.all([
+        staticCells(),
+        getStaticJson(`map/${monthLabel(year, month)}.json`),
+      ])
+      return parseMapCells(decodeMonth(encoded as EncodedMonth, cells))
+    },
+  )
 }
 
 /** Entity types the series endpoint serves (the ones stored in entity_month). */
@@ -87,7 +158,10 @@ export async function fetchSeries(
   base: string = apiBaseUrl(),
 ): Promise<EntityMonth[]> {
   const query = new URLSearchParams({ entity_type: entityType, entity_id: entityId })
-  return parseEntityMonths(await getJson(`${base}/api/series?${query.toString()}`))
+  return route(
+    async () => parseEntityMonths(await getJson(`${base}/api/series?${query.toString()}`)),
+    async () => parseEntityMonths(await getStaticJson(`series/${entityType}-${entityId}.json`)),
+  )
 }
 
 /** GET /api/evidence: one entity_month record for a month. A 404 means the entity or month is unknown. */
@@ -104,7 +178,20 @@ export async function fetchEvidence(
     year: String(year),
     month: String(month),
   })
-  return parseEntityEvidence(await getJson(`${base}/api/evidence?${query.toString()}`))
+  return route(
+    async () => parseEntityEvidence(await getJson(`${base}/api/evidence?${query.toString()}`)),
+    async () => {
+      // One record of the static series, with its stored JSON text decoded as the API does.
+      const series = await getStaticJson(`series/${entityType}-${entityId}.json`)
+      const record = (Array.isArray(series) ? series : []).find(
+        (r: { year?: number; month?: number }) => r.year === year && r.month === month,
+      ) as Record<string, unknown> | undefined
+      if (record === undefined) throw new StaticFileError('No record for this month.', 404)
+      const stored = record.raw_by_witness
+      const decoded = typeof stored === 'string' ? (JSON.parse(stored) as unknown) : null
+      return parseEntityEvidence({ ...record, raw_by_witness: decodeRawByWitness(decoded, 'evidence') })
+    },
+  )
 }
 
 /** GET /api/entities: the countries or continents present in the products, with their bounds. */
@@ -112,7 +199,11 @@ export async function fetchEntities(
   type: 'COUNTRY' | 'CONTINENT',
   base: string = apiBaseUrl(),
 ): Promise<EntityItem[]> {
-  return parseEntityItems(await getJson(`${base}/api/entities?${new URLSearchParams({ type }).toString()}`))
+  return route(
+    async () =>
+      parseEntityItems(await getJson(`${base}/api/entities?${new URLSearchParams({ type }).toString()}`)),
+    async () => parseEntityItems(await getStaticJson(`entities-${type}.json`)),
+  )
 }
 
 /**
@@ -120,12 +211,18 @@ export async function fetchEntities(
  * through the harmonization function. On a 422 or 503 the server's message is in `ApiError.detail`.
  */
 export async function fetchCustomSeries(bbox: Bbox, base: string = apiBaseUrl()): Promise<EntityMonth[]> {
-  const body = await request(`${base}/api/series/custom`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ bbox }),
-  })
-  return parseEntityMonths(body)
+  return route(
+    async () =>
+      parseEntityMonths(
+        await request(`${base}/api/series/custom`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bbox }),
+        }),
+      ),
+    // The offline copy has the preset views only.
+    () => Promise.reject(new ApiError('The offline copy has no custom areas.', 503, STATIC_CUSTOM_MESSAGE)),
+  )
 }
 
 /** The most anomalies the API returns in one call (its documented maximum). */
@@ -142,7 +239,11 @@ export async function fetchAnomalies(
   base: string = apiBaseUrl(),
 ): Promise<Anomaly[]> {
   const query = new URLSearchParams({ year: String(year), month: String(month), limit: String(limit) })
-  return parseAnomalies(await getJson(`${base}/api/anomalies?${query.toString()}`))
+  return route(
+    async () => parseAnomalies(await getJson(`${base}/api/anomalies?${query.toString()}`)),
+    async () =>
+      parseAnomalies(await getStaticJson(`anomalies/${monthLabel(year, month)}.json`)).slice(0, limit),
+  )
 }
 
 /** The query string of `GET /api/export.csv` for a preset area or a custom rectangle (W,S,E,N). */
@@ -184,6 +285,26 @@ export async function fetchCsv(
   synthetic: boolean,
   base: string = apiBaseUrl(),
 ): Promise<CsvDownload> {
+  return route(
+    () => fetchCsvFromApi(area, synthetic, base),
+    async () => {
+      if (area.entity_type === 'CUSTOM') {
+        throw new ApiError('The offline copy has no custom areas.', 503, STATIC_CUSTOM_MESSAGE)
+      }
+      // Written by the real export code for every preset area when the copy was made.
+      const key = `${area.entity_type}-${area.entity_id}`
+      const manifest = await enterStaticMode()
+      const filename = manifest.exports[key] ?? fallbackFilename(area, synthetic)
+      return { blob: await getStaticBlob(`export/${key}.csv`), filename }
+    },
+  )
+}
+
+async function fetchCsvFromApi(
+  area: ExportArea,
+  synthetic: boolean,
+  base: string,
+): Promise<CsvDownload> {
   let response: Response
   try {
     response = await fetch(`${base}/api/export.csv?${exportQuery(area)}`)
@@ -197,7 +318,7 @@ export async function fetchCsv(
     } catch {
       detail = null
     }
-    throw new ApiError(`The data service returned status ${response.status}.`, response.status, detail)
+    throw new ApiError(`The data service returned status ${response.status}.`, response.status, detail, detail === null)
   }
   const filename =
     filenameFromDisposition(response.headers.get('Content-Disposition')) ?? fallbackFilename(area, synthetic)

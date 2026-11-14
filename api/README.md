@@ -60,6 +60,21 @@ Notes on the choices the contract leaves open (all confirmed by the Lead on PR #
 - `null` is returned as `null` and a real zero as `0`. A stored value that violates the contract (for example an unknown verdict) is reported as `503`, never coerced.
 - There is no CORS configuration. In development, the web app proxies `/api` to this server (Vite dev proxy).
 
+## Static export (offline copy, T-043)
+
+`fire_api/static_export.py` writes the preset views as static JSON, so the app can run with no API:
+
+```bash
+cd api
+PRODUCTS_DIR=../data/products .venv/bin/python -m fire_api.static_export --out ../app/public/data
+```
+
+Every file is the API's own answer: the endpoints are called in-process through the FastAPI test client, so there is one implementation and nothing is computed. It writes `meta.json`, `validation.json`, `entities-COUNTRY.json`, `entities-CONTINENT.json`, `series/<TYPE>-<ID>.json` for every country, continent and the world, `anomalies/<YYYY-MM>.json` and `map/<YYYY-MM>.json` for every month, the CSV of every preset area under `export/` (made with the real export code, with the file names it chose), a shared `cells.json` and a `manifest.json` (export time, `synthetic`, versions, data snapshot, months, file names).
+
+- **The map files are columnar.** The API's full map response is about 28 MB for a month; a month file holds one column per field (a column that is the same everywhere is stored once, a repeated value through a small table), and the cell ids and bounds are written once in `cells.json`. Decoding gives back exactly the API's records (tested for several months, including an outage, a witness-disagreement, a MIXED and an NRT month).
+- **One products directory per export.** The `synthetic` flag is passed through. A non-empty output directory is refused unless `--overwrite` is given, and then only a directory that holds this script's `manifest.json` is cleared. `--latest-months N` makes a quick partial copy.
+- **Not committed.** `app/public/data/` is ignored; regenerate it. Sizes and generation time of the real export are in the T-043 pull request.
+
 ## Test and lint
 
 ```bash

@@ -8,6 +8,8 @@ import type { RankingTab } from './components/anomalies/rankings.ts'
 import { AreaPicker } from './components/area/AreaPicker.tsx'
 import { resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
+import { useStaticManifest } from './api/staticData.ts'
+import { OfflineNote } from './components/common/OfflineNote.tsx'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
 import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
@@ -101,6 +103,8 @@ export default function App() {
     dispatch({ type: 'select-entity', entity: customArea(bbox) })
   }
 
+  // True while the app shows the offline copy of the preset views (T-043).
+  const offline = useStaticManifest()
   const meta = useQuery({ queryKey: ['meta'], queryFn: () => fetchMeta(), retry: false })
   const months = useMemo(
     () =>
@@ -151,6 +155,7 @@ export default function App() {
         Skip to the controls and the map
       </a>
       <SyntheticBanner synthetic={meta.data?.synthetic === true} />
+      <OfflineNote manifest={offline} />
       <header>
         <h1>Global Fire Harmonization</h1>
         <p className="subtitle">Satellite-detected fire activity, harmonized across MODIS and VIIRS</p>
