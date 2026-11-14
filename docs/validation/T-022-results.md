@@ -8,8 +8,8 @@ Run 2026-11-14/15 with `python pipeline/validation_d.py` on the final T-011/T-01
 |---|---|---|
 | D1 coverage, fire regions pooled (the locked criterion) | **PASS** | 0.818 of 1,466 D/N units |
 | D2 estimate level (a part of D2) | **PASS** | 0 violations in 70,906 entity-months |
-| D2 verdict level (the other part) | **NOT_RUN** | needs T-014 |
-| D2 as a whole | **NOT_RUN** until the verdict part runs | |
+| D2 verdict level (the other part) | **PASS** | 936 of 936 rows without an estimate are `CANNOT_DETERMINE` with `OUTAGE`; 0 violations in 68,562 rows |
+| D2 as a whole | **PASS** | both halves pass; 50.9% of entity-months and 67.8% of land cell-months have a determinable verdict |
 
 ## D1: are the 90% intervals honest
 
@@ -58,14 +58,26 @@ UNASSIGNED (4 units) is not judged on its own. For region day+night totals also 
 
 Status **PASS**. This covers the estimate half of the criterion only.
 
-**Verdict level: NOT_RUN [OPEN].** "Outage months are 100% `CANNOT_DETERMINE` with `OUTAGE`" and the share of land cells with a determinable verdict need the T-014 table. `check_verdicts()` is written and tested on planted good and bad tables; it checks that rows without an estimate are `CANNOT_DETERMINE` with `OUTAGE`, that `OUTAGE` never appears with an estimate, that `INSUFFICIENT_BASELINE` and `WIDE_INTERVAL` rows are not determinable, that `NO_DETECTED_ACTIVITY` has an estimate of 0, and reports the determinable share. Note for T-014: the current `harmonize.records_from` does not emit `OUTAGE`; T-014 must add it, otherwise this test will fail.
+**Verdict level [VERIFIED].** Run on the T-014 products (PR #52, branch `origin/science/T-014-verdicts`, method with baselines and the `OUTAGE` code; products brought in uncommitted): `python pipeline/validation_d.py verdicts data/products/entity_month.parquet` (also reads `cell_month_harmonized.parquet` and `cells.parquet` from the same folder). Rules checked: a row without an estimate is `CANNOT_DETERMINE` with `OUTAGE`; `OUTAGE` never appears with an estimate; `INSUFFICIENT_BASELINE` and `WIDE_INTERVAL` rows are not determinable; `NO_DETECTED_ACTIVITY` has an estimate of 0. `NO_DETECTED_ACTIVITY` counts as an allowed outcome, as the plan text says.
 
-After T-014 is merged and its products are built:
+| Table | Rows | Rows without estimate | Of these `CANNOT_DETERMINE` + `OUTAGE` | Violations |
+|---|---|---|---|---|
+| `entity_month` (countries 66,218, continents 2,051, globe 293) | 68,562 | 936 (904 country, 28 continent, 4 global; months 2002-07 to 2002-09 and 2026-11) | 936 | 0 |
+| `cell_month_harmonized`, all cells | 16,477,734 | 224,952 | 224,952 | 0 |
+| `cell_month_harmonized`, land cells | 16,206,123 | 221,244 | 221,244 | 0 |
 
-    python pipeline/validation_d.py verdicts data/products/entity_month.parquet
+Status **PASS**. Note: `entity_month` holds countries, continents and the globe, not the 14 fire regions, so the 968 no-estimate entity-months of the estimate-level run (which included regions) are 936 here; the extra 32 are region rows.
 
-The result is written to `data/interim/qa/T-022_verdict_check.json`. The same function also accepts the cell-level table for the land-cell share. The "cells below the data thresholds" part of D2 is checked only through the `INSUFFICIENT_BASELINE` rule above.
+**Share of land cells with a determinable verdict [VERIFIED].** Land cells are the 55,311 cells with a `country_iso3` in `cells.parquet` (of 56,238). Determinable means any verdict but `CANNOT_DETERMINE`; "normal" means `ABOVE_NORMAL`, `BELOW_NORMAL` or `WITHIN_NORMAL`.
+
+| Scope | Cell-months | Normal verdict | Not `CANNOT_DETERMINE` | Cells with at least one normal verdict | Cells with at least one determinable verdict |
+|---|---|---|---|---|---|
+| All cells | 16,477,734 | 2.9% | 68.3% | 21.4% | 99.8% |
+| Land cells | 16,206,123 | 3.0% | 67.8% | 21.8% | 99.8% |
+| Entity-months (countries, continents, globe) | 68,562 | 24.4% (ABOVE 6,119 + BELOW 6,318 + WITHIN 8,320 of 68,562) | 50.9% | | |
+
+Reading it: most of the determinable cell-months are `NO_DETECTED_ACTIVITY` (10.8 million of 11.3 million); a normal-range verdict exists in only 3% of land cell-months (per calendar month between 0% and 6.4%), which is what D-028 anticipated for cells. Almost every cell has some determinable month (99.8%), but only about one in five ever gets a normal-range verdict. [VERIFIED as counts; the interpretation is mine.]
 
 ## Changes for the Lead [OPEN]
-- `docs/VALIDATION_PLAN.md` section 4: D1 PASS (pooled), with the per-region FAIL and night limit recorded in section 5; D2 stays NOT_RUN until the verdict part runs.
+- `docs/VALIDATION_PLAN.md` section 4: D1 PASS (pooled), with the per-region FAIL and night limit recorded in section 5; D2 PASS (both halves) with the determinable shares above.
 - Decide whether D1 means pooled (as read here) or per region; the plan text should say which.

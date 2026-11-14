@@ -273,7 +273,8 @@ def d2_verdict_status(res: dict) -> str:
     """PASS: at least one outage row was checked and no rule is broken. INCONCLUSIVE: no row without an estimate to check."""
     if res["rows_without_estimate"] == 0:
         return "INCONCLUSIVE"
-    return "FAIL" if sum(res["violations"].values()) else "PASS"
+    cell = sum(v["outage_rule_violations"] for v in res.get("cell_level", {}).values())
+    return "FAIL" if sum(res["violations"].values()) + cell else "PASS"
 
 
 def d2_entries(chk: dict, pert: dict, verdict_res: dict | None = None) -> list[dict]:
@@ -343,14 +344,77 @@ def run(paths: hz.Paths | None = None) -> dict:
     return {"entries": entries, "d1_regions": region, "d1_countries": country, "d2": chk, "perturbation": pert}
 
 
+def cell_determinable_shares(harmonized: str | Path, cells: str | Path) -> dict:
+    """D2: the share of cell-months and of cells with a determinable verdict, for all cells and for land cells (a country_iso3 in cells).
+
+    `normal`: ABOVE, BELOW or WITHIN_NORMAL. `not_cannot_determine`: any verdict but CANNOT_DETERMINE (includes NO_DETECTED_ACTIVITY).
+    Also the outage rule on the cell table: a row without an estimate must be CANNOT_DETERMINE with OUTAGE."""
+    con = duckdb.connect()
+    h, c = f"read_parquet('{Path(harmonized).as_posix()}')", f"read_parquet('{Path(cells).as_posix()}')"
+    norm = "verdict IN ('ABOVE_NORMAL', 'BELOW_NORMAL', 'WITHIN_NORMAL')"
+    df = con.execute(f"""WITH j AS (SELECT h.cell_id, h.verdict, h.estimate, h.reason_codes, (c.country_iso3 IS NOT NULL) AS land
+                                    FROM {h} h JOIN {c} c USING (cell_id)),
+        pc AS (SELECT cell_id, land, max(({norm})::int) AS any_norm, max((verdict <> 'CANNOT_DETERMINE')::int) AS any_det FROM j GROUP BY 1, 2)
+        SELECT 'all' AS scope, count(*) AS cells, avg(any_norm) AS cells_any_normal, avg(any_det) AS cells_any_not_cd,
+               NULL::DOUBLE AS months, NULL::DOUBLE AS m_normal, NULL::DOUBLE AS m_not_cd, NULL::DOUBLE AS m_noest, NULL::DOUBLE AS m_bad FROM pc
+        UNION ALL
+        SELECT 'land', count(*), avg(any_norm), avg(any_det), NULL, NULL, NULL, NULL, NULL FROM pc WHERE land""").df()
+    mm = con.execute(f"""WITH j AS (SELECT h.verdict, h.estimate, h.reason_codes, (c.country_iso3 IS NOT NULL) AS land
+                                    FROM {h} h JOIN {c} c USING (cell_id))
+        SELECT land, count(*) AS months, avg(({norm})::int) AS m_normal, avg((verdict <> 'CANNOT_DETERMINE')::int) AS m_not_cd,
+               sum((estimate IS NULL)::int) AS m_noest,
+               sum((estimate IS NULL AND NOT (verdict = 'CANNOT_DETERMINE' AND list_contains(reason_codes, 'OUTAGE')))::int) AS m_bad,
+               sum((list_contains(reason_codes, 'OUTAGE') AND estimate IS NOT NULL)::int) AS outage_with_estimate
+        FROM j GROUP BY land""").df()
+    out: dict = {}
+    for scope, sel in (("all", mm), ("land", mm[mm.land])):
+        n = float(sel.months.sum())
+        out[scope] = {"cell_months": int(n), "cells": int(df[df.scope == scope].cells.iloc[0]),
+                      "cell_months_normal_share": float((sel.m_normal * sel.months).sum() / n),
+                      "cell_months_not_cannot_determine_share": float((sel.m_not_cd * sel.months).sum() / n),
+                      "cells_with_any_normal_verdict": float(df[df.scope == scope].cells_any_normal.iloc[0]),
+                      "cells_with_any_not_cd_verdict": float(df[df.scope == scope].cells_any_not_cd.iloc[0]),
+                      "cell_months_without_estimate": int(sel.m_noest.sum()),
+                      "outage_rule_violations": int(sel.m_bad.sum() + sel.outage_with_estimate.sum())}
+    return out
+
+
 def run_verdicts(path: str) -> dict:
     em = pd.read_parquet(path)
     res = check_verdicts(em)
+    prod = Path(path).parent
+    if (prod / "cell_month_harmonized.parquet").exists() and (prod / "cells.parquet").exists():
+        res["cell_level"] = cell_determinable_shares(prod / "cell_month_harmonized.parquet", prod / "cells.parquet")
     entries = d2_entries({"entity_months": 0, "months_expected_without_estimate": 0, "months_with_a_partial_witness": 0, "violations": 0}, {}, res)
     out = QA / "T-022_verdict_check.json"
     QA.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"entry": entries[-1], "result": res}, indent=1, default=str), encoding="utf-8")
-    return {"entry": entries[-1], "result": res}
+    merged = _merge_entries(entries[-1])
+    return {"entry": entries[-1], "d2_overall": merged, "result": res}
+
+
+def d2_overall(estimates: dict, verdicts: dict) -> dict:
+    """The D2 entry of the plan: PASS only when both halves PASS; FAIL if either fails; otherwise the weaker of the two."""
+    st = {estimates["status"], verdicts["status"]}
+    status = "FAIL" if "FAIL" in st else ("NOT_RUN" if "NOT_RUN" in st else ("INCONCLUSIVE" if "INCONCLUSIVE" in st else "PASS"))
+    return {"test_id": "D2", "family": "D", "title": "Gaps and insufficiency", "case": "Outage months; cells below the data thresholds",
+            "criterion": "100% shown as CANNOT_DETERMINE / NO_DETECTED_ACTIVITY; report % of land cells with a determinable verdict",
+            "threshold": "100%", "measured": {"estimates": estimates["status"], "verdicts": verdicts["status"]}, "status": status,
+            "notes": "Both halves: D2-ESTIMATES (no estimate without a complete witness) and D2-VERDICTS (CANNOT_DETERMINE with OUTAGE)."}
+
+
+def _merge_entries(verdict_entry: dict) -> dict | None:
+    """Replace D2-VERDICTS in the entries file of the main run and add the D2 entry; returns the D2 entry (None without the file)."""
+    f = QA / "T-022_validation_entries.json"
+    if not f.exists():
+        return None
+    doc = json.loads(f.read_text(encoding="utf-8"))
+    tests = [t for t in doc["tests"] if t["test_id"] not in ("D2-VERDICTS", "D2")]
+    est = next(t for t in tests if t["test_id"] == "D2-ESTIMATES")
+    overall = d2_overall(est, verdict_entry)
+    doc["tests"] = [*tests, verdict_entry, overall]
+    f.write_text(json.dumps(doc, indent=1, default=str), encoding="utf-8")
+    return overall
 
 
 if __name__ == "__main__":

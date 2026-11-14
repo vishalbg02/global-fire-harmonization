@@ -287,3 +287,42 @@ def test_verdict_level_is_not_run_until_a_table_exists():
     assert e["D2-VERDICTS"]["status"] == "NOT_RUN" and e["D2-ESTIMATES"]["status"] == "PASS"
     e2 = {x["test_id"]: x for x in vd.d2_entries(chk, {"changed": 0}, vd.check_verdicts(em_table(GOOD)))}
     assert e2["D2-VERDICTS"]["status"] == "PASS"
+
+
+def cell_files(tmp_path, bad=False):
+    cells = pd.DataFrame({"cell_id": ["c1", "c2", "c3"], "country_iso3": ["AAA", "AAA", None]})
+    cmw = pd.DataFrame({
+        "cell_id": ["c1", "c1", "c1", "c2", "c2", "c2", "c3", "c3"],
+        "estimate": [10.0, 5.0, None, 0.0, 0.0, 0.0, 0.0, None],
+        "verdict": ["ABOVE_NORMAL", "CANNOT_DETERMINE", "CANNOT_DETERMINE", "NO_DETECTED_ACTIVITY", "NO_DETECTED_ACTIVITY",
+                    "NO_DETECTED_ACTIVITY", "NO_DETECTED_ACTIVITY", "CANNOT_DETERMINE"],
+        "reason_codes": [[], ["INSUFFICIENT_BASELINE"], ["OUTAGE"], [], [], [], [], [] if bad else ["OUTAGE"]]})
+    cells.to_parquet(tmp_path / "cells.parquet")
+    cmw.to_parquet(tmp_path / "h.parquet")
+    return tmp_path / "h.parquet", tmp_path / "cells.parquet"
+
+
+def test_cell_determinable_shares_by_hand(tmp_path):
+    out = vd.cell_determinable_shares(*cell_files(tmp_path))
+    land, allc = out["land"], out["all"]
+    assert (land["cells"], land["cell_months"], allc["cells"], allc["cell_months"]) == (2, 6, 3, 8)
+    assert land["cell_months_normal_share"] == pytest.approx(1 / 6)           # one ABOVE_NORMAL
+    assert land["cell_months_not_cannot_determine_share"] == pytest.approx(4 / 6)
+    assert land["cells_with_any_normal_verdict"] == pytest.approx(0.5) and land["cells_with_any_not_cd_verdict"] == 1.0
+    assert allc["cell_months_not_cannot_determine_share"] == pytest.approx(5 / 8)
+    assert land["cell_months_without_estimate"] == 1 and out["all"]["outage_rule_violations"] == 0
+
+
+def test_cell_outage_rule_violation_is_counted(tmp_path):
+    out = vd.cell_determinable_shares(*cell_files(tmp_path, bad=True))
+    assert out["all"]["outage_rule_violations"] == 1 and out["land"]["outage_rule_violations"] == 0
+    res = vd.check_verdicts(em_table(GOOD))
+    res["cell_level"] = out
+    assert vd.d2_verdict_status(res) == "FAIL"
+
+
+def test_d2_overall_needs_both_halves():
+    p, f, n = {"status": "PASS"}, {"status": "FAIL"}, {"status": "NOT_RUN"}
+    assert vd.d2_overall(p, p)["status"] == "PASS"
+    assert vd.d2_overall(p, f)["status"] == "FAIL" and vd.d2_overall(f, p)["status"] == "FAIL"
+    assert vd.d2_overall(p, n)["status"] == "NOT_RUN"
