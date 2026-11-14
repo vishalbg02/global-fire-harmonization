@@ -16,6 +16,7 @@ Likelihood and impact: L (low) · M (medium) · H (high).
 | S8 | Results sensitive to grid size or thresholds chosen after seeing results | M | H | Pre-registration at G1 |
 | S9 | Validation tests fail | M | M | Publish the failures and narrow claims. Honesty is part of the product |
 | S10 | MODIS `version` inconsistency hides a processing change | L–M | M | T-007 investigation |
+| S11 | Static-source mask for NRT is imperfect (NRT has no `type`) | H (certain) | M | Measured on held-out years: removes 88% of static detections and wrongly removes 0.55% of fire detections at the proposed setting; residual static sources remain in NRT months, which are already provisional; the setting (0.05° cells, share at least 0.5, at least 10 detections) was approved by the Lead 2026-11-14 |
 
 ## 2. Technical risks
 

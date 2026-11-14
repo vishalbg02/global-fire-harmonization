@@ -21,7 +21,7 @@ All facts are marked with their verification status. Re-verify anything marked *
 | **Total** | | **≈9.1 GB** |
 
 - **Not available as zips [VERIFIED]:** any 2026 file; NOAA-21 (`viirs-jpss2` and `viirs-noaa21` return nothing).
-- **Unzipped size [ESTIMATE]:** about 4.5× expansion, measured on 2020 (MODIS 78 MB → 350 MB; S-NPP 368 MB → 1,625 MB). Total ≈41 GB.
+- **Unzipped size [VERIFIED 2026-11-14, T-005]:** 43,314,408,585 bytes of CSV when unzipped (40.3 GiB, 43.3 GB) across the 46 zips. The earlier estimate was ≈41 GB.
 - **Row count [VERIFIED 2026-11-14, T-003]:** 546,469,853 detections in the 46 zips (the earlier estimate was ≈475 million), before any filtering. Per sensor and year: see "Row counts per sensor and year" below.
 
 ### Columns [VERIFIED 2026-11-14 from file headers]
@@ -70,6 +70,61 @@ Rows read from the CSVs of the 46 zips (2002 to 2025) and the 2026 API files (T-
 | **Total** | **112,491,592** | **296,606,426** | **172,952,556** | **582,050,574** |
 
 2026 combines standard (SP) and near-real-time (NRT) API data. Terra and Aqua, S-NPP (`N`) and NOAA-20 (`N20`) appear only in their own sensor's files. Counts per satellite and data level are in `data/interim/detections/row_counts.tsv` (not committed).
+
+### QA summary of the normalized detections (T-005) **[VERIFIED 2026-11-14]**
+
+Computed by `python pipeline/qa_filters.py` over all 582,050,574 rows. Nothing was dropped, de-duplicated or altered; every filter below is counted, not applied.
+
+**Value domains.** No row has latitude or longitude out of range, a date outside its file's year, an invalid time (`acq_time_utc` 0000 to 2359, minutes below 60), a confidence value outside its domain (MODIS 0 to 100, VIIRS l/n/h), a `daynight` value other than D or N, a `type` other than 0 to 3, a non-positive `scan` or `track`, or a missing key field. The one exception is **478 rows with a negative `frp`** (values from -59.2 to -0.01 MW, scattered across the three sensors and many years; kept as delivered in the normalized data). **Decision, approved by the Lead 2026-11-14:** negative `frp` is treated as `null` when summing `frp_sum_mw`; cell-day counts are unaffected.
+
+**Duplicates.** Exact duplicates on (satellite, lat, lon, date, time): 252 rows in total (244 repeat inside the same country file, 8 appear only in another country's file), which is 0.00004% of the rows. Partitions do not overlap in time, so there are no duplicates between the 2025 zip and the 2026 API data. Not removed from the normalized data. **Lead decision (2026-11-14):** remove exact duplicates when computing cell-days in T-006; they cannot change presence-based cell-days anyway.
+
+**Filter funnel** (`SCIENTIFIC_METHODOLOGY.md` §4.1; counted only):
+
+| Sensor | Level | Rows | Type filter (SP type 0, NRT kept) | Confidence only | Type and confidence |
+|---|---|---|---|---|---|
+| MODIS | NRT | 796,045 | 796,045 | 756,434 | 756,434 |
+| MODIS | SP | 111,695,547 | 107,875,842 | 106,395,345 | 102,835,267 |
+| VIIRS_NOAA20 | NRT | 7,460,323 | 7,460,323 | 6,600,887 | 6,600,887 |
+| VIIRS_NOAA20 | SP | 165,492,233 | 153,977,067 | 146,392,919 | 135,255,051 |
+| VIIRS_SNPP | NRT | 6,602,259 | 6,602,259 | 5,888,989 | 5,888,989 |
+| VIIRS_SNPP | SP | 290,004,167 | 270,217,892 | 257,514,732 | 238,377,999 |
+
+Standard-data rows by `type` (the filter keeps type 0):
+
+| Sensor (SP) | type 1 volcano | type 2 static land | type 3 offshore |
+|---|---|---|---|
+| MODIS | 84,167 | 3,691,725 | 43,813 |
+| VIIRS_NOAA20 | 176,214 | 10,700,270 | 638,682 |
+| VIIRS_SNPP | 331,538 | 18,399,472 | 1,055,265 |
+
+**Static-source mask** (needed because NRT rows have no `type`). Per fine cell, the share of SP detections from 2012 to 2025 whose `type` is 2 or 3. Hold-out: cells built from SP 2012 to 2023, tested on SP 2024 to 2025, where `type` is known. Minimum 10 detections per cell (a minimum of 3 gives almost the same numbers; see the full table in the local summary):
+
+| Fine grid | Min share static | Cells masked | NRT rows masked | Static detections removed (hold-out) | Fire (type 0) wrongly removed (hold-out) | Precision |
+|---|---|---|---|---|---|---|
+| 0.05° | 0.3 | 17,092 | 861,542 (5.8%) | 91.3% | 0.68% | 90.1% |
+| 0.05° | 0.5 | 10,929 | 808,973 (5.4%) | 87.8% | 0.55% | 91.6% |
+| 0.05° | 0.7 | 7,208 | 733,542 (4.9%) | 82.5% | 0.41% | 93.2% |
+| 0.05° | 0.9 | 3,675 | 530,229 (3.6%) | 61.9% | 0.19% | 95.6% |
+| 0.1° | 0.3 | 9,955 | 885,511 (6.0%) | 91.3% | 0.88% | 87.6% |
+| 0.1° | 0.5 | 6,781 | 825,763 (5.6%) | 88.0% | 0.70% | 89.5% |
+| 0.1° | 0.7 | 4,612 | 733,125 (4.9%) | 81.7% | 0.49% | 91.9% |
+| 0.1° | 0.9 | 2,151 | 488,701 (3.3%) | 57.2% | 0.20% | 95.1% |
+
+**Decision, approved by the Lead 2026-11-14:** the static-source mask uses 0.05° cells, a static share of at least 0.5 and at least 10 detections, built on SP data. This also fits a 0.05° fine grid for D-009 / T-051, which is not locked yet. Evidence: fine grid 0.05°, share static at least 0.5, at least 10 detections. It masks 10,929 cells and 808,973 of the 14,858,627 NRT rows (5.4%), removes 87.8% of static detections on held-out years, and wrongly removes 0.55% of fire detections. The 0.1° grid removes slightly more static detections at the same share but loses more fire. A higher share lowers the fire loss and the recall. The setting is approved but not yet applied anywhere; the mask files stay local.
+
+**Day/night against the solar zenith rule** (night when the zenith angle is above 85 degrees; 0.5% sample; rows within 1 degree of the limit excluded):
+
+| Sensor | Level | Decidable sample rows | Agree with the zenith rule |
+|---|---|---|---|
+| MODIS | NRT | 3,989 | 3,984 (99.87%) |
+| MODIS | SP | 557,430 | 557,430 (100.00%) |
+| VIIRS_NOAA20 | NRT | 37,677 | 37,675 (99.99%) |
+| VIIRS_NOAA20 | SP | 826,093 | 825,808 (99.97%) |
+| VIIRS_SNPP | NRT | 32,996 | 32,991 (99.98%) |
+| VIIRS_SNPP | SP | 1,451,276 | 1,450,888 (99.97%) |
+
+NRT day/night agrees with the zenith rule almost as well as SP does (99.87% to 99.99%), so recomputing it would change very few rows. **Decision, approved by the Lead 2026-11-14: not recomputed.** FIRMS's `daynight` is kept as delivered, because source values are not altered. Measured only.
 
 ## 2. NASA FIRMS area API: **2026 data**
 
