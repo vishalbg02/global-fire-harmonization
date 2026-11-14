@@ -40,7 +40,7 @@ Responses are bare payloads (no envelope). Errors use FastAPI's default body, `{
 | `GET /api/series?entity_type=COUNTRY\|CONTINENT\|GLOBAL&entity_id=` | `entity_month` records ordered by year, month | 400, 404, 503 |
 | `POST /api/series/custom` with `{"bbox": [W,S,E,N]}` | `entity_month`-shaped records from `harmonize_area()` | 422, 503 |
 | `GET /api/evidence?entity_type=&entity_id=&year=&month=` | One `entity_month` record with `raw_by_witness` decoded into an object | 400, 404, 503 |
-| `GET /api/anomalies?year=&month=&limit=` | Entities with an `ABOVE_NORMAL` or `BELOW_NORMAL` verdict, ordered by the larger of `p_above` and `p_below`, descending (default limit 20, maximum 500) | 400, 503 |
+| `GET /api/anomalies?year=&month=&limit=` | Entities with an `ABOVE_NORMAL` or `BELOW_NORMAL` verdict, in the order below (default limit 20, maximum 500) | 400, 503 |
 | `GET /api/export.csv?entity_type=&entity_id=` or `?bbox=W,S,E,N` | The monthly series of one preset area, or of a custom rectangle, as a CSV download (UTF-8 with a byte-order mark; `#` metadata lines, then one row per month; all five `raw_<witness>` columns; empty cell = missing, never 0; `Content-Disposition` carries the file name, prefixed `SYNTHETIC_` while the data are) | 400 (neither or both of preset and `bbox`, malformed `bbox`), 404, 422, 503 |
 | `GET /api/validation` | `validation_results.json`, served as is | 503 |
 
@@ -50,6 +50,7 @@ Status codes: `400` invalid parameters, `404` unknown entity or month, `422` inv
 
 Notes on the choices the contract leaves open (all confirmed by the Lead on PR #16):
 
+- Anomaly order (T-039 phase 2, approved by the Lead on PR #62; the API alone orders, the app never re-sorts): (1) the larger of `p_above` and `p_below`, descending; (2) on a tie, the distance from normal `abs(ln(pct_of_normal / 100))`, descending, where a missing or non-positive `pct_of_normal` has no distance and goes last; (3) `entity_id` ascending (then `entity_type`, only so the order is fully determined). Many probabilities are 1.0 to rounding, so the first key alone left the top of the list arbitrary. Stored values are not changed. Tested in `tests/test_anomaly_order.py`.
 - `type` and `entity_type` use the contract's uppercase values.
 - `bbox` in `/api/entities` is derived from the bounds of the cells assigned to each country or continent. An entity with no cells has no derivable bbox and is not listed.
 - `layer` is validated but every layer returns the same fields; the web app chooses how to colour them.
