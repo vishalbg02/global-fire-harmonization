@@ -69,7 +69,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
-| T-030 | Environment setup per the approved stack; app skeleton | M3 | P0 | T-0A, T-0D | `frontend/T-030-setup` | — | TODO | — | Runs locally for M1 and M3 |
+| T-030 | Environment setup per the approved stack; app skeleton | M3 | P0 | T-0A, T-0D | `Swastik` (accepted for this task only) | [#5](https://github.com/vishalbg02/global-fire-harmonization/pull/5) | ASSIGNED (2026-11-14) | — | Runs locally for M1 and M3 |
 | T-031 | Global map: country layer + analysis-cell layer | M3 | P0 | T-030, T-010 | `frontend/T-031-global-map` | — | TODO | — | Selected month renders; tooltip per cell |
 | T-032 | Calendar (years × months; % of normal / activity) | M3 | P0 | T-010 | `frontend/T-032-calendar` | — | TODO | — | Accessible ramps; legend; null shown as "no data" |
 | T-033 | Raw vs harmonized toggle | M3 | P0 | T-032 | `frontend/T-033-toggle` | — | TODO | — | Switches calendar and map |
