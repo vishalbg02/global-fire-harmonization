@@ -189,7 +189,7 @@ Evidence: the 2026 MODIS files pulled in T-002 (world, 2026-01-01 to 2026-11-14,
 | Data | Use | Source / licence |
 |---|---|---|
 | Natural Earth admin-0 countries (1:50m) | Map boundaries; country attributes | https://www.naturalearthdata.com/ (public domain) |
-| GFED basis regions (14 fire regions) | Pooling parent in calibration | globalfiredata.org. **Access to be verified (T-004)**. Fallback: UN geoscheme subregions mapped from country names |
+| GFED basis regions (14 fire regions) | Pooling parent in calibration | GFED4s basis-regions grid, http://www.geo.vu.nl/~gwerf/GFED/GFED4/ (free with citation). **Access verified 2026-11-14 (T-004)**; no fallback needed. See the T-004 section below |
 
 FIRMS country names (e.g. `Democratic_Republic_of_the_Congo`, `Russian_Federation`) are mapped to ISO3 codes and continents in `pipeline/country_map.csv` (task T-009).
 
@@ -200,6 +200,35 @@ FIRMS country names (e.g. `Democratic_Republic_of_the_Congo`, `Russian_Federatio
 - **Continent codes:** `AF`, `AN`, `AS`, `EU`, `NA`, `OC`, `SA`. `AN` is included because the data has detections in Antarctica. Continents follow Natural Earth (so Russia is `EU`, Turkey, Cyprus, Georgia and Kazakhstan are `AS`). Where Natural Earth says "Seven seas (open ocean)", the UN M49 region is used.
 - **Approved by the Lead 2026-11-14:** Kosovo has no ISO 3166-1 code, so the user-assigned `XKX` is used. `UMI` (United States Minor Outlying Islands) is `OC`. The continent policy is approved as written: continents follow Natural Earth (Russia `EU`; Turkey, Cyprus, Georgia, Armenia, Azerbaijan and Kazakhstan `AS`), "Seven seas" territories use the UN M49 region (ATF, MUS, SHN and SYC `AF`; HMD and UMI `OC`; MDV `AS`), and Antarctica `AN` is included because it has data.
 - Territories keep their own code (Greenland `GRL`, Hong Kong `HKG`, Norfolk Island `NFK`); they are not merged into their sovereign state. Codes in common use are used for disputed territories (Palestine `PSE`, Taiwan `TWN`); this is not a political statement.
+
+### Fire-region mask (T-004) **[VERIFIED 2026-11-14]**
+
+The pooling parent in calibration is the GFED basis region (14 regions: BONA, TENA, CEAM, NHSA, SHSA, EURO, MIDE, NHAF, SHAF, BOAS, CEAS, SEAS, EQAS, AUST). The lookup is `pipeline/fire_regions.py`; every analysis cell gets a `fire_region`.
+
+- **Source:** the basis-regions grid (`ancill/basis_regions`, 720 x 1440 cells of 0.25 degrees, classes 0 = ocean and 1 to 14) inside `GFED4.1s_2001.hdf5` (30,765,559 bytes, SHA-256 `1b684bf0b348e92a5d63ea660564f01439f69c4eb88eacd46280237d51ce5815`), downloaded on 2026-11-14 over plain HTTP from http://www.geo.vu.nl/~gwerf/GFED/GFED4/ (no login). The file and the derived grids stay local (`data/interim/fire_regions/`, not committed). Cite: van der Werf et al. (2017), Earth System Science Data 9, 697-720, https://essd.copernicus.org/articles/9/697/2017/. GFED data are free to use with citation; the licence terms were not independently verified beyond the project pages **[ASSUMPTION]**.
+- **Cell rule (0.5 degree cells; works for any multiple of 0.25 degrees):** the most common GFED region among the cell's land 0.25 degree sub-cells (`GFED`). A tie takes the lowest region number; only 2 of the 259,200 cells are decided by a tie.
+- **Fallback rules (approved by the Lead 2026-11-14):** a cell with no land sub-cell takes the region of the nearest land cell within 1.0 degree (`NEAREST_LAND`); otherwise it is `UNASSIGNED` and is pooled directly to the global ratio.
+- **Cells:** 66,768 `GFED`, 14,305 `NEAREST_LAND`, 178,127 `UNASSIGNED` (mostly open ocean), 259,200 in total.
+- **Detections** (all 582,050,574 normalized rows): 581,209,529 (99.856%) fall in a `GFED` cell, 300,184 (0.052%) in a `NEAREST_LAND` cell and 540,861 (0.093%) in an `UNASSIGNED` cell. The unassigned ones are on islands that the 0.25 degree grid does not mark as land: the United States (348,504; latitudes 18.9 to 51.9, which spans Hawaii and the Aleutians), Ecuador (68,078, Galapagos), rows without a country (44,699, the 2026 API data), Reunion (28,227), Antarctica (13,980), Fiji, Mauritius, Cape Verde, Portugal (Azores and Madeira), Tonga and others; 41 country names in all.
+
+| Region | Name | Cells (GFED land) | Cells (nearest land) | Detections (GFED land) | Detections (nearest land) |
+|---|---|---|---|---|---|
+| BONA | Boreal North America | 8,962 | 2,187 | 14,790,548 | 152 |
+| TENA | Temperate North America | 3,428 | 314 | 14,076,642 | 545 |
+| CEAM | Central America | 1,270 | 862 | 13,730,358 | 15,833 |
+| NHSA | Northern Hemisphere South America | 1,064 | 197 | 12,234,675 | 632 |
+| SHSA | Southern Hemisphere South America | 5,474 | 754 | 63,428,485 | 1,323 |
+| EURO | Europe | 5,839 | 1,929 | 5,133,612 | 82,705 |
+| MIDE | Middle East | 4,752 | 648 | 17,394,576 | 119,503 |
+| NHAF | Northern Hemisphere Africa | 5,014 | 366 | 119,803,461 | 5,017 |
+| SHAF | Southern Hemisphere Africa | 3,515 | 597 | 172,334,780 | 10,193 |
+| BOAS | Boreal Asia | 11,727 | 2,182 | 31,254,394 | 2,405 |
+| CEAS | Central Asia | 8,259 | 876 | 28,490,644 | 21,718 |
+| SEAS | Southeast Asia | 2,652 | 700 | 44,208,960 | 4,802 |
+| EQAS | Equatorial Asia | 1,612 | 1,851 | 9,770,484 | 28,735 |
+| AUST | Australia and New Zealand | 3,200 | 842 | 34,557,910 | 6,621 |
+
+- **Approved by the Lead 2026-11-14:** (1) GFED4s basis regions as the source (public, no login, the same 14 regions as GFED5; the GFED5 grids are offered over SFTP with login details published by GFED, which were not used); (2) the fallback rules above, including the code `UNASSIGNED`, which pools to the global ratio (0.09% of detections); (3) `h5py` as a **one-off build tool only**: it reads the GFED HDF5 file once and writes a plain NumPy array. It is not a runtime dependency of the pipeline, the API or the app, so the stack does not change.
 
 ## 7. Update strategy
 
