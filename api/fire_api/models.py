@@ -1,4 +1,4 @@
-"""Pydantic models mirroring docs/DATA_CONTRACT.md (contract_version 0.1.0).
+"""Pydantic models mirroring docs/DATA_CONTRACT.md (contract_version 0.1.1).
 
 Unknown enum values, missing fields and wrong types fail validation. Nothing is coerced:
 `None` stays `None` and a real zero stays 0.
@@ -29,6 +29,7 @@ class ReasonCode(StrEnum):
     SINGLE_WITNESS = "SINGLE_WITNESS"
     POOLED_CALIBRATION = "POOLED_CALIBRATION"
     DIURNAL_CAVEAT = "DIURNAL_CAVEAT"
+    NOT_HARMONIZED = "NOT_HARMONIZED"
 
 
 class Witness(StrEnum):

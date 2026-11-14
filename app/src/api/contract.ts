@@ -1,7 +1,7 @@
-// TypeScript mirror of docs/DATA_CONTRACT.md (contract_version 0.1.0).
+// TypeScript mirror of docs/DATA_CONTRACT.md (contract_version 0.1.1).
 // Unknown enum values and missing fields throw ContractError; nothing is coerced.
 
-export const CONTRACT_VERSION = '0.1.0'
+export const CONTRACT_VERSION = '0.1.1'
 
 export const VERDICTS = [
   'ABOVE_NORMAL',
@@ -23,6 +23,7 @@ export const REASON_CODES = [
   'SINGLE_WITNESS',
   'POOLED_CALIBRATION',
   'DIURNAL_CAVEAT',
+  'NOT_HARMONIZED',
 ] as const
 export type ReasonCode = (typeof REASON_CODES)[number]
 
