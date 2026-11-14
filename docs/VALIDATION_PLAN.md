@@ -1,6 +1,6 @@
 # Validation Plan: the Witness Stand
 
-> **No validation test has been run yet.** Every status below is `NOT_RUN`. Thresholds are **PROPOSED** and must be **locked by the Project Lead at Gate G1, before any results exist** (T-051). After that, any threshold change must be logged in `DECISION_LOG.md` with a reason, and the original threshold kept visible.
+> **No validation test has been run yet.** Every status below is `NOT_RUN`. Thresholds were **locked by the Project Lead at Gate G1 on 2026-11-14, before any results existed** (T-051, D-028). After that, any threshold change must be logged in `DECISION_LOG.md` with a reason, and the original threshold kept visible.
 
 ## 1. Principles
 
@@ -24,7 +24,7 @@
 
 These are well-documented extreme seasons. **Their detected anomaly magnitudes in our record are unknown until computed.** The Lead defines the exact bounding boxes and months by H6 (T-050).
 
-### 2a. Case windows and boxes (T-050) **[DRAFT, awaiting the Lead]**
+### 2a. Case windows and boxes (T-050) **[APPROVED by the Lead 2026-11-14]**
 Fixed before any result. Boxes are approximate rectangles (W, S, E, N in degrees) evaluated through `harmonize_area()` on the cells they contain; "peak window" is what test A1 compares.
 
 | ID | Box (W, S, E, N) or entity | Analysis window | Peak window |

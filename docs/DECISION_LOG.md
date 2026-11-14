@@ -13,7 +13,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-007 | 2026-11-14 | NOAA-21 excluded from the MVP | PROPOSED |
 | D-008 | 2026-11-14 | Technology stack | **APPROVED** (2026-11-14, as recommended) |
 | D-009 | 2026-11-14 | Regular lat/lon grid: analysis 0.5°, fine 0.05° (locked at G1 on the Aqua vs S-NPP 2012–2016 test) | APPROVED (2026-11-14) |
-| D-010 | 2026-11-14 | Baseline 2003–2022 + Aqua-only sensitivity test | PROPOSED |
+| D-010 | 2026-11-14 | Baseline 2003–2022 + Aqua-only sensitivity test | **APPROVED** (2026-11-14, D-028) |
 | D-011 | 2026-11-14 | Private GitHub repo; collaborators added by the Lead only | APPROVED |
 | D-012 | 2026-11-14 | Git workflow: feature branches, PRs, Lead-only merges | SUPERSEDED by D-017 |
 | D-013 | 2026-11-14 | Demo is local-first plus a recorded video; deployment optional | PROPOSED |
@@ -27,7 +27,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-022 | 2026-11-14 | Contract additions from the workstream prompts (cell_id, cell bounds, entity IDs, PRODUCTS_DIR, path rule); envelope and error format not adopted → contract 0.1.1 | **APPROVED** (2026-11-14) |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
 | D-021 | 2026-11-14 | Rewrite the 4 bootstrap commits on `main` to remove AI trailers | APPROVED and DONE (force-pushed 2026-11-14) |
-| D-028 | 2026-11-14 | G1 lock (T-051): baseline, probabilities, verdict and minimum-data thresholds, reason-code rules; validation thresholds locked as written | **DRAFT** (awaiting the Lead) |
+| D-028 | 2026-11-14 | G1 lock (T-051): baseline, probabilities, verdict and minimum-data thresholds, reason-code rules; validation thresholds locked as written | **APPROVED** (2026-11-14) |
 | D-027 | 2026-11-14 | Contract products in `data/products/` are committed through Git LFS; raw and interim data stay out of Git | **APPROVED** (2026-11-14) |
 | D-026 | 2026-11-14 | Reason code `NOT_HARMONIZED` and raw-only products (contract 0.1.1) | **APPROVED** (2026-11-14) |
 | D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
@@ -94,7 +94,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 
 ### D-010: Baseline
 - **Decision (proposed):** 2003–2022, same calendar month, harmonized values. Sensitivity test S1 uses an Aqua-measured baseline (2003–2021).
-- **Status:** PROPOSED.
+- **Status:** **APPROVED** 2026-11-14, as specified in D-028 (G1 lock).
 
 ### D-011: Repository
 - **Decision:** private GitHub repo `global-fire-harmonization` under the Lead's account. No collaborators are added by automation.
@@ -221,7 +221,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Cost:** every committed version stays in LFS history and counts against the account's LFS storage and bandwidth quota, so products are committed only when they change.
 - **Status:** **APPROVED** by the Lead, 2026-11-14 (replaces the earlier "never commit products" rule).
 
-### D-028: G1 lock (T-051): baseline, verdicts, data thresholds and validation thresholds **[DRAFT, awaiting the Lead]**
+### D-028: G1 lock (T-051): baseline, verdicts, data thresholds and validation thresholds **[APPROVED 2026-11-14]**
 Fixed **before** any baseline, verdict or validation result exists (pre-registration). After approval, a change needs a new entry with its reason, and the original stays visible.
 
 **1. Baseline (closes D-010).**
@@ -257,4 +257,4 @@ The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the 
 
 **6. Validation thresholds.** Locked exactly as written in `docs/VALIDATION_PLAN.md` §3 (A1, A2, B1, B2, B3, C1, D1, D2, E1, CTRL, S1). Cases and windows: T-050 in `docs/VALIDATION_PLAN.md` §2.
 
-- **Status:** DRAFT, awaiting the Lead's approval.
+- **Status:** **APPROVED** by the Lead, 2026-11-14 (G1 lock). D-010 is closed by this entry.
