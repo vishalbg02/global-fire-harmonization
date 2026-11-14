@@ -79,6 +79,27 @@ def test_the_rule_flags_year_round_sources_only(tmp_path):
     assert b_months[0] == 2 and b_months[1] >= 0.01 * nm.nights_in((2012, 2023))      # B is persistent but seasonal: not flagged
 
 
+def test_a_seasonal_fire_field_is_never_flagged(tmp_path):
+    rows = []
+    for i, d in enumerate(days(2012, 2023)):
+        if 7 <= d.month <= 10:                                                     # G: lit every night and day, Jul to Oct only
+            rows += [rec("N", 16.01, 26.01, d.isoformat()), rec("N", 16.01, 26.01, d.isoformat(), dn="D")]
+        if i % 10 == 0:                                                            # H: year-round at night, but busy by day too
+            rows.append(rec("N", 17.01, 27.01, d.isoformat()))
+        if i % 2 == 0:
+            rows.append(rec("N", 17.01, 27.01, d.isoformat(), dn="D"))
+        if i % 10 == 0:                                                            # I: a flare: lit year-round at night, rarely by day
+            rows.append(rec("N", 18.01, 28.01, d.isoformat()))
+            if i % 50 == 0:
+                rows.append(rec("N", 18.01, 28.01, d.isoformat(), dn="D"))
+    write_det(tmp_path / "det", "VIIRS_SNPP", pd.DataFrame(rows))
+    con = duckdb.connect()
+    nm.build(con, tmp_path / "det", empty_mask(tmp_path / "m.parquet"), (2012, 2023))
+    assert set(con.execute("SELECT r, c FROM night_cells").fetchall()) == {(int((18.01 + 90) / 0.05), int((28.01 + 180) / 0.05))}
+    nm.build(con, tmp_path / "det", empty_mask(tmp_path / "m2.parquet"), (2012, 2023), max_day_night=None)
+    assert int((17.01 + 90) / 0.05) in {r for r, _ in con.execute("SELECT r, c FROM night_cells").fetchall()}   # caught only by the day test
+
+
 def test_evaluate_counts_what_the_new_cells_remove(tmp_path):
     rows = [rec("N", 10.01, 20.01, f"2024-0{m}-0{k}", typ=t) for m in range(1, 4) for k in range(1, 4) for t in (0, 2)]
     rows += [rec("N", 30.01, 30.01, "2024-05-05", typ=0)]

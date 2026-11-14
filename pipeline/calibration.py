@@ -12,7 +12,8 @@ fire region. The log-ratio of a stratum is shrunk toward its fire region, and th
 ratio, with precision weights: weight on the local estimate = tau^2 / (tau^2 + v), where v is the
 bootstrap variance of the local log-ratio, never below its counting-noise floor 1/sum(Aqua) + 1/sum(witness),
 and tau^2 the between-stratum variance (DerSimonian-Laird estimate from the data). Cells in the UNASSIGNED fire region pool directly to the global ratio.
-A stratum keeps a local weight only with at least 3 overlap months.
+A stratum keeps a local weight only with at least 3 overlap months, and only if no single month holds more than
+half of its overlap cell-days (Aqua or witness): a one-off event such as an eruption is not a calibration.
 `pooling_level` is the level with the largest weight in the final estimate.
 
 Uncertainty: the months of a season are resampled with replacement (whole months), the whole procedure
@@ -37,6 +38,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BLOCK_DEG = 2.5
 BOOTSTRAP = 1000  # Lead, 2026-11-14: ratio_sd feeds every interval downstream
 MIN_LOCAL_MONTHS = 3  # Lead, 2026-11-14: a local ratio needs at least 3 overlap months
+MAX_MONTH_SHARE = 0.5  # Lead, 2026-11-14: no local ratio when one month holds more than half of the overlap cell-days
 SEED = 20261114
 SEASONS = ["DJF", "MAM", "JJA", "SON"]
 SEASON_OF = {12: "DJF", 1: "DJF", 2: "DJF", 3: "MAM", 4: "MAM", 5: "MAM", 6: "JJA", 7: "JJA", 8: "JJA", 9: "SON", 10: "SON", 11: "SON"}
@@ -140,6 +142,14 @@ def poisson_floor(a: np.ndarray, w: np.ndarray) -> np.ndarray:
         return np.where((a > 0) & (w > 0), 1.0 / np.where(a > 0, a, 1) + 1.0 / np.where(w > 0, w, 1), np.inf)
 
 
+def burst(x_m: np.ndarray, overlap: np.ndarray, max_share: float = MAX_MONTH_SHARE) -> np.ndarray:
+    """Strata whose single largest overlap month holds more than max_share of their overlap cell-days."""
+    x = np.where(overlap, x_m, 0.0)
+    tot = x.sum(axis=0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(tot > 0, x.max(axis=0) / np.where(tot > 0, tot, 1) > max_share, False)
+
+
 def fit_season(a_m: np.ndarray, w_m: np.ndarray, region_of: np.ndarray, has_region: np.ndarray, n_regions: int,
                rng: np.random.Generator, boot: int = BOOTSTRAP) -> dict:
     """Fit one witness x daynight x season. a_m, w_m: (months, strata) cell_days of Aqua and of the witness."""
@@ -155,8 +165,9 @@ def fit_season(a_m: np.ndarray, w_m: np.ndarray, region_of: np.ndarray, has_regi
     th_s, th_r, th_g = log_ratio(ta, tw), log_ratio(ra, rw), log_ratio(ga, gw)
     v_s = np.maximum(boot_var(th_s), poisson_floor(ta[0], tw[0]))
     v_r = np.maximum(boot_var(th_r), poisson_floor(ra[0], rw[0]))
-    used = ((a_m > 0) & (w_m > 0)).sum(axis=0)
-    eligible = used >= MIN_LOCAL_MONTHS
+    overlap = (a_m > 0) & (w_m > 0)
+    used = overlap.sum(axis=0)
+    eligible = (used >= MIN_LOCAL_MONTHS) & ~burst(a_m, overlap) & ~burst(w_m, overlap)
     final, weights, tau2_l, tau2_r = pool(th_s[0], th_r[0], th_g[0], v_s, v_r, region_of, has_region, eligible)
     finals = np.empty((boot, n_s))
     for b in range(boot):  # the whole procedure per replicate, with tau^2 re-estimated
@@ -164,7 +175,7 @@ def fit_season(a_m: np.ndarray, w_m: np.ndarray, region_of: np.ndarray, has_regi
     with np.errstate(over="ignore", invalid="ignore"):
         sd = np.nanstd(np.exp(finals), axis=0, ddof=1)
     return {"theta": final, "ratio": np.exp(final), "sd": sd, "weights": weights, "tau2_local": tau2_l, "tau2_region": tau2_r,
-            "n_overlap": used, "global_ratio": float(np.exp(th_g[0])) if np.isfinite(th_g[0]) else float("nan"),
+            "n_overlap": used, "burst": (used >= MIN_LOCAL_MONTHS) & ~eligible, "global_ratio": float(np.exp(th_g[0])) if np.isfinite(th_g[0]) else float("nan"),
             "region_ratio": np.exp(th_r[0]), "local_ratio_observed": np.exp(th_s[0])}
 
 
@@ -257,6 +268,8 @@ def calibrate(paths: Paths | None = None, boot: int = BOOTSTRAP, seed: int = SEE
                     out["n_overlap_months"].append(int(res["n_overlap"][i]))
                     out["fit_period"].append(fit_period)
                     out["pooling_level"].append(LEVELS[lvl[i]])
+                report.setdefault("burst_rows", {}).setdefault(f"{witness}|{dn}", 0)
+                report["burst_rows"][f"{witness}|{dn}"] += int(res["burst"].sum())
                 report["global"].append({"witness": witness, "daynight": dn, "season": season, "ratio": res["global_ratio"],
                                          "months": int(sel.sum())})
                 report["tau2"].append({"witness": witness, "daynight": dn, "season": season, "tau2_local": res["tau2_local"],

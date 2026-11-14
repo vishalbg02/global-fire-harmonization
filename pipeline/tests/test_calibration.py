@@ -68,7 +68,8 @@ def make_products(tmp: Path, sigma: float = 0.0, lam: float = 20.0, seed: int = 
                 if spike_block is not None and sid_true == spike_block:            # activity in one single month, wild ratio
                     a, wv, a_n, w_n = (4, 1, 0, 0) if (y, m) == (2013, 7) else (0, 0, 0, 0)
                 if burst and sid_true in burst:                                     # large counts in a few listed months only
-                    a, wv, a_n, w_n = (2000, 500, 0, 0) if (y, m) in burst[sid_true] else (0, 0, 0, 0)
+                    k = dict.fromkeys(burst[sid_true], 1) if isinstance(burst[sid_true], list) else burst[sid_true]
+                    a, wv, a_n, w_n = (2000 * k[(y, m)], 500 * k[(y, m)], 0, 0) if (y, m) in k else (0, 0, 0, 0)
                 for dn, n in (("D", a if w == "AQUA_MODIS" else wv), ("N", a_n if w == "AQUA_MODIS" else w_n)):
                     rows.append((cid, y, m, w, dn, n, n, 0.0, da, dim, "SP"))
     df = pd.DataFrame(rows, columns=["cell_id", "year", "month", "witness", "daynight", "detections", "cell_days", "frp_sum_mw",
@@ -257,3 +258,18 @@ def test_local_needs_at_least_three_overlap_months(tmp_path):
     assert d.loc[two, "pooling_level"] in ("REGION", "GLOBAL") and d.loc[two, "ratio"] < 1.5
     assert d.loc[three, "pooling_level"] == "LOCAL" and d.loc[three, "ratio"] > 3.0     # 3 months with large counts: local
     assert (df[df.n_overlap_months < cal.MIN_LOCAL_MONTHS].pooling_level != "LOCAL").all()
+
+
+def test_a_one_month_burst_does_not_get_a_local_weight(tmp_path):
+    bursty = cal.stratum_id("EURO", -40.0 + 2.5 * 2 + 0.26, 20.26)
+    steady = cal.stratum_id("EURO", -40.0 + 2.5 * 6 + 0.26, 20.26)
+    burst = {bursty: {(2013, 7): 4, (2014, 7): 1, (2015, 7): 1, (2016, 7): 1},      # one month holds 4/7 of the cell-days
+             steady: {(2013, 7): 1, (2014, 7): 1, (2015, 7): 1, (2016, 7): 1}}      # four equal months
+    _, df, report, _ = run(tmp_path, sigma=0.35, lam=100.0, burst=burst)
+    d = pick(df)
+    assert d.loc[bursty, "n_overlap_months"] == 4 and d.loc[steady, "n_overlap_months"] == 4
+    assert d.loc[bursty, "pooling_level"] in ("REGION", "GLOBAL") and d.loc[bursty, "ratio"] < 1.5   # an event, not a calibration
+    assert d.loc[steady, "pooling_level"] == "LOCAL" and d.loc[steady, "ratio"] > 3.0
+    assert report["burst_rows"]["SNPP_VIIRS|D"] >= 1
+    m = cal.burst(np.array([[6.0, 1, 0], [2, 1, 0], [2, 1, 5]]), np.array([[True, True, False], [True, True, False], [True, True, True]]))
+    assert m.tolist() == [True, False, True]              # 6/10 > 0.5; 1/3 is not; only overlap months count (5 of 5)

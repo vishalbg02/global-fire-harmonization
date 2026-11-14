@@ -184,3 +184,15 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Decision:** add `terra-draw-maplibre-gl-adapter`, pinned exactly to **1.5.0** (MIT licence; the official companion of `terra-draw`), to the frontend stack. `npm audit` must stay at 0 vulnerabilities.
 - **Effect:** `docs/TECH_STACK.md` §7 gains one row. No other part of the stack changes.
 - **Status:** **APPROVED** by the Lead, 2026-11-14.
+
+### D-025: Persistent night sources join the static mask; no local calibration for one-month bursts
+- **Context:** on PR #36 (T-011) the extreme night calibration ratios were traced to unlabelled gas flares and industrial heat (Permian, Bakken, Eagle Ford and others) and to volcanoes (Yasur, Fagradalsfjall). Evidence and numbers: `docs/DATA_SOURCES.md`, section "Extreme ratios: causes".
+- **Decision 1: the static mask gains persistent night sources.** A 0.05 degree fine cell is masked if its kept VIIRS night detections (S-NPP or NOAA-20; SP, type 0, confidence n or h, not already in the T-005 mask), over 2012 to 2025:
+  - light it on at least 1% of nights;
+  - in at least 10 of the 12 calendar months;
+  - with at least half of those nights outside its 3 busiest calendar months;
+  - and its kept VIIRS day detections fall on at most 0.5 times as many days as its nights. This fourth condition was added after the Lead's review: a flare burns around the clock, a vegetation fire mostly in the afternoon. It keeps the Chiquitano dry forest (Bolivia) out of the mask.
+  The cells are added to the approved T-005 mask, which applies to every witness, both day and night, and all years. Built by `pipeline/night_mask.py`; `pipeline/gridding.py` uses the combined mask by default, and `--mask` remains for comparisons.
+- **Decision 2: one-off events get no local weight.** In calibration, a stratum x witness x day/night x season whose single largest overlap month holds more than 50% of its overlap cell-days (Aqua or witness) takes its region's estimate. This is a general rule instead of a volcano list (`MAX_MONTH_SHARE` in `pipeline/calibration.py`).
+- **Not changed:** the low night ratios in savanna and agricultural fire regions are accepted as a hypothesis (real regional differences: VIIRS sees more small night fires than MODIS). T-012 and validation test E1 by region are to check it.
+- **Status:** **APPROVED in principle** by the Lead on PR #36, 2026-11-14. Final approval waits on the Lead's re-run of the reworked PR.
