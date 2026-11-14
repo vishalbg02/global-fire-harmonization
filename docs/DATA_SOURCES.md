@@ -225,14 +225,16 @@ Definitions: *Active cells* are analysis cells with any activity by either satel
 
 ### Calibration (T-011) **[VERIFIED 2026-11-14 unless labelled]**
 
-`python pipeline/calibration.py` writes `data/products/calibration.parquet` (local, not committed; 96,384 rows = 4,016 strata x 2 witnesses x 3 day/night values x 4 seasons; contract check passes) and regenerates `cells.parquet` with the final `stratum_id`.
+`python pipeline/calibration.py` writes `data/products/calibration.parquet` (local, not committed; 96,384 rows = 4,016 strata x 2 witnesses x 3 day/night values x 4 seasons; contract check passes) and regenerates `cells.parquet` with the final `stratum_id`. The full run with 1,000 bootstrap replicates takes 104 seconds.
 
-- **Ratio:** sum of Aqua `cell_days` / sum of witness `cell_days` per stratum x day/night x season (DJF, MAM, JJA, SON). It is the multiplier that converts the witness to the Aqua-equivalent scale. `D` and `N` have their own ratios; `ALL` is fitted on the `ALL` cell-days and is informational only (the combination converts `D` and `N`).
-- **Fit periods:** S-NPP 2012-01 to 2016-12, NOAA-20 2018-04 to 2021-12. The held-out years (2017 to 2021 for S-NPP) are never read. Only months in which both Aqua and the witness had every day available enter the fit: S-NPP uses 58 of 60 months (2012-01 and 2012-03 are partial), NOAA-20 all 45.
-- **Strata (final rule, replaces the provisional T-006 rule):** a 2.5 degree block inside a GFED fire region, `{region}_b{row}_{col}` (row from the south, column from -180, in 2.5 degree steps). 4,016 strata.
-- **Partial pooling:** the log-ratio of a stratum is shrunk toward its fire region, and the region toward the global ratio. The weight on the lower level is tau^2 / (tau^2 + v): v is the variance of its log-ratio and tau^2 the spread between units, estimated from the data (DerSimonian-Laird). v is the monthly block-bootstrap variance, **never below the counting-noise floor 1/sum(Aqua) + 1/sum(witness)**. `UNASSIGNED` cells pool directly to the global ratio. `pooling_level` is the level with the largest weight in the final estimate (ties go to the more local level).
-- **Uncertainty:** 200 bootstrap replicates resample whole fit months within each season (fixed seed); the whole procedure, including tau^2, is repeated per replicate; `ratio_sd` is the standard deviation of the final ratio. `n_overlap_months` counts the fit months in which the stratum had both Aqua and witness cell-days.
-- **A problem found and fixed while building it:** for a stratum with activity in only one or two months, the bootstrap variance is about 0 (the replicates repeat one value). That let such strata keep their own, very noisy ratio (up to 4.9), and it also broke the tau^2 estimate for their whole group (tau^2 jumped between 0 and 1.5). The counting-noise floor fixes both; a test now covers it.
+- **Ratio:** sum of Aqua `cell_days` / sum of witness `cell_days` per stratum x day/night x season. It is the multiplier that converts the witness to the Aqua-equivalent scale. `D` and `N` have their own ratios; `ALL` is fitted on the `ALL` cell-days and is informational only (the combination converts `D` and `N`).
+- **Fit periods:** S-NPP 2012-01 to 2016-12, NOAA-20 2018-04 to 2021-12. The held-out years (2017 to 2021 for S-NPP) are never read. S-NPP uses 58 of 60 months (2012-01 and 2012-03 are partial), NOAA-20 all 45.
+- **Strata:** a 2.5 degree block inside a GFED fire region, `{region}_b{row}_{col}` (row from the south, column from -180, in 2.5 degree steps). 4,016 strata. This replaces the provisional T-006 rule.
+- **Partial pooling:** the log-ratio of a stratum is shrunk toward its fire region, and the region toward the global ratio. The weight on the lower level is tau^2 / (tau^2 + v): v is the monthly block-bootstrap variance of its log-ratio, never below the counting-noise floor 1/sum(Aqua) + 1/sum(witness), and tau^2 the spread between units (DerSimonian-Laird, from the data). **A stratum keeps a local weight only with at least 3 overlap months**; otherwise it takes its region's estimate (or the global one for `UNASSIGNED`). `pooling_level` is the level with the largest weight in the final estimate; a stratum that takes its region's estimate is labelled `GLOBAL` when that region itself leans on the global ratio.
+- **Uncertainty:** 1,000 bootstrap replicates resample whole fit months within each season (fixed seed); the whole procedure, including tau^2, is repeated per replicate; `ratio_sd` is the standard deviation of the final ratio. `n_overlap_months` counts the fit months in which the stratum had both Aqua and witness cell-days.
+- **A problem found and fixed while building it:** for a stratum active in only one or two months, the bootstrap variance is about 0, which let such strata keep a very noisy ratio (up to 4.9) and broke tau^2 for their whole group. The counting-noise floor fixes it; a test covers it.
+
+**Approved by the Lead 2026-11-14:** the 2.5 degree block inside a fire region as the local stratum; precision-weight shrinkage with DerSimonian-Laird tau^2 and the counting-noise floor; `pooling_level` by the largest weight (ties to the more local level); complete months only; seasons DJF / MAM / JJA / SON; the final `stratum_id` rule and the regenerated `cells.parquet`. **Changes asked by the Lead (done):** at least 3 overlap months for a local weight; 1,000 bootstrap replicates; the sanity tables below.
 
 **Global ratios** (Aqua-equivalent multiplier; the witness sees about 1 / ratio times the Aqua cell-days):
 
@@ -245,29 +247,51 @@ Definitions: *Active cells* are analysis cells with any activity by either satel
 | NOAA-20 | N | 0.045 | 0.040 | 0.075 | 0.073 |
 | NOAA-20 | ALL (informational) | 0.231 | 0.215 | 0.284 | 0.234 |
 
-S-NPP and NOAA-20 give very similar ratios. By day a VIIRS witness records about 3 to 4 times the Aqua cell-days; by night about 13 to 25 times, which matches VIIRS's much better night sensitivity.
+By day a VIIRS witness records about 3 to 4 times the Aqua cell-days; by night about 13 to 25 times. S-NPP and NOAA-20 agree closely.
 
-**Between-unit variance tau^2** (larger means strata, or regions, differ more):
+**Between-unit variance tau^2:**
 
 | Witness | Day/night | tau^2 local (DJF / MAM / JJA / SON) | tau^2 region (DJF / MAM / JJA / SON) |
 |---|---|---|---|
-| S-NPP | D | 0.08 / 0.09 / 0.06 / 0.08 | 0.05 / 0.08 / 0.17 / 0.12 |
-| S-NPP | N | 0.39 / 0.34 / 0.32 / 0.26 | 0.44 / 0.17 / 0.16 / 0.45 |
-| NOAA-20 | D | 0.08 / 0.10 / 0.09 / 0.11 | 0.06 / 0.08 / 0.23 / 0.14 |
-| NOAA-20 | N | 0.37 / 0.36 / 0.40 / 0.32 | 0.54 / 0.18 / 0.33 / 0.55 |
+| S-NPP | D | 0.08 / 0.09 / 0.06 / 0.08 | 0.05 / 0.08 / 0.16 / 0.12 |
+| S-NPP | N | 0.38 / 0.30 / 0.29 / 0.23 | 0.44 / 0.16 / 0.16 / 0.48 |
+| NOAA-20 | D | 0.08 / 0.10 / 0.09 / 0.10 | 0.06 / 0.08 / 0.23 / 0.15 |
+| NOAA-20 | N | 0.36 / 0.30 / 0.34 / 0.29 | 0.51 / 0.18 / 0.30 / 0.58 |
 
 **Pooling levels** (rows per witness and day/night; each row is a stratum x season):
 
 | Witness | Day/night | LOCAL | REGION | GLOBAL |
 |---|---|---|---|---|
-| S-NPP | D | 5,907 (37%) | 6,737 (42%) | 3,420 (21%) |
-| S-NPP | N | 3,759 (23%) | 8,886 (55%) | 3,419 (21%) |
-| NOAA-20 | D | 5,507 (34%) | 7,644 (48%) | 2,913 (18%) |
-| NOAA-20 | N | 3,416 (21%) | 8,862 (55%) | 3,786 (24%) |
+| S-NPP | D | 5,833 (36.3%) | 6,809 (42.4%) | 3,422 (21.3%) |
+| S-NPP | N | 3,191 (19.9%) | 9,449 (58.8%) | 3,424 (21.3%) |
+| NOAA-20 | D | 5,413 (33.7%) | 7,738 (48.2%) | 2,913 (18.1%) |
+| NOAA-20 | N | 2,700 (16.8%) | 9,553 (59.5%) | 3,811 (23.7%) |
 
-Night strata lean on pooling, as the Lead expected from the G1 test (thin Aqua night activity). 1,206 of the 18,589 `LOCAL` day and night rows rest on 2 or fewer overlap months; they keep a local ratio because their counts in those months are large enough for the counting-noise floor.
+**Sanity check: the `LOCAL` ratios** (every `LOCAL` row has at least 3 overlap months):
 
-**Proposals (need Lead approval):** the 2.5 degree local block inside a fire region; the precision-weight shrinkage with DerSimonian-Laird tau^2 and the counting-noise floor; `pooling_level` by the largest weight; complete months only; 200 bootstrap replicates; seasons DJF / MAM / JJA / SON. **Open question:** whether `LOCAL` should also require a minimum number of overlap months (for example 3), which would move the 1,206 rows above to their region.
+| Witness | Day/night | LOCAL rows | 5th percentile | Median | 95th percentile | Global ratio range (by season) |
+|---|---|---|---|---|---|---|
+| S-NPP | D | 5,833 | 0.134 | 0.285 | 0.527 | 0.273 to 0.350 |
+| S-NPP | N | 3,191 | 0.017 | 0.062 | 0.186 | 0.041 to 0.074 |
+| NOAA-20 | D | 5,413 | 0.124 | 0.273 | 0.531 | 0.262 to 0.331 |
+| NOAA-20 | N | 2,700 | 0.015 | 0.058 | 0.196 | 0.040 to 0.075 |
+
+The 10 most extreme `LOCAL` ratios (largest distance from the global ratio of the same witness, day/night and season, in log terms):
+
+| Stratum | Fire region | Witness | Day/night | Season | Ratio | Global ratio | Ratio / global | `ratio_sd` | Overlap months |
+|---|---|---|---|---|---|---|---|---|---|
+| `TENA_b047_032` | TENA | S-NPP | N | DJF | 0.003 | 0.050 | 0.06 | 0.001 | 3 |
+| `TENA_b048_030` | TENA | NOAA-20 | N | DJF | 0.003 | 0.045 | 0.07 | 0.001 | 5 |
+| `TENA_b048_030` | TENA | NOAA-20 | N | SON | 0.006 | 0.073 | 0.08 | 0.001 | 7 |
+| `EURO_b061_063` | EURO | NOAA-20 | N | MAM | 0.426 | 0.040 | 10.71 | 0.087 | 3 |
+| `SEAS_b044_110` | SEAS | NOAA-20 | N | DJF | 0.005 | 0.045 | 0.10 | 0.001 | 7 |
+| `SEAS_b044_105` | SEAS | S-NPP | N | DJF | 0.005 | 0.050 | 0.10 | 0.003 | 3 |
+| `SEAS_b047_102` | SEAS | NOAA-20 | N | SON | 0.007 | 0.073 | 0.10 | 0.001 | 4 |
+| `CEAS_b051_116` | CEAS | S-NPP | N | JJA | 0.007 | 0.070 | 0.10 | 0.001 | 9 |
+| `SEAS_b043_103` | SEAS | S-NPP | N | DJF | 0.005 | 0.050 | 0.10 | 0.001 | 6 |
+| `EQAS_b028_139` | EQAS | S-NPP | N | MAM | 0.383 | 0.041 | 9.45 | 0.153 | 5 |
+
+All 10 are night (`N`) rows. Eight have a ratio of about one tenth of the global night ratio (the VIIRS witness sees many more night cell-days than usual relative to Aqua); for example `TENA_b047_032` covers 27.5 to 30.0 N and 100.0 to 97.5 W. Two have a ratio about ten times the global one (`EURO_b061_063`, 62.5 to 65.0 N and 22.5 to 20.0 W, in Iceland; `EQAS_b028_139`, 20.0 to 17.5 S and 167.5 to 170.0 E). Their cause is not investigated here **[OPEN]**. **Hypothesis:** persistent night-time heat sources that the static mask does not remove (for example gas flaring) for the low ones, and few, unusual night detections for the high ones. T-013 should treat night conversions in these strata with care; their `ratio_sd` is small, so the spread between strata, not the bootstrap, is what flags them.
 
 **Not done here:** the holdout evaluation and the Aqua drift diagnostic (T-012), the combination (T-013) and any validation test.
 

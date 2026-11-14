@@ -22,7 +22,8 @@ BLOCKS_PER_REGION = 8
 
 
 def make_products(tmp: Path, sigma: float = 0.0, lam: float = 20.0, seed: int = 1, sparse_block: str | None = None,
-                  partial: tuple = (), holdout_outlier: bool = False, unassigned_blocks: int = 0, spike_block: str | None = None):
+                  partial: tuple = (), holdout_outlier: bool = False, unassigned_blocks: int = 0, spike_block: str | None = None,
+                  burst: dict | None = None):
     """Write cells.parquet and cell_month_witness.parquet. Aqua ~ Poisson(lam); witness ~ Poisson(lam / ratio)."""
     rng = np.random.default_rng(seed)
     cells, truth = [], {}
@@ -66,6 +67,8 @@ def make_products(tmp: Path, sigma: float = 0.0, lam: float = 20.0, seed: int = 
                 a_n, w_n = rng.poisson(lam_c / 4), rng.poisson(lam_c / 4 / ratio)   # night: a quarter of the day activity
                 if spike_block is not None and sid_true == spike_block:            # activity in one single month, wild ratio
                     a, wv, a_n, w_n = (4, 1, 0, 0) if (y, m) == (2013, 7) else (0, 0, 0, 0)
+                if burst and sid_true in burst:                                     # large counts in a few listed months only
+                    a, wv, a_n, w_n = (2000, 500, 0, 0) if (y, m) in burst[sid_true] else (0, 0, 0, 0)
                 for dn, n in (("D", a if w == "AQUA_MODIS" else wv), ("N", a_n if w == "AQUA_MODIS" else w_n)):
                     rows.append((cid, y, m, w, dn, n, n, 0.0, da, dim, "SP"))
     df = pd.DataFrame(rows, columns=["cell_id", "year", "month", "witness", "daynight", "detections", "cell_days", "frp_sum_mw",
@@ -241,3 +244,16 @@ def test_a_stratum_with_one_active_month_does_not_keep_its_own_ratio(tmp_path):
     # for the whole group; with the floor the data-rich strata of the same region still keep their own ratio
     rich = d[d.index.str.startswith("SHAF_") & (d.index != spike)]
     assert (rich.pooling_level == "LOCAL").mean() > 0.8
+
+
+def test_local_needs_at_least_three_overlap_months(tmp_path):
+    two = cal.stratum_id("EURO", -40.0 + 2.5 * 2 + 0.26, 20.26)
+    three = cal.stratum_id("EURO", -40.0 + 2.5 * 6 + 0.26, 20.26)
+    burst = {two: [(2013, 7), (2014, 7)], three: [(2013, 7), (2014, 7), (2015, 7)]}   # large counts, ratio 4, in JJA only
+    _, df, _, _ = run(tmp_path, sigma=0.35, lam=100.0, burst=burst)
+    d = pick(df)
+    assert d.loc[two, "n_overlap_months"] == 2 and d.loc[three, "n_overlap_months"] == 3
+    # 2 months: not a calibration. It takes its region's estimate (which itself may lean on the global ratio)
+    assert d.loc[two, "pooling_level"] in ("REGION", "GLOBAL") and d.loc[two, "ratio"] < 1.5
+    assert d.loc[three, "pooling_level"] == "LOCAL" and d.loc[three, "ratio"] > 3.0     # 3 months with large counts: local
+    assert (df[df.n_overlap_months < cal.MIN_LOCAL_MONTHS].pooling_level != "LOCAL").all()

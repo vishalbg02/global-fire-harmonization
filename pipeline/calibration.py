@@ -12,6 +12,7 @@ fire region. The log-ratio of a stratum is shrunk toward its fire region, and th
 ratio, with precision weights: weight on the local estimate = tau^2 / (tau^2 + v), where v is the
 bootstrap variance of the local log-ratio, never below its counting-noise floor 1/sum(Aqua) + 1/sum(witness),
 and tau^2 the between-stratum variance (DerSimonian-Laird estimate from the data). Cells in the UNASSIGNED fire region pool directly to the global ratio.
+A stratum keeps a local weight only with at least 3 overlap months.
 `pooling_level` is the level with the largest weight in the final estimate.
 
 Uncertainty: the months of a season are resampled with replacement (whole months), the whole procedure
@@ -34,7 +35,8 @@ import pyarrow.parquet as pq
 
 ROOT = Path(__file__).resolve().parents[1]
 BLOCK_DEG = 2.5
-BOOTSTRAP = 200
+BOOTSTRAP = 1000  # Lead, 2026-11-14: ratio_sd feeds every interval downstream
+MIN_LOCAL_MONTHS = 3  # Lead, 2026-11-14: a local ratio needs at least 3 overlap months
 SEED = 20261114
 SEASONS = ["DJF", "MAM", "JJA", "SON"]
 SEASON_OF = {12: "DJF", 1: "DJF", 2: "DJF", 3: "MAM", 4: "MAM", 5: "MAM", 6: "JJA", 7: "JJA", 8: "JJA", 9: "SON", 10: "SON", 11: "SON"}
@@ -92,11 +94,15 @@ def shrink_weight(tau2: float, v: np.ndarray, theta: np.ndarray) -> np.ndarray:
     return np.nan_to_num(lam, nan=0.0)
 
 
-def pool(theta_s, theta_r, theta_g, v_s, v_r, region_of, has_region):
+def pool(theta_s, theta_r, theta_g, v_s, v_r, region_of, has_region, eligible=None):
     """One pooling pass. theta_s (S,), theta_r (R,), theta_g scalar; region_of (S,) region index; has_region (S,) bool.
 
+    eligible (S,) bool: strata allowed a local weight (at least MIN_LOCAL_MONTHS overlap months); the others take
+    their parent's ratio and do not enter the between-stratum variance.
     Returns the final log-ratio per stratum and the weights on (local, region, global).
     """
+    if eligible is not None:
+        theta_s = np.where(eligible, theta_s, np.nan)
     tau2_r = dl_tau2(theta_r, v_r, np.zeros(len(theta_r), dtype=int)) if len(theta_r) > 1 else 0.0
     lam_r = shrink_weight(tau2_r, v_r, theta_r)
     rho = np.where(np.isfinite(theta_r), lam_r * np.nan_to_num(theta_r) + (1 - lam_r) * theta_g, theta_g)  # region after shrinkage
@@ -149,13 +155,14 @@ def fit_season(a_m: np.ndarray, w_m: np.ndarray, region_of: np.ndarray, has_regi
     th_s, th_r, th_g = log_ratio(ta, tw), log_ratio(ra, rw), log_ratio(ga, gw)
     v_s = np.maximum(boot_var(th_s), poisson_floor(ta[0], tw[0]))
     v_r = np.maximum(boot_var(th_r), poisson_floor(ra[0], rw[0]))
-    final, weights, tau2_l, tau2_r = pool(th_s[0], th_r[0], th_g[0], v_s, v_r, region_of, has_region)
+    used = ((a_m > 0) & (w_m > 0)).sum(axis=0)
+    eligible = used >= MIN_LOCAL_MONTHS
+    final, weights, tau2_l, tau2_r = pool(th_s[0], th_r[0], th_g[0], v_s, v_r, region_of, has_region, eligible)
     finals = np.empty((boot, n_s))
     for b in range(boot):  # the whole procedure per replicate, with tau^2 re-estimated
-        finals[b] = pool(th_s[b + 1], th_r[b + 1], th_g[b + 1], v_s, v_r, region_of, has_region)[0]
+        finals[b] = pool(th_s[b + 1], th_r[b + 1], th_g[b + 1], v_s, v_r, region_of, has_region, eligible)[0]
     with np.errstate(over="ignore", invalid="ignore"):
         sd = np.nanstd(np.exp(finals), axis=0, ddof=1)
-    used = ((a_m > 0) & (w_m > 0)).sum(axis=0)
     return {"theta": final, "ratio": np.exp(final), "sd": sd, "weights": weights, "tau2_local": tau2_l, "tau2_region": tau2_r,
             "n_overlap": used, "global_ratio": float(np.exp(th_g[0])) if np.isfinite(th_g[0]) else float("nan"),
             "region_ratio": np.exp(th_r[0]), "local_ratio_observed": np.exp(th_s[0])}
