@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ApiError, fetchEntities, fetchMapCells, fetchMeta } from './api/client.ts'
-import type { Bbox, EntityItem, MapCell } from './api/contract.ts'
+import { ApiError, fetchAnomalies, fetchEntities, fetchMapCells, fetchMeta } from './api/client.ts'
+import type { Anomaly, Bbox, EntityItem, MapCell } from './api/contract.ts'
+import { AnomalyPanel } from './components/anomalies/AnomalyPanel.tsx'
+import { EXPANDED_SIZE, PAGE_SIZE, outlinedCountries, rankAnomalies, topN } from './components/anomalies/rankings.ts'
+import type { RankingTab } from './components/anomalies/rankings.ts'
 import { AreaPicker } from './components/area/AreaPicker.tsx'
 import { resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
@@ -17,7 +20,7 @@ import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
-import { monthRange } from './state/months.ts'
+import { monthKey, monthRange } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
@@ -26,6 +29,8 @@ export default function App() {
   // The selection starts from the link (area, month, source, map mode, value mode), if any.
   const [selection, dispatch] = useReducer(selectionReducer, null, () => selectionFromUrl(window.location.search))
   const [drawing, setDrawing] = useState(false)
+  const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
+  const [anomalyExpanded, setAnomalyExpanded] = useState(false)
 
   // Keep the link in step with the selection, so the address bar can be shared.
   useEffect(() => {
@@ -54,6 +59,40 @@ export default function App() {
       },
       fit: item.bbox,
     })
+  // The global anomaly overview (T-040): the API's anomalies for the selected month, ranked per
+  // verdict and per area type here. The world is a single entity and is left out.
+  const anomalies = useQuery({
+    queryKey: ['anomalies', selection.month?.year, selection.month?.month],
+    queryFn: () => fetchAnomalies(selection.month!.year, selection.month!.month),
+    enabled: selection.month !== null,
+    retry: false,
+  })
+  const rankings = useMemo(() => rankAnomalies(anomalies.data ?? [], anomalyTab), [anomalies.data, anomalyTab])
+  const anomalyShown = anomalyExpanded ? EXPANDED_SIZE : PAGE_SIZE
+  const anomalyOutlines = useMemo(
+    () =>
+      anomalyTab === 'COUNTRY'
+        ? outlinedCountries(topN(rankings.above, anomalyShown), topN(rankings.below, anomalyShown))
+        : { above: [], below: [] },
+    [anomalyTab, rankings, anomalyShown],
+  )
+  const anomalyStatus =
+    selection.month === null ? 'idle' : anomalies.isPending ? 'loading' : anomalies.isError ? 'error' : 'ready'
+  const anomalyList = anomalyTab === 'COUNTRY' ? countries.data : continents.data
+  const chooseAnomaly = (anomaly: Anomaly) => {
+    const found = anomalyList?.find((e) => e.entity_id === anomaly.entity_id)
+    dispatch({
+      type: 'select-entity',
+      entity: {
+        entity_type: anomaly.entity_type === 'CONTINENT' ? 'CONTINENT' : 'COUNTRY',
+        entity_id: anomaly.entity_id,
+        entity_name: anomaly.entity_name,
+      },
+      fit: found?.bbox,
+    })
+    evidenceHeading.current?.focus()
+  }
+
   const chooseCustom = (bbox: Bbox) => {
     setDrawing(false)
     dispatch({ type: 'select-entity', entity: customArea(bbox) })
@@ -135,6 +174,7 @@ export default function App() {
             customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
             drawing={drawing}
             onDrawn={chooseCustom}
+            anomalyOutlines={anomalyOutlines}
           />
           <aside>
             <AreaPicker
@@ -149,6 +189,25 @@ export default function App() {
               onToggleDrawing={() => setDrawing((d) => !d)}
               customMessage={customMessage}
               customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
+            />
+            <AnomalyPanel
+              month={selection.month}
+              provisional={
+                selection.month !== null &&
+                (meta.data?.provisional_months ?? []).includes(monthKey(selection.month.year, selection.month.month))
+              }
+              status={anomalyStatus}
+              onRetry={() => void anomalies.refetch()}
+              tab={anomalyTab}
+              onTabChange={(t) => {
+                setAnomalyTab(t)
+                setAnomalyExpanded(false)
+              }}
+              expanded={anomalyExpanded}
+              onToggleExpanded={() => setAnomalyExpanded((e) => !e)}
+              rankings={rankings}
+              totalAreas={anomalyList === undefined ? null : anomalyList.length}
+              onSelect={chooseAnomaly}
             />
             <Legend layer={layer} max={max} />
             <section aria-label="Selection" className="selection">

@@ -4,6 +4,8 @@ import {
   REASON_CODES,
   VERDICTS,
   evidenceFromEntityMonth,
+  parseAnomalies,
+  parseAnomaly,
   parseEntityEvidence,
   parseEntityItems,
   parseEntityMonth,
@@ -239,5 +241,46 @@ describe('evidenceFromEntityMonth', () => {
   it('rejects invalid JSON and an unknown witness instead of guessing', () => {
     expect(() => evidenceFromEntityMonth(parseEntityMonth(rawEntityMonth({ raw_by_witness: 'not json' })))).toThrow(ContractError)
     expect(() => evidenceFromEntityMonth(parseEntityMonth(rawEntityMonth({ raw_by_witness: '{"LANDSAT": 1}' })))).toThrow(ContractError)
+  })
+})
+
+
+describe('parseAnomaly', () => {
+  const anomaly = (overrides: Record<string, unknown> = {}) => ({
+    entity_type: 'COUNTRY',
+    entity_id: 'IDN',
+    entity_name: 'Indonesia',
+    verdict: 'ABOVE_NORMAL',
+    p_above: 0.95,
+    p_below: 0.01,
+    pct_of_normal: 704.08,
+    ...overrides,
+  })
+
+  it('parses an entry and keeps null probabilities and percentages as null', () => {
+    expect(parseAnomaly(anomaly()).pct_of_normal).toBe(704.08)
+    const sparse = parseAnomaly(anomaly({ p_above: null, pct_of_normal: null }))
+    expect(sparse.p_above).toBeNull()
+    expect(sparse.pct_of_normal).toBeNull()
+  })
+
+  it('accepts only the above and below verdicts', () => {
+    expect(parseAnomaly(anomaly({ verdict: 'BELOW_NORMAL' })).verdict).toBe('BELOW_NORMAL')
+    for (const verdict of ['WITHIN_NORMAL', 'CANNOT_DETERMINE', 'NO_DETECTED_ACTIVITY', 'MAYBE']) {
+      expect(() => parseAnomaly(anomaly({ verdict }))).toThrow(ContractError)
+    }
+  })
+
+  it('rejects an unknown entity type, a missing field and a wrongly typed probability', () => {
+    expect(() => parseAnomaly(anomaly({ entity_type: 'PLANET' }))).toThrow(ContractError)
+    const missing = anomaly()
+    delete (missing as Record<string, unknown>).p_below
+    expect(() => parseAnomaly(missing)).toThrow(/missing field "p_below"/)
+    expect(() => parseAnomaly(anomaly({ p_above: '0.9' }))).toThrow(ContractError)
+  })
+
+  it('parses a list and rejects a non-list', () => {
+    expect(parseAnomalies([anomaly(), anomaly({ entity_id: 'BRA' })])).toHaveLength(2)
+    expect(() => parseAnomalies({})).toThrow(ContractError)
   })
 })

@@ -282,6 +282,59 @@ aside section {
   font-size: 0.9rem;
 }
 
+/* ---- Anomaly overview ---- */
+.anomaly-panel h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.anomaly-panel h3 {
+  margin: 0.6rem 0 0.2rem;
+  font-size: 0.9rem;
+}
+
+.anomaly-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.3rem 0;
+}
+
+.anomaly-tabs button[aria-selected='true'] {
+  font-weight: 700;
+  border-bottom: 3px solid var(--focus);
+}
+
+.anomaly-ranking ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.anomaly-entry {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0 0.3rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.25rem 0.4rem;
+  margin: 0.15rem 0;
+  font: inherit;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.anomaly-name {
+  font-weight: 600;
+}
+
+.anomaly-detail {
+  grid-column: 2;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
 /* ---- Witness comparison ---- */
 .witness-panel {
   padding: 0 1rem 1rem;

@@ -123,3 +123,18 @@ Open questions for the Lead. None is decided here. Suggested defaults are what I
 6. **Clicking an entry.** Default: selects the area exactly like choosing it in the area picker (including fitting the map to it, using its bounds from the entity list), and moves focus to the evidence panel's heading as a calendar click does. Confirm.
 7. **Interaction with the other controls.** Default: the list is harmonized only (verdicts exist only for the harmonized estimate) and does not change with the Raw / Harmonized control or the map mode. Confirm.
 8. **Provisional months.** Default: a "Provisional" badge on the list when the selected month is in `metadata.provisional_months`. Anomalies in provisional months can change, so the list says so. Confirm the wording "Provisional: may change when science-quality data arrive" (the text already used in the evidence panel).
+
+### Lead answers (PR #35 comment) and how this prompt applies them
+
+1. **Tracker:** the Lead marks T-040 in PR #26 when this merges; the tracker is not edited here.
+2. **Entity types:** **tabs, Countries (default) and Continents**, instead of one mixed list. The world is left out of the ranking. (Supersedes §15 item 2 and the "mixed list" in §8.)
+3. **Map outlines:** countries only.
+4. **Count:** top 10, with "Show more" going to 20.
+5. **Placement:** the map's right-hand column, below the area picker.
+6. **Click:** selects the area like the picker does, fits the map, and moves focus to the evidence heading.
+7. **Raw / Harmonized:** the list is harmonized only.
+8. **Provisional:** a badge with the evidence panel's wording.
+
+Two additions:
+- **Two rankings:** "Most likely above normal" (sorted by `p_above`) and "Most likely below normal" (sorted by `p_below`), each showing the probability and `pct_of_normal`. This means the app orders each verdict's entries by the stored probability itself, rather than keeping the API's single combined order (supersedes "no re-sorting" in §2 and §9). Only a stored field is used for ordering.
+- **Exclude `CANNOT_DETERMINE` and `NO_DETECTED_ACTIVITY`** from both rankings, with a one-line count of how many were excluded. The API already leaves them out, but it gives no count of the verdicts it omits, and no endpoint lists them. The app therefore shows "N of M are in neither ranking", which is the number of areas of the type minus the ranked ones, and says plainly that it includes areas that are within normal. An exact count of the excluded verdicts needs an API addition, which is for the Lead to decide.

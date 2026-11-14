@@ -42,6 +42,8 @@ interface Props {
   /** While true, the user draws a rectangle with two clicks. */
   drawing: boolean
   onDrawn: (bbox: Bbox) => void
+  /** ISO3 codes of the countries listed in the anomaly rankings, to outline (T-040). */
+  anomalyOutlines: { above: readonly string[]; below: readonly string[] }
 }
 
 const CUSTOM_SOURCE = 'custom-area'
@@ -70,6 +72,7 @@ export function MapView({
   customBbox,
   drawing,
   onDrawn,
+  anomalyOutlines,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -108,6 +111,23 @@ export function MapView({
       map.addSource('countries', { type: 'geojson', data: COUNTRIES_URL })
       map.addLayer({ id: 'countries-fill', type: 'fill', source: 'countries', paint: { 'fill-color': '#f7f7f2', 'fill-opacity': 1 } })
       map.addLayer({ id: 'countries-line', type: 'line', source: 'countries', paint: { 'line-color': '#8a8f98', 'line-width': 0.6 } })
+      // Countries in the anomaly rankings (T-040): vermillion solid for above, dashed blue for
+      // below, so the two differ by line style as well as colour. Added before the selection
+      // outline so the selected country stays on top.
+      map.addLayer({
+        id: 'anomalies-above',
+        type: 'line',
+        source: 'countries',
+        paint: { 'line-color': '#D55E00', 'line-width': 2 },
+        filter: ['in', ['get', 'ISO_A3_EH'], ['literal', []]],
+      })
+      map.addLayer({
+        id: 'anomalies-below',
+        type: 'line',
+        source: 'countries',
+        paint: { 'line-color': '#0072B2', 'line-width': 2, 'line-dasharray': [2, 1.5] },
+        filter: ['in', ['get', 'ISO_A3_EH'], ['literal', []]],
+      })
       map.addLayer({
         id: 'countries-selected',
         type: 'line',
@@ -149,6 +169,18 @@ export function MapView({
     if (loaded.current) apply()
     else map.once('load', apply)
   }, [selectedCountryIso3])
+
+  // Outline the countries listed in the anomaly rankings.
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null) return
+    const apply = () => {
+      map.setFilter('anomalies-above', ['in', ['get', 'ISO_A3_EH'], ['literal', [...anomalyOutlines.above]]])
+      map.setFilter('anomalies-below', ['in', ['get', 'ISO_A3_EH'], ['literal', [...anomalyOutlines.below]]])
+    }
+    if (loaded.current) apply()
+    else map.once('load', apply)
+  }, [anomalyOutlines])
 
   // Outline the custom rectangle.
   useEffect(() => {

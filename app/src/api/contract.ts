@@ -90,6 +90,20 @@ export interface EntityItem {
   bbox: Bbox
 }
 
+/** The two verdicts GET /api/anomalies can return; the API excludes every other verdict. */
+export type AnomalyVerdict = 'ABOVE_NORMAL' | 'BELOW_NORMAL'
+
+/** One item of GET /api/anomalies: an area with a confident above- or below-normal verdict. */
+export interface Anomaly {
+  entity_type: EntityType
+  entity_id: string
+  entity_name: string
+  verdict: AnomalyVerdict
+  p_above: number | null
+  p_below: number | null
+  pct_of_normal: number | null
+}
+
 /**
  * GET /api/evidence: an entity_month record with `raw_by_witness` decoded into an object
  * (witness to raw fire-active cell-days), or null when the record has none.
@@ -305,6 +319,26 @@ export function parseEntityItem(raw: unknown): EntityItem {
     entity_name: str(o, 'entity_name', what),
     bbox: parseBbox(field(o, 'bbox', what), what),
   }
+}
+
+export function parseAnomaly(raw: unknown): Anomaly {
+  const what = 'anomaly'
+  const o = asRecord(raw, what)
+  return {
+    entity_type: oneOf(field(o, 'entity_type', what), ENTITY_TYPES, 'entity_type', what),
+    entity_id: str(o, 'entity_id', what),
+    entity_name: str(o, 'entity_name', what),
+    // Only these two verdicts are ever ranked; anything else is a contract violation.
+    verdict: oneOf(field(o, 'verdict', what), ['ABOVE_NORMAL', 'BELOW_NORMAL'] as const, 'verdict', what),
+    p_above: numOrNull(o, 'p_above', what),
+    p_below: numOrNull(o, 'p_below', what),
+    pct_of_normal: numOrNull(o, 'pct_of_normal', what),
+  }
+}
+
+export function parseAnomalies(raw: unknown): Anomaly[] {
+  if (!Array.isArray(raw)) throw new ContractError('anomalies response: expected a list')
+  return raw.map(parseAnomaly)
 }
 
 export function parseEntityItems(raw: unknown): EntityItem[] {
