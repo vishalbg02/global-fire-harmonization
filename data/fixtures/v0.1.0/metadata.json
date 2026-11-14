@@ -1,0 +1,32 @@
+{
+  "contract_version": "0.1.0",
+  "method_version": "SYNTHETIC-0.0.0",
+  "synthetic": true,
+  "generated_at": "2026-11-14T00:00:00Z",
+  "grid": {
+    "analysis_deg": 0.5,
+    "fine_deg": null
+  },
+  "baseline_years": [
+    2003,
+    2022
+  ],
+  "first_month": "2002-07",
+  "latest_month": "2026-11",
+  "provisional_months": [
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+  ],
+  "witnesses": [
+    "AQUA_MODIS",
+    "SNPP_VIIRS",
+    "NOAA20_VIIRS"
+  ],
+  "data_snapshot": {
+    "zips_downloaded": "2026-11-14",
+    "api_pulled": "2026-11-14"
+  },
+  "citation": "SYNTHETIC DATA, not NASA observations. Real products will cite NASA FIRMS (LANCE, ESDIS)."
+}
