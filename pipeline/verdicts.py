@@ -558,6 +558,24 @@ def build(paths: Paths | None = None, log=print) -> dict:
     return summary
 
 
+def refresh_snapshot(paths: Paths) -> dict:
+    """Set the data snapshot dates of metadata.json from the modification times of the saved raw files (needs the raw folder)."""
+    import raw_only
+    snapshot = raw_only.snapshot_dates(paths.raw)
+    if not all(snapshot.values()):
+        raise FileNotFoundError(f"no raw files under {paths.raw}")
+    f = paths.products / "metadata.json"
+    meta = json.loads(f.read_text(encoding="utf-8"))
+    meta["data_snapshot"] = snapshot
+    f.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    return snapshot
+
+
 if __name__ == "__main__":
-    out = build()
-    print(json.dumps({k: v for k, v in out.items() if k != "metadata"}, indent=1, default=float))
+    args = sys.argv[1:]
+    raw = Path(args[args.index("--raw") + 1]) if "--raw" in args else ROOT / "data" / "raw"
+    if args[:1] == ["snapshot"]:
+        print(refresh_snapshot(Paths(raw=raw)))
+    else:
+        out = build(Paths(raw=raw))
+        print(json.dumps({k: v for k, v in out.items() if k != "metadata"}, indent=1, default=float))
