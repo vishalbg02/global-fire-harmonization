@@ -391,7 +391,7 @@ def _measured(old: dict | None, new: dict | None, raw: dict, quiet: dict, single
     for key, rec in (("harmonized_2010_aqua", old), ("harmonized_2023_snpp", new)):
         if rec and rec.get("estimate") is not None:
             out[key] = {"estimate": rec["estimate"], "sd": rec["sd"], "ci90": [rec["ci90_low"], rec["ci90_high"]], "witnesses_used": rec["witnesses_used"],
-                        "reason_codes": rec["reason_codes"], "pct_of_normal_context": rec["estimate"] / quiet["median"] * 100.0 if quiet["median"] else None}
+                        "reason_codes": rec["reason_codes"], "pct_of_normal_context": rec["estimate"] / quiet["median"] * 100.0 if quiet["median"] >= va.MIN_BASELINE_MEDIAN else None}      # None below the 5 cell-day floor of D-028: no meaningful percentage
     if old and new and old.get("estimate") and new.get("estimate") is not None:
         out["harmonized_ratio_new_over_old"] = new["estimate"] / old["estimate"]
         out["difference_in_sd"] = (new["estimate"] - old["estimate"]) / float(np.sqrt(old["sd"] ** 2 + new["sd"] ** 2))
