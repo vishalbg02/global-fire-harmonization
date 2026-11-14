@@ -4,7 +4,7 @@ import type { Metadata } from '../../api/contract.ts'
 import type { Area, Source, ValueMode } from '../../state/selection.ts'
 import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
 import { useAreaSeries } from '../area/useAreaSeries.ts'
-import { RAW_ONLY_AREA_UNAVAILABLE, useRawOnly } from '../../content/rawOnly.ts'
+import { RAW_ONLY_AREA_UNAVAILABLE, isRawOnlySeries, useRawOnly } from '../../content/rawOnly.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { CalendarChart } from './CalendarChart.tsx'
 import { CalendarLegend } from './CalendarLegend.tsx'
@@ -36,9 +36,11 @@ export function CalendarPanel({
 }: Props) {
   const [tableView, setTableView] = useState(false)
   const series = useAreaSeries(area)
-  const rawOnly = useRawOnly()
-
   const records = series.data
+  const globalRawOnly = useRawOnly()
+  const rawOnly = isRawOnlySeries(records, globalRawOnly)
+  // % of normal needs a baseline: unavailable when the series holds none (raw-only, or until T-014).
+  const pctUnavailable = globalRawOnly && (records === undefined || records.every((r) => r.pct_of_normal === null))
   const rows = useMemo(
     () =>
       records === undefined || meta === null
@@ -58,7 +60,12 @@ export function CalendarPanel({
     <section className="calendar-panel" aria-label="Historical calendar">
       <header className="calendar-header">
         <h2>{`Calendar: ${area.entity_name}`}</h2>
-        <ValueModeSelector value={valueMode} onChange={onValueModeChange} />
+        <ValueModeSelector
+          value={valueMode}
+          onChange={onValueModeChange}
+          pctUnavailable={pctUnavailable}
+          rawOnly={rawOnly}
+        />
         <label className="table-toggle">
           <input type="checkbox" checked={tableView} onChange={(e) => setTableView(e.target.checked)} />
           Table view
@@ -85,10 +92,10 @@ export function CalendarPanel({
       {series.isError && serverMessage !== null && (
         <ErrorState message={serverMessage} onRetry={apiError?.status === 422 ? undefined : () => void series.refetch()} />
       )}
-      {series.isError && !notFound && serverMessage === null && rawOnly && apiError?.status === 503 && (
+      {series.isError && !notFound && serverMessage === null && globalRawOnly && apiError?.status === 503 && (
         <EmptyState message={RAW_ONLY_AREA_UNAVAILABLE} />
       )}
-      {series.isError && !notFound && serverMessage === null && !(rawOnly && apiError?.status === 503) && (
+      {series.isError && !notFound && serverMessage === null && !(globalRawOnly && apiError?.status === 503) && (
         <ErrorState
           message="Data are not available right now. The calendar could not be loaded."
           onRetry={() => void series.refetch()}
