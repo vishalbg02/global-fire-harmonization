@@ -26,7 +26,7 @@
 4. Decide the API owner (D-015) and confirm product direction D-003.
 5. Add the two collaborators (Lead only).
 6. Decide on technical protection of `main` (D-019) and repo visibility for judges (D-014).
-7. Decide whether to rewrite the 4 bootstrap commits on `main` that carry AI trailers (D-021). Best done before collaborators clone.
+7. ~~Rewrite the bootstrap commits on `main` (D-021)~~: done 2026-11-14. Anyone who cloned before this must re-clone or run `git fetch && git reset --hard origin/main` on `main`.
 
 ## Recommended for the Lead to assign first (stack-independent)
 

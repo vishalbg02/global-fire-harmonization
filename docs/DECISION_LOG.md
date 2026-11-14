@@ -24,7 +24,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-018 | 2026-11-14 | Lead bookkeeping commits allowed directly on `main` (tracker, decision log, progress log, handoff only) | PROPOSED |
 | D-019 | — | Technical protection of `main` (GitHub Pro branch protection vs policy + local guard) | OPEN |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
-| D-021 | — | Rewrite the 4 bootstrap commits on `main` to remove AI trailers (needs a force-push to `main`) | OPEN |
+| D-021 | 2026-11-14 | Rewrite the 4 bootstrap commits on `main` to remove AI trailers | APPROVED and DONE (force-pushed 2026-11-14) |
 
 ---
 
@@ -138,4 +138,11 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Options:**
   - (a) Rewrite those commits and force-push `main`. Cheapest now, before collaborators clone. Destructive to remote history.
   - (b) Leave the history as is and apply D-020 from now on.
-- **Status:** OPEN. The Lead decides. No history on `main` has been rewritten.
+- **Decision:** option (a), approved by the Lead on 2026-11-14.
+- **Execution:**
+  - The commits were rebuilt with identical file trees and with the original author, committer and dates preserved. Only the messages changed: AI `Co-Authored-By` trailers removed; the tool's name replaced with "assistant instructions".
+  - Force-pushed with a lease on the old tip.
+  - Mapping: 6670a4b→8daabd3, 92afa01→5c0d8b4, 343a874→348ef2d, 2d26909→00c9f7f.
+  - PR #1 was rebased onto the new `main`.
+- **Note:** the *file contents* of those historical commits still contain the old "Claude / M1" owner credit in `TASK_TRACKER.md`. It is corrected going forward by PR #1. Rewriting historical file contents was not part of this decision.
+- **Status:** APPROVED and DONE.
