@@ -27,6 +27,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-022 | — | Contract additions marked [PROPOSED ADDITION] in the workstream prompts' shared section | PROPOSED |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
 | D-021 | 2026-11-14 | Rewrite the 4 bootstrap commits on `main` to remove AI trailers | APPROVED and DONE (force-pushed 2026-11-14) |
+| D-024 | 2026-11-14 | Add `terra-draw-maplibre-gl-adapter` 1.5.0 to the frontend stack (drawing the custom rectangle on the MapLibre map, T-035) | **APPROVED** (2026-11-14) |
 
 ---
 
@@ -167,3 +168,9 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
   - The PR branch was rebased onto the new `main`. GitHub auto-closed PR #1 on the base force-push and would not reopen it, so PR #2 replaces it (same branch).
 - **Note:** the *file contents* of those historical commits still contain the old "Claude / M1" owner credit in `TASK_TRACKER.md`. It is corrected going forward by PR #2. Rewriting historical file contents was not part of this decision.
 - **Status:** APPROVED and DONE.
+
+### D-024: Add terra-draw-maplibre-gl-adapter 1.5.0 to the frontend stack
+- **Context:** the approved stack (D-008) names `terra-draw` for drawing the custom-area rectangle. `terra-draw` does not draw on a map by itself: it needs a separate adapter for the mapping library, and for MapLibre that is `terra-draw-maplibre-gl-adapter`. It was found while preparing T-035 and raised on PR #30.
+- **Decision:** add `terra-draw-maplibre-gl-adapter`, pinned exactly to **1.5.0** (MIT licence; the official companion of `terra-draw`), to the frontend stack. `npm audit` must stay at 0 vulnerabilities.
+- **Effect:** `docs/TECH_STACK.md` §7 gains one row. No other part of the stack changes.
+- **Status:** **APPROVED** by the Lead, 2026-11-14.
