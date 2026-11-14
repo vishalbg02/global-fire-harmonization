@@ -264,4 +264,56 @@ def test_entry_has_the_contract_test_shape_and_stays_not_run():
     assert e["measured"]["provisional_status"] == "PASS"
     assert e["measured"]["aqua_only_pct_of_normal"] == pytest.approx(350.0) and e["measured"]["snpp_only_pct_of_normal"] == pytest.approx(325.0)
     assert "shared_aqua_baseline" in e["measured"]["exploratory"]
-    assert "provisional" in e["notes"].lower()
+    assert "NOT_RUN" in e["notes"] and "T-014" in e["notes"]
+
+
+# ------------------------------------------------------------------------------------------------ the T-014 product
+def _aqua_series(f=lambda y, m: 10.0 + (y % 7) + m) -> pd.DataFrame:
+    return pd.DataFrame([{"year": y, "month": m, "estimate": float(f(y, m))} for y in range(2003, 2023) for m in range(1, 13)])
+
+
+def _product_from(aqua: pd.DataFrame, after_2011_factor: float = 1.0) -> pd.DataFrame:
+    """A fake T-014 entity series: equal to Aqua up to 2011, scaled afterwards; baseline_median built from its own estimates."""
+    p = aqua.copy()
+    p.loc[p.year > 2011, "estimate"] *= after_2011_factor
+    med = p.groupby("month")["estimate"].median()
+    p["baseline_median"] = p["month"].map(med)
+    return p
+
+
+def test_crosscheck_equal_series_agree_exactly_before_2012_and_the_baselines_match():
+    aq = _aqua_series()
+    r = va.crosscheck_aqua_baseline(_product_from(aq), aq)
+    assert r["estimates_2003_2011"]["n"] == 9 * 12 and r["estimates_2003_2011"]["max_rel_diff"] == 0.0
+    assert r["baseline_2003_2011"]["max_rel_diff"] == 0.0 and r["baseline_2003_2011"]["n_months"] == 12
+    assert r["baseline_2003_2022"]["ratio_min"] == r["baseline_2003_2022"]["ratio_max"] == 1.0
+
+
+def test_crosscheck_detects_a_planted_difference():
+    aq = _aqua_series()
+    r = va.crosscheck_aqua_baseline(_product_from(aq, after_2011_factor=2.0), aq)
+    assert r["estimates_2003_2011"]["max_rel_diff"] == 0.0           # the Aqua-only years still agree
+    assert r["baseline_2003_2022"]["ratio_max"] < 1.0 and r["baseline_2003_2022"]["ratio_min"] < 1.0   # the later years are doubled in the product
+    bad = _product_from(aq)
+    bad.loc[(bad.year == 2005) & (bad.month == 3), "estimate"] *= 1.5
+    assert va.crosscheck_aqua_baseline(bad, aq)["estimates_2003_2011"]["max_rel_diff"] == pytest.approx(1 / 3)     # |a - 1.5a| / 1.5a
+
+
+def test_product_context_applies_the_a1_quantities_to_the_combined_series():
+    rows = []
+    for m in range(6, 13):
+        e = {9: 300.0, 10: 400.0}.get(m, 100.0)
+        rows.append({"entity_type": "COUNTRY", "entity_id": "IDN", "year": 2015, "month": m, "estimate": e, "sd": 50.0, "baseline_median": 100.0,
+                     "baseline_p25": 80.0, "baseline_p75": 120.0, "pct_of_normal": e, "p_above": 1.0, "verdict": "ABOVE_NORMAL",
+                     "reason_codes": [], "witnesses_used": ["AQUA_MODIS"], "ci90_low": 0.0, "ci90_high": 0.0})
+    rows.append({**rows[0], "entity_id": "OTHER"})
+    ctx = va.product_context(pd.DataFrame(rows), "COUNTRY", "IDN", {"analysis": ANALYSIS, "peak": PEAK})
+    assert ctx["entity"] == "COUNTRY:IDN" and len(ctx["months"]) == 7
+    assert ctx["summary"]["direction"] == va.ABOVE and ctx["summary"]["peak_month"] == "2015-10" and ctx["summary"]["pct_of_normal"] == pytest.approx(350.0)
+
+
+def test_crosscheck_ignores_product_years_before_the_baseline_period():
+    aq = _aqua_series()
+    prod = _product_from(aq)
+    prod = pd.concat([prod, pd.DataFrame([{"year": 2002, "month": m, "estimate": 1e6, "baseline_median": np.nan} for m in range(7, 13)])])
+    assert va.crosscheck_aqua_baseline(prod, aq)["baseline_2003_2011"]["max_rel_diff"] == 0.0

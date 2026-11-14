@@ -1,7 +1,7 @@
 # T-020: test A1 (real anomaly preserved, two independent paths): results
 
 > Case C1, Indonesia (Sumatra + Kalimantan), Sep-Oct 2015. Run 2026-11-14 on the T-011/T-013 products on `main` (`cell_month_witness`, `cells`, `calibration`), method `harmonize.METHOD_VERSION` = `0.1.0-combined-no-baseline`.
-> **PROVISIONAL.** Computed with a baseline built inside `pipeline/validation_a1.py` (the D-028 rules), because the T-014 products (baseline, `pct_of_normal`, verdicts) do not exist yet. **Formal status: `NOT_RUN` until the test is re-run on the T-014 products.** Labels: [VERIFIED] computed here, [ASSUMPTION] a reading chosen where the documents are silent, [HYPOTHESIS], [OPEN].
+> **The two single-witness paths and their baselines are built inside `pipeline/validation_a1.py`** (the D-028 rules), because the T-014 product (`entity_month`, PR #52, method 0.1.0) holds only the combined series. The T-014 product is used for context and as a cross-check (section 6). **Formal status: `NOT_RUN`, pending the Lead's decision on the S-NPP-only baseline (section 4).** Labels: [VERIFIED] computed here, [ASSUMPTION] a reading chosen where the documents are silent, [HYPOTHESIS], [OPEN].
 
 ## 1. What was done
 - **Case** (VALIDATION_PLAN section 2a): box W 95, S -6, E 119, N 4; analysis window 2015-06 to 2015-12; peak window 2015-09 to 2015-10. 548 analysis cells have their centre in the box [ASSUMPTION: centre in the box, edges included; ocean cells are included, they hold few detections].
@@ -55,14 +55,39 @@ The S-NPP own-baseline columns are exploratory; in the formal reading they do no
 - **Only C1 was run.** [OPEN] The A1 family pass needs 5 of 6 cases (C1 to C6). The harness takes any of C1 to C6 as data (`python pipeline/validation_a1.py --case C2`), but only C1 was run here.
 - The boxes are the Lead's (T-050), used as written; the 548-cell box includes ocean cells.
 
-## 4. What is provisional until T-014
-1. The baseline and `pct_of_normal` (built here, not the T-014 products; where the T-014 rules differ from D-028 as read here, T-014 wins).
-2. The reading of how the S-NPP-only path gets a baseline (a decision for the Lead; this is why the formal status stays `NOT_RUN`).
-3. The definitions in section 1 that the plan does not fix (peak month, direction, interval over the peak window).
-4. The recorded entry has `status: "NOT_RUN"` and carries the computed result as `measured.provisional_status`.
+## 4. What the Lead must decide, and what is still provisional
+1. **Decision (blocks the formal status):** how does the S-NPP-only path get a baseline? D-028 as written gives none (at most 11 of 20 years), so A1 on this path is INCONCLUSIVE. The three readings in section 2 give INCONCLUSIVE, PASS and FAIL. Options for the Lead: (a) accept INCONCLUSIVE as the honest result; (b) approve exploratory 1 (the S-NPP-only estimates against the Aqua baseline, justified by the Aqua-equivalent scale, D-005; the paths then share the baseline, so they differ only in the numerator); (c) approve a shorter minimum for this path (exploratory 2, which fails for C1 and needs a logged decision, D-028 change). Any of (b) or (c) is a change or an interpretation of D-028 and must be logged; this task changed no threshold.
+2. The definitions in section 1 that the plan does not fix (peak month, direction, interval over the peak window): the Lead should confirm them.
+3. Only C1 has been run; the family pass needs C1 to C6.
+4. The recorded entry has `status: "NOT_RUN"`; the computed result is in `measured.provisional_status` (INCONCLUSIVE).
 
 ## 5. Recorded entry and re-run
 - Entry (contract section 6 shape, git-ignored): `data/interim/qa/T-020_validation_entries.json`; tables: `data/interim/qa/T-020_a1_tables.json`. Test id `A1-C1`.
 - Command: `python pipeline/validation_a1.py --case C1` (about 30 seconds).
-- **After T-014 lands:** build the two `entity_month`-shaped frames for the box from the single-witness runs of the T-014 pipeline (columns `year`, `month`, `estimate`, `sd`, `baseline_median`, `baseline_p25`, `baseline_p75`, `pct_of_normal`), restrict each to the analysis window, and call `validation_a1.compare_paths(aqua_frame, snpp_frame, case["analysis"], case["peak"])` (and `entry_for` with those frames). Set `status` in the recorded entry to the returned status only once the Lead has confirmed that the T-014 baseline for the S-NPP-only path is the intended one.
+- **If the T-014 pipeline later produces single-witness series:** build the two `entity_month`-shaped frames for the box (columns `year`, `month`, `estimate`, `sd`, `baseline_median`, `baseline_p25`, `baseline_p75`, `pct_of_normal`), restrict each to the analysis window, and call `validation_a1.compare_paths(aqua_frame, snpp_frame, case["analysis"], case["peak"])` (and `entry_for` with those frames). Set `status` in the recorded entry to the returned status only once the Lead has decided item 1 of section 4.
+- The run needs `data/products/entity_month.parquet` and `metadata.json` of T-014 (uncommitted copies of PR #52) for the section 6 checks; without them (or with the raw-only product) those checks are skipped and the rest runs unchanged.
 - Tests: `python -m pytest pipeline/tests/test_validation_a1.py -q -p no:cacheprovider`.
+
+## 6. Cross-check with the T-014 product (PR #52, method 0.1.0)
+The product is a combined series for countries, continents and the world, so it cannot replace the two path series. It is used for two checks, both on the country entity `COUNTRY:IDN` (Indonesia, 1,047 analysis cells), which is a larger area than the C1 box (548 cells, which also takes in parts of Malaysia and Brunei); numbers differ from section 2 for that reason.
+
+**(a) Context: the combined product for Indonesia, 2015** [VERIFIED]. Witnesses used: Aqua and S-NPP in every month shown.
+
+| Month | Estimate | pct_of_normal | p_above | Verdict |
+|---|---|---|---|---|
+| 2015-06 | 1456.4 | 128.9 | 0.0000 | WITHIN_NORMAL |
+| 2015-07 | 4229.3 | 264.5 | 1.0000 | ABOVE_NORMAL |
+| 2015-08 | 10627.3 | 216.5 | 1.0000 | ABOVE_NORMAL |
+| 2015-09 | 19068.7 | 264.9 | 1.0000 | ABOVE_NORMAL |
+| 2015-10 | 17202.7 | 541.6 | 1.0000 | ABOVE_NORMAL |
+| 2015-11 | 3039.2 | 428.1 | 1.0000 | ABOVE_NORMAL |
+| 2015-12 | 1084.9 | 503.9 | 1.0000 | ABOVE_NORMAL |
+
+With the same peak-window rules as section 1 the combined series is ABOVE normal, peak month 2015-10 (pct_of_normal 541.6), peak-window pct_of_normal 349.6 (90% interval 327.0 to 372.1). It agrees in direction and peak month with both paths (section 2), and its magnitude (349.6) lies between the S-NPP-only (328.2, Aqua baseline) and Aqua-only (361.3) values. The product's verdicts are ABOVE_NORMAL for every month from July to December.
+
+**(b) Does the Aqua-only stand-in reproduce the product's baseline where only Aqua contributes?** [VERIFIED] For Indonesia (the whole 2003-2022 range, calendar months 1 to 12):
+- **Estimates 2003-2011** (108 country-months): the Aqua-only path and the product's estimate are identical (maximum relative difference 0.0), as expected, since both are Aqua-only there.
+- **Baseline over 2003-2011 only** (p25, p50, p75 built from the two series, same rules): identical for all 12 calendar months (maximum relative difference 0.0). So the stand-in's percentile rule reproduces the product's.
+- **Baseline over the full 2003-2022**: the stand-in is Aqua-only throughout and the product is combined from 2012, so they differ by construction. The ratio of the medians (Aqua-only over product) is between 0.909 and 1.023 over the 12 months (median 0.993): Jan 1.007, Feb 0.940, Mar 0.992, Apr 1.020, May 0.994, Jun 1.000, Jul 0.989, Aug 1.023, Sep 1.000, Oct 0.982, Nov 0.909, Dec 0.948. For the peak months of C1 (September and October) the medians are 7199.5 against 7199.5 and 3120.5 against 3176.5.
+
+This supports using the Aqua-only baseline of this module as the stand-in for the Aqua path, and, for exploratory reading 1, as the common baseline. [HYPOTHESIS] the small Nov and Dec differences reflect the VIIRS years entering the product's medians; not tested. The check was run for one country only.

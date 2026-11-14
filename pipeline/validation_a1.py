@@ -50,7 +50,7 @@ Month = tuple[int, int]
 # VALIDATION_PLAN.md section 2a (approved by the Lead 2026-11-14): box (W, S, E, N), analysis window, peak window (inclusive)
 CASES: dict[str, dict] = {
     "C1": {"name": "Indonesia (Sumatra + Kalimantan)", "label": "Indonesia Sep-Oct 2015", "box": (95.0, -6.0, 119.0, 4.0),
-           "analysis": ((2015, 6), (2015, 12)), "peak": ((2015, 9), (2015, 10))},
+           "analysis": ((2015, 6), (2015, 12)), "peak": ((2015, 9), (2015, 10)), "context_entity": ("COUNTRY", "IDN")},
     "C2": {"name": "Brazilian Amazon", "label": "Brazilian Amazon Aug 2019", "box": (-70.0, -12.0, -45.0, 0.0),
            "analysis": ((2019, 5), (2019, 11)), "peak": ((2019, 8), (2019, 9))},
     "C3": {"name": "Pantanal", "label": "Pantanal 2020", "box": (-59.0, -22.0, -54.0, -15.0),
@@ -280,7 +280,63 @@ def _r(x, nd: int = 1):
     return None if x is None or (isinstance(x, float) and not np.isfinite(x)) else round(float(x), nd)
 
 
-def entry_for(case_id: str, case: dict, frames: dict[str, tuple[pd.DataFrame, pd.DataFrame]]) -> dict:
+# ------------------------------------------------------------------------------------------------ the T-014 product
+def product_frame(product: pd.DataFrame, entity_type: str, entity_id: str) -> pd.DataFrame:
+    """The rows of one entity of the T-014 `entity_month` product, sorted by month, numbers as floats."""
+    df = product[(product.entity_type == entity_type) & (product.entity_id == entity_id)].copy()
+    for col in ("estimate", "sd", "ci90_low", "ci90_high", "baseline_median", "baseline_p25", "baseline_p75", "pct_of_normal", "p_above"):
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df.sort_values(["year", "month"]).reset_index(drop=True)
+
+
+def product_context(product: pd.DataFrame, entity_type: str, entity_id: str, case: dict) -> dict:
+    """The COMBINED series of the T-014 product over the case window, with the A1 quantities of `summarize_path` (context, not a path)."""
+    df = _window(product_frame(product, entity_type, entity_id), case["analysis"])
+    summary = summarize_path(df, case["analysis"], case["peak"])
+    months = [{"year": int(r.year), "month": int(r.month), "estimate": _r(r.estimate), "pct_of_normal": _r(r.pct_of_normal),
+               "p_above": _r(r.p_above, 4), "verdict": r.verdict, "reason_codes": list(r.reason_codes), "witnesses_used": list(r.witnesses_used)}
+              for r in df.itertuples()]
+    return {"entity": f"{entity_type}:{entity_id}", "summary": {k: (_r(v) if isinstance(v, float) else v) for k, v in summary.items()}, "months": months}
+
+
+def crosscheck_aqua_baseline(product: pd.DataFrame, aqua: pd.DataFrame, years: tuple[int, int] = BASELINE_YEARS, aqua_only_until: int = 2011) -> dict:
+    """Does the Aqua-only stand-in reproduce the T-014 baseline where only Aqua contributes?
+
+    `product` and `aqua` are frames of the SAME entity (the product's combined series, and the Aqua-only path from this module).
+      * `estimates_2003_2011`: Aqua-only against the product's estimate, same month (both are Aqua-only there, so equal up to rounding);
+      * `baseline_2003_2011`: p25/p50/p75 built from the two series over 2003-2011 only (the years where only Aqua contributes);
+      * `baseline_2003_2022`: the stand-in's median (Aqua-only, all 20 years) against the product's `baseline_median` (combined series
+        from 2012): they differ by construction after 2011, reported as a ratio.
+    """
+    def rel(a: float, b: float) -> float:
+        return abs(a - b) / b if b else (0.0 if a == 0 else float("inf"))
+    p = product[product.estimate.notna()]
+    a = aqua[aqua.estimate.notna()]
+    both = p.merge(a, on=["year", "month"], suffixes=("_p", "_a"))
+    early = both[both.year <= aqua_only_until]
+    d = [rel(x, y) for x, y in zip(early.estimate_a, early.estimate_p, strict=True)]
+    out: dict = {"estimates_2003_2011": {"n": len(d), "max_rel_diff": max(d) if d else None, "median_rel_diff": float(np.median(d)) if d else None}}
+    b_rel, per_month = [], []
+    for m in range(1, 13):
+        ep = p[(p.month == m) & (p.year >= years[0]) & (p.year <= aqua_only_until)].estimate
+        ea = a[(a.month == m) & (a.year >= years[0]) & (a.year <= aqua_only_until)].estimate
+        sp, sa = baseline_stats(ep.tolist(), years, 1, 0.0), baseline_stats(ea.tolist(), years, 1, 0.0)
+        if sp and sa:
+            b_rel.append(max(rel(sa[k], sp[k]) for k in ("baseline_p25", "baseline_median", "baseline_p75")))
+    out["baseline_2003_2011"] = {"n_months": len(b_rel), "max_rel_diff": max(b_rel) if b_rel else None}
+    prod_base = p[(p.year >= years[0]) & (p.year <= years[1])].groupby("month")["baseline_median"].first()
+    stand = attach_baseline(pd.DataFrame({"year": 2015, "month": list(range(1, 13)), "estimate": 1.0}), a, years, MIN_BASELINE_YEARS, 0.0)
+    for r in stand.itertuples():
+        pb = prod_base.get(r.month)
+        if pb is not None and pd.notna(pb) and pd.notna(r.baseline_median):
+            per_month.append({"month": int(r.month), "aqua_only_median": _r(r.baseline_median), "product_median": _r(pb), "ratio": _r(r.baseline_median / pb, 3)})
+    ratios = [x["ratio"] for x in per_month]
+    out["baseline_2003_2022"] = {"n_months": len(ratios), "ratio_min": min(ratios) if ratios else None, "ratio_max": max(ratios) if ratios else None,
+                                 "ratio_median": float(np.median(ratios)) if ratios else None, "per_month": per_month}
+    return out
+
+
+def entry_for(case_id: str, case: dict, frames: dict[str, tuple[pd.DataFrame, pd.DataFrame]], t014: dict | None = None) -> dict:
     """The contract section 6 test entry. `status` is NOT_RUN: the formal status needs the T-014 products (see `provisional_status`)."""
     results = {k: compare_paths(a, s, case["analysis"], case["peak"]) for k, (a, s) in frames.items() }
     formal = results["formal"]
@@ -302,12 +358,14 @@ def entry_for(case_id: str, case: dict, frames: dict[str, tuple[pd.DataFrame, pd
         "threshold": "pre-registered at G1 (D-028): same direction; peak month +-1; 90% intervals overlap; family pass >= 5 of 6 cases C1-C6",
         "measured": {"aqua_only_pct_of_normal": _r(formal["aqua"]["pct_of_normal"]), "snpp_only_pct_of_normal": _r(formal["snpp"]["pct_of_normal"]),
                      "aqua_only_peak_month": formal["aqua"]["peak_month"], "snpp_only_peak_month": formal["snpp"]["peak_month"],
-                     "provisional_status": formal["status"], "baseline": "PROVISIONAL: built in pipeline/validation_a1.py (D-028 rules), not the T-014 products",
+                     "provisional_status": formal["status"], "baseline": "built in pipeline/validation_a1.py per path (D-028 rules); the T-014 product has no single-witness series",
                      "formal_reading": block(formal),
-                     "exploratory": {k: block(v) for k, v in results.items() if k != "formal"}},
+                     "exploratory": {k: block(v) for k, v in results.items() if k != "formal"},
+                     **({"t014_product": t014} if t014 else {})},
         "status": "NOT_RUN",
-        "notes": ("Computed with a provisional baseline built in this module, to be re-run on the T-014 products; the formal status stays "
-                  "NOT_RUN until then. See docs/validation/T-020-results.md."),
+        "notes": ("The two single-witness paths and their baselines are built in this module (the T-014 product holds only the combined "
+                  "series); the combined T-014 product is used as context and to cross-check the Aqua-only baseline. The formal status stays "
+                  "NOT_RUN until the Lead decides how the S-NPP-only path gets a baseline. See docs/validation/T-020-results.md."),
     }
 
 
@@ -317,10 +375,30 @@ def table(frame: pd.DataFrame) -> list[dict]:
             for _, r in frame.iterrows()]
 
 
+def t014_check(case: dict, paths: hz.Paths | None = None) -> dict | None:
+    """Context and baseline cross-check against the T-014 `entity_month` product (None if the product has no harmonized estimates)."""
+    paths = paths or hz.Paths()
+    f = paths.products / "entity_month.parquet"
+    ent = case.get("context_entity")
+    if not f.exists() or not ent:
+        return None
+    product = pd.read_parquet(f)
+    if product["estimate"].notna().sum() == 0:
+        return None
+    meta = json.loads((paths.products / "metadata.json").read_text(encoding="utf-8"))
+    out = {"product_method_version": meta.get("method_version"), "context_combined_series": product_context(product, ent[0], ent[1], case)}
+    cells = pd.read_parquet(paths.products / "cells.parquet", columns=["cell_id", "country_iso3"])
+    ids = sorted(cells.loc[cells.country_iso3 == ent[1], "cell_id"])
+    months = [(y, m) for y in range(BASELINE_YEARS[0], BASELINE_YEARS[1] + 1) for m in range(1, 13)]
+    aqua = path_records(ids, months, paths, ("AQUA_MODIS",), ent[1], ent[1])["AQUA_MODIS"]
+    out["crosscheck_aqua_only_baseline"] = {"entity": f"{ent[0]}:{ent[1]}", "n_cells": len(ids), **crosscheck_aqua_baseline(product_frame(product, *ent), aqua)}
+    return out
+
+
 def run(case_id: str = "C1", paths: hz.Paths | None = None, out_dir: Path = QA_DIR) -> dict:
     case = CASES[case_id]
     frames, n_cells = build_case_frames(case, paths)
-    entry = entry_for(case_id, case, frames)
+    entry = entry_for(case_id, case, frames, t014_check(case, paths))
     out_dir.mkdir(parents=True, exist_ok=True)
     doc = {"contract_version": CONTRACT_VERSION, "method_version": hz.METHOD_VERSION + "+a1-provisional-baseline",
            "generated_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "synthetic": False, "tests": [entry]}
