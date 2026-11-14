@@ -27,7 +27,8 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-0C | Add collaborators (Lead only) | M1 | P0 | T-000 | — | — | TODO | — | Both teammates have access |
 | T-0D | Decide API owner (D-015) and repo directory layout | M1 | P0 | T-0A | — | — | TODO | — | Logged |
 | T-0F | Decide technical protection of `main` (D-019) | M1 | P1 | — | — | — | TODO | — | Logged; any settings change made by the Lead |
-| T-0G | Teammate workstream prompts (Member 2, Member 3) + stale-status fixes | M1 | P0 | T-0E | `docs/T-0G-teammate-prompts` | [#3](https://github.com/vishalbg02/global-fire-harmonization/pull/3) | IN_REVIEW | PENDING | Lead approves both prompts; prompts consistent with DATA_CONTRACT v0.1.0 |
+| T-0G | Teammate workstream prompts (Member 2, Member 3) + stale-status fixes | M1 | P0 | T-0E | `docs/T-0G-teammate-prompts` | [#3](https://github.com/vishalbg02/global-fire-harmonization/pull/3) | MERGED (2026-11-14, PR #3) | — (Lead-authored PR) | Lead approves both prompts; prompts consistent with DATA_CONTRACT v0.1.0 |
+| T-0H | Record D-008 and D-016 approvals across docs and prompts | M1 | P0 | T-0G | `docs/T-0H-record-approvals` | *(see PR list)* | IN_REVIEW | PENDING | Approvals reflected consistently on `main` |
 
 ## Data and science (Member 2)
 
