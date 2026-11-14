@@ -34,14 +34,14 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
-| T-001 | Download all global zips (MODIS 2002–2025, S-NPP 2012–2025, NOAA-20 2018–2025) | M2 | P0 | — (stack-independent) | `data/T-001-download-zips` | — | TODO | — | All files present; sizes match `DATA_SOURCES.md`; snapshot recorded in `data/README.md` |
-| T-002 | Pull 2026 data via the area API (world, 5-day windows) for MODIS, S-NPP, NOAA-20; fetch `missing_data` and `data_availability` | M2 | P0 | MAP_KEY | `data/T-002-api-2026` | — | TODO | — | Complete date coverage logged; retries recorded |
+| T-001 | Download all global zips (MODIS 2002–2025, S-NPP 2012–2025, NOAA-20 2018–2025) | M2 | P0 | — (stack-independent) | `data/T-001-download-zips` | [#7](https://github.com/vishalbg02/global-fire-harmonization/pull/7) | MERGED (2026-11-14) | APPROVED | All files present; sizes match `DATA_SOURCES.md`; snapshot recorded in `data/README.md` |
+| T-002 | Pull 2026 data via the area API (world, 5-day windows) for MODIS, S-NPP, NOAA-20; fetch `missing_data` and `data_availability` | M2 | P0 | MAP_KEY | `data/T-002-api-2026` | [#9](https://github.com/vishalbg02/global-fire-harmonization/pull/9) | MERGED (2026-11-14) | APPROVED | Complete date coverage logged; retries recorded |
 | T-003 | Unzip and normalize to the unified schema (Parquet) | M2 | P0 | T-001, T-0A, T-0D | `data/T-003-normalize` | — | TODO | — | Row counts per sensor and year recorded |
 | T-004 | Fire-region mask (GFED basis regions) or UN-subregion fallback | M1 → M2 | P0 | — | `science/T-004-region-mask` | — | TODO | — | Every analysis cell has a `fire_region` |
 | T-005 | Filters + static-source mask + QA summary | M2 | P0 | T-003 | `data/T-005-filters-qa` | — | TODO | — | QA table; estimates in `DATA_SOURCES.md` replaced with measurements |
 | T-006 | Fine-grid cell-days → analysis cell-month per witness × day/night | M2 | P0 | T-005, D-009 | `data/T-006-gridding` | — | TODO | — | `cell_month_witness` validates against the contract |
 | T-007 | Investigate MODIS `version` values (6.2 / 6.03 / 61.03) | M2 | P1 | T-003 | `data/T-007-modis-version` | — | TODO | — | Finding documented; any method impact logged |
-| T-008 | Confirm Aqua/Terra 2026 availability via `data_availability` | M2 | P0 | MAP_KEY | `data/T-008-availability` | — | TODO | — | Result in `DATA_SOURCES.md` |
+| T-008 | Confirm Aqua/Terra 2026 availability via `data_availability` | M2 | P0 | MAP_KEY | `data/T-008-availability` | [#10](https://github.com/vishalbg02/global-fire-harmonization/pull/10) | MERGED (2026-11-14) | APPROVED | Result in `DATA_SOURCES.md` |
 | T-009 | FIRMS country name → ISO3 / continent mapping | M2 | P0 | T-003 | `data/T-009-country-mapping` | — | TODO | — | 100% of country files mapped |
 | T-010 | SYNTHETIC fixtures for all contract products | M2 | P0 | T-0B | `data/T-010-fixtures` | — | TODO | — | Labelled synthetic; <5 MB; validate against the contract |
 | T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | — | TODO | — | `calibration` product; pooling levels reported |
@@ -69,7 +69,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
-| T-030 | Environment setup per the approved stack; app skeleton | M3 | P0 | T-0A, T-0D | `Swastik` (accepted for this task only) | [#5](https://github.com/vishalbg02/global-fire-harmonization/pull/5) | IN_REVIEW | — | Runs locally for M1 and M3 |
+| T-030 | Environment setup per the approved stack; app skeleton | M3 | P0 | T-0A, T-0D | `Swastik` (accepted for this task only) | [#5](https://github.com/vishalbg02/global-fire-harmonization/pull/5) | MERGED (2026-11-14) | APPROVED | Runs locally for M1 and M3 |
 | T-031 | Global map: country layer + analysis-cell layer | M3 | P0 | T-030, T-010 | `frontend/T-031-global-map` | — | TODO | — | Selected month renders; tooltip per cell |
 | T-032 | Calendar (years × months; % of normal / activity) | M3 | P0 | T-010 | `frontend/T-032-calendar` | — | TODO | — | Accessible ramps; legend; null shown as "no data" |
 | T-033 | Raw vs harmonized toggle | M3 | P0 | T-032 | `frontend/T-033-toggle` | — | TODO | — | Switches calendar and map |
