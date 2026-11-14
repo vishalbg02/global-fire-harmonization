@@ -63,11 +63,27 @@ Source: FIRMS FAQ **[VERIFIED 2026-11-14]**: https://www.earthdata.nasa.gov/data
 
 | Satellite | Start | End |
 |---|---|---|
-| Terra MODIS | 1 Nov 2000 | Ongoing; ending around early 2027 **[ASSUMPTION: NASA sources disagree]** |
-| Aqua MODIS | Jul 2002 | Ongoing; ending between ~Aug 2026 and ~Sep 2027 **[OPEN: confirm via `data_availability`, T-008]** |
+| Terra MODIS | 1 Nov 2000 | Still delivering detections on 2026-11-14 **[VERIFIED 2026-11-14, T-008]**. Mission end: ending around early 2027 **[ASSUMPTION: NASA sources disagree]** |
+| Aqua MODIS | Jul 2002 | Still delivering detections on 2026-11-14 **[VERIFIED 2026-11-14, T-008]**. Mission end: between ~Nov 2026 and ~Sep 2027 **[OPEN: cannot be determined from FIRMS data]** |
 | S-NPP VIIRS | 20 Jan 2012 | **2 Nov 2026, 15:40 UTC** |
 | NOAA-20 VIIRS | 1 Apr 2018 | Ongoing |
 | NOAA-21 VIIRS | 17 Jan 2024 | Ongoing (not used in the MVP) |
+
+### Aqua/Terra 2026 availability (T-008) **[VERIFIED 2026-11-14]**
+
+Evidence: the 2026 MODIS files pulled in T-002 (world, 2026-01-01 to 2026-11-14, `MODIS_SP` then `MODIS_NRT`) and the FIRMS `missing_data` response saved the same day. Reproduce with `python -I pipeline/check_modis_availability.py`.
+
+- `data_availability` lists MODIS as one source (`MODIS_SP` to 2026-08-31, `MODIS_NRT` 2026-09-01 to 2026-11-14). It cannot separate Aqua from Terra, so the `satellite` column of the detections is used.
+
+| Satellite | First detection | Last detection | Days with detections | Days without | Days without that FIRMS lists as missing |
+|---|---|---|---|---|---|
+| Aqua | 2026-01-01 | 2026-11-14 | 318 of 318 | none | none |
+| Terra | 2026-01-01 | 2026-11-14 | 317 of 318 | 2026-01-12 | 2026-01-12 |
+
+- Both satellites were still delivering on the last day pulled. Terra's single day without detections matches an entry in FIRMS `missing_data`, so it is a documented outage and not a quiet day. Aqua has none.
+- Per month, Aqua has about 1.7 to 3 times as many detection rows as Terra in 2026 (Jan 203,892 vs 73,894; Aug 381,385 vs 164,293). This is an observation only; the cause is not investigated here **[OPEN]**.
+- **Cannot determine from FIRMS data:** when either mission will end. Those dates stay marked as above.
+- Caveat: the `missing_data` table is read from the endpoint that the FIRMS missing-data web page loads (`?action=fetch_data`). It is not a documented API and may change.
 
 ## 5. Additional NASA products considered (not used in the MVP)
 
