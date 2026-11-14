@@ -13,4 +13,5 @@ export const REASON_CODE_SHORT: Record<ReasonCode, string> = {
   SINGLE_WITNESS: 'Single satellite',
   POOLED_CALIBRATION: 'Pooled calibration',
   DIURNAL_CAVEAT: 'Overpass-time caveat',
+  NOT_HARMONIZED: 'Raw data only',
 }

@@ -55,6 +55,10 @@ describe('plain-language reason texts (T-036 acceptance)', () => {
     expect(REASON_TEXTS.POOLED_CALIBRATION).toBe('Local data were sparse, so calibration borrows from the wider region.')
   })
 
+  it('uses the Lead-approved text for NOT_HARMONIZED (contract 0.1.1, D-026)', () => {
+    expect(REASON_TEXTS.NOT_HARMONIZED).toBe("Harmonized values aren't computed yet; this shows raw satellite data only.")
+  })
+
   it('uses the Lead replacement text for DIURNAL_CAVEAT, without the unsourced claim', () => {
     expect(REASON_TEXTS.DIURNAL_CAVEAT).toBe(
       'Satellites pass over at fixed times of day. Fires that burn mainly at other hours can be under-counted, and differently by each satellite.',

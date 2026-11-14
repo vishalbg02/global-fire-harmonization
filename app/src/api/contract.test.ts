@@ -80,6 +80,10 @@ describe('parseMapCell', () => {
     expect(parseMapCell(rawCell({ reason_codes: [...REASON_CODES] })).reason_codes).toHaveLength(REASON_CODES.length)
   })
 
+  it('accepts NOT_HARMONIZED, the contract 0.1.1 reason code on raw-only rows', () => {
+    expect(parseMapCell(rawCell({ reason_codes: ['NOT_HARMONIZED'] })).reason_codes).toEqual(['NOT_HARMONIZED'])
+  })
+
   it('rejects an unknown verdict instead of coercing it', () => {
     expect(() => parseMapCell(rawCell({ verdict: 'MAYBE_ABOVE' }))).toThrow(ContractError)
   })

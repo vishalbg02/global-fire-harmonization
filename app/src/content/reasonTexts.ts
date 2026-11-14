@@ -17,6 +17,7 @@ export const REASON_TEXTS: Record<ReasonCode, string> = {
   AQUA_DRIFT_ERA: "Aqua MODIS's orbit has drifted, so it is not used as a witness for this period.",
   SINGLE_WITNESS: 'Only one satellite contributed this month.',
   POOLED_CALIBRATION: 'Local data were sparse, so calibration borrows from the wider region.',
+  NOT_HARMONIZED: "Harmonized values aren't computed yet; this shows raw satellite data only.",
   DIURNAL_CAVEAT:
     'Satellites pass over at fixed times of day. Fires that burn mainly at other hours can be under-counted, and differently by each satellite.',
 }

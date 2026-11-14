@@ -105,7 +105,7 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
         </section>
       )}
 
-      {!rawOnly && (
+      {(!rawOnly || record.reason_codes.length > 0) && (
       <section aria-labelledby="ev-reasons">
         <h3 id="ev-reasons">Why</h3>
         {record.reason_codes.length === 0 ? (
