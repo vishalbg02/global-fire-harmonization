@@ -104,3 +104,42 @@ def test_build_reads_the_files_and_the_product_metadata_and_a_missing_file_is_an
     (qa / "T-025_validation_entries.json").unlink()
     with pytest.raises(FileNotFoundError):
         vi.build(qa, products)
+
+
+TABLE = """| Test | Expected | Actual | Status | Run date | Notes |
+|---|---|---|---|---|---|
+| A1 | x | 0 of 6 | **FAIL** | 2026-11-15 | |
+| A2 | x | — | NOT_RUN | — | |
+| B1 | x | 13 of 14 | PASS | 2026-11-15 | |
+| B2 | x | — | NOT_RUN | — | |
+| B3 | x | ok | PASS | 2026-11-15 | |
+| C1 | x | — | NOT_RUN | — | |
+| CTRL | x | — | NOT_RUN | — | |
+| D1 | x | 0.818 | PASS | 2026-11-15 | |
+| D2 | x | ok | PASS | 2026-11-15 | |
+| E1 | x | 14 of 14 | PASS | 2026-11-15 | |
+| S1 | x | — | NOT_RUN | — | |
+"""
+
+
+def results_doc() -> dict:
+    status = {"A1-FAMILY": "FAIL", "B1": "PASS", "B3": "PASS", "D1-REGIONS": "PASS", "D2": "PASS", "E1": "PASS", "S1": "NOT_RUN"}
+    tests = [entry(i, s, notes="why") for i, s in status.items()]
+    return {"contract_version": "0.1.1", "method_version": "0.1.0", "generated_at": "x", "synthetic": False, "tests": vi.merge(tests)}
+
+
+def test_the_headline_status_of_each_plan_test_is_the_family_pooled_or_overall_entry():
+    got = vi.plan_statuses(results_doc())
+    assert got["A1"] == "FAIL" and got["D1"] == "PASS" and got["S1"] == "NOT_RUN" and got["A2"] == "NOT_RUN" and len(got) == 11
+
+
+def test_a_plan_table_that_matches_the_results_has_no_problems():
+    assert vi.check_plan_table(TABLE, results_doc()) == []
+
+
+def test_a_wrong_status_a_missing_run_date_a_not_run_with_a_result_and_a_missing_row_are_found():
+    d = results_doc()
+    assert any("section 4 shows 'PASS'" in p for p in vi.check_plan_table(TABLE.replace("**FAIL**", "PASS"), d))
+    assert any("no run date" in p for p in vi.check_plan_table(TABLE.replace("| 14 of 14 | PASS | 2026-11-15 |", "| 14 of 14 | PASS | — |"), d))
+    assert any("must not show an actual result" in p for p in vi.check_plan_table(TABLE.replace("| A2 | x | — |", "| A2 | x | 50% |"), d))
+    assert any("no row in section 4" in p for p in vi.check_plan_table(chr(10).join(x for x in TABLE.splitlines() if not x.startswith("| E1")), d))

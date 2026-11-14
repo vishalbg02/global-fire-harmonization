@@ -118,6 +118,43 @@ def check(doc: dict) -> list[str]:
     return problems
 
 
+# The entry whose status is THE status of a plan test in docs/VALIDATION_PLAN.md section 4 (the Lead's readings: D1 is the pooled share,
+# A1 the family, S1 the overall; the per-region and night D1 entries are separate rows in the results file).
+HEADLINE = {"A1": "A1-FAMILY", "A2": "A2", "B1": "B1", "B2": "B2", "B3": "B3", "C1": "C1", "CTRL": "CTRL", "D1": "D1-REGIONS",
+            "D2": "D2", "E1": "E1", "S1": "S1"}
+
+
+def plan_statuses(doc: dict) -> dict[str, str]:
+    """The status of each plan test as section 4 of the plan must show it (headline entry of the results document)."""
+    by_id = {t["test_id"]: t["status"] for t in doc["tests"]}
+    return {p: by_id[h] for p, h in HEADLINE.items() if h in by_id}
+
+
+def check_plan_table(markdown: str, doc: dict) -> list[str]:
+    """Problems between the section 4 table of VALIDATION_PLAN.md and the results document: a status that differs, a row with no run date
+    although it ran, a NOT_RUN row with an actual result, a test without a row. Only the rows of the plan tests are read."""
+    problems: list[str] = []
+    want = plan_statuses(doc)
+    rows: dict[str, list[str]] = {}
+    for line in markdown.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 6 and cells[0] in HEADLINE:
+            rows[cells[0]] = cells
+    for p, status in want.items():
+        if p not in rows:
+            problems.append(f"{p}: no row in section 4")
+            continue
+        _, _, actual, shown, run_date, _ = rows[p][:6]
+        shown = shown.replace("*", "").strip()
+        if not shown.startswith(status):
+            problems.append(f"{p}: section 4 shows {shown!r}, the results file has {status}")
+        if status == "NOT_RUN" and actual not in ("", "—", "-"):
+            problems.append(f"{p}: a NOT_RUN row must not show an actual result")
+        if status != "NOT_RUN" and run_date in ("", "—", "-"):
+            problems.append(f"{p}: ran ({status}) but has no run date")
+    return problems
+
+
 def build(qa: Path = QA, products: Path = PRODUCTS, now: datetime | None = None) -> dict:
     entries, meta = load_entries(qa)
     product_meta = json.loads((products / "metadata.json").read_text(encoding="utf-8"))
@@ -134,6 +171,9 @@ def main(argv: list[str] | None = None) -> int:
     target = PRODUCTS / "validation_results.json"
     doc = json.loads(target.read_text(encoding="utf-8")) if args.check else build()
     problems = check(doc)
+    plan = ROOT / "docs" / "VALIDATION_PLAN.md"
+    if plan.exists() and not problems:
+        problems = check_plan_table(plan.read_text(encoding="utf-8"), doc)
     if problems:
         print("\n".join(problems))
         return 1
