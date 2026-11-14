@@ -1,0 +1,29 @@
+{
+  "contract_version": "0.1.1",
+  "method_version": "0.1.0-raw-only",
+  "synthetic": false,
+  "generated_at": "2026-11-14T14:44:00Z",
+  "grid": {
+    "analysis_deg": 0.5,
+    "fine_deg": 0.05
+  },
+  "baseline_years": [],
+  "first_month": "2002-07",
+  "latest_month": "2026-11",
+  "provisional_months": [
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+  ],
+  "witnesses": [
+    "AQUA_MODIS",
+    "NOAA20_VIIRS",
+    "SNPP_VIIRS"
+  ],
+  "data_snapshot": {
+    "zips_downloaded": "2026-11-14",
+    "api_pulled": "2026-11-14"
+  },
+  "citation": "We acknowledge the use of data and imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Earth Science Data and Information System (ESDIS), and from LANCE. FIRMS data are provided \"as is\". These files hold raw observations only: no harmonized estimate, baseline or verdict."
+}
