@@ -420,9 +420,10 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
   1. **Counting noise**, per stratum and day/night: `phi x ratio^2 x cell_days`, plus a term that grows with the size of the estimate, `kappa x E^2` (`E`: the witness estimate of the area for that day/night). `phi` is the overdispersion factor and `kappa` a relative error (below); both are the same for every witness, including single-witness months.
   2. **Ratio error, shared.** Strata that take the same ratio share its error, so the errors are added **fully correlated** inside each *ratio source*: a `LOCAL` stratum is its own source, the strata with pooling level `REGION` of one fire region form one source, the strata with level `GLOBAL` form one source (per witness, day/night and season). Each source adds `(sum of cell_days x ratio_sd)^2` (the Lead's `(sum cell_days)^2 x ratio_sd^2`, with each stratum's own `ratio_sd`; the two agree when the `ratio_sd` of a source is common). Different sources are independent **[LIMITATION]**: the region estimates share the global one, and `LOCAL` strata are partly shrunk toward their region, which this grouping by the dominant level does not capture, so the interval of a very large area can still be too narrow.
 - **Zero counts:** the variance of a witness is never below `mean(ratio)^2` (one cell-day).
-- **Combination:** a precision-weighted mean of the witnesses that count. `S = sqrt(chi^2 / (N - 1))` multiplies the combined sd whenever `S > 1`; `disagreement_scale` is `max(S, 1)` with 2 or more witnesses and `null` with one. **The code `WITNESS_DISAGREEMENT` is given only when `S > 2`** (Lead's decision); `SINGLE_WITNESS` with one witness.
-- **Witnesses that count:** only those with every day of the month available. If none counts, the estimate is `null` and `n_witnesses` is 0. The optional `aqua_cutoff` (reason `AQUA_DRIFT_ERA`) is not set; its value comes from T-012 (D-005).
+- **Combination (one method for every month):** the witnesses are combined **separately for day and for night** (a precision-weighted mean of the witnesses that count in that part) and the two combined estimates are **added**; the variances add. `S = sqrt(chi^2 / (N - 1))` is **pooled over both parts** (the `chi^2` and the degrees of freedom are summed) and multiplies the combined sd whenever `S > 1`; `disagreement_scale` is `max(S, 1)` with 2 or more witnesses and `null` with one. **The code `WITNESS_DISAGREEMENT` is given only when `S > 2`** (Lead's decision); `SINGLE_WITNESS` with one witness.
+- **Witnesses that count:** only those with every day of the month available. If none counts, the estimate is `null` and `n_witnesses` is 0. The Aqua drift cutoff (D-005, approved by the Lead 2026-11-14) is `AQUA_FROM = {"D": None, "N": (2024, 5)}`: **Aqua night is not combined from 2024-05 on, Aqua day stays** (reason `AQUA_DRIFT_ERA`). The method is the same for every month: days and nights are combined separately and added, `S` is pooled over both with the degrees of freedom summed, and a night or day part that has data but no witness that counts gives no estimate for the month.
 - **Interval:** 90% normal, `estimate +/- 1.645 sd`, lower bound at 0. `data_level` follows the witnesses that count, with the reason `PROVISIONAL_NRT` for `NRT` and `MIXED`.
+- **First version ("totals method"):** summing day and night per witness and then combining the witnesses is kept as `separate=False`, only for the seam check below. The Indonesia 2015 table and the country shares in this section were computed with the totals method and are labelled "totals method"; the numbers of the method now used are in the subsection "The seam at 2024-05" below.
 
 **Overdispersion `phi` and the size-dependent term `kappa`** (`estimate_dispersion`, fit periods only). **Approved by the Lead 2026-11-14.**
 - **Model:** the variance of a witness estimate for one day/night is `phi x count + kappa x estimate^2`, plus the shared ratio variance. `phi` = 1, `kappa` = 0 is Poisson. The `kappa` term is a relative error: it grows with the square of the size, as the extra-Poisson variance does.
@@ -440,7 +441,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - **Lower bound:** the ratios were fitted on these months, so the two witnesses agree better in them than out of sample, and `phi` and `kappa` are lower bounds. Test D1 (coverage on the holdout years) is the final check.
 - **Compare with the first version:** a single `phi` of 7.7 (day) and 6.5 (night) estimated on units of at least 20 cell-days. The estimate rose with the size of the unit (5.5, 7.7, 14.0 and 24.8 by day for minimum sizes of 5, 20, 100 and 500 cell-days), which is why a constant factor was replaced.
 
-**Tests** (`pipeline/tests/test_harmonize.py`, 27 tests on synthetic data with answers computed by hand):
+**Tests** (`pipeline/tests/test_harmonize.py`; 27 tests of the first version, 38 now, listed in the T-012 subsections below; synthetic data with answers computed by hand):
 - the weighted mean, `chi^2` and sd; equal witnesses are not inflated and conflicting ones are; the stratum-first sum;
 - **shared ratio errors:** two strata on the same pooled region ratio get a larger area variance (74.47) than two `LOCAL` strata (58.37); `GLOBAL` strata of different regions form one source, `REGION` strata of different regions do not;
 - **`phi`:** it scales the counting variance of every witness, including a single one; `solve_phi` recovers planted values and ignores 5% outliers;
@@ -450,7 +451,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - Breaking the code on purpose (regions not shared, `GLOBAL` not shared, ratio errors independent, `phi` ignored or not applied to Aqua, `kappa` ignored, not squared, not applied to Aqua, never positive, size bands ignored, code threshold at 1, fit window ignored, wrong chi-square target) makes tests fail (checked).
 
 **On the real products** (final T-011 products):
-- **Indonesia 2015** (`harmonize_area`). Raw Aqua cell-days are 4,118, 10,761, 20,370, 17,386 and 2,800.
+- **Indonesia 2015, totals method** (`harmonize_area` with `separate=False`; the numbers of the method now used are below). Raw Aqua cell-days are 4,118, 10,761, 20,370, 17,386 and 2,800.
 
   | Month | Poisson only, independent strata | `phi` only (7.72 / 6.53) | **`phi` and `kappa`** | `S` | Code |
   |---|---|---|---|---|---|
@@ -461,7 +462,7 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
   | November | 3,132 (275) | 3,218 (243) | **3,044 (278)** | 1.48 | none |
 
   Estimate (sd). The September interval (17,155 to 20,975) contains the raw Aqua value. Over all 176 Indonesian months with 2 or more witnesses: `S > 1` in 43% and `S > 2` in 8% (with `phi` only: 54% and 26%).
-- **Every country** (66,218 country-months, 39,776 with 2 or more witnesses):
+- **Every country, totals method** (66,218 country-months, 39,776 with 2 or more witnesses):
 
   | | Poisson only | `phi` only | **`phi` and `kappa`** |
   |---|---|---|---|
@@ -477,7 +478,288 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 - **No estimate:** 904 country-months: 2002-07 to 2002-09 (Aqua outage days) and 2026-11 (a partial month).
 - **Run time:** one area takes seconds; `python pipeline/harmonize.py` (every country, two variance variants) takes about 15 minutes; `python pipeline/harmonize.py phi` takes 10 seconds.
 
-**Reading it correctly:** the witnesses disagree beyond their stated uncertainty (`S > 1`) in 26% of the multi-witness country-months and beyond a factor of 2 in 6.8%, so the code `WITNESS_DISAGREEMENT` flags the exceptions. Whether the intervals are the right width is test D1: the Aqua-only years (2002-07 to 2011-12, inside the 2003 to 2022 baseline) have no second witness, so their width rests on `phi` and `kappa` alone.
+- **Every country with the method now used (day and night combined separately), `phi` and `kappa`** (66,218 country-months, 39,776 with 2 or more witnesses; 65,314 with an estimate; the 904 without are the same months as before):
+
+  | | Totals method (first version) | **Day and night separately (now)** |
+  |---|---|---|
+  | `S > 1` | 26% | **23.7%** |
+  | `S > 2` (the code) | 6.8% | **4.6%** |
+  | `S > 3` | 1.9% | 0.83% |
+  | `S > 5` | 0.15% | 0.02% |
+  | 95th percentile of `S` | 2.23 | 1.95 |
+  | Median relative sd | 0.23 | 0.22 |
+  | Indonesia `S > 1` / `S > 2` | 43% / 8% | 58.5% / 13.6% |
+
+  This run was made before two small fixes (the disagreement scale of two witnesses that never cover the same part, and the data level of an excluded Aqua night row); they change only rare months and the `data_level`, not these shares **[ASSUMPTION: not re-run]**.
+
+**Reading it correctly (totals method):** the witnesses disagree beyond their stated uncertainty (`S > 1`) in 26% of the multi-witness country-months and beyond a factor of 2 in 6.8%, so the code `WITNESS_DISAGREEMENT` flags the exceptions. Whether the intervals are the right width is test D1: the Aqua-only years (2002-07 to 2011-12, inside the 2003 to 2022 baseline) have no second witness, so their width rests on `phi` and `kappa` alone.
+
+### Holdout evaluation 2017 to 2021 (T-012) **[VERIFIED 2026-11-14 unless labelled]**
+
+Source: `python pipeline/holdout.py`; the report is `data/interim/qa/holdout_report.json` (not committed). Code: `pipeline/holdout.py`; tests: `pipeline/tests/test_holdout.py` (SYNTHETIC fixtures with answers known by hand).
+
+**How it is done**
+
+- Question: how well does the converted S-NPP estimate predict what Aqua MODIS counted, in months that were not used to fit the ratios?
+- Units: fire-region-months and country-months, 2017-01 to 2021-12, day and night separately. A unit needs a complete month for both Aqua and S-NPP and at least 20 Aqua cell-days (sensitivity at 5 and 100). The day+night total (T) exists only where both a day and a night unit exist.
+- Actual value: the Aqua cell-day count (an estimate with ratio 1, not ground truth).
+- Three predictions on the same units:
+  - ours: the converted S-NPP estimate (T-011 ratios, T-013 aggregation);
+  - raw: the naive raw merge (raw S-NPP cell-days);
+  - global ratio (glob): one ratio per day/night and season (sum Aqua / sum S-NPP raw over the globe), fitted on 2012-01 to 2016-12 only and applied to raw S-NPP cell-days.
+- Global ratios (fit 2012-2016): D {DJF 0.281, MAM 0.273, JJA 0.350, SON 0.279}; N {DJF 0.051, MAM 0.041, JJA 0.071, SON 0.075}.
+- Nothing is fitted on 2017-2021 except as noted under "Reading it correctly".
+- 90% interval = prediction +/- 1.645 x sqrt(var_pred + var_aqua). Per day/night unit, var_pred = phi x vc_S + kappa x e_S^2 + vr_S (S-NPP counting variance at phi = 1, relative-error term on the converted estimate, shared ratio variance) and var_aqua = phi x vc_A + kappa x actual^2. Totals sum the D and N variances. phi = {D 2.25, N 2.47}, kappa = {D 0.0084, N 0.0164} (`harmonize.PHI`, `harmonize.KAPPA`).
+- Variance variants compared: with_phi_kappa (the final model), with_phi_only (phi D 7.72, N 6.53, kappa 0), poisson_only (phi 1, kappa 0).
+- Error measures: ratio predicted/actual (median, 5th and 95th percentile) and the median absolute log error (MALE). A prediction of 0 is floored at 1 cell-day in the log error **[ASSUMPTION]**.
+
+**Main result (Aqua >= 20 cell-days; ours / raw / glob)**
+
+| Level | D/N/T | n | median pred/actual | p05 | p95 | MALE ours | MALE raw | MALE glob |
+|---|---|---|---|---|---|---|---|---|
+| Region | D | 830 | 1.03 / 3.85 / 1.12 | 0.84 / 2.21 / 0.65 | 1.46 / 7.05 / 2.24 | 0.090 | 1.347 | 0.265 |
+| Region | N | 636 | 1.08 / 19.66 / 1.08 | 0.57 / 6.52 / 0.40 | 2.09 / 58.13 / 3.21 | 0.209 | 2.979 | 0.447 |
+| Region | T | 636 | 1.02 / 4.60 / 1.07 | 0.82 / 2.97 / 0.62 | 1.34 / 7.83 / 1.95 | 0.086 | 1.526 | 0.224 |
+| Country | D | 4798 | 1.04 / 4.19 / 1.21 | 0.69 / 2.19 / 0.64 | 1.74 / 9.62 / 2.83 | 0.149 | 1.434 | 0.316 |
+| Country | N | 1611 | 1.02 / 19.08 / 1.03 | 0.47 / 5.69 / 0.31 | 1.89 / 61.76 / 3.66 | 0.224 | 2.949 | 0.569 |
+| Country | T | 1600 | 0.99 / 4.22 / 0.98 | 0.73 / 2.79 / 0.61 | 1.36 / 7.96 / 1.79 | 0.100 | 1.439 | 0.213 |
+
+- Ours has a lower pooled MALE than both baselines in every row (D, N, T at region and country level); against the raw merge it is roughly 10 to 18 times lower.
+- Raw S-NPP counts exceed Aqua by a median factor of about 4 by day and about 19 to 20 by night, so the raw merge is not usable as a combined count; that is the reason for the conversion.
+- Median pred/actual of ours is within about 8% of 1 in every pooled row (1.02 to 1.08 for regions, 0.995 to 1.04 for countries).
+
+**By fire region (n units; median = median pred/actual of ours; MALE of ours, raw, glob)**
+
+| Region | D n | D median | D ours | D raw | D glob | N n | N median | N ours | N raw | N glob |
+|---|---|---|---|---|---|---|---|---|---|---|
+| AUST | 60 | 1.00 | 0.064 | 0.905 | 0.335 | 60 | 1.15 | 0.251 | 2.636 | 0.509 |
+| BOAS | 50 | 0.98 | 0.090 | 0.875 | 0.352 | 38 | 1.08 | 0.304 | 2.957 | 0.461 |
+| BONA | 56 | 1.03 | 0.115 | 0.938 | 0.292 | 30 | 0.74 | 0.437 | 2.578 | 0.622 |
+| CEAM | 60 | 0.96 | 0.070 | 1.631 | 0.367 | 43 | 0.99 | 0.217 | 2.961 | 0.309 |
+| CEAS | 60 | 0.99 | 0.065 | 1.204 | 0.121 | 55 | 1.43 | 0.444 | 3.542 | 0.795 |
+| EQAS | 60 | 1.12 | 0.113 | 1.640 | 0.433 | 31 | 1.31 | 0.290 | 2.794 | 0.408 |
+| EURO | 60 | 1.04 | 0.146 | 1.348 | 0.134 | 33 | 1.04 | 0.281 | 2.916 | 0.223 |
+| MIDE | 60 | 1.13 | 0.164 | 1.574 | 0.347 | 57 | 1.07 | 0.162 | 3.038 | 0.269 |
+| NHAF | 60 | 1.08 | 0.096 | 1.422 | 0.164 | 50 | 1.03 | 0.083 | 3.025 | 0.205 |
+| NHSA | 60 | 1.02 | 0.075 | 1.546 | 0.295 | 38 | 1.07 | 0.156 | 2.749 | 0.290 |
+| SEAS | 60 | 1.03 | 0.084 | 1.627 | 0.359 | 41 | 1.28 | 0.314 | 3.908 | 0.924 |
+| SHAF | 60 | 1.07 | 0.086 | 1.559 | 0.263 | 58 | 1.07 | 0.105 | 3.154 | 0.476 |
+| SHSA | 60 | 1.00 | 0.088 | 1.168 | 0.120 | 60 | 1.05 | 0.112 | 2.277 | 0.542 |
+| TENA | 60 | 1.02 | 0.093 | 0.995 | 0.260 | 42 | 0.90 | 0.362 | 3.116 | 0.708 |
+| UNASSIGNED | 4 | 0.94 | 0.155 | 1.373 | 0.245 | - | - | - | - | - |
+
+**Where ours does not beat a baseline (groups with at least 30 units where MALE ours is larger than a baseline; raw is never the better one)**
+
+- Regions: EURO D (ours 0.146, glob 0.134, n 60) and EURO N (0.281 vs 0.223, n 33). No other region group, D, N or T, loses.
+- Countries (8 groups, all against glob): ESP D (0.177 vs 0.153), KAZ N (0.490 vs 0.383), PRY D (0.104 vs 0.103), SDN D (0.173 vs 0.142), SDN N (0.168 vs 0.136), URY D (0.208 vs 0.184), MLI T (0.080 vs 0.076), SDN T (0.108 vs 0.088).
+- Night is the weaker half: pooled N MALE 0.209 (regions) and 0.224 (countries) against 0.090 and 0.149 by day, and the 5th to 95th percentile range of the N ratio is wide (0.57 to 2.09 for regions, 0.47 to 1.89 for countries). **[HYPOTHESIS]** few night detections per unit and a night ratio estimated from fewer cells; not tested.
+
+**Bias by year (median log(pred/actual), ours)**
+
+| Level | D/N/T | 2017 | 2018 | 2019 | 2020 | 2021 |
+|---|---|---|---|---|---|---|
+| Region | D | -0.007 | +0.035 | +0.026 | +0.052 | +0.029 |
+| Region | N | +0.026 | +0.101 | +0.046 | +0.105 | +0.126 |
+| Region | T | -0.004 | +0.020 | +0.022 | +0.030 | +0.025 |
+| Country | D | +0.001 | +0.061 | +0.034 | +0.049 | +0.033 |
+| Country | N | -0.004 | +0.065 | +0.022 | +0.021 | +0.019 |
+| Country | T | -0.020 | +0.001 | -0.003 | -0.006 | -0.005 |
+
+- Ours is slightly high from 2018 on at region level, most at night (+0.10 to +0.13 in 2018, 2020 and 2021); by day and in the total it is at most +0.05 and +0.03. The pattern is not a clean monotonic drift. **[OPEN]** whether the night offset is Aqua drift or an S-NPP effect; that is the subject of the Aqua drift analysis, not of this section.
+
+**Coverage of the 90% interval (target 80% to 97%)**
+
+| Level | Variant | D/N units | D | N | Total (D+N) |
+|---|---|---|---|---|---|
+| Region | with_phi_kappa | 0.818 | 0.870 | 0.750 | 0.847 |
+| Region | with_phi_only | 0.616 | 0.587 | 0.654 | 0.506 |
+| Region | poisson_only | 0.333 | 0.307 | 0.366 | 0.266 |
+| Country | with_phi_kappa | 0.811 | 0.817 | 0.794 | 0.826 |
+| Country | with_phi_only | 0.779 | 0.775 | 0.791 | 0.601 |
+| Country | poisson_only | 0.452 | 0.451 | 0.455 | 0.301 |
+
+- Final model (with_phi_kappa): pooled coverage is inside 80% to 97% for D/N units (regions 0.818, countries 0.811), for day (0.870, 0.817) and for the totals (0.847, 0.826). It is below 80% for night units at both levels (regions 0.750, countries 0.794). So the target is met for the pooled units and totals and not met for night units taken alone.
+- With phi only the target is not met: regions 0.616 (total 0.506), country totals 0.601 (country D/N units 0.779 is also just below). Poisson only is far too narrow (0.333 regions, 0.452 countries). The kappa term is what brings the intervals into the target range (with phi and kappa estimated on the S-NPP fit period, see below).
+- By group (at least 30 units, final model): 7 of 14 region groups are inside 80% to 97% for D/N units (range 0.70 to 0.96) and 7 of 14 for region totals (0.67 to 1.00). 45 of 87 countries are inside for D/N units (range 0.39 to 1.00); 16 of 19 countries for totals (0.68 to 0.96). The pooled number meets the target, but roughly half of the individual regions and countries fall below 80%.
+- Lowest country D/N unit coverages (at least 30 units) include DZA 0.41, MWI 0.39, DEU 0.56, JPN 0.57, CHN 0.58 and PER 0.54; reasons were not investigated. **[OPEN]**
+
+**Coverage check asked by the Lead on PR #43 [VERIFIED]** (final model `phi` and `kappa`; 90% and 50% intervals; the rule below was fixed by the Lead before these numbers were seen).
+
+| Level | Units | 90% interval | 50% interval |
+|---|---|---|---|
+| Regions, day/night units | 1,466 | **0.818** | 0.471 |
+| Regions, day | 830 | 0.870 | 0.516 |
+| Regions, night | 636 | 0.750 | 0.414 |
+| Regions, day+night total | 636 | 0.847 | 0.497 |
+| Countries, day/night units | 6,409 | **0.811** | 0.439 |
+| Countries, day | 4,798 | 0.817 | 0.448 |
+| Countries, night | 1,611 | 0.794 | 0.412 |
+| Countries, day+night total | 1,600 | 0.826 | 0.463 |
+
+**By size band** (Aqua cell-days of the unit; 90% interval and 50% interval in brackets; units in brackets of the band at 20 or more; the 5 to 20 band comes from the run with a minimum of 5):
+
+| Band | Regions D | Regions N | Countries D | Countries N |
+|---|---|---|---|---|
+| 5 to 20 | 0.828 (0.483), n 29 | 0.582 (0.276), n 134 | 0.831 (0.482), n 1,750 | 0.858 (0.486), n 1,118 |
+| 20 to 100 | 0.727 (0.273), n 22 | 0.712 (0.349), n 229 | 0.814 (0.424), n 1,852 | 0.779 (0.396), n 926 |
+| 100 to 500 | 0.770 (0.415), n 135 | 0.752 (0.407), n 226 | 0.764 (0.409), n 1,239 | 0.830 (0.429), n 529 |
+| 500 and more | 0.895 (0.544), n 673 | 0.796 (0.503), n 181 | 0.858 (0.501), n 1,707 | 0.763 (0.449), n 156 |
+
+**By period** (the Lead's split: a widening factor `c` on 2017 to 2018 only, coverage on 2019 to 2021):
+
+| Level | 90%, 2017-2018 | 90%, 2019-2021 | 50%, 2017-2018 | 50%, 2019-2021 |
+|---|---|---|---|---|
+| Regions | 0.828 (587 units) | 0.811 (879) | 0.504 | 0.449 |
+| Countries | 0.824 (2,520) | 0.803 (3,889) | 0.437 | 0.440 |
+
+**The pre-registered rule (Lead, PR #43):** if coverage is below 80%, estimate one factor `c` on 2017 to 2018 only and report 2019 to 2021 with it; if it is 80% to 97%, change nothing and report it; above 97%, report only.
+- **Applied here:** the pooled coverage of the 90% interval is 0.818 (regions) and 0.811 (countries), inside 80% to 97%, so **nothing is changed** and the honest holdout number is **0.811 and 0.803 on 2019 to 2021**.
+- **Not met, and not hidden:** night units alone (0.750 regions, 0.794 countries), the 100 to 500 and 20 to 100 bands at region level (0.71 to 0.77), country night over 500 cell-days (0.763), and the 5 to 20 band at region night (0.582). The 50% interval covers 0.47 and 0.44, below 50%, so the intervals are slightly too narrow in the middle as well.
+- **For information, not applied:** the smallest `c` giving 90% on 2017 to 2018 is 1.26 (regions) and 1.31 (countries); with it, the coverage on 2019 to 2021 would be 0.877 and 0.887 (the 50% interval, `c` 0.97 and 1.16: 0.439 and 0.500).
+
+**Sensitivity to the minimum Aqua cell-days**
+
+| Level | min | n D | n N | MALE ours D / N | with_phi_kappa coverage: D/N, D, N, total | with_phi_only: D/N, total |
+|---|---|---|---|---|---|---|
+| Region | 5 | 859 | 770 | 0.094 / 0.260 | 0.799, 0.868, 0.721, 0.839 | 0.630, 0.530 |
+| Region | 20 | 830 | 636 | 0.090 / 0.209 | 0.818, 0.870, 0.750, 0.847 | 0.616, 0.506 |
+| Region | 100 | 808 | 407 | 0.088 / 0.161 | 0.840, 0.874, 0.771, 0.860 | 0.584, 0.405 |
+| Country | 5 | 6548 | 2729 | 0.191 / 0.286 | 0.821, 0.821, 0.820, 0.806 | 0.828, 0.678 |
+| Country | 20 | 4798 | 1611 | 0.149 / 0.224 | 0.811, 0.817, 0.794, 0.826 | 0.779, 0.601 |
+| Country | 100 | 2946 | 685 | 0.113 / 0.173 | 0.818, 0.819, 0.815, 0.869 | 0.682, 0.483 |
+
+- The error falls as the minimum rises (more cell-days, less relative noise). With the final model the pooled coverage stays between 0.72 and 0.87 over all thresholds; night units are below 0.80 at region level for all three thresholds (0.721, 0.750, 0.771). At 5 cell-days the pooled region D/N coverage (0.799) is just under the target. With phi only, the totals stay far below target at every threshold.
+
+**Reading it correctly**
+
+- Aqua and S-NPP observe many of the same fires, so the two sides are not independent. The interval adds var_pred and var_aqua as if they were, which ignores their covariance. **[ASSUMPTION]** independence; the covariance was not quantified. The coverage numbers describe this approximation.
+- phi and kappa (T-013) were estimated on country-months of the fit periods: Aqua against S-NPP in 2012 to 2016 and Aqua against NOAA-20 in 2018-04 to 2021-12. The second pair overlaps the months of this holdout (the Aqua side is the same), so coverage on 2017-2021 is not a clean out-of-sample test of the variance model. The T-011 ratios and the global baseline are out-of-sample for S-NPP.
+- Aqua is the reference here but is itself an estimate and subject to drift; agreement with Aqua is not agreement with the truth. Hotspots are not fire counts or burned area.
+- D1, the independent final check, has not been run; these results do not replace it. **[OPEN]**
+
+### Aqua drift diagnostic (T-012) **[VERIFIED 2026-11-14 unless labelled]**
+
+Code `pipeline/aqua_drift.py`, tests `pipeline/tests/test_aqua_drift.py`, figure `docs/figures/aqua_drift.png`, report `data/interim/qa/aqua_drift_report.json` (not committed). **Nothing in this section is applied anywhere**; the proposal is for the Lead's decision (D-005).
+
+#### Question and series
+
+Is the Aqua / converted-VIIRS ratio R(t) stable after the T-011 fit years? R(t) is the monthly ratio of the Aqua estimate to the converted VIIRS estimate (the T-011 ratios exactly as fitted, nothing refitted), computed globally and per fire region, day and night separately, from S-NPP and from NOAA-20 separately. Only months in which both witnesses are complete enter a series. The primary series is global day, S-NPP (164 months from 2012-01). The last complete month of both VIIRS witnesses is 2026-10.
+
+#### Pre-registered method (fixed in the task prompt before any result was seen) [VERIFIED]
+
+On y(t) = log R(t) of the global day series from S-NPP, fit by least squares a model that is flat up to a break month b and linear afterwards, continuous at b: y = a + s x max(0, t - b). Candidate b run from 2018-01 to 2025-06. The onset is the b with the smallest residual sum of squares. Its 90% interval is the 5th to 95th percentile of b over 1,000 moving-block bootstrap replicates of the residuals (blocks of 6 months, fixed seed; every replicate repeats the whole search over b). The slope after b is reported with the 5th to 95th percentile of the replicate slopes. Drift is DETECTED only if the slope interval excludes 0 AND the break model beats the flat model by BIC, where BIC = n log(RSS / n) + k log n. The same procedure is repeated, as confirmation and not as selection, for the night series, for NOAA-20 (from 2018-04) and for each fire region.
+
+#### Choices the registered method left open [VERIFIED]
+
+- BIC parameter counts: flat k = 2 (level, sigma); break k = 4 (level, slope, break month, sigma).
+- Incomplete months are dropped: a month enters only if Aqua and the VIIRS witness are both complete (the global value needs every entity complete) and both values are above zero.
+- Regional series: a month also needs at least 20 cell-days on each side; series with fewer than 60 months are not fitted. Region UNASSIGNED has too few months (2 to 12) and is not fitted.
+- NOAA-20 series start in 2018-04, so their first candidate month is 2019-04 (12 months after the first month); the last candidate stays 2025-06.
+- Interval definitions: the onset interval is the 5th to 95th percentile of the bootstrap break months, reported on the month grid; the slope is the log-slope s converted to percent per year as 100 x (exp(12 s) - 1), with the 5th to 95th percentile of the replicate slopes converted the same way. dBIC is BIC(flat) minus BIC(break), so positive favours the break model.
+- Bootstrap: 1000 replicates, block length 6 months, seed 2012.
+
+#### Result of the primary series [VERIFIED]
+
+Global day, S-NPP: onset 2025-06 (90% interval 2019-02 to 2025-06); slope after onset -5.4% per year (90% interval -8.5 to -0.4); BIC break -853.5 against flat -859.6, so the flat model is better by 6.1. The slope interval excludes 0 but the break model does not beat the flat model by BIC. **Drift is NOT detected by the registered rule.** The onset sits at the last allowed candidate (2025-06), so the break is at the edge of the range and the fitted decline covers only the final months.
+
+#### Confirmation series, global [VERIFIED]
+
+| Daynight | Witness | Detected | Onset | Onset 90% interval | Slope %/yr (90%) | dBIC | Months |
+|---|---|---|---|---|---|---|---|
+| N | SNPP_VIIRS | yes | 2024-05 | 2022-10 to 2025-04 | -12.0 (-22.8 to -5.5) | +28.9 | 164 |
+| N | NOAA20_VIIRS | yes | 2024-09 | 2024-03 to 2025-02 | -19.0 (-25.4 to -14.1) | +50.7 | 99 |
+| D | NOAA20_VIIRS | no | 2025-06 | 2020-01 to 2025-06 | -6.1 (-9.2 to -0.5) | -2.7 | 99 |
+
+Global night is detected in both witnesses (S-NPP onset 2024-05, NOAA-20 onset 2024-09). Global day from NOAA-20 is not detected.
+
+#### Fire regions, day and night, both witnesses [VERIFIED]
+
+Each cell: detected; onset; slope in %/yr. Region codes are the fire-region codes of the pipeline. Intervals for every cell are in the report.
+
+| Region | Day S-NPP | Day NOAA-20 | Night S-NPP | Night NOAA-20 |
+|---|---|---|---|---|
+| AUST | no; 2021-02; +0.8 | no; 2021-01; +0.9 | no; 2025-02; -16.1 | no; 2025-03; -20.1 |
+| BOAS | no; 2020-08; +1.8 | no; 2023-11; +4.9 | no; 2023-05; -13.0 | yes; 2024-04; -28.1 |
+| BONA | no; 2024-03; +3.1 | no; 2020-03; +1.6 | no; 2018-01; +5.8 | not fitted (n=50) |
+| CEAM | yes; 2018-10; +1.7 | yes; 2019-04; +2.1 | no; 2025-06; +4.4 | no; 2024-08; -3.1 |
+| CEAS | yes; 2018-12; +2.1 | no; 2019-04; +1.6 | no; 2019-08; -3.2 | yes; 2023-04; -9.4 |
+| EQAS | no; 2018-01; -0.9 | no; 2025-06; +11.2 | no; 2018-10; -3.0 | not fitted (n=48) |
+| EURO | no; 2020-07; +2.5 | no; 2020-05; +3.1 | no; 2025-06; -3.6 | not fitted (n=50) |
+| MIDE | no; 2022-03; +4.1 | yes; 2021-04; +4.7 | no; 2019-12; -1.0 | no; 2020-01; -1.9 |
+| NHAF | no; 2025-06; -11.7 | no; 2025-06; -5.4 | yes; 2024-10; -12.5 | yes; 2023-10; -8.6 |
+| NHSA | yes; 2022-06; +4.0 | yes; 2022-03; +5.0 | yes; 2024-03; -11.8 | yes; 2024-03; -13.1 |
+| SEAS | no; 2023-06; +4.8 | no; 2021-05; +2.1 | no; 2019-05; -2.3 | no; 2019-08; -3.0 |
+| SHAF | no; 2025-06; -5.0 | no; 2025-06; -8.6 | yes; 2018-01; -3.2 | yes; 2024-04; -16.9 |
+| SHSA | yes; 2021-06; +3.6 | yes; 2020-12; +3.0 | yes; 2024-06; -12.3 | yes; 2024-08; -18.4 |
+| TENA | yes; 2024-10; -13.2 | yes; 2021-11; -2.6 | no; 2021-09; -8.4 | no; 2021-08; -7.4 |
+| UNASSIGNED | not fitted (n=12) | not fitted (n=6) | not fitted (n=2) | not fitted (n=2) |
+
+The regional results are descriptive confirmation, not a selection of a cutoff. They are many tests without a multiplicity correction [ASSUMPTION: the registered method has none, and none was added]. Several regional series are detected with onsets years before 2024; those are not the same phenomenon as the night-time decline and are not interpreted here [OPEN].
+
+#### R(t) in the fit years [VERIFIED]
+
+Near 1 by construction, because T-011 fitted the ratios on these years.
+
+| Series | Months | Median R | Min R | Max R |
+|---|---|---|---|---|
+| S-NPP day, 2012-2016 | 58 | 0.990 | 0.878 | 1.114 |
+| S-NPP night, 2012-2016 | 58 | 0.978 | 0.802 | 1.170 |
+| NOAA-20 day, 2018-2021 | 45 | 0.992 | 0.677 | 1.141 |
+| NOAA-20 night, 2018-2021 | 45 | 0.972 | 0.703 | 1.282 |
+
+#### Sensitivity (not part of the registered method) [VERIFIED as computed; sensitivity only]
+
+- Block length 3 months: not detected, onset 2025-06 (interval 2019-01 to 2025-06). Block length 12 months: not detected, onset 2025-06 (interval 2019-04 to 2025-06).
+- Null bootstrap of the break search (primary series): observed gain 0.0246, null 95th percentile 0.0307, p = 0.074.
+- Candidate range extended to 2026-04: day not detected (onset 2025-09, slope -7.7% per year, dBIC -5.4); night detected (onset 2024-05, interval 2022-10 to 2025-04, slope -12.0% per year, dBIC +28.9).
+- Primary residuals: lag-1 autocorrelation -0.19, standard deviation 0.071 (log units).
+
+#### Proposal
+
+**[VERIFIED]** By the registered rule **no `aqua_cutoff` is proposed**, because the primary series (global day, S-NPP) is not detected. The report holds `aqua_cutoff: null`.
+
+**[APPROVED by the Lead 2026-11-14 as a documented deviation from the registered rule; see D-005]** Night-time Aqua / converted VIIRS falls from about 2024-05 (S-NPP) to about 2024-09 (NOAA-20), in both witnesses; the onset intervals overlap (S-NPP 2022-10 to 2025-04, NOAA-20 2024-03 to 2025-02). The Lead approved a **night-only cutoff from 2024-05** (the earlier onset; Aqua day stays, as the registered rule says). This is a deviation from the registered day-only rule, chosen after seeing the results, and is therefore not a registered result; it is recorded as such in D-005 and in the risk S17. The cause (an Aqua change, a processing change, or a VIIRS change) is [OPEN]; this diagnostic cannot separate them.
+
+#### Effect of the cutoff in `harmonize_area` [VERIFIED]
+
+`AQUA_FROM = {"D": None, "N": (2024, 5)}` is the module default. There is one method for every month (days and nights combined separately and added, see T-013 above), so the cutoff changes only which witnesses enter. Checked on the real products:
+- **Months before 2024-05 are identical with and without the cutoff**: the same method and the same witnesses (Indonesia, Brazil and Australia, 262 months each: identical to 1e-12, the floating-point order of the sums).
+- **2024-05 to 2026-10** (31 months; the month 2026-11 is partial): the estimates change only through the exclusion of Aqua night; the months carry `AQUA_DRIFT_ERA`. **Size of the change [VERIFIED], default against no cutoff, with the single method:** the estimate moves by +1.18% on average for Indonesia, +0.68% for Brazil and +0.85% for Australia, and the sd by -19.2%, -0.6% and -11.8% (the sd falls where Aqua night, with its large variance, no longer enters the night part). Months before 2024-05 differ by at most 1.5e-11 (the order of floating-point sums).
+- **The holdout does not move:** its window is 2017 to 2021 and Aqua is the target there, not a combined witness (90% coverage 0.818 for regions and 0.811 for countries, as before).
+- **Tests** (`pipeline/tests/test_harmonize.py`, 38 tests, all pass): the default is night from 2024-05 and no day cutoff; night excluded from 2024-05 with Aqua day kept, by hand; the code `AQUA_DRIFT_ERA` present and absent; two months, before and after 2024-05, with identical inputs differ only through the Aqua night exclusion (with no Aqua night rows the two months are identical; May equals the data without Aqua night; April keeps it); Aqua day still weighs in after the cutoff (and Aqua night's 500 does not); a night with no other witness gives no estimate; the disagreement is pooled over day and night; the two ways of combining agree exactly when day and night agree, and the totals method (`separate=False`) differs when they disagree.
+
+#### The seam at 2024-05: both ways of combining (Lead review, PR #45) [VERIFIED]
+
+**Concern:** switching the combination method at the cutoff month could create an artificial step. **Rule (fixed by the Lead before the run):** compute both ways for 2012-01 to 2024-04, every country-month and fire-region-month. If the median of the absolute value of log(separate / totals) of the estimate is at most 1% **and** its 95th percentile is at most 5%, keep the code as it was; otherwise use the separate day/night combination for all months and re-run the holdout coverage and Indonesia 2015. Run: `python pipeline/harmonize.py seam` (`data/interim/qa/harmonize_seam.json`). 29,542 entity-months, 29,229 of them with 2 or more witnesses.
+
+| | Entity-months | Median abs. log ratio | 95th pct | 99th pct | Max | sd ratio, median | sd ratio, 5th to 95th pct |
+|---|---|---|---|---|---|---|---|
+| All | 29,542 | 0.0035 | 0.280 | 0.894 | 4.30 | 1.000 | 0.71 to 1.70 |
+| Country | 27,322 | 0.0039 | 0.315 | 0.907 | 4.30 | 1.000 | 0.71 to 1.70 |
+| Fire region | 2,220 | 0.0012 | 0.041 | 0.259 | 0.72 | 1.000 | 0.73 to 1.77 |
+
+(log units; `python pipeline/harmonize.py seam`, `data/interim/qa/harmonize_seam.json`.) Over the 29,229 entity-months with 2 or more witnesses the figures are the same to the third decimal.
+
+- **Decision:** the median is within 1% but the 95th percentile (0.280, about 28%) is far above 5%, so by the rule **the separate day/night combination is used for all months**. This is the method described in T-013 above.
+- **Holdout re-run:** unchanged, because it does not use the combined estimate (Aqua is its target): 90% coverage 0.818 (regions) and 0.811 (countries); 50% coverage 0.471 and 0.439; 2019 to 2021 0.811 and 0.803.
+- **Indonesia 2015, new method vs totals method** (estimate (sd), `S`):
+
+  | Month | New method | `S` | Totals method | `S` |
+  |---|---|---|---|---|
+  | July | 4,229.3 (251.4) | 1.00 | 4,229.0 (251.5) | 1.00 |
+  | August | 10,627.3 (633.4) | 1.00 | 10,627.6 (633.4) | 1.00 |
+  | September | 19,068.7 (1,063.0) | 1.00 | 19,065.3 (1,161.3) | 1.09 |
+  | October | 17,202.7 (946.7) | 1.00 | 17,204.0 (946.9) | 1.00 |
+  | November | 3,039.2 (306.2) | 1.63 | 3,044.3 (277.6) | 1.48 |
+
+  Raw Aqua cell-days in September: 20,370; the new September interval (17,320 to 20,817) contains it. Over all 176 Indonesian months with 2 or more witnesses: `S > 1` in 58.5% and `S > 2` in 13.6% (totals method: 43% and 8%); median relative sd 0.093.
+- **Why the tail is large [HYPOTHESIS, not investigated]:** the two ways differ most where day and night disagree differently across the witnesses, so that weighting the witnesses once for the total and weighting them separately for day and night give different answers.
+
+#### Problem of the registered design [VERIFIED as a property of the design]
+
+A drift visible only at night, or only in the last months before the end of the candidate range, can fail a day-only decision rule. Here the day series has a slope interval that excludes 0 but a break at the range edge, which BIC does not reward, while night is clearly detected in both witnesses. The registered primary series therefore does not report the night-time change.
+
+**Nothing is applied.** Figure: `docs/figures/aqua_drift.png`.
 
 ### Raw-only products for the app (T-014a) **[VERIFIED 2026-11-14 unless labelled]**
 

@@ -81,7 +81,7 @@ For any area (country, continent, custom), sum the raw cell-days **per witness p
 ### 4.6 Baseline and verdicts
 - Baseline: the same calendar month, years 2003–2022 **[PROPOSED, D-010]**. Percentiles p25, p50 and p75 come from the harmonized estimates.
 - Probabilities `p_above` (> p75), `p_below` (< p25) and `p_within` come from the estimate's uncertainty distribution. Baseline percentile uncertainty is not propagated in v0.1 **[LIMITATION]**.
-- **Verdict rules** (thresholds to be locked at G1):
+- **Verdict rules** (locked at G1 on 2026-11-14: **D-028** in `DECISION_LOG.md` gives the exact order, the minimum-data thresholds and the caveat codes):
 
 | Condition | Verdict |
 |---|---|

@@ -89,6 +89,9 @@ PHI = {"D": 2.25, "N": 2.47}      # `python pipeline/harmonize.py phi` on the T-
 KAPPA = {"D": 0.0084, "N": 0.0164}
 KAPPA0 = {"D": 0.0, "N": 0.0}
 PHI_ONLY = {"D": 7.72, "N": 6.53}  # phi alone, units of at least 20 cell-days (the first PR #43 version), kept for comparison
+# D-005 (approved by the Lead 2026-11-14, a documented deviation from the registered day-only rule): Aqua night is not combined from
+# 2024-05 on (night drift detected in both witnesses: S-NPP onset 2024-05, NOAA-20 2024-09; the earlier onset is used); Aqua day stays.
+AQUA_FROM = {"D": None, "N": (2024, 5)}
 SIZE_BANDS = (5.0, 20.0, 100.0, 500.0)   # lower edges of the size bands of a country-month, in cell-days
 
 
@@ -286,42 +289,97 @@ def _level(lo: str, hi: str) -> str:
     return lo if lo == hi else "MIXED"
 
 
-def records_from(agg: pd.DataFrame, n_cells: dict[tuple[str, str], int], aqua_cutoff: tuple[int, int] | None = None,
-                 phi: dict[str, float] | None = None, kappa: dict[str, float] | None = None) -> list[dict]:
-    """Contract-shaped records from the aggregated table."""
-    phi = phi or PHI
-    kappa = KAPPA if kappa is None else kappa
-    out: list[dict] = []
-    for (etype, eid, year, month), g in agg.groupby(["entity_type", "entity_id", "year", "month"], sort=True):
-        raw_by = {w: int(g.loc[g.witness == w, "raw"].sum()) for w in RAW_WITNESSES if (g.witness == w).any()}
-        est = np.full((1, len(WITNESSES)), np.nan)
-        var = np.full((1, len(WITNESSES)), np.nan)
-        use = np.zeros((1, len(WITNESSES)), dtype=bool)
-        cutoff_hit = False
+def _excluded_daynights(aqua_from: dict[str, tuple[int, int] | None], year: int, month: int) -> set[str]:
+    """The day/night parts for which Aqua is not combined in this month (from the start month of its exclusion on)."""
+    return {dn for dn, start in aqua_from.items() if start is not None and (year, month) >= tuple(start)}
+
+
+def _combine_witnesses(g: pd.DataFrame, phi: dict[str, float], kappa: dict[str, float], excluded: set[str], separate: bool = True) -> dict:
+    """Combine the witnesses of one entity-month: separately for day and for night, then add the two combined estimates (their
+    variances add; the disagreement `S` is pooled over both parts). One method for every month, so that excluding Aqua night from
+    2024-05 (D-005) creates no step in the method. `separate=False` is the earlier way (sum day and night per witness, then
+    combine the witnesses), kept only to measure how much the two differ (`seam_check`)."""
+    n_w = len(WITNESSES)
+    if not excluded and not separate:
+        est, var, use = np.full((1, n_w), np.nan), np.full((1, n_w), np.nan), np.zeros((1, n_w), dtype=bool)
         for j, w in enumerate(WITNESSES):
             rows = g[g.witness == w]
             if rows.empty:
                 continue
             if rows["missing"].sum():
-                raise ValueError(f"{etype} {eid} {year}-{month:02d}: {int(rows['missing'].sum())} stratum rows have no calibration ratio")
+                raise ValueError(f"{int(rows['missing'].sum())} stratum rows have no calibration ratio")
             est[0, j] = rows["e"].sum()
             counting = sum(phi[r.daynight] * r.vc + kappa[r.daynight] * r.e ** 2 for r in rows.itertuples())
             floor = float(rows["rbar"].mean()) ** 2
             var[0, j] = max(counting + float(rows["vr"].sum()), floor)       # a zero count still carries one cell-day of variance
             use[0, j] = bool(rows["complete"].all())
-            if w == "AQUA_MODIS" and aqua_cutoff is not None and (year, month) > aqua_cutoff:
-                cutoff_hit = cutoff_hit or use[0, j]
-                use[0, j] = False
         c = combine(est, var, use)
-        n = int(c["n"][0])
         used = [w for j, w in enumerate(WITNESSES) if use[0, j] and np.isfinite(est[0, j])]
-        levels = g[g.witness.isin(used)] if used else g
+        return {"n": int(c["n"][0]), "used": used, "parts": {(w, dn) for w in used for dn in ("D", "N")}, "estimate": float(c["estimate"][0]),
+                "sd": float(c["sd"][0]), "scale": float(c["scale"][0]), "disagree": bool(c["disagree"][0]), "aqua_excluded": False}
+    total, plain_var, chi2, dof, used, parts, hit, complete = 0.0, 0.0, 0.0, 0, set(), set(), False, True
+    for dn in ("D", "N"):
+        est, var, use = np.full((1, n_w), np.nan), np.full((1, n_w), np.nan), np.zeros((1, n_w), dtype=bool)
+        for j, w in enumerate(WITNESSES):
+            rows = g[(g.witness == w) & (g.daynight == dn)]
+            if rows.empty:
+                continue
+            r = rows.iloc[0]
+            if r["missing"]:
+                raise ValueError(f"{int(r['missing'])} stratum rows have no calibration ratio")
+            est[0, j] = float(r.e)
+            var[0, j] = max(phi[dn] * float(r.vc) + kappa[dn] * float(r.e) ** 2 + float(r.vr), float(r.rbar) ** 2)
+            use[0, j] = bool(r.complete)
+            if w == "AQUA_MODIS" and dn in excluded:
+                hit = hit or use[0, j]
+                use[0, j] = False
+        if not (g.daynight == dn).any():
+            continue                              # no data at all for this part (not possible in the real products): nothing to add
+        c = combine(est, var, use)
+        if int(c["n"][0]) == 0:
+            complete = False                      # a day/night part with data but no witness that counts: no total
+            continue
+        n_dn = int(c["n"][0])
+        total += float(c["estimate"][0])
+        plain_var += float(c["sd"][0]) ** 2 / (float(c["scale"][0]) ** 2 if n_dn >= 2 else 1.0)
+        chi2 += float(c["chi2"][0])
+        dof += n_dn - 1
+        used_dn = {w for j, w in enumerate(WITNESSES) if use[0, j] and np.isfinite(est[0, j])}
+        used |= used_dn
+        parts |= {(w, dn) for w in used_dn}
+    if not complete:
+        return {"n": 0, "used": [], "parts": set(), "estimate": float("nan"), "sd": float("nan"), "scale": float("nan"), "disagree": False,
+                "aqua_excluded": hit}
+    s = float(np.sqrt(chi2 / dof)) if dof > 0 else float("nan")
+    # two witnesses overall but never two for the same part (for example S-NPP by day and NOAA-20 by night): nothing to cross-check,
+    # so the scale is 1 (the contract wants a scale of at least 1 with 2 or more witnesses); one witness overall: no scale
+    scale = max(s, 1.0) if dof > 0 else (1.0 if len(used) >= 2 else float("nan"))
+    return {"n": len(used), "used": [w for w in WITNESSES if w in used], "parts": parts, "estimate": total,
+            "sd": float(np.sqrt(plain_var)) * (scale if dof > 0 else 1.0), "scale": scale, "disagree": bool(dof > 0 and s > DISAGREEMENT_CODE),
+            "aqua_excluded": hit}
+
+
+def records_from(agg: pd.DataFrame, n_cells: dict[tuple[str, str], int], aqua_from: dict[str, tuple[int, int] | None] | None = None,
+                 phi: dict[str, float] | None = None, kappa: dict[str, float] | None = None, separate: bool = True) -> list[dict]:
+    """Contract-shaped records from the aggregated table (`separate`: combine day and night separately, the default; False: the earlier method)."""
+    phi = phi or PHI
+    kappa = KAPPA if kappa is None else kappa
+    aqua_from = AQUA_FROM if aqua_from is None else aqua_from
+    out: list[dict] = []
+    for (etype, eid, year, month), g in agg.groupby(["entity_type", "entity_id", "year", "month"], sort=True):
+        raw_by = {w: int(g.loc[g.witness == w, "raw"].sum()) for w in RAW_WITNESSES if (g.witness == w).any()}
+        try:
+            c = _combine_witnesses(g, phi, kappa, _excluded_daynights(aqua_from, int(year), int(month)), separate)
+        except ValueError as e:
+            raise ValueError(f"{etype} {eid} {year}-{month:02d}: {e}") from e
+        n, used = c["n"], c["used"]
+        levels = g[[(w, d) in c["parts"] for w, d in zip(g.witness, g.daynight, strict=True)]] if used else g       # the rows that were used
         reasons = []
         if n == 1:
             reasons.append("SINGLE_WITNESS")
-        if bool(c["disagree"][0]):
+        if c["disagree"]:
             reasons.append("WITNESS_DISAGREEMENT")
-        if cutoff_hit:
+        if c["aqua_excluded"]:
             reasons.append("AQUA_DRIFT_ERA")
         level = _level(levels["lo"].min(), levels["hi"].max())
         if level in ("NRT", "MIXED"):
@@ -329,9 +387,9 @@ def records_from(agg: pd.DataFrame, n_cells: dict[tuple[str, str], int], aqua_cu
         rec = {"entity_type": etype, "entity_id": eid, "entity_name": g["entity_name"].iloc[0], "year": int(year), "month": int(month),
                "estimate": None, "ci90_low": None, "ci90_high": None, "sd": None,
                "raw_combined_cell_days": int(sum(raw_by.values())), "witnesses_used": used, "n_witnesses": n,
-               "disagreement_scale": None if np.isnan(c["scale"][0]) else float(c["scale"][0])}
+               "disagreement_scale": None if np.isnan(c["scale"]) else float(c["scale"])}
         if n > 0:
-            rec["estimate"], rec["sd"] = float(c["estimate"][0]), float(c["sd"][0])
+            rec["estimate"], rec["sd"] = float(c["estimate"]), float(c["sd"])
             rec["ci90_low"], rec["ci90_high"] = interval(rec["estimate"], rec["sd"])
         rec.update({k: None for k in HARMONIZED_NULLS})
         rec.update({"verdict": "CANNOT_DETERMINE", "reason_codes": sorted(reasons), "data_level": level,
@@ -342,12 +400,14 @@ def records_from(agg: pd.DataFrame, n_cells: dict[tuple[str, str], int], aqua_cu
 
 
 def harmonize_area(cell_ids: list[str], months: list[tuple[int, int]] | None = None, paths: Paths | None = None,
-                   aqua_cutoff: tuple[int, int] | None = None, entity_id: str = "CUSTOM", entity_name: str = "Custom area",
-                   phi: dict[str, float] | None = None, kappa: dict[str, float] | None = None) -> list[dict]:
+                   aqua_from: dict[str, tuple[int, int] | None] | None = None, entity_id: str = "CUSTOM", entity_name: str = "Custom area",
+                   phi: dict[str, float] | None = None, kappa: dict[str, float] | None = None, separate: bool = True) -> list[dict]:
     """The single implementation of the science for an area: `entity_month` records (DATA_CONTRACT.md section 4, 8).
 
     `cell_ids` are analysis cells of cells.parquet; `months` is a list of (year, month) or None for every month with data.
-    `aqua_cutoff` (year, month): Aqua is not combined after it (the value comes from T-012; none by default).
+    `aqua_from`: per day/night, the month from which Aqua is not combined (default `AQUA_FROM`: night from 2024-05, D-005; pass
+    {"D": None, "N": None} to keep Aqua everywhere). `separate`: combine day and night separately in every month (the default,
+    one method for all months; False is the earlier totals method, kept for the seam check).
     `phi`, `kappa`: overdispersion and relative error per day/night (default: the estimates on the fit periods, `PHI`, `KAPPA`).
     Deterministic for the same inputs and method_version; records are ordered by year and month.
     """
@@ -366,11 +426,53 @@ def harmonize_area(cell_ids: list[str], months: list[tuple[int, int]] | None = N
     con.register("members_df", members)
     con.execute("CREATE TEMP TABLE members AS SELECT * FROM members_df")
     agg = aggregate(con, paths, "members", months)
-    return records_from(agg, {("CUSTOM", entity_id): len(ids)}, aqua_cutoff, phi, kappa)
+    return records_from(agg, {("CUSTOM", entity_id): len(ids)}, aqua_from, phi, kappa, separate)
+
+
+# --------------------------------------------------------------------------------------------- the seam at the cutoff
+def seam_check(paths: Paths | None = None, first: tuple[int, int] = (2012, 1), last: tuple[int, int] = (2024, 4)) -> dict:
+    """How much the two ways of combining differ before the cutoff month: day+night totals combined (the method before 2024-05)
+    against day and night combined separately and added (the method from 2024-05), with no Aqua exclusion in either, for every
+    country-month and fire-region-month from `first` to `last`. Decision rule fixed by the Lead (PR #45): median |log(separate / totals)|
+    of the estimate at most 1% and its 95th percentile at most 5%: no visible seam.
+    """
+    paths = paths or Paths()
+    paths.tmp.mkdir(parents=True, exist_ok=True)
+    con = duckdb.connect()
+    con.execute(f"SET temp_directory='{paths.tmp.as_posix()}'")
+    cells = f"read_parquet('{(paths.products / 'cells.parquet').as_posix()}')"
+    con.execute(f"""CREATE TEMP TABLE members AS
+        SELECT 'COUNTRY' AS entity_type, country_iso3 AS entity_id, country_iso3 AS entity_name, cell_id FROM {cells} WHERE country_iso3 IS NOT NULL
+        UNION ALL
+        SELECT 'REGION', fire_region, fire_region, cell_id FROM {cells} WHERE fire_region IS NOT NULL""")
+    counts = {(t, e): n for t, e, n in con.execute("SELECT entity_type, entity_id, count(*) FROM members GROUP BY 1, 2").fetchall()}
+    months = [(y, m) for y in range(first[0], last[0] + 1) for m in range(1, 13) if first <= (y, m) <= last]
+    agg = aggregate(con, paths, "members", months)
+    none = {"D": None, "N": None}
+    a = pd.DataFrame(records_from(agg, counts, none, separate=False))
+    b = pd.DataFrame(records_from(agg, counts, none, separate=True))
+    keys = ["entity_type", "entity_id", "year", "month"]
+    m = a.merge(b, on=keys, suffixes=("_tot", "_sep"))
+    both = m[m.estimate_tot.notna() & m.estimate_sep.notna() & (m.estimate_tot > 0) & (m.estimate_sep > 0)].copy()
+    both["dlog"] = np.abs(np.log(both.estimate_sep / both.estimate_tot))
+    both["sd_ratio"] = both.sd_sep / both.sd_tot
+
+    def summarise(x: pd.DataFrame) -> dict:
+        return {"entity_months": len(x), "median_abs_log_diff": float(x.dlog.median()), "p95_abs_log_diff": float(x.dlog.quantile(0.95)),
+                "p99_abs_log_diff": float(x.dlog.quantile(0.99)), "max_abs_log_diff": float(x.dlog.max()),
+                "median_sd_ratio": float(x.sd_ratio.median()), "p05_sd_ratio": float(x.sd_ratio.quantile(0.05)),
+                "p95_sd_ratio": float(x.sd_ratio.quantile(0.95))}
+    out = {"window": f"{first[0]}-{first[1]:02d} to {last[0]}-{last[1]:02d}", "rule": "median <= 1% and p95 <= 5%", "all": summarise(both),
+           "two_plus_witnesses": summarise(both[both.n_witnesses_tot >= 2]), "by_type": {t: summarise(g) for t, g in both.groupby("entity_type")}}
+    out["no_seam"] = bool(out["two_plus_witnesses"]["median_abs_log_diff"] <= 0.01 and out["two_plus_witnesses"]["p95_abs_log_diff"] <= 0.05
+                          and out["all"]["median_abs_log_diff"] <= 0.01 and out["all"]["p95_abs_log_diff"] <= 0.05)
+    (paths.products.parent / "interim" / "qa").mkdir(parents=True, exist_ok=True)
+    (paths.products.parent / "interim" / "qa" / "harmonize_seam.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
+    return out
 
 
 # ------------------------------------------------------------------------------------------------ real-data report
-def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = None, phi: dict[str, float] | None = None,
+def report(paths: Paths | None = None, aqua_from: dict[str, tuple[int, int] | None] | None = None, phi: dict[str, float] | None = None,
            kappa: dict[str, float] | None = None) -> dict:
     """Run the combination over every country; summarise how the witnesses agree.
 
@@ -389,7 +491,7 @@ def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = Non
     out: dict = {"phi": phi or PHI, "kappa": KAPPA if kappa is None else kappa}
     variants = (("phi_only", PHI_ONLY, KAPPA0), ("phi_and_kappa", phi or PHI, KAPPA if kappa is None else kappa))
     for label, ph, ka in variants:
-        recs = pd.DataFrame(records_from(agg, n_cells, aqua_cutoff, ph, ka))
+        recs = pd.DataFrame(records_from(agg, n_cells, aqua_from, ph, ka))
         two = recs[recs.n_witnesses >= 2]
         s = two.disagreement_scale.astype(float)
         rel_sd = (recs.sd / recs.estimate).replace([np.inf, -np.inf], np.nan)
@@ -417,7 +519,9 @@ def report(paths: Paths | None = None, aqua_cutoff: tuple[int, int] | None = Non
 
 if __name__ == "__main__":
     import sys
-    if sys.argv[1:] == ["phi"]:
+    if sys.argv[1:] == ["seam"]:
+        print(json.dumps(seam_check(), indent=1))
+    elif sys.argv[1:] == ["phi"]:
         res = estimate_dispersion()
         (Paths().products.parent / "interim" / "qa" / "harmonize_dispersion.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
         print(json.dumps(res, indent=1))
