@@ -357,7 +357,7 @@ def _aggregate_v02(con, members: str, when: str, wit: str, cmw: str, cells: str,
     FROM allg GROUP BY entity_type, entity_id, year, month, witness, daynight
     ORDER BY entity_type, entity_id, year, month, witness, daynight"""
     df = con.execute(sql).df()
-    bad = df[(df.witness != "AQUA_MODIS") & (df.e.isna() | (df.missing > 0))]
+    bad = df[df.witness.isin(["SNPP_VIIRS", "NOAA20_VIIRS"]) & (df.e.isna() | (df.missing > 0))]    # Terra has no ratio in either method
     if len(bad):
         raise ValueError(f"{len(bad)} VIIRS rows have no activity factor or no calibration ratio")
     return df

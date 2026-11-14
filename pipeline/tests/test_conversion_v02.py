@@ -212,3 +212,10 @@ def test_a_viirs_row_without_a_factor_is_an_error_not_a_silent_one(tmp_path):
 def test_factors_need_their_columns(tmp_path):
     with pytest.raises(ValueError, match="columns"):
         run_aggregate(make(tmp_path, ROWS), factor_rows({}).drop(columns=["f_sd"]))
+
+
+def test_terra_rows_have_no_ratio_in_either_method_and_are_not_an_error(tmp_path):
+    paths = make(tmp_path, ROWS + [(("A1", "TERRA_MODIS", "D"), 55)])
+    a, b = run_aggregate(paths), run_aggregate(paths, factor_rows({6: (2.0, 0.1)}))
+    ta, tb = a[a.witness == "TERRA_MODIS"].reset_index(drop=True), b[b.witness == "TERRA_MODIS"].reset_index(drop=True)
+    assert len(tb) == 1 and ta.raw[0] == tb.raw[0] == 55 and pd.isna(ta.e[0]) and pd.isna(tb.e[0])
