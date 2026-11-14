@@ -33,7 +33,7 @@ All facts are marked with their verification status. Re-verify anything marked *
   - `acq_time`: HHMM in **UTC**.
   - MODIS `confidence`: 0–100. VIIRS `confidence`: `l`, `n` or `h`.
   - `type` (archive data only): 0 = presumed vegetation fire, 1 = active volcano, 2 = other static land source, 3 = offshore.
-- **Data-quality question [OPEN, T-007]:** the MODIS `version` field varies (`6.2` in 2012, `6.03` in 2020, `61.03` in 2025).
+- **MODIS `version` values [VERIFIED 2026-11-14, T-007]:** `6.2` (2002 to 2017), `6.03` (2018 to 2022), `61.03` (2023 to 2026-08), `6.1NRT` (NRT from 2026-09). See the T-007 section below for the finding and its limits.
 - **Coverage note:** country files contain only detections attributed to a country. Open-ocean detections, and possibly some disputed areas, are absent. Acceptable, because we filter offshore and static sources anyway.
 
 ### Row counts per sensor and year (T-003) **[VERIFIED 2026-11-14]**
@@ -125,6 +125,64 @@ Standard-data rows by `type` (the filter keeps type 0):
 | VIIRS_SNPP | SP | 1,451,276 | 1,450,888 (99.97%) |
 
 NRT day/night agrees with the zenith rule almost as well as SP does (99.87% to 99.99%), so recomputing it would change very few rows. **Decision, approved by the Lead 2026-11-14: not recomputed.** FIRMS's `daynight` is kept as delivered, because source values are not altered. Measured only.
+
+### MODIS `version` values (T-007) **[VERIFIED 2026-11-14 unless labelled]**
+
+Computed by `python pipeline/modis_version.py` on the normalized MODIS detections (standard data for the step test). No row was dropped, filtered or changed.
+
+**What the values are.** The FIRMS readme in each zip calls the field "Collection / Version" and says to use it to tell NRT from standard data; it does not explain individual values. So the meaning of each string below is **not documented in the shipped files [OPEN]**.
+
+| `version` | Applies to | Rows |
+|---|---|---|
+| `6.2` | Terra and Aqua standard data, 2002-01-01 to 2017-12-31 | 74,794,635 |
+| `6.03` | Terra and Aqua standard data, 2018-01-01 to 2022-12-31 (and the Morocco and Somalia files in earlier years, see below) | 21,392,328 |
+| `61.03` | Terra and Aqua standard data, 2023-01-01 to 2026-08-31 | 15,508,584 |
+| `6.1NRT` | Terra and Aqua near-real-time data, 2026-09-01 onward | 796,045 |
+
+**Rows with a minority version.** Before 2018 the only `6.03` rows are 15,748 rows in two country files, Somalia (10,637) and Morocco (5,111), covering 2002 to 2017; every other country file carries `6.2` in those years. The reason is not documented **[OPEN]**; they are 0.014% of the MODIS rows.
+
+**Step test.** For every 1 January from 2004 to 2025, the 12 months after are compared with the 12 months before. Each cell shows the after/before ratio at the version boundary and, in brackets, the range of the same ratio at the other 1 January boundaries (21 to 22 years for MODIS, 11 for S-NPP). A star marks a value outside that range. S-NPP is a control: a different instrument that did not change version.
+
+*Boundary 2018-01-01 (`6.2` to `6.03`)*
+
+| Measure | Terra | Aqua | S-NPP (control) |
+|---|---|---|---|
+| Rows (all) | 0.927 [0.71 to 1.12] | 0.947 [0.79 to 1.09] | 0.954 [0.85 to 1.10] |
+| Rows relative to S-NPP | 0.971 [0.80 to 1.06] | 0.992 [0.90 to 1.12] | - |
+| Type 0 rows relative to S-NPP | 0.941 [0.79 to 1.07] | 0.982 [0.91 to 1.11] | - |
+| Kept rows (type 0 and confidence) relative to S-NPP | 0.942 [0.80 to 1.07] | 0.981 [0.92 to 1.12] | - |
+| Low-confidence share | 0.986 [0.94 to 1.10] | 0.983 [0.95 to 1.05] | 0.977 [0.96 to 1.09] |
+| Mean confidence | 0.996 [0.98 to 1.01] | 0.996 [0.99 to 1.01] | - |
+| Mean FRP | 1.015 [0.79 to 1.16] | 0.987 [0.89 to 1.09] | 0.982 [0.96 to 1.06] |
+| Daytime share | 1.019 [0.91 to 1.05] | 1.006 [0.99 to 1.02] | 1.009 [0.97 to 1.06] |
+| Static-source share (type 2 or 3) | 1.574 [0.83 to 1.40]* | 1.504 [0.87 to 1.22]* | 1.045 [0.90 to 1.12] |
+
+*Boundary 2023-01-01 (`6.03` to `61.03`)*
+
+| Measure | Terra | Aqua | S-NPP (control) |
+|---|---|---|---|
+| Rows (all) | 1.253 [0.71 to 1.12]* | 1.220 [0.79 to 1.09]* | 1.267 [0.85 to 1.10]* |
+| Rows relative to S-NPP | 0.989 [0.80 to 1.06] | 0.963 [0.90 to 1.12] | - |
+| Type 0 rows relative to S-NPP | 0.990 [0.79 to 1.07] | 0.956 [0.91 to 1.11] | - |
+| Kept rows (type 0 and confidence) relative to S-NPP | 0.972 [0.80 to 1.07] | 0.944 [0.92 to 1.12] | - |
+| Low-confidence share | 1.126 [0.94 to 1.10]* | 1.085 [0.95 to 1.05]* | 0.944 [0.96 to 1.09]* |
+| Mean confidence | 1.018 [0.98 to 1.01]* | 1.004 [0.99 to 1.01] | - |
+| Mean FRP | 1.291 [0.79 to 1.16]* | 1.117 [0.89 to 1.09]* | 1.059 [0.96 to 1.06] |
+| Daytime share | 0.899 [0.91 to 1.05]* | 0.986 [0.99 to 1.02]* | 0.954 [0.97 to 1.06]* |
+| Static-source share (type 2 or 3) | 0.885 [0.83 to 1.40] | 0.904 [0.87 to 1.22] | 0.869 [0.90 to 1.12]* |
+
+**Findings.**
+1. **Counts: no step beyond normal variation [verified].** Rows, type 0 rows and kept rows relative to S-NPP are inside the range of the other years at both boundaries. The raw MODIS count rise in 2023 (about 1.22 to 1.25 times) is matched by S-NPP (1.27 times), so it is year-to-year fire variability, not a MODIS processing step.
+2. **2018 boundary: the static-source share rises [verified; cause is a hypothesis].** The share of type 2 or 3 detections is about 1.5 times higher after 2018-01-01 (Terra 1.57, Aqua 1.50), above anything at the other 1 January boundaries, while S-NPP shows no such step (1.05). Type 0 and kept counts do not move, so the added detections are static-source rows. **Hypothesis:** the `6.03` processing flags more static sources. It does not affect the type 0 filter.
+3. **2023 boundary: some distribution measures move [verified; cause open].** The low-confidence share rises (Terra 1.13, Aqua 1.09, outside the range of the other years) while S-NPP's falls; mean FRP rises more in MODIS (Terra 1.29, Aqua 1.12) than in S-NPP (1.06). The daytime share falls in both MODIS and S-NPP, so that one is common to both instruments. The cause of the MODIS-specific moves is not determined **[OPEN]**.
+4. **Confidence and day/night at 2018: no step.**
+
+**Method impact (logged; no change proposed).**
+- The harmonization unit is the cell-day from type 0, confidence-filtered rows. Their count relative to S-NPP shows no step at either boundary, so no correction by `version` is needed on this evidence.
+- The extra low-confidence rows after 2023 are removed by the confidence filter (MODIS 30 or more).
+- FRP is not used for the harmonization (only for the informational `frp_sum_mw`); the 2023 FRP shift is recorded as a limitation.
+- The static-source mask was built from standard data of all sensors from 2012 to 2025 (approved by the Lead); the 2018 rise in MODIS static share is a reason to keep reporting the mask's hold-out score per sensor, not a reason to change it.
+- **Whether to flag or adjust by `version` is the Lead's decision. Nothing was dropped.**
 
 ## 2. NASA FIRMS area API: **2026 data**
 

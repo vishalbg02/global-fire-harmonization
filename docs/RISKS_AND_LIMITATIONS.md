@@ -15,7 +15,7 @@ Likelihood and impact: L (low) · M (medium) · H (high).
 | S7 | Baseline depends on harmonization | M | M | Sensitivity test S1 with an Aqua-measured baseline |
 | S8 | Results sensitive to grid size or thresholds chosen after seeing results | M | H | Pre-registration at G1 |
 | S9 | Validation tests fail | M | M | Publish the failures and narrow claims. Honesty is part of the product |
-| S10 | MODIS `version` inconsistency hides a processing change | L–M | M | T-007 investigation |
+| S10 | MODIS `version` inconsistency hides a processing change | L–M | M | Investigated in T-007: no step in type 0 or kept counts relative to S-NPP at the 2018 or 2023 version changes; static-source share rises about 1.5 times in 2018 and low-confidence share and mean FRP rise in 2023 (cause open); nothing dropped; flag or adjust is the Lead's decision |
 | S11 | Static-source mask for NRT is imperfect (NRT has no `type`) | H (certain) | M | Measured on held-out years: removes 88% of static detections and wrongly removes 0.55% of fire detections at the proposed setting; residual static sources remain in NRT months, which are already provisional; the setting (0.05° cells, share at least 0.5, at least 10 detections) was approved by the Lead 2026-11-14 |
 
 ## 2. Technical risks
