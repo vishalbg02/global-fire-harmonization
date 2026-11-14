@@ -46,7 +46,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-010 | SYNTHETIC fixtures for all contract products | M2 | P0 | T-0B | `data/T-010-fixtures` | [#15](https://github.com/vishalbg02/global-fire-harmonization/pull/15) | MERGED (2026-11-14) | APPROVED | Labelled synthetic; <5 MB; validate against the contract |
 | T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | [#36](https://github.com/vishalbg02/global-fire-harmonization/pull/36) | IN_REVIEW | PENDING | `calibration` product; pooling levels reported |
 | T-012 | Holdout evaluation 2017–2021; Aqua drift diagnostic | M2 | P0 | T-011 | `science/T-012-holdout-drift` | — | TODO | — | Scores and drift plot presented at R2 |
-| T-013 | Witness combination + disagreement inflation; `harmonize_area()` | M2 | P0 | T-011 | `science/T-013-combination` | — | TODO | — | Unit tests on synthetic data with known answers |
+| T-013 | Witness combination + disagreement inflation; `harmonize_area()` | M2 | P0 | T-011 | `science/T-013-combination` | — | IN_REVIEW | PENDING | Unit tests on synthetic data with known answers |
 | T-014 | Baseline, probabilities, verdicts, reason codes; entity aggregation | M2 | P0 | T-013, D-010 | `science/T-014-verdicts` | — | TODO | — | `cell_month_harmonized`, `entity_month`, `metadata.json` validate |
 | T-015 | Large-fire consistency check | M2 | P1 | T-006 | `science/T-015-large-fire` | — | TODO | — | Diagnostic series per entity |
 | T-016 | "MODIS blindness" indicator | M2 | P1 | T-011 | `science/T-016-blindness` | — | TODO | — | Per-region value with caveat text |
