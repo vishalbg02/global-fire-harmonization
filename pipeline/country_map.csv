@@ -110,7 +110,7 @@ Jordan,JOR,AS,NATURAL_EARTH,matched Natural Earth NAME 'Jordan' (JOR)
 Kazakhstan,KAZ,AS,NATURAL_EARTH,matched Natural Earth NAME 'Kazakhstan' (KAZ)
 Kenya,KEN,AF,NATURAL_EARTH,matched Natural Earth NAME 'Kenya' (KEN)
 Kiribati,KIR,OC,NATURAL_EARTH,matched Natural Earth NAME 'Kiribati' (KIR)
-Kosovo,XKX,EU,MANUAL,No ISO 3166-1 code; XKX is the user-assigned code in common use [needs Lead approval]
+Kosovo,XKX,EU,MANUAL,No ISO 3166-1 code; XKX is the user-assigned code in common use [approved by the Lead 2026-11-14]
 Kuwait,KWT,AS,NATURAL_EARTH,matched Natural Earth NAME 'Kuwait' (KWT)
 Kyrgyzstan,KGZ,AS,NATURAL_EARTH,matched Natural Earth NAME 'Kyrgyzstan' (KGZ)
 Lao PDR,LAO,AS,NATURAL_EARTH,matched Natural Earth NAME_LONG 'Lao PDR' (LAO)
@@ -226,7 +226,7 @@ Ukraine,UKR,EU,NATURAL_EARTH,matched Natural Earth NAME 'Ukraine' (UKR)
 United Arab Emirates,ARE,AS,NATURAL_EARTH,matched Natural Earth NAME 'United Arab Emirates' (ARE)
 United Kingdom,GBR,EU,NATURAL_EARTH,matched Natural Earth NAME 'United Kingdom' (GBR)
 United States,USA,NA,NATURAL_EARTH,matched Natural Earth NAME_LONG 'United States' (USA)
-United States Minor Outlying Islands,UMI,OC,MANUAL,Mostly Pacific islands; UN M49 region is Oceania [needs Lead approval]
+United States Minor Outlying Islands,UMI,OC,MANUAL,Mostly Pacific islands; UN M49 region is Oceania [approved by the Lead 2026-11-14]
 United States Virgin Islands,VIR,NA,NATURAL_EARTH,matched Natural Earth NAME_LONG 'United States Virgin Islands' (VIR)
 Uruguay,URY,SA,NATURAL_EARTH,matched Natural Earth NAME 'Uruguay' (URY)
 Uzbekistan,UZB,AS,NATURAL_EARTH,matched Natural Earth NAME 'Uzbekistan' (UZB)

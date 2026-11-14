@@ -70,10 +70,10 @@ def test_territories_are_not_mapped_to_their_sovereign():
     assert BY_NAME["Norfolk Island"]["iso3"] == "NFK" and BY_NAME["Australia"]["iso3"] == "AUS"
 
 
-def test_manual_rows_have_notes_and_flagged_ones_say_so():
+def test_manual_rows_have_notes_and_approved_ones_say_so():
     manual = [r for r in ROWS if r["method"] == "MANUAL"]
     assert len(manual) == len(cm.MANUAL) and all(r["note"] for r in manual)
-    assert "needs Lead approval" in BY_NAME["Kosovo"]["note"]
+    assert "approved by the Lead 2026-11-14" in BY_NAME["Kosovo"]["note"]
 
 
 # ------------------------------------------------------------- builder logic (synthetic reference)
