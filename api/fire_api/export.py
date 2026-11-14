@@ -39,13 +39,25 @@ UNCERTAINTY_NOTE = (
     "ci90_low and ci90_high are the 90% interval of the estimate; verdict and p_above, p_below, "
     "p_within describe the estimate against the baseline (see method_version)."
 )
+# Dataset DOIs from the collection metadata of NASA's CMR catalogue
+# (https://cmr.earthdata.nasa.gov/search/collections.umm_json?short_name=<short name>).
+SP_DOIS = [
+    ("MODIS/Aqua MYD14 V061", "10.5067/MODIS/MYD14.061"),
+    ("MODIS/Terra MOD14 V061", "10.5067/MODIS/MOD14.061"),
+    ("VIIRS/NPP VNP14IMG V002", "10.5067/VIIRS/VNP14IMG.002"),
+    ("VIIRS/JPSS1 VJ114IMG V002", "10.5067/VIIRS/VJ114IMG.002"),
+]
 # Near-real-time product DOIs, copied from the NASA Earthdata catalogue pages of each product.
-# Standard-product DOIs have not been confirmed and are not listed.
-DATASET_DOIS = [
+NRT_DOIS = [
     ("MODIS MCD14DL NRT", "10.5067/FIRMS/MODIS/MCD14DL.NRT.0061"),
     ("VIIRS S-NPP VNP14IMGT NRT", "10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002"),
     ("VIIRS NOAA-20 VJ114IMGT NRT", "10.5067/FIRMS/VIIRS/VJ114IMGT_NRT.002"),
 ]
+
+
+def _dois(items: list[tuple[str, str]]) -> str:
+    return "; ".join(f"{name} doi:{doi}" for name, doi in items)
+
 
 _FORMULA_START = ("=", "+", "-", "@")
 
@@ -101,8 +113,8 @@ def header_lines(meta: Metadata, subject: str) -> list[str]:
         f"citation: {meta.citation}",
         f"acknowledgement: {ACKNOWLEDGEMENT}",
         f"notes: {HOTSPOTS_NOTE} {UNCERTAINTY_NOTE}",
-        "dataset_dois (near-real-time products; NASA Earthdata): "
-        + "; ".join(f"{name} doi:{doi}" for name, doi in DATASET_DOIS),
+        f"dataset_dois_standard_products_(SP): {_dois(SP_DOIS)}",
+        f"dataset_dois_near-real-time_(NRT): {_dois(NRT_DOIS)}",
     ]
     return [f"# {line}" for line in lines]
 

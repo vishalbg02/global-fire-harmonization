@@ -63,7 +63,17 @@ class TestPreset:
         assert "# generated_at: 2026-11-14T00:00:00Z" in joined
         assert "not fire counts or burned area" in joined
         assert "NASA's Fire Information for Resource Management System" in joined
-        assert "doi:" in joined
+        assert "standard_products_(SP)" in joined and "near-real-time_(NRT)" in joined
+        for doi in (
+            "10.5067/MODIS/MYD14.061",
+            "10.5067/MODIS/MOD14.061",
+            "10.5067/VIIRS/VNP14IMG.002",
+            "10.5067/VIIRS/VJ114IMG.002",
+            "10.5067/FIRMS/MODIS/MCD14DL.NRT.0061",
+            "10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002",
+            "10.5067/FIRMS/VIIRS/VJ114IMGT_NRT.002",
+        ):
+            assert f"doi:{doi}" in joined
 
     def test_null_is_empty_and_zero_is_zero(self, client: TestClient) -> None:
         # BRA has p_above 0.0 (a real zero) and the SA continent has nulls.
