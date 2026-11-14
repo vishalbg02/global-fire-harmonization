@@ -123,8 +123,12 @@ def summarise(d: pd.DataFrame) -> dict:
     rel_glob = rel[rel["entity_type"] == "GLOBAL"].groupby(["witness", "in_ref"])["s_rel"].median().reset_index()
     rel_reg = (rel[rel["entity_type"] == "FIRE_REGION"].groupby(["entity_id", "witness", "in_ref"])["s_rel"].median().unstack("in_ref"))
     activity = ok.groupby(["flag_high"])["cell_days"].median().to_dict()
+    ok_ref = in_reference(ok["year"], ok["month"], ok["witness"])
+    period = (ok.assign(inside_reference=ok_ref).groupby(["entity_type", "witness", "inside_reference"])
+              .agg(judged=("S", "size"), flagged=("flag_high", "sum")).reset_index())
+    period["share"] = period["flagged"] / period["judged"]
     return {"global_by_year": by_year.to_dict("records"), "global_S_slope_per_year": slopes,
-            "flag_counts": flagged.to_dict("records"), "top_flagged": top.to_dict("records"),
+            "flag_counts": flagged.to_dict("records"), "flag_by_period": period.to_dict("records"), "top_flagged": top.to_dict("records"),
             "s_rel_global": rel_glob.to_dict("records"),
             "s_rel_region": _region_rows(rel_reg),
             "median_cell_days_flagged_vs_not": {str(k): float(v) for k, v in activity.items()}}
@@ -161,5 +165,9 @@ def run(products: Path = ROOT / "data" / "products", qa: Path = QA) -> pd.DataFr
 
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ["summary"]:                  # recompute only the summary from the series file (light)
+        _d = pd.read_parquet(QA / "T-015_large_fire_series.parquet")
+        (QA / "T-015_large_fire_summary.json").write_text(json.dumps(summarise(_d), indent=1, default=str), encoding="utf-8")
+        sys.exit(0)
     out = run()
     print(f"{len(out):,} rows; statuses: {out['status'].value_counts().to_dict()}", file=sys.stderr)
