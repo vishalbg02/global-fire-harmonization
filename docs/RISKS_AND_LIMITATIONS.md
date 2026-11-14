@@ -32,6 +32,7 @@ Likelihood and impact: L (low) · M (medium) · H (high).
 | T8 | Node 20 (EOL) on team machines | H | L | Install Node 22/24 LTS at setup |
 | T9 | Custom areas wait on Member 2's `harmonize_area()`: until it is delivered, `POST /api/series/custom` answers `503` and the app shows that message. The custom-area flow has been tested only against mocked responses and a local stand-in, not against the real function (T-035) | H until delivered | M | The app shows the server's message; preset areas are unaffected; verify the custom flow as soon as the function lands |
 | T10 | Drawing a rectangle needs a pointer (terra-draw with its MapLibre adapter, D-024) | M | L | The typed W/S/E/N form is the keyboard and screen-reader route to a custom area (T-035) |
+| T11 | The witness comparison chart (T-037) is a canvas, not keyboard-navigable; its Aqua-drift and provisional marks are shown as shaded bands, which a screen reader cannot read from the chart | M | L | A table view gives the same values with a Notes column stating outage, drift-era or provisional per month; not yet checked with a real screen reader |
 
 ## 3. Performance risks
 
