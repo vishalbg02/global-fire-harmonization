@@ -128,7 +128,8 @@ def test_entity_sums_match_their_cells(entity, harm, cells):
 # -------------------------------------------------------------------------- edge cases
 def test_every_verdict_and_reason_code_present(harm):
     assert set(harm.verdict) == cc.ENUMS["verdict"]
-    assert set(harm.reason_codes.explode().dropna()) == cc.ENUMS["reason_code"]
+    # NOT_HARMONIZED (D-026) marks raw-only products; the harmonized fixtures never use it
+    assert set(harm.reason_codes.explode().dropna()) == cc.ENUMS["reason_code"] - {"NOT_HARMONIZED"}
 
 
 def test_outage_month(cmw, harm):
