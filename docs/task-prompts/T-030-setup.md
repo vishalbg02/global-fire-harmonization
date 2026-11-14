@@ -134,3 +134,13 @@ Open questions for the Lead. None is decided here.
 5. **Setup docs location.** The Member 3 prompt says the root `README.md` "Setup" needs approval first. This prompt uses `app/README.md` and proposes a pointer in the root README. Is that acceptable?
 6. **Lint/format tooling.** The approved stack lists ruff (Python) and Vitest (frontend) but no frontend linter or formatter. The template's default ESLint config comes with the Vite scaffold. Keep it, or remove it?
 7. **Banner.** The persistent "SYNTHETIC DATA — not NASA observations" banner needs `metadata.synthetic` from the API. It is left to T-031 onward, not T-030.
+
+### Lead answers (PR #5 comment)
+
+1. T-030 will be set to `ASSIGNED` (owner Member 3) by the Lead.
+2. `Swastik` is accepted for this task only; later tasks use `frontend/T-0XX-<short-name>` or `api/...`.
+3. T-030 covers `app/` only. Python/API setup belongs to T-034 (install Python 3.13 or 3.14 first).
+4. No placeholder folders; each folder is added when its task starts.
+5. `app/README.md` is approved; the root README pointer is proposed in the PR for review.
+6. Keep the Vite template's default lint config as-is.
+7. The synthetic-data banner is deferred to T-031.
