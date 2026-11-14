@@ -1,4 +1,4 @@
-"""Check a folder of products against docs/DATA_CONTRACT.md v0.1.0.
+"""Check a folder of products against docs/DATA_CONTRACT.md (fixtures 0.1.0 or 0.1.1; real products 0.1.1).
 
 Checks field names and types, enumerations, key uniqueness, null rules and the
 SYNTHETIC labelling. Returns a list of problems (empty means the folder conforms).
@@ -27,7 +27,8 @@ ENUMS = {
     "data_level": {"SP", "NRT", "MIXED"},
     "verdict": {"ABOVE_NORMAL", "BELOW_NORMAL", "WITHIN_NORMAL", "CANNOT_DETERMINE", "NO_DETECTED_ACTIVITY"},
     "reason_code": {"OUTAGE", "INSUFFICIENT_BASELINE", "INSUFFICIENT_OVERLAP", "WITNESS_DISAGREEMENT", "WIDE_INTERVAL",
-                    "PROVISIONAL_NRT", "AQUA_DRIFT_ERA", "SINGLE_WITNESS", "POOLED_CALIBRATION", "DIURNAL_CAVEAT"},
+                    "PROVISIONAL_NRT", "AQUA_DRIFT_ERA", "SINGLE_WITNESS", "POOLED_CALIBRATION", "DIURNAL_CAVEAT",
+                    "NOT_HARMONIZED"},
     "entity_type": {"CELL", "COUNTRY", "CONTINENT", "GLOBAL", "CUSTOM"},
     "pooling_level": {"LOCAL", "REGION", "GLOBAL"},
     "test_status": {"PASS", "FAIL", "INCONCLUSIVE", "NOT_RUN"},
@@ -122,7 +123,7 @@ def _enum_list(errors, name, col, series, allowed):
         errors.append(f"{name}.{col}: values outside the enumeration: {sorted(bad)}")
 
 
-def check_harmonized_rows(name: str, df: pd.DataFrame, errors: list[str]) -> None:
+def check_harmonized_rows(name: str, df: pd.DataFrame, errors: list[str], real: bool = False) -> None:
     _enum(errors, name, "verdict", df.verdict, ENUMS["verdict"])
     _enum(errors, name, "data_level", df.data_level, ENUMS["data_level"])
     _enum_list(errors, name, "witnesses_used", df.witnesses_used, ENUMS["witness"])
@@ -162,6 +163,13 @@ def check_harmonized_rows(name: str, df: pd.DataFrame, errors: list[str]) -> Non
         errors.append(f"{name}: NO_DETECTED_ACTIVITY with detections present")
     if (df.verdict[null_est] != "CANNOT_DETERMINE").any():
         errors.append(f"{name}: a null estimate must have verdict CANNOT_DETERMINE")
+    if real:  # D-026: a raw-only row must say so
+        raw_only = df.method_version.str.endswith("-raw-only")
+        wrong = raw_only & ~df.reason_codes.map(lambda r: list(r) == ["NOT_HARMONIZED"])
+        if wrong.any():
+            errors.append(f"{name}: {int(wrong.sum())} raw-only rows do not have reason_codes = [NOT_HARMONIZED]")
+        if (~raw_only & df.reason_codes.map(lambda r: "NOT_HARMONIZED" in list(r))).any():
+            errors.append(f"{name}: NOT_HARMONIZED on rows that are not raw-only")
     if df[["baseline_median", "baseline_p25", "baseline_p75"]].isna().any(axis=1).ne(df.baseline_median.isna()).any():
         errors.append(f"{name}: baseline fields are not null together")
     if (df.verdict[df.baseline_median.isna()] != "CANNOT_DETERMINE").any():
@@ -188,9 +196,9 @@ def check_dir(folder: Path = DEFAULT_DIR, real: bool = False, only: tuple[str, .
     if cmw is not None:
         _guard("cell_month_witness", errors, lambda: _check_witness(cmw, cells, errors))
     if harm is not None:
-        _guard("cell_month_harmonized", errors, lambda: _check_harm(harm, cells, errors))
+        _guard("cell_month_harmonized", errors, lambda: _check_harm(harm, cells, errors, real))
     if ent is not None:
-        _guard("entity_month", errors, lambda: _check_entity(ent, errors))
+        _guard("entity_month", errors, lambda: _check_entity(ent, errors, real))
     if cal is not None:
         _guard("calibration", errors, lambda: _check_calibration(cal, cells, errors))
     _guard("json files", errors, lambda: check_json(folder, errors, real))
@@ -227,14 +235,14 @@ def _check_witness(cmw: pd.DataFrame, cells: pd.DataFrame | None, errors: list[s
         errors.append("cell_month_witness: cell_id not in cells")
 
 
-def _check_harm(harm: pd.DataFrame, cells: pd.DataFrame | None, errors: list[str]) -> None:
-    check_harmonized_rows("cell_month_harmonized", harm, errors)
+def _check_harm(harm: pd.DataFrame, cells: pd.DataFrame | None, errors: list[str], real: bool = False) -> None:
+    check_harmonized_rows("cell_month_harmonized", harm, errors, real)
     if cells is not None and not set(harm.cell_id) <= set(cells.cell_id):
         errors.append("cell_month_harmonized: cell_id not in cells")
 
 
-def _check_entity(ent: pd.DataFrame, errors: list[str]) -> None:
-    check_harmonized_rows("entity_month", ent, errors)
+def _check_entity(ent: pd.DataFrame, errors: list[str], real: bool = False) -> None:
+    check_harmonized_rows("entity_month", ent, errors, real)
     _enum(errors, "entity_month", "entity_type", ent.entity_type, ENUMS["entity_type"])
     for raw in ent.raw_by_witness:
         try:
@@ -268,8 +276,9 @@ def check_json(folder: Path, errors: list[str], real: bool = False) -> None:
               "latest_month", "provisional_months", "witnesses", "data_snapshot", "citation"):
         if k not in meta:
             errors.append(f"metadata.json: missing {k}")
-    if meta.get("contract_version") != "0.1.0":
-        errors.append("metadata.json: contract_version is not 0.1.0")
+    allowed = {"0.1.1"} if real else {"0.1.0", "0.1.1"}
+    if meta.get("contract_version") not in allowed:
+        errors.append(f"metadata.json: contract_version is not {' or '.join(sorted(allowed))}")
     if meta.get("synthetic") is not (not real):
         errors.append(f"metadata.json: synthetic must be {'false' if real else 'true'}" + ("" if real else " in fixtures"))
     for k in ("first_month", "latest_month"):
@@ -280,8 +289,8 @@ def check_json(folder: Path, errors: list[str], real: bool = False) -> None:
     if not set(meta.get("witnesses", [])) <= ENUMS["witness"]:
         errors.append("metadata.json: witnesses outside the enumeration")
     val = json.loads((folder / "validation_results.json").read_text(encoding="utf-8"))
-    if val.get("synthetic") is not (not real) or val.get("contract_version") != "0.1.0":
-        errors.append(f"validation_results.json: needs synthetic {'false' if real else 'true'} and contract_version 0.1.0")
+    if val.get("synthetic") is not (not real) or val.get("contract_version") not in allowed:
+        errors.append(f"validation_results.json: needs synthetic {'false' if real else 'true'} and contract_version {' or '.join(sorted(allowed))}")
     for t in val.get("tests", []):
         for k in ("test_id", "family", "title", "case", "criterion", "threshold", "measured", "status", "notes"):
             if k not in t:
@@ -301,7 +310,7 @@ def main() -> int:
     errors = check_dir(folder, real=real)
     for e in errors:
         print("FAIL", e)
-    print(f"{folder}: {'conforms to contract 0.1.0' if not errors else f'{len(errors)} problem(s)'}")
+    print(f"{folder}: {'conforms to the contract' if not errors else f'{len(errors)} problem(s)'}")
     return 1 if errors else 0
 
 

@@ -64,7 +64,7 @@ def test_cell_level_sums_and_all_harmonized_fields_are_null(tmp_path):
     for col in ro.NULL_FLOATS:
         assert h[col].isna().all(), col
     assert (h.witnesses_used.map(len) == 0).all() and (h.n_witnesses == 0).all()
-    assert (h.verdict == "CANNOT_DETERMINE").all() and (h.reason_codes.map(len) == 0).all()
+    assert (h.verdict == "CANNOT_DETERMINE").all() and (h.reason_codes.map(list) == [["NOT_HARMONIZED"]] * len(h)).all()
     assert h.method_version.str.endswith("-raw-only").all()
 
 
@@ -99,12 +99,12 @@ def test_metadata_is_real_and_names_what_it_found(tmp_path):
     paths = make_products(tmp_path)
     ro.build(paths)
     m = json.loads((paths.products / "metadata.json").read_text(encoding="utf-8"))
-    assert m["synthetic"] is False and m["method_version"].endswith("-raw-only") and m["contract_version"] == "0.1.0"
+    assert m["synthetic"] is False and m["method_version"].endswith("-raw-only") and m["contract_version"] == "0.1.1"
     assert (m["first_month"], m["latest_month"]) == ("2020-01", "2026-11") and m["provisional_months"] == ["2026-10", "2026-11"]
     assert m["witnesses"] == ["AQUA_MODIS", "SNPP_VIIRS"] and m["grid"] == {"analysis_deg": 0.5, "fine_deg": 0.05}
     assert m["baseline_years"] == [] and "FIRMS" in m["citation"] and all(m["data_snapshot"].values())
     v = json.loads((paths.products / "validation_results.json").read_text(encoding="utf-8"))
-    assert v["synthetic"] is False and v["tests"] == []
+    assert v["synthetic"] is False and v["tests"] == [] and v["contract_version"] == "0.1.1"
 
 
 def test_the_output_passes_the_contract_in_real_mode_and_a_corrupted_copy_does_not(tmp_path):
@@ -119,6 +119,42 @@ def test_the_output_passes_the_contract_in_real_mode_and_a_corrupted_copy_does_n
     pq.write_table(pa.Table.from_pandas(h, preserve_index=False), paths.products / "cell_month_harmonized.parquet")
     errors = cc.check_dir(paths.products, real=True, only=only)
     assert any("verdict" in e or "estimate" in e for e in errors)
+
+
+def test_a_raw_only_row_without_not_harmonized_fails_in_real_mode(tmp_path):
+    paths = make_products(tmp_path)
+    ro.build(paths)
+    only = ("cells", "cell_month_harmonized", "entity_month")
+    for name in ("cell_month_harmonized", "entity_month"):
+        path = paths.products / f"{name}.parquet"
+        schema = pq.read_table(path).schema
+        good = pq.read_table(path).to_pandas()
+        assert cc.check_dir(paths.products, real=True, only=only) == []
+        for bad_codes in ([], ["SINGLE_WITNESS"], ["NOT_HARMONIZED", "SINGLE_WITNESS"]):
+            bad = good.copy()
+            bad.at[0, "reason_codes"] = bad_codes
+            pq.write_table(pa.Table.from_pandas(bad, schema=schema, preserve_index=False), path)
+            errors = cc.check_dir(paths.products, real=True, only=only)
+            assert any(name in e and "NOT_HARMONIZED" in e for e in errors), (name, bad_codes)
+        pq.write_table(pa.Table.from_pandas(good, schema=schema, preserve_index=False), path)
+    # a harmonized row must not carry the code
+    schema = pq.read_table(paths.products / "cell_month_harmonized.parquet").schema
+    h = pq.read_table(paths.products / "cell_month_harmonized.parquet").to_pandas()
+    h["method_version"] = "0.1.0-combined"
+    pq.write_table(pa.Table.from_pandas(h, schema=schema, preserve_index=False), paths.products / "cell_month_harmonized.parquet")
+    assert any("not raw-only" in e for e in cc.check_dir(paths.products, real=True, only=only))
+
+
+def test_the_checker_takes_contract_0_1_1_and_the_real_mode_requires_it(tmp_path):
+    paths = make_products(tmp_path)
+    ro.build(paths)
+    only = ("cells", "cell_month_harmonized", "entity_month")
+    meta_path = paths.products / "metadata.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    meta["contract_version"] = "0.1.0"
+    meta_path.write_text(json.dumps(meta), encoding="utf-8")
+    assert any("contract_version" in e for e in cc.check_dir(paths.products, real=True, only=only))
+    assert "NOT_HARMONIZED" in cc.ENUMS["reason_code"]
 
 
 def test_the_build_is_deterministic(tmp_path):

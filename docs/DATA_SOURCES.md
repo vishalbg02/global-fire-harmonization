@@ -410,16 +410,17 @@ Built on 2012 to 2023, the rule flags 2,985 cells (4,123 without condition 4); b
 
 ### Raw-only products for the app (T-014a) **[VERIFIED 2026-11-14 unless labelled]**
 
-`python pipeline/raw_only.py` writes `cell_month_harmonized.parquet`, `entity_month.parquet`, `metadata.json` and `validation_results.json` into `data/products/` (local, not committed), from `cell_month_witness.parquet` and `cells.parquet` (the final T-011 products). They have the exact shape of `docs/DATA_CONTRACT.md` v0.1.0 section 3, 4 and 7, so the API and app need no change. **They are not harmonized results**: every harmonized field is `null`, `witnesses_used` is `[]`, `n_witnesses` is 0, the verdict is `CANNOT_DETERMINE`, and `method_version` is `0.1.0-raw-only`. T-014 replaces them.
+`python pipeline/raw_only.py` writes `cell_month_harmonized.parquet`, `entity_month.parquet`, `metadata.json` and `validation_results.json` into `data/products/` (local, not committed), from `cell_month_witness.parquet` and `cells.parquet` (the final T-011 products). They have the exact shape of `docs/DATA_CONTRACT.md` v0.1.0 section 3, 4 and 7, so the API and app need no change. **They are not harmonized results**: every harmonized field is `null`, `witnesses_used` is `[]`, `n_witnesses` is 0, the verdict is `CANNOT_DETERMINE`, `reason_codes` is `["NOT_HARMONIZED"]` and `method_version` is `0.1.0-raw-only`. T-014 replaces them.
 
 - **Cell level:** 16,477,734 rows, one per cell x month that has a witness row. `raw_combined_cell_days` is the sum of the `ALL` cell-days over every witness operating that month, **Terra included** (the contract's naive raw sum, as in the fixtures).
 - **Entity level:** 68,562 rows over 293 months: 226 `COUNTRY` (`entity_id` = ISO3, name from `country_map.csv`), 7 `CONTINENT` (`AF AN AS EU NA OC SA`) and `GLOBAL`. `raw_by_witness` is a JSON map of the witnesses operating that month; `n_cells` is the number of cells of the entity. The 927 cells without a country (ocean) enter `GLOBAL` only: 29,031 cell-days in total.
 - **Checks:** the `GLOBAL` total, the cell-level total and the independent fine-cell-days recount agree at 219,583,156; continents add up to countries at 219,554,125; `contract_check.py --real` passes. `data_level` is `SP` in 67,626 entity rows, `NRT` in 702 and `MIXED` in 234 (months where witnesses differ).
 - **`metadata.json`:** `synthetic: false`; `first_month` 2002-07, `latest_month` 2026-11; `provisional_months` 2026-08 to 2026-11; `witnesses` Aqua, S-NPP and NOAA-20 (Terra is raw view only); `baseline_years` is empty because no baseline is computed; snapshot dates 2026-11-14 for the zips and for the API pull, from the modification times of the saved files.
 - **Read the numbers correctly:** `raw_combined_cell_days` adds witnesses that see the same fire (Aqua, Terra and VIIRS), so it is not a measure of fire activity. The app must not show it as one.
-- **Reason code [PROPOSAL, not approved]:** no contract code means "not yet harmonized", so `reason_codes` is empty. The proposal for the Lead is `NOT_HARMONIZED` (contract 0.1.1). Until then the rows are recognised by the `-raw-only` suffix of `method_version`.
-- **Entity IDs [ASSUMPTION]:** D-022 (entity ID scheme) is still proposed; the fixtures' convention is used.
-- **Checker:** `contract_check.py --real` requires `synthetic: false` and skips the SYNTHETIC test-id rules; the default mode is unchanged.
+- **Reason code [APPROVED, D-026, contract 0.1.1]:** every raw-only row has `reason_codes = ["NOT_HARMONIZED"]`. `metadata.json` and `validation_results.json` carry `contract_version` `0.1.1`.
+- **Entity IDs [APPROVED, D-022, contract 0.1.1]:** ISO3 for countries, `AF AN AS EU NA OC SA` for continents, `GLOBAL`.
+- **Checker:** `contract_check.py --real` requires `synthetic: false` and contract `0.1.1`, skips the SYNTHETIC test-id rules, and fails a raw-only row (`method_version` ending in `-raw-only`) without exactly `["NOT_HARMONIZED"]` and a harmonized row that carries it. The default mode accepts the fixtures (0.1.0 or 0.1.1).
+- **Products in Git (D-027):** the five Parquet products are committed through Git LFS and `metadata.json` and `validation_results.json` as normal files, with the SHA-256 checksums in the PR.
 
 ## 2. NASA FIRMS area API: **2026 data**
 

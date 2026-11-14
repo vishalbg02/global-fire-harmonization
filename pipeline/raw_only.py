@@ -1,8 +1,8 @@
 """Raw-only `cell_month_harmonized` and `entity_month` in the contract shape (T-014a).
 
 Until T-013 and T-014 deliver the harmonized products, the app gets the real raw observations in the exact shape of
-docs/DATA_CONTRACT.md v0.1.0 section 3 and 4. Only the raw fields are filled. Every harmonized field is null,
-`witnesses_used` is empty and the verdict is CANNOT_DETERMINE. The rows are recognised by a `method_version`
+docs/DATA_CONTRACT.md 0.1.1 (D-026) section 3 and 4. Only the raw fields are filled. Every harmonized field is null,
+`witnesses_used` is empty, the verdict is CANNOT_DETERMINE and `reason_codes` is [NOT_HARMONIZED]. The rows are recognised by a `method_version`
 that ends in `-raw-only`. T-014 replaces these files.
 
     python pipeline/raw_only.py            # reads and writes data/products/, then validates with contract_check --real
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 METHOD_VERSION = "0.1.0-raw-only"
-CONTRACT_VERSION = "0.1.0"
+CONTRACT_VERSION = "0.1.1"
 CONTINENT_NAMES = {"AF": "Africa", "AN": "Antarctica", "AS": "Asia", "EU": "Europe", "NA": "North America",
                    "OC": "Oceania", "SA": "South America"}
 CITATION = ("We acknowledge the use of data and imagery from NASA's Fire Information for Resource Management System (FIRMS) "
@@ -69,7 +69,7 @@ def build(paths: Paths | None = None) -> dict:
         SELECT 'GLOBAL', 'GLOBAL', 'Global', c.cell_id FROM {cells} c""")
     # the harmonized columns shared by both tables, in contract order (estimate .. method_version)
     harm = f"""{nulls_a}, {{raw}} AS raw_combined_cell_days, CAST([] AS VARCHAR[]) AS witnesses_used, CAST(0 AS BIGINT) AS n_witnesses,
-               {nulls_b}, 'CANNOT_DETERMINE' AS verdict, CAST([] AS VARCHAR[]) AS reason_codes, {{dl}} AS data_level,
+               {nulls_b}, 'CANNOT_DETERMINE' AS verdict, CAST(['NOT_HARMONIZED'] AS VARCHAR[]) AS reason_codes, {{dl}} AS data_level,
                '{METHOD_VERSION}' AS method_version"""
     cell_sql = f"""SELECT cell_id, year, month, {harm.format(raw='CAST(sum(s) AS BIGINT)', dl="CASE WHEN min(lo) = max(hi) THEN min(lo) ELSE 'MIXED' END")}
                    FROM w GROUP BY cell_id, year, month ORDER BY cell_id, year, month"""
