@@ -615,3 +615,12 @@ aside section {
 .export-csv {
   margin: 0.5rem 0;
 }
+
+/* ---- Raw-only data (T-039) ---- */
+.raw-only-note {
+  margin: 0;
+  padding: 0.4rem 1rem;
+  background: #fff3cd;
+  border-bottom: 1px solid #8a6d00;
+  font-weight: 600;
+}

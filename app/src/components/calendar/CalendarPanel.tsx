@@ -4,6 +4,7 @@ import type { Metadata } from '../../api/contract.ts'
 import type { Area, Source, ValueMode } from '../../state/selection.ts'
 import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
 import { useAreaSeries } from '../area/useAreaSeries.ts'
+import { RAW_ONLY_AREA_UNAVAILABLE, useRawOnly } from '../../content/rawOnly.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { CalendarChart } from './CalendarChart.tsx'
 import { CalendarLegend } from './CalendarLegend.tsx'
@@ -35,6 +36,7 @@ export function CalendarPanel({
 }: Props) {
   const [tableView, setTableView] = useState(false)
   const series = useAreaSeries(area)
+  const rawOnly = useRawOnly()
 
   const records = series.data
   const rows = useMemo(
@@ -83,7 +85,10 @@ export function CalendarPanel({
       {series.isError && serverMessage !== null && (
         <ErrorState message={serverMessage} onRetry={apiError?.status === 422 ? undefined : () => void series.refetch()} />
       )}
-      {series.isError && !notFound && serverMessage === null && (
+      {series.isError && !notFound && serverMessage === null && rawOnly && apiError?.status === 503 && (
+        <EmptyState message={RAW_ONLY_AREA_UNAVAILABLE} />
+      )}
+      {series.isError && !notFound && serverMessage === null && !(rawOnly && apiError?.status === 503) && (
         <ErrorState
           message="Data are not available right now. The calendar could not be loaded."
           onRetry={() => void series.refetch()}
