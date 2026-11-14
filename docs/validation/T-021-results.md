@@ -9,7 +9,7 @@
 | B1 | 2012-01 (S-NPP enters) | **PASS** | harmonized step within +-10% of 1 in 14 of 14 regions (range 0.955 to 1.007); raw step 2.60 to 4.28 in 14 of 14 |
 | B1 | 2018-04 (NOAA-20 enters) | **PASS** | harmonized step within +-10% in **13 of 14** regions (92.9%; range 0.952 to 1.104); raw step 1.60 to 2.05 in 14 of 14 |
 | B1 | family (both dates) | **PASS** | |
-| B3 | drift as a ratio trend | **PASS** | night, both VIIRS witnesses: S-NPP onset 2024-05, NOAA-20 onset 2024-09, falling ratio; day not detected (section 4.1) |
+| B3 | drift as a ratio trend | **PASS as written** | "Drift visible as a ratio trend, with its onset estimate". Visible at night only (S-NPP onset 2024-05, NOAA-20 onset 2024-09); the registered day-only drift method of T-012 found none (section 4.1) |
 | B3 | outages, estimates | **PASS** | 60 of 60 entity-months in the 4 outage months have no estimate; 0 of 345 incomplete witness-month cases used |
 | B3 | outages, verdicts | **PASS** | 936 of 936 entity-months in the 4 outage months are `CANNOT_DETERMINE` (100%), all with the reason `OUTAGE` (T-014 product, section 4.3) |
 | B3 | family | **PASS** | all three plan criteria ran and passed |
@@ -94,7 +94,7 @@ The pre-registered T-012 detector (`aqua_drift.detect`, unchanged settings: 1,00
 | Day | S-NPP | **no** | 2025-06 (2019-02 to 2025-06) | -5.4% (-8.5 to -0.4) | -6.1 | 164 |
 | Day | NOAA-20 | **no** | 2025-06 (2020-01 to 2025-06) | -6.1% (-9.2 to -0.5) | -2.7 | 99 |
 
-Status **PASS** through the night part. The numbers equal those of T-012 (`docs/DATA_SOURCES.md`), as they must: the same code and seed. **Reading it honestly:** (1) this PASS confirms T-012 and is not independent of it; (2) the criterion was written knowing the T-012 result; the strict reading "the registered primary series (global day, S-NPP) detects drift" would be **FAIL**, as T-012 reported, and the Lead's D-005 decision is the documented deviation; (3) the hypothesis "drift visible after ~2021" is supported only for night, and the onsets (2024-05 and 2024-09) are three years later than 2021; (4) the cause (Aqua, processing or VIIRS) is not separated [OPEN].
+Status **PASS as written** (the criterion in the plan is "drift visible as a ratio trend, reported with its onset estimate"; the wording is not changed after seeing the result, decision of the Lead on PR #54, 2026-11-14). The drift is **visible at night only** (S-NPP onset 2024-05, NOAA-20 onset 2024-09); the registered day-only drift method of T-012 found none. The caveat stays visible. The numbers equal those of T-012 (`docs/DATA_SOURCES.md`), as they must: the same code and seed. **Reading it honestly:** (1) this PASS confirms T-012 and is not independent of it; (2) the criterion was written knowing the T-012 result; the strict reading "the registered primary series (global day, S-NPP) detects drift" would be **FAIL**, as T-012 reported, and the Lead's D-005 decision is the documented deviation; (3) the hypothesis "drift visible after ~2021" is supported only for night, and the onsets (2024-05 and 2024-09) are three years later than 2021; (4) the cause (Aqua, processing or VIIRS) is not separated [OPEN].
 
 ### 4.2 Outages, estimate level: PASS [VERIFIED]
 
