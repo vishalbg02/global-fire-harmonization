@@ -51,6 +51,7 @@ import holdout as ho
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / "data" / "interim" / "_e1_tmp"
+WORK_S1 = ROOT / "data" / "interim" / "_s1_tmp"
 QA = ROOT / "data" / "interim" / "qa"
 WITNESS = "SNPP_VIIRS"
 FIT_WINDOW = cal.FITS[WITNESS]                 # ((2012, 1), (2016, 12))
@@ -465,7 +466,7 @@ def records_frame(records: list[dict]) -> pd.DataFrame:
 
 def run_s1(src: Path | None = None, work: Path | None = None) -> dict:
     src = src or ROOT / "data" / "products"
-    work = work or WORK
+    work = work or WORK_S1
     cells = pq.read_table(src / "cells.parquet").to_pandas()
     members = s1_members(cells)
     n_cells = {(et, eid): int(n) for (et, eid), n in members.groupby(["entity_type", "entity_id"]).size().items()}
@@ -485,7 +486,7 @@ def run_s1(src: Path | None = None, work: Path | None = None) -> dict:
     out = {"window": [list(S1_WINDOW[0]), list(S1_WINDOW[1])], "baseline_harmonized_years": list(BASE_HARMONIZED), "baseline_aqua_years": list(BASE_AQUA),
            "entities": {"REGION": 14, "COUNTRY": ["CAN"], "CASE": list(CASES)}, "summary": summarise_s1(cmp), "case_peak_months": rows,
            "c7_canada_informational": canada, "status_baseline": s1_status(rows)}
-    shutil.rmtree(paths.tmp, ignore_errors=True)
+    shutil.rmtree(work, ignore_errors=True)
     return out
 
 
