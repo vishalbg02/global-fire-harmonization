@@ -114,7 +114,7 @@ def test_evidence_decodes_raw_by_witness_and_anomalies_are_ordered(client: TestC
     assert scores == sorted(scores, reverse=True)
 
 
-def test_custom_area_is_503_until_the_harmonization_function_exists(client: TestClient) -> None:
+def test_custom_area_series_comes_from_harmonize_area(client: TestClient) -> None:
     con = duckdb.connect()
     try:
         lat_c, lon_c = con.execute(
@@ -125,4 +125,7 @@ def test_custom_area_is_503_until_the_harmonization_function_exists(client: Test
         con.close()
     box = [lon_c - 0.1, lat_c - 0.1, lon_c + 0.1, lat_c + 0.1]
     response = client.post("/api/series/custom", json={"bbox": box})
-    assert response.status_code == 503
+    assert response.status_code == 200
+    records = [EntityMonth.model_validate(r) for r in response.json()]
+    assert records
+    assert {r.entity_type for r in records} == {"CUSTOM"}

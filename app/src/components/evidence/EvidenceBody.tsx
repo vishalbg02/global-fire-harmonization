@@ -1,6 +1,6 @@
 import type { HarmonizedFields, Witness } from '../../api/contract.ts'
 import { ACTIVITY_UNITS } from '../../content/calendar.ts'
-import { NOT_AVAILABLE_YET, useRawOnly } from '../../content/rawOnly.ts'
+import { NOT_AVAILABLE_YET, isRawOnlyRecord, useRawOnly } from '../../content/rawOnly.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { WITNESS_NAMES } from '../../content/witnesses.ts'
@@ -22,8 +22,9 @@ interface Props {
 
 /** The evidence for one month, as stored: nothing here is computed. */
 export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
-  // Raw-only products: the harmonized parts are not available yet, so no verdict or caveat is shown.
-  const rawOnly = useRawOnly()
+  // A raw-only record (decided from the record, not from the global metadata): the harmonized
+  // parts are not available yet, so no verdict or caveat is shown. A harmonized record is shown in full.
+  const rawOnly = useRawOnly() && isRawOnlyRecord(record)
   const verdict = VERDICT_PRESENTATION[record.verdict]
   const probability = verdictProbability(record)
   const provisional = record.data_level !== 'SP'

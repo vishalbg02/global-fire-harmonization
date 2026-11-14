@@ -4,7 +4,7 @@ import type { Area } from '../../state/selection.ts'
 import { JUMP_CAPTION } from '../../content/source.ts'
 import { useAreaSeries } from '../area/useAreaSeries.ts'
 import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
-import { RAW_ONLY_AREA_UNAVAILABLE, useRawOnly } from '../../content/rawOnly.ts'
+import { RAW_ONLY_AREA_UNAVAILABLE, isRawOnlySeries, useRawOnly } from '../../content/rawOnly.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { SatelliteTimeline } from './SatelliteTimeline.tsx'
 import { WitnessChart } from './WitnessChart.tsx'
@@ -23,8 +23,9 @@ interface Props {
 export function WitnessPanel({ area, onShowWorld }: Props) {
   const [tableView, setTableView] = useState(false)
   const series = useAreaSeries(area)
-  const rawOnly = useRawOnly()
   const records = series.data
+  const globalRawOnly = useRawOnly()
+  const rawOnly = isRawOnlySeries(records, globalRawOnly)
 
   const apiError = series.error instanceof ApiError ? series.error : null
   const isCustom = area.entity_type === 'CUSTOM'
@@ -73,10 +74,10 @@ export function WitnessPanel({ area, onShowWorld }: Props) {
       {series.isError && serverMessage !== null && (
         <ErrorState message={serverMessage} onRetry={apiError?.status === 422 ? undefined : () => void series.refetch()} />
       )}
-      {series.isError && !notFound && serverMessage === null && rawOnly && apiError?.status === 503 && (
+      {series.isError && !notFound && serverMessage === null && globalRawOnly && apiError?.status === 503 && (
         <EmptyState message={RAW_ONLY_AREA_UNAVAILABLE} />
       )}
-      {series.isError && !notFound && serverMessage === null && !(rawOnly && apiError?.status === 503) && (
+      {series.isError && !notFound && serverMessage === null && !(globalRawOnly && apiError?.status === 503) && (
         <ErrorState
           message="Data are not available right now. The satellite comparison could not be loaded."
           onRetry={() => void series.refetch()}
