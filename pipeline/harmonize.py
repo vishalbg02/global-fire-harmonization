@@ -302,17 +302,21 @@ def _aggregate_v02(con, members: str, when: str, wit: str, cmw: str, cells: str,
         raise ValueError(f"factors needs the columns {need}")
     con.register("factors_df", factors[need])
     con.execute("CREATE OR REPLACE TEMP TABLE fac AS SELECT * FROM factors_df")
-    # converted activity per analysis cell of every stratum-month of the strata of the members (whole strata, not only the members' cells)
-    con.execute(f"""CREATE OR REPLACE TEMP TABLE act AS
-        WITH ncell AS (SELECT stratum_id, count(*) AS n FROM {cells} GROUP BY stratum_id),
-             strata AS (SELECT DISTINCT stratum_id FROM mem),
+    # Converted activity per analysis cell of every stratum-month of the strata of the members (whole strata, not only the members' cells).
+    # Two materialised steps: with the ratio join in the same query the planner reordered the joins and spilled tens of GB on large boxes.
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE act0 AS
+        WITH strata AS (SELECT DISTINCT stratum_id FROM mem),
              cs AS (SELECT c.cell_id, c.stratum_id FROM {cells} c JOIN strata USING (stratum_id))
-        SELECT c.stratum_id, w.year, w.month, w.witness, w.daynight,
-               sum(w.cell_days) * any_value(k.ratio) / any_value(n.n) AS x
-        FROM {cmw} w JOIN cs c USING (cell_id) JOIN ncell n USING (stratum_id)
-             JOIN {cal} k ON k.stratum_id = c.stratum_id AND k.witness = w.witness AND k.daynight = w.daynight AND k.season = {SEASON_SQL}
+        SELECT c.stratum_id, w.year, w.month, w.witness, w.daynight, sum(w.cell_days) AS cd
+        FROM {cmw} w JOIN cs c USING (cell_id)
         WHERE w.daynight IN ('D', 'N') AND w.witness IN ('SNPP_VIIRS', 'NOAA20_VIIRS'){when}
         GROUP BY c.stratum_id, w.year, w.month, w.witness, w.daynight""")
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE act AS
+        WITH ncell AS (SELECT stratum_id, count(*) AS n FROM {cells} GROUP BY stratum_id)
+        SELECT a.stratum_id, a.year, a.month, a.witness, a.daynight, a.cd * k.ratio / n.n AS x
+        FROM act0 a JOIN ncell n USING (stratum_id)
+             JOIN {cal} k ON k.stratum_id = a.stratum_id AND k.witness = a.witness AND k.daynight = a.daynight
+                  AND k.season = {SEASON_SQL.replace('w.month', 'a.month')}""")
     sql = f"""
     WITH base AS (
         SELECT m.entity_type, m.entity_id, any_value(m.entity_name) AS entity_name, m.stratum_id, w.year, w.month, w.witness, w.daynight,
