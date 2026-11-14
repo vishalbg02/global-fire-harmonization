@@ -47,7 +47,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | [#36](https://github.com/vishalbg02/global-fire-harmonization/pull/36) | MERGED (2026-11-14) | APPROVED | `calibration` product; pooling levels reported |
 | T-012 | Holdout evaluation 2017–2021; Aqua drift diagnostic | M2 | P0 | T-011 | `science/T-012-holdout-drift` | [#45](https://github.com/vishalbg02/global-fire-harmonization/pull/45) | MERGED (2026-11-14) | APPROVED | Scores and drift plot presented at R2 |
 | T-013 | Witness combination + disagreement inflation; `harmonize_area()` | M2 | P0 | T-011 | `science/T-013-combination` | [#43](https://github.com/vishalbg02/global-fire-harmonization/pull/43) | MERGED (2026-11-14) | APPROVED | Unit tests on synthetic data with known answers |
-| T-014 | Baseline, probabilities, verdicts, reason codes; entity aggregation | M2 | P0 | T-013, D-010 | `science/T-014-verdicts` | — | TODO | — | `cell_month_harmonized`, `entity_month`, `metadata.json` validate |
+| T-014 | Baseline, probabilities, verdicts, reason codes; entity aggregation | M2 | P0 | T-013, D-010 | `science/T-014-verdicts` | — | IN_REVIEW | PENDING | `cell_month_harmonized`, `entity_month`, `metadata.json` validate |
 | T-014a | Raw-only `cell_month_harmonized`, `entity_month` and `metadata.json` for the app (D-026) | M2 | P0 | T-006, T-009 | `science/T-014a-raw-only-products` | [#40](https://github.com/vishalbg02/global-fire-harmonization/pull/40) | MERGED (2026-11-14) | APPROVED | Contract 0.1.1 raw-only shape; every harmonized field null; `NOT_HARMONIZED`; totals reconcile |
 | T-015 | Large-fire consistency check | M2 | P1 | T-006 | `science/T-015-large-fire` | — | TODO | — | Diagnostic series per entity |
 | T-016 | "MODIS blindness" indicator | M2 | P1 | T-011 | `science/T-016-blindness` | — | TODO | — | Per-region value with caveat text |
@@ -59,11 +59,11 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-050 | Define case windows, bounding boxes, quiet months | M1 | P0 | — | `docs/T-050-validation-cases` | [#51](https://github.com/vishalbg02/global-fire-harmonization/pull/51) | MERGED (2026-11-14) | APPROVED | Table in `VALIDATION_PLAN.md` |
 | T-051 | **G1 lock**: grid, baseline, verdict and validation thresholds | M1 | P0 | T-006 | `docs/T-051-g1-lock` | [#51](https://github.com/vishalbg02/global-fire-harmonization/pull/51) | MERGED (2026-11-14) | APPROVED | Logged as approved before any results |
 | T-020 | Test A1 (two independent paths) | M2 | P0 | T-014, T-050 | `science/T-020-test-a1` | [#55](https://github.com/vishalbg02/global-fire-harmonization/pull/55) | IN_REVIEW | PENDING | Results recorded, pass or fail |
-| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | — | TODO | — | Recorded |
-| T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | — | TODO | — | Recorded |
+| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | [#54](https://github.com/vishalbg02/global-fire-harmonization/pull/54) | IN_REVIEW | PENDING | Recorded |
+| T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | [#56](https://github.com/vishalbg02/global-fire-harmonization/pull/56) | IN_REVIEW | PENDING | Recorded |
 | T-023 | Test A2 (same fire, two eras) | M2 | P1 | T-014, T-050 | `science/T-023-test-a2` | — | TODO | — | Recorded |
 | T-024 | Tests B2, C1, CTRL | M2 | P1 | T-014 | `science/T-024-test-b2-c1-ctrl` | — | TODO | — | Recorded |
-| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | — | TODO | — | Recorded |
+| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | [#57](https://github.com/vishalbg02/global-fire-harmonization/pull/57) | IN_REVIEW | PENDING | Recorded |
 | T-026 | Verify every number displayed in the app/demo against products | M2 + M1 | P0 | T-039 | `science/T-026-number-check` | — | TODO | — | Checklist signed off |
 
 ## Application and API (Member 3)

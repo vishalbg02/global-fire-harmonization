@@ -267,6 +267,7 @@ def aggregate(con, paths: Paths, members: str, months: list[tuple[int, int]] | N
     conv AS (
         SELECT b.*, CASE WHEN b.witness = 'AQUA_MODIS' THEN 1.0 ELSE k.ratio END AS r,
                CASE WHEN b.witness = 'AQUA_MODIS' THEN 0.0 ELSE k.ratio_sd END AS rsd,
+               CASE WHEN b.witness <> 'AQUA_MODIS' AND k.pooling_level <> 'LOCAL' THEN 1 ELSE 0 END AS pooled,
                CASE WHEN b.witness = 'AQUA_MODIS' THEN 'AQUA' WHEN k.pooling_level = 'LOCAL' THEN b.stratum_id
                     WHEN k.pooling_level = 'REGION' THEN split_part(b.stratum_id, '_b', 1) ELSE 'GLOBAL' END AS src
         FROM base b LEFT JOIN {cal} k ON k.stratum_id = b.stratum_id AND k.witness = b.witness AND k.daynight = b.daynight
@@ -275,11 +276,12 @@ def aggregate(con, paths: Paths, members: str, months: list[tuple[int, int]] | N
         SELECT entity_type, entity_id, any_value(entity_name) AS entity_name, year, month, witness, daynight, src,
                sum(cd) AS raw, bool_and(complete) AS complete, min(lo) AS lo, max(hi) AS hi,
                sum(r * cd) AS e, sum(r * r * cd) AS vc, power(sum(cd * rsd), 2) AS vr, sum(r) AS sr, count(*) AS nr,
+               sum(pooled * r * cd) AS e_pooled,
                count(*) FILTER (WHERE r IS NULL) AS missing
         FROM conv GROUP BY entity_type, entity_id, year, month, witness, daynight, src)
     SELECT entity_type, entity_id, any_value(entity_name) AS entity_name, year, month, witness, daynight,
            sum(raw) AS raw, bool_and(complete) AS complete, min(lo) AS lo, max(hi) AS hi,
-           sum(e) AS e, sum(vc) AS vc, sum(vr) AS vr, sum(sr) / sum(nr) AS rbar, sum(missing) AS missing
+           sum(e) AS e, sum(vc) AS vc, sum(vr) AS vr, sum(sr) / sum(nr) AS rbar, sum(missing) AS missing, sum(e_pooled) AS e_pooled
     FROM grp GROUP BY entity_type, entity_id, year, month, witness, daynight
     ORDER BY entity_type, entity_id, year, month, witness, daynight"""
     return con.execute(sql).df()

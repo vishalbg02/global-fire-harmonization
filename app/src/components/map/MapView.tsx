@@ -13,7 +13,7 @@ import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
 import { countryIso3, countryName } from './countries.ts'
-import { cellFillColor, sharedMax } from './scale.ts'
+import { cellFillColor, needsOutline, sharedMax } from './scale.ts'
 
 // MapLibre 6 runs in a module worker. Bundlers do not emit it automatically, so register
 // it through Vite (works in both the dev server and the production build).
@@ -102,6 +102,11 @@ export function MapView({
       attributionControl: false,
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+    // The focusable map canvas gets a name and its keyboard keys (MapLibre: arrows pan, plus and minus zoom).
+    map.getCanvas().setAttribute(
+      'aria-label',
+      'Map canvas. Use the arrow keys to pan and the plus and minus keys to zoom. Choose an area with the search, the typed box or the lists.',
+    )
     const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
     map.addControl(overlay)
     mapRef.current = map
@@ -262,10 +267,11 @@ export function MapView({
         [c.lon_min, c.lat_max],
       ],
       getFillColor: (c) => [...cellFillColor(c, layer, max)],
-      getLineColor: (c) => (c.cell_id === selectedCellId ? [0, 80, 200, 255] : [60, 60, 60, 90]),
-      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : 1),
+      getLineColor: (c) =>
+        c.cell_id === selectedCellId ? [0, 80, 200, 255] : needsOutline(c, layer) ? [27, 27, 31, 255] : [60, 60, 60, 90],
+      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : 1),
       lineWidthUnits: 'pixels',
-      updateTriggers: { getFillColor: [layer, max], getLineColor: [selectedCellId], getLineWidth: [selectedCellId] },
+      updateTriggers: { getFillColor: [layer, max], getLineColor: [selectedCellId, layer], getLineWidth: [selectedCellId, layer] },
       onHover: (info) => {
         const box = wrap.current?.getBoundingClientRect()
         setHover(

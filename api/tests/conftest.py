@@ -8,6 +8,7 @@ import duckdb
 import pytest
 from fastapi.testclient import TestClient
 
+from fire_api import custom
 from fire_api.main import app
 
 HARMONIZED_COLUMNS = """
@@ -145,6 +146,12 @@ def build_products(directory: Path, harmonized_rows: list[tuple[Any, ...]] | Non
     _write_parquet(directory, "entity_month.parquet", ENTITY_COLUMNS, ENTITY_ROWS)
     (directory / "metadata.json").write_text(json.dumps(METADATA), encoding="utf-8")
     (directory / "validation_results.json").write_text(json.dumps(VALIDATION), encoding="utf-8")
+
+
+@pytest.fixture(autouse=True)
+def _fresh_custom_cache() -> None:
+    """No custom-area result survives from one test to the next."""
+    custom.clear_cache()
 
 
 @pytest.fixture

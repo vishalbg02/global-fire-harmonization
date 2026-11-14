@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { ApiError } from '../../api/client.ts'
 import type { Area } from '../../state/selection.ts'
 import { JUMP_CAPTION } from '../../content/source.ts'
@@ -7,8 +7,10 @@ import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
 import { RAW_ONLY_AREA_UNAVAILABLE, isRawOnlySeries, useRawOnly } from '../../content/rawOnly.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { SatelliteTimeline } from './SatelliteTimeline.tsx'
-import { WitnessChart } from './WitnessChart.tsx'
 import { WitnessTable } from './WitnessTable.tsx'
+
+// The chart (ECharts) is loaded when first shown (T-042).
+const WitnessChart = lazy(() => import('./WitnessChart.tsx').then((m) => ({ default: m.WitnessChart })))
 
 interface Props {
   area: Area
@@ -96,7 +98,9 @@ export function WitnessPanel({ area, onShowWorld }: Props) {
                 </p>
               }
             >
-              <WitnessChart records={records} areaName={area.entity_name} />
+              <Suspense fallback={<LoadingState what="the chart" />}>
+                <WitnessChart records={records} areaName={area.entity_name} />
+              </Suspense>
             </ErrorBoundary>
           )}
           <SatelliteTimeline />
