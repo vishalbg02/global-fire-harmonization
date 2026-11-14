@@ -121,6 +121,7 @@ def case_estimates(case: dict, paths: hz.Paths, factors: pd.DataFrame | None, ph
     con = duckdb.connect()
     con.execute(f"SET temp_directory='{paths.tmp.as_posix()}'")
     con.execute("SET memory_limit='6GB'")
+    con.execute("SET max_temp_directory_size='20GiB'")       # a runaway query stops here instead of filling the drive
     con.execute("SET preserve_insertion_order=false")
     con.register("members_df", pd.DataFrame({"entity_type": "CUSTOM", "entity_id": "A1", "entity_name": "A1 box", "cell_id": ids}))
     con.execute("CREATE TEMP TABLE members AS SELECT * FROM members_df")
