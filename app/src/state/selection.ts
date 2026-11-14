@@ -1,19 +1,34 @@
 import { createContext, useContext } from 'react'
 import type { Dispatch } from 'react'
-import type { MapLayer } from '../api/contract.ts'
+import type { Bbox, MapLayer } from '../api/contract.ts'
 
-/** An area the calendar can show: the series endpoint serves these entity types. */
-export interface Area {
+/** A country, a continent or the world: the series endpoint serves these. */
+export interface PresetArea {
   entity_type: 'COUNTRY' | 'CONTINENT' | 'GLOBAL'
   entity_id: string
   entity_name: string
 }
 
-export interface SelectedEntity {
-  entity_type: 'CELL' | Area['entity_type']
+/** A rectangle chosen by the user; its series comes from `POST /api/series/custom`. */
+export interface CustomArea {
+  entity_type: 'CUSTOM'
   entity_id: string
   entity_name: string
+  bbox: Bbox
 }
+
+/** An area the calendar and the evidence panel can show. */
+export type Area = PresetArea | CustomArea
+
+export type SelectedEntity = Area | { entity_type: 'CELL'; entity_id: string; entity_name: string }
+
+/** Asks the map to fit a box. A new object each time, so the same box can be requested again. */
+export interface FitRequest {
+  bbox: Bbox
+}
+
+/** The default view when the world is chosen. */
+export const WORLD_BBOX: Bbox = [-180, -60, 180, 75]
 
 /** What the calendar colours by. */
 export type ValueMode = 'pct' | 'activity'
@@ -27,7 +42,7 @@ export type Source = 'raw' | 'harmonized'
 /** The map shows the verdict (always harmonized) or the activity of the chosen source. */
 export type MapMode = 'verdict' | 'activity'
 
-export const WORLD: Area = { entity_type: 'GLOBAL', entity_id: 'GLOBAL', entity_name: 'World' }
+export const WORLD: PresetArea = { entity_type: 'GLOBAL', entity_id: 'GLOBAL', entity_name: 'World' }
 
 export interface Selection {
   entity: SelectedEntity | null
@@ -36,6 +51,8 @@ export interface Selection {
    * Selecting a cell leaves it unchanged (cells have no series); clearing resets to the world.
    */
   area: Area
+  /** The last request to fit the map to an area chosen in the area picker (null at start). */
+  fit: FitRequest | null
   /** null until the available months are known. */
   month: { year: number; month: number } | null
   mapMode: MapMode
@@ -44,7 +61,7 @@ export interface Selection {
 }
 
 export type SelectionAction =
-  | { type: 'select-entity'; entity: SelectedEntity }
+  | { type: 'select-entity'; entity: SelectedEntity; fit?: Bbox }
   | { type: 'clear-entity' }
   | { type: 'set-month'; year: number; month: number }
   | { type: 'set-map-mode'; mapMode: MapMode }
@@ -54,6 +71,7 @@ export type SelectionAction =
 export const initialSelection: Selection = {
   entity: null,
   area: WORLD,
+  fit: null,
   month: null,
   mapMode: 'verdict',
   source: 'harmonized',
@@ -73,12 +91,13 @@ export function rawAvailable(valueMode: ValueMode): boolean {
 export function selectionReducer(state: Selection, action: SelectionAction): Selection {
   switch (action.type) {
     case 'select-entity': {
-      const { entity } = action
+      const { entity, fit } = action
+      const fitRequest = fit === undefined ? state.fit : { bbox: fit }
       if (entity.entity_type === 'CELL') return { ...state, entity }
-      return { ...state, entity, area: { ...entity, entity_type: entity.entity_type } }
+      return { ...state, entity, area: entity, fit: fitRequest }
     }
     case 'clear-entity':
-      return { ...state, entity: null, area: WORLD }
+      return { ...state, entity: null, area: WORLD, fit: { bbox: WORLD_BBOX } }
     case 'set-month':
       return { ...state, month: { year: action.year, month: action.month } }
     case 'set-map-mode':

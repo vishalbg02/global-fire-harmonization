@@ -6,13 +6,16 @@ export function LoadingState({ what }: { what: string }) {
   )
 }
 
-export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+/** An error message; the Retry button only appears when retrying can help (`onRetry` given). */
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="state state-error" role="alert">
       <p>{message}</p>
-      <button type="button" onClick={onRetry}>
-        Retry
-      </button>
+      {onRetry !== undefined && (
+        <button type="button" onClick={onRetry}>
+          Retry
+        </button>
+      )}
     </div>
   )
 }

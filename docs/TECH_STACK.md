@@ -170,6 +170,7 @@ These are planning estimates **[ESTIMATE]**, not measurements.
 | Frontend | React 19 + Vite 8 + TypeScript (strict; version pinned by the Vite template) |
 | Map | MapLibre GL JS 6 + deck.gl 9; Natural Earth boundaries; optional free basemap only with Lead approval |
 | Drawing | terra-draw |
+| Drawing adapter | terra-draw-maplibre-gl-adapter 1.5.0, pinned exactly (D-024, approved 2026-11-14) |
 | Charts | Apache ECharts 6 |
 | Data fetching | TanStack Query |
 | Tests and lint | pytest, ruff (Python); Vitest (frontend) |

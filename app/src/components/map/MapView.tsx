@@ -5,7 +5,11 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
 import { PolygonLayer, TextLayer } from '@deck.gl/layers'
-import type { MapCell, MapLayer } from '../../api/contract.ts'
+import { TerraDraw, TerraDrawRectangleMode } from 'terra-draw'
+import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
+import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
+import { bboxFromRing } from '../../state/bbox.ts'
+import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
 import { countryIso3, countryName } from './countries.ts'
@@ -31,19 +35,58 @@ interface Props {
   selectedCountryIso3: string | null
   onSelectCell: (cell: MapCell) => void
   onSelectCountry: (iso3: string, name: string) => void
+  /** Fit the map to this box whenever the object changes (an area chosen in the picker). */
+  fit: FitRequest | null
+  /** The selected custom rectangle, outlined on the map. */
+  customBbox: Bbox | null
+  /** While true, the user draws a rectangle with two clicks. */
+  drawing: boolean
+  onDrawn: (bbox: Bbox) => void
 }
 
-export function MapView({ cells, layer, selectedCellId, selectedCountryIso3, onSelectCell, onSelectCountry }: Props) {
+const CUSTOM_SOURCE = 'custom-area'
+
+function boxFeature(bbox: Bbox) {
+  const [w, s, e, n] = bbox
+  return {
+    type: 'Feature' as const,
+    properties: {},
+    geometry: { type: 'Polygon' as const, coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] },
+  }
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+export function MapView({
+  cells,
+  layer,
+  selectedCellId,
+  selectedCountryIso3,
+  onSelectCell,
+  onSelectCountry,
+  fit,
+  customBbox,
+  drawing,
+  onDrawn,
+}: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const overlayRef = useRef<MapLibreOverlay | null>(null)
   const loaded = useRef(false)
   const wrap = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
-  const callbacks = useRef({ onSelectCell, onSelectCountry })
+  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn })
+  // Clicks are ignored while drawing, and for a moment after a rectangle is finished, so that
+  // the click that ends the drawing does not also select a country or a cell.
+  const ignoreClicksUntil = useRef(0)
+  const drawingRef = useRef(drawing)
   useEffect(() => {
-    callbacks.current = { onSelectCell, onSelectCountry }
+    callbacks.current = { onSelectCell, onSelectCountry, onDrawn }
+    drawingRef.current = drawing
   })
+  const clicksIgnored = () => drawingRef.current || Date.now() < ignoreClicksUntil.current
 
   useEffect(() => {
     if (container.current === null) return
@@ -72,9 +115,18 @@ export function MapView({ cells, layer, selectedCellId, selectedCountryIso3, onS
         paint: { 'line-color': '#0050c8', 'line-width': 2.5 },
         filter: ['==', ['get', 'ISO_A3_EH'], ''],
       })
+      map.addSource(CUSTOM_SOURCE, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+      map.addLayer({ id: 'custom-area-fill', type: 'fill', source: CUSTOM_SOURCE, paint: { 'fill-color': '#0050c8', 'fill-opacity': 0.08 } })
+      map.addLayer({
+        id: 'custom-area-line',
+        type: 'line',
+        source: CUSTOM_SOURCE,
+        paint: { 'line-color': '#0050c8', 'line-width': 2.5, 'line-dasharray': [3, 2] },
+      })
       loaded.current = true
     })
     map.on('click', 'countries-fill', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+      if (clicksIgnored()) return
       const props = e.features?.[0]?.properties
       const iso3 = countryIso3(props)
       if (iso3 !== null) callbacks.current.onSelectCountry(iso3, countryName(props))
@@ -97,6 +149,65 @@ export function MapView({ cells, layer, selectedCellId, selectedCountryIso3, onS
     if (loaded.current) apply()
     else map.once('load', apply)
   }, [selectedCountryIso3])
+
+  // Outline the custom rectangle.
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null) return
+    const apply = () => {
+      const source = map.getSource(CUSTOM_SOURCE) as maplibregl.GeoJSONSource | undefined
+      source?.setData({ type: 'FeatureCollection', features: customBbox === null ? [] : [boxFeature(customBbox)] })
+    }
+    if (loaded.current) apply()
+    else map.once('load', apply)
+  }, [customBbox])
+
+  // Fit the map to an area chosen in the picker (no animation if the user prefers reduced motion).
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null || fit === null) return
+    const [w, s, e, n] = fit.bbox
+    map.fitBounds(
+      [
+        [w, s],
+        [e, n],
+      ],
+      { padding: 30, maxZoom: 6, animate: !prefersReducedMotion() },
+    )
+  }, [fit])
+
+  // Draw a rectangle with two clicks (terra-draw and its MapLibre adapter, D-024).
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null || !drawing) return
+    let draw: TerraDraw | null = null
+    const start = () => {
+      draw = new TerraDraw({
+        adapter: new TerraDrawMapLibreGLAdapter({ map }),
+        modes: [new TerraDrawRectangleMode()],
+      })
+      draw.start()
+      draw.setMode('rectangle')
+      draw.on('finish', (id) => {
+        const feature = draw?.getSnapshot().find((f) => f.id === id)
+        const ring = feature?.geometry.type === 'Polygon' ? feature.geometry.coordinates[0] : null
+        draw?.clear()
+        ignoreClicksUntil.current = Date.now() + 400
+        if (ring === null || ring === undefined) return
+        const check = bboxFromRing(ring)
+        if (check.ok) callbacks.current.onDrawn(check.bbox)
+      })
+    }
+    if (loaded.current) start()
+    else map.once('load', start)
+    return () => {
+      map.off('load', start)
+      if (draw !== null) {
+        draw.stop()
+        draw = null
+      }
+    }
+  }, [drawing])
 
   useEffect(() => {
     const overlay = overlayRef.current
@@ -132,7 +243,7 @@ export function MapView({ cells, layer, selectedCellId, selectedCountryIso3, onS
         )
       },
       onClick: (info) => {
-        if (info.object) callbacks.current.onSelectCell(info.object as MapCell)
+        if (info.object && !clicksIgnored()) callbacks.current.onSelectCell(info.object as MapCell)
       },
     })
     const icons =

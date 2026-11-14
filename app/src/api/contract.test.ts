@@ -3,7 +3,9 @@ import {
   ContractError,
   REASON_CODES,
   VERDICTS,
+  evidenceFromEntityMonth,
   parseEntityEvidence,
+  parseEntityItems,
   parseEntityMonth,
   parseEntityMonths,
   parseMapCell,
@@ -193,5 +195,49 @@ describe('parseEntityEvidence', () => {
     const missing = evidence()
     delete missing.pct_of_normal
     expect(() => parseEntityEvidence(missing)).toThrow(/missing field "pct_of_normal"/)
+  })
+})
+
+
+describe('parseEntityItems', () => {
+  const item = (overrides: Record<string, unknown> = {}) => ({
+    entity_type: 'COUNTRY',
+    entity_id: 'IDN',
+    entity_name: 'Indonesia',
+    bbox: [95, -11, 141, 6],
+    ...overrides,
+  })
+
+  it('parses a list of entities with their boxes', () => {
+    const items = parseEntityItems([item(), item({ entity_id: 'BRA', entity_name: 'Brazil', bbox: [-56, -12, -53, -9.5] })])
+    expect(items).toHaveLength(2)
+    expect(items[1].bbox).toEqual([-56, -12, -53, -9.5])
+  })
+
+  it('rejects a non-list, a bad box, an unknown type and a missing field', () => {
+    expect(() => parseEntityItems({})).toThrow(ContractError)
+    expect(() => parseEntityItems([item({ bbox: [1, 2, 3] })])).toThrow(ContractError)
+    expect(() => parseEntityItems([item({ bbox: [1, 2, 3, 'x'] })])).toThrow(ContractError)
+    expect(() => parseEntityItems([item({ entity_type: 'PLANET' })])).toThrow(ContractError)
+    const missing = item()
+    delete (missing as Record<string, unknown>).bbox
+    expect(() => parseEntityItems([missing])).toThrow(/missing field "bbox"/)
+  })
+})
+
+describe('evidenceFromEntityMonth', () => {
+  it('decodes the JSON string of raw_by_witness into an object', () => {
+    const record = parseEntityMonth(rawEntityMonth({ entity_type: 'CUSTOM', raw_by_witness: '{"AQUA_MODIS": 5, "SNPP_VIIRS": 0}' }))
+    expect(evidenceFromEntityMonth(record).raw_by_witness).toEqual({ AQUA_MODIS: 5, SNPP_VIIRS: 0 })
+  })
+
+  it('keeps a null raw_by_witness as null', () => {
+    const record = parseEntityMonth(rawEntityMonth({ raw_by_witness: null }))
+    expect(evidenceFromEntityMonth(record).raw_by_witness).toBeNull()
+  })
+
+  it('rejects invalid JSON and an unknown witness instead of guessing', () => {
+    expect(() => evidenceFromEntityMonth(parseEntityMonth(rawEntityMonth({ raw_by_witness: 'not json' })))).toThrow(ContractError)
+    expect(() => evidenceFromEntityMonth(parseEntityMonth(rawEntityMonth({ raw_by_witness: '{"LANDSAT": 1}' })))).toThrow(ContractError)
   })
 })
