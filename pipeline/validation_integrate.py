@@ -18,8 +18,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 QA = ROOT / "data" / "interim" / "qa"
 PRODUCTS = ROOT / "data" / "products"
+# Order matters: when two files carry the same test_id the later one wins (T-025b ran the half of S1 that T-025 recorded as NOT_RUN).
 ENTRY_FILES = ("T-020_validation_entries.json", "T-021_validation_entries.json", "T-022_validation_entries.json",
-               "T-025_validation_entries.json")
+               "T-023_validation_entries.json", "T-024_validation_entries.json", "T-025_validation_entries.json",
+               "T-025b_validation_entries.json")
 STATUSES = ("PASS", "FAIL", "INCONCLUSIVE", "NOT_RUN")
 FIELDS = ("test_id", "family", "title", "case", "criterion", "threshold", "measured", "status", "notes")
 PLAN_ORDER = ("A1", "A2", "B1", "B2", "B3", "C1", "CTRL", "D1", "D2", "E1", "S1")
@@ -71,8 +73,34 @@ def load_entries(qa: Path = QA, files: tuple[str, ...] = ENTRY_FILES) -> tuple[l
     return entries, meta
 
 
+def resolve_s1(entries: list[dict]) -> list[dict]:
+    """The overall S1 entry once both halves have a verdict.
+
+    S1 (VALIDATION_PLAN section 3) is "conclusions unchanged" for two re-runs: the Aqua-measured baseline (S1-BASELINE) and no confidence filter
+    (S1-CONFIDENCE-FILTER). [ASSUMPTION] Overall: FAIL if either half FAILs, PASS if both PASS, otherwise INCONCLUSIVE; while a half is NOT_RUN
+    the overall entry stays as the harness wrote it (NOT_RUN).
+    """
+    by_id = {e["test_id"]: e for e in entries}
+    base, conf, overall = by_id.get("S1-BASELINE"), by_id.get("S1-CONFIDENCE-FILTER"), by_id.get("S1")
+    if not (base and conf and overall) or "NOT_RUN" in (base["status"], conf["status"]):
+        return entries
+    verdicts = (base["status"], conf["status"])
+    status = "FAIL" if "FAIL" in verdicts else ("PASS" if verdicts == ("PASS", "PASS") else "INCONCLUSIVE")
+    resolved = {**overall, "status": status, "measured": {"baseline_half": base["status"], "confidence_filter_half": conf["status"]},
+                "notes": (f"Both halves ran: S1-BASELINE {base['status']} (T-025) and S1-CONFIDENCE-FILTER {conf['status']} (T-025b). Overall by the "
+                          "rule: FAIL if either half FAILs, PASS if both PASS [ASSUMPTION, flagged for the Lead]. S1-CONFIDENCE-FILTER PASS means the "
+                          "conclusions do not depend on the filter, not that A1 passes (A1 is FAIL with and without it).")}
+    return [resolved if e["test_id"] == "S1" else e for e in entries]
+
+
 def merge(entries: list[dict]) -> list[dict]:
-    """Harness entries in plan order (A1 ... S1), the plan tests nobody ran appended as NOT_RUN entries in their place."""
+    """Harness entries in plan order (A1 ... S1), the plan tests nobody ran appended as NOT_RUN entries in their place.
+
+    A test_id present in more than one file keeps its last occurrence in the position of its first; the overall S1 is resolved from its halves."""
+    seen: dict[str, dict] = {}
+    for e in entries:
+        seen[e["test_id"]] = e
+    entries = resolve_s1(list(seen.values()))
     by_plan: dict[str, list[dict]] = {p: [] for p in PLAN_ORDER}
     for e in entries:
         if e.get("measured") is None:                  # a harness may write null for a test that did not run: the contract wants an object

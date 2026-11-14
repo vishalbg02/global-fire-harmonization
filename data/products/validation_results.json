@@ -1,7 +1,7 @@
 {
   "contract_version": "0.1.1",
   "method_version": "0.1.0",
-  "generated_at": "2026-11-14T21:20:54Z",
+  "generated_at": "2026-11-14T21:39:37Z",
   "synthetic": false,
   "tests": [
     {
@@ -783,15 +783,478 @@
       "notes": "C1 is officially INCONCLUSIVE (D-028 as pre-registered); C2 to C6 use the shared Aqua baseline (D-029). See docs/validation/T-020-results.md."
     },
     {
+      "test_id": "A2-C1",
+      "family": "A",
+      "title": "Same fire, two eras (planted into quiet months)",
+      "case": "Indonesia Sep-Oct 2015",
+      "criterion": "Harmonized peaks overlap within 90% intervals AND the raw record shows a mismatch (otherwise INCONCLUSIVE)",
+      "threshold": "VALIDATION_PLAN section 3 (A2); raw mismatch fixed in advance: raw S-NPP 2023 / raw Aqua 2010 >= 1.5 or <= 1/1.5; 90% intervals (1.645 sd, floor 0) that touch overlap",
+      "measured": {
+        "n_cells": 548,
+        "quiet_month_rule": "lowest median 2003-2022 of the box's harmonized series, >= 15 years, earliest on a tie",
+        "quiet_calendar_month": 12,
+        "quiet_month_baseline_median": 114.12376834468458,
+        "baseline_medians_by_calendar_month": {
+          "1": 241.8314371471686,
+          "2": 479.59219374306,
+          "3": 595.0,
+          "4": 348.59895200307005,
+          "5": 545.0922676392248,
+          "6": 1039.5,
+          "7": 1434.0,
+          "8": 4629.0,
+          "9": 6076.0,
+          "10": 1424.0,
+          "11": 277.7615475046839,
+          "12": 114.12376834468458
+        },
+        "raw_aqua_cell_days_peak_window": {
+          "2015-09": 15751.0,
+          "2015-10": 11346.0
+        },
+        "event_month": "2015-09",
+        "planting": {
+          "old": {
+            "ok": true,
+            "reason": null,
+            "witness": "AQUA_MODIS",
+            "event": "2015-09",
+            "target": "2010-12",
+            "days_in_month": 31,
+            "n_rows": 1644,
+            "removed_rows": 3288,
+            "event_days_in_month": 30,
+            "cell_days": 31502,
+            "detections": 52690,
+            "frp_sum_mw": 2083232.7999999998,
+            "data_level": "SP",
+            "totals_preserved": true,
+            "other_witnesses_in_planted_month": []
+          },
+          "new": {
+            "ok": true,
+            "reason": null,
+            "witness": "SNPP_VIIRS",
+            "event": "2015-09",
+            "target": "2023-12",
+            "days_in_month": 31,
+            "n_rows": 1644,
+            "removed_rows": 6576,
+            "event_days_in_month": 30,
+            "cell_days": 125636,
+            "detections": 449544,
+            "frp_sum_mw": 3401236.34,
+            "data_level": "SP",
+            "totals_preserved": true,
+            "other_witnesses_in_planted_month": []
+          }
+        },
+        "raw": {
+          "aqua_2010_cell_days": 15751,
+          "snpp_2023_cell_days": 62818,
+          "ratio": 3.9881912259539076,
+          "mismatch": true,
+          "direction": "inflation",
+          "large_inflation": true,
+          "threshold": 1.5
+        },
+        "harmonized_2010_aqua": {
+          "estimate": 15751.0,
+          "sd": 1215.0952189849156,
+          "ci90": [
+            13752.346221961268,
+            17749.653778038733
+          ],
+          "witnesses_used": [
+            "AQUA_MODIS"
+          ],
+          "reason_codes": [
+            "SINGLE_WITNESS"
+          ],
+          "pct_of_normal_context": 13801.682356323645
+        },
+        "harmonized_2023_snpp": {
+          "estimate": 10237.612095171116,
+          "sd": 926.4334399602212,
+          "ci90": [
+            8713.764691323417,
+            11761.459499018816
+          ],
+          "witnesses_used": [
+            "SNPP_VIIRS"
+          ],
+          "reason_codes": [
+            "SINGLE_WITNESS"
+          ],
+          "pct_of_normal_context": 8970.622196991222
+        },
+        "harmonized_ratio_new_over_old": 0.6499658494807388,
+        "difference_in_sd": -3.6082757817139326,
+        "real_event_month_context": {
+          "AQUA_MODIS": {
+            "estimate": 15751.0,
+            "sd": 1215.0952189849156
+          },
+          "SNPP_VIIRS": {
+            "estimate": 13638.035791793809,
+            "sd": 1064.6152378985596
+          }
+        },
+        "identity_check_aqua": {
+          "planted_2010_estimate": 15751.0,
+          "real_event_aqua_only_estimate": 15751.0,
+          "equal": true
+        },
+        "exploratory_event_season_ratios": {
+          "season_of_event": "SON",
+          "season_of_target": "DJF",
+          "snpp_2023_estimate": 13638.035791793809,
+          "snpp_2023_sd": 1092.1729418058567,
+          "snpp_2023_ci90": [
+            11841.571167206186,
+            15434.500416381432
+          ],
+          "intervals_overlap": true,
+          "ratio_new_over_old": 0.8658520596656599
+        },
+        "intervals_overlap": false,
+        "interval_2010": [
+          13752.346221961268,
+          17749.653778038733
+        ],
+        "interval_2023": [
+          8713.764691323417,
+          11761.459499018816
+        ],
+        "reasons": [
+          "the 90% intervals of the harmonized peaks do not overlap"
+        ]
+      },
+      "status": "FAIL",
+      "notes": "Design fixed in docs/task-prompts/T-023-test-a2.md before any run. A planted month holds one witness (Aqua in 2010, S-NPP in 2023), so each is a single-witness estimate. See docs/validation/T-023-results.md."
+    },
+    {
+      "test_id": "A2-C4",
+      "family": "A",
+      "title": "Same fire, two eras (planted into quiet months)",
+      "case": "SE Australia Dec 2019-Jan 2020",
+      "criterion": "Harmonized peaks overlap within 90% intervals AND the raw record shows a mismatch (otherwise INCONCLUSIVE)",
+      "threshold": "VALIDATION_PLAN section 3 (A2); raw mismatch fixed in advance: raw S-NPP 2023 / raw Aqua 2010 >= 1.5 or <= 1/1.5; 90% intervals (1.645 sd, floor 0) that touch overlap",
+      "measured": {
+        "n_cells": 296,
+        "quiet_month_rule": "lowest median 2003-2022 of the box's harmonized series, >= 15 years, earliest on a tie",
+        "quiet_calendar_month": 12,
+        "quiet_month_baseline_median": 130.33314392506702,
+        "baseline_medians_by_calendar_month": {
+          "1": 160.0,
+          "2": 211.93438455333006,
+          "3": 569.2329478213574,
+          "4": 1460.4647893263013,
+          "5": 1026.902311192137,
+          "6": 218.01350396260872,
+          "7": 335.0,
+          "8": 570.5,
+          "9": 480.6896728737665,
+          "10": 287.75846061045763,
+          "11": 166.66608841093546,
+          "12": 130.33314392506702
+        },
+        "raw_aqua_cell_days_peak_window": {
+          "2019-12": 6842.0,
+          "2020-01": 4373.0
+        },
+        "event_month": "2019-12",
+        "planting": {
+          "old": {
+            "ok": true,
+            "reason": null,
+            "witness": "AQUA_MODIS",
+            "event": "2019-12",
+            "target": "2010-12",
+            "days_in_month": 31,
+            "n_rows": 888,
+            "removed_rows": 1776,
+            "event_days_in_month": 31,
+            "cell_days": 13684,
+            "detections": 42514,
+            "frp_sum_mw": 5154415.6,
+            "data_level": "SP",
+            "totals_preserved": true,
+            "other_witnesses_in_planted_month": []
+          },
+          "new": {
+            "ok": true,
+            "reason": null,
+            "witness": "SNPP_VIIRS",
+            "event": "2019-12",
+            "target": "2023-12",
+            "days_in_month": 31,
+            "n_rows": 888,
+            "removed_rows": 3552,
+            "event_days_in_month": 31,
+            "cell_days": 33244,
+            "detections": 434040,
+            "frp_sum_mw": 4672796.16,
+            "data_level": "SP",
+            "totals_preserved": true,
+            "other_witnesses_in_planted_month": []
+          }
+        },
+        "raw": {
+          "aqua_2010_cell_days": 6842,
+          "snpp_2023_cell_days": 16622,
+          "ratio": 2.4294066062554807,
+          "mismatch": true,
+          "direction": "inflation",
+          "large_inflation": true,
+          "threshold": 1.5
+        },
+        "harmonized_2010_aqua": {
+          "estimate": 6842.0,
+          "sd": 529.9140843570776,
+          "ci90": [
+            5970.368896372593,
+            7713.631103627407
+          ],
+          "witnesses_used": [
+            "AQUA_MODIS"
+          ],
+          "reason_codes": [
+            "SINGLE_WITNESS"
+          ],
+          "pct_of_normal_context": 5249.623997356881
+        },
+        "harmonized_2023_snpp": {
+          "estimate": 3531.5531371928846,
+          "sd": 284.7719623928728,
+          "ci90": [
+            3063.1449419968794,
+            3999.96133238889
+          ],
+          "witnesses_used": [
+            "SNPP_VIIRS"
+          ],
+          "reason_codes": [
+            "SINGLE_WITNESS"
+          ],
+          "pct_of_normal_context": 2709.6355008694454
+        },
+        "harmonized_ratio_new_over_old": 0.5161580147899568,
+        "difference_in_sd": -5.5028785156885185,
+        "real_event_month_context": {
+          "AQUA_MODIS": {
+            "estimate": 6842.0,
+            "sd": 529.9140843570776
+          },
+          "SNPP_VIIRS": {
+            "estimate": 3531.5531371928846,
+            "sd": 284.7719623928728
+          }
+        },
+        "identity_check_aqua": {
+          "planted_2010_estimate": 6842.0,
+          "real_event_aqua_only_estimate": 6842.0,
+          "equal": true
+        },
+        "exploratory_event_season_ratios": {
+          "season_of_event": "DJF",
+          "season_of_target": "DJF",
+          "snpp_2023_estimate": 3531.5531371928846,
+          "snpp_2023_sd": 284.7719623928728,
+          "snpp_2023_ci90": [
+            3063.1449419968794,
+            3999.96133238889
+          ],
+          "intervals_overlap": false,
+          "ratio_new_over_old": 0.5161580147899568
+        },
+        "intervals_overlap": false,
+        "interval_2010": [
+          5970.368896372593,
+          7713.631103627407
+        ],
+        "interval_2023": [
+          3063.1449419968794,
+          3999.96133238889
+        ],
+        "reasons": [
+          "the 90% intervals of the harmonized peaks do not overlap"
+        ]
+      },
+      "status": "FAIL",
+      "notes": "Design fixed in docs/task-prompts/T-023-test-a2.md before any run. A planted month holds one witness (Aqua in 2010, S-NPP in 2023), so each is a single-witness estimate. See docs/validation/T-023-results.md."
+    },
+    {
+      "test_id": "A2-C6",
+      "family": "A",
+      "title": "Same fire, two eras (planted into quiet months)",
+      "case": "Siberia (Sakha/Yakutia) 2021",
+      "criterion": "Harmonized peaks overlap within 90% intervals AND the raw record shows a mismatch (otherwise INCONCLUSIVE)",
+      "threshold": "VALIDATION_PLAN section 3 (A2); raw mismatch fixed in advance: raw S-NPP 2023 / raw Aqua 2010 >= 1.5 or <= 1/1.5; 90% intervals (1.645 sd, floor 0) that touch overlap",
+      "measured": {
+        "n_cells": 2174,
+        "quiet_month_rule": "lowest median 2003-2022 of the box's harmonized series, >= 15 years, earliest on a tie",
+        "quiet_calendar_month": 1,
+        "quiet_month_baseline_median": 0.023677838907555863,
+        "baseline_medians_by_calendar_month": {
+          "1": 0.023677838907555863,
+          "2": 0.09439201896004806,
+          "3": 1.3135331071354066,
+          "4": 15.719066572716311,
+          "5": 187.06788602001456,
+          "6": 599.2165531320029,
+          "7": 3597.263634908617,
+          "8": 1518.0,
+          "9": 195.3394371064344,
+          "10": 26.87597176937058,
+          "11": 0.5662535624695764,
+          "12": 0.07074403991725234
+        },
+        "raw_aqua_cell_days_peak_window": {
+          "2021-07": 20635.0,
+          "2021-08": 21094.0
+        },
+        "event_month": "2021-08",
+        "planting": {
+          "old": {
+            "ok": true,
+            "reason": null,
+            "witness": "AQUA_MODIS",
+            "event": "2021-08",
+            "target": "2010-01",
+            "days_in_month": 31,
+            "n_rows": 6522,
+            "removed_rows": 13044,
+            "event_days_in_month": 31,
+            "cell_days": 42188,
+            "detections": 104140,
+            "frp_sum_mw": 11005175.799999999,
+            "data_level": "SP",
+            "totals_preserved": true,
+            "other_witnesses_in_planted_month": []
+          },
+          "new": {
+            "ok": true,
+            "reason": null,
+            "witness": "SNPP_VIIRS",
+            "event": "2021-08",
+            "target": "2023-01",
+            "days_in_month": 31,
+            "n_rows": 6522,
+            "removed_rows": 26088,
+            "event_days_in_month": 31,
+            "cell_days": 102092,
+            "detections": 1143006,
+            "frp_sum_mw": 11535638.219999999,
+            "data_level": "SP",
+            "totals_preserved": true,
+            "other_witnesses_in_planted_month": []
+          }
+        },
+        "raw": {
+          "aqua_2010_cell_days": 21094,
+          "snpp_2023_cell_days": 51046,
+          "ratio": 2.419929837868588,
+          "mismatch": true,
+          "direction": "inflation",
+          "large_inflation": true,
+          "threshold": 1.5
+        },
+        "harmonized_2010_aqua": {
+          "estimate": 21094.0,
+          "sd": 1603.0636281819884,
+          "ci90": [
+            18457.194976950872,
+            23730.805023049128
+          ],
+          "witnesses_used": [
+            "AQUA_MODIS"
+          ],
+          "reason_codes": [
+            "SINGLE_WITNESS"
+          ],
+          "pct_of_normal_context": null
+        },
+        "harmonized_2023_snpp": {
+          "estimate": 7343.406532448044,
+          "sd": 907.0059809133352,
+          "ci90": [
+            5851.514455076067,
+            8835.298609820022
+          ],
+          "witnesses_used": [
+            "SNPP_VIIRS"
+          ],
+          "reason_codes": [
+            "SINGLE_WITNESS"
+          ],
+          "pct_of_normal_context": null
+        },
+        "harmonized_ratio_new_over_old": 0.34812773928358987,
+        "difference_in_sd": -7.465574821673518,
+        "real_event_month_context": {
+          "AQUA_MODIS": {
+            "estimate": 21094.0,
+            "sd": 1603.0636281819884
+          },
+          "SNPP_VIIRS": {
+            "estimate": 15898.803058716407,
+            "sd": 1283.1261748416732
+          }
+        },
+        "identity_check_aqua": {
+          "planted_2010_estimate": 21094.0,
+          "real_event_aqua_only_estimate": 21094.0,
+          "equal": true
+        },
+        "exploratory_event_season_ratios": {
+          "season_of_event": "JJA",
+          "season_of_target": "DJF",
+          "snpp_2023_estimate": 15898.803058716412,
+          "snpp_2023_sd": 1422.4604749234695,
+          "snpp_2023_ci90": [
+            13559.06378734343,
+            18238.542330089396
+          ],
+          "intervals_overlap": false,
+          "ratio_new_over_old": 0.7537121010105439
+        },
+        "intervals_overlap": false,
+        "interval_2010": [
+          18457.194976950872,
+          23730.805023049128
+        ],
+        "interval_2023": [
+          5851.514455076067,
+          8835.298609820022
+        ],
+        "reasons": [
+          "the 90% intervals of the harmonized peaks do not overlap"
+        ]
+      },
+      "status": "FAIL",
+      "notes": "Design fixed in docs/task-prompts/T-023-test-a2.md before any run. A planted month holds one witness (Aqua in 2010, S-NPP in 2023), so each is a single-witness estimate. See docs/validation/T-023-results.md."
+    },
+    {
       "test_id": "A2",
       "family": "A",
-      "title": "Same fire, two eras",
+      "title": "Same fire, two eras: family result",
       "case": "C1, C4, C6",
-      "criterion": "Harmonized peaks overlap within 90% intervals and the raw record shows a mismatch (otherwise INCONCLUSIVE)",
-      "threshold": "pre-registered at G1 (D-028)",
-      "measured": {},
-      "status": "NOT_RUN",
-      "notes": "Not run: T-023 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+      "criterion": "All three cases C1, C4, C6 PASS (the plan gives no family rule: [ASSUMPTION], the literal reading)",
+      "threshold": "A2 as written in VALIDATION_PLAN section 3 per case; the family rule is an [ASSUMPTION] for the Lead; an INCONCLUSIVE case does not count as a PASS",
+      "measured": {
+        "case_status": {
+          "C1": "FAIL",
+          "C4": "FAIL",
+          "C6": "FAIL"
+        },
+        "n_pass": 0,
+        "n_fail": 3,
+        "n_inconclusive": 0,
+        "n_not_run": 0
+      },
+      "status": "FAIL",
+      "notes": "Family rule is an [ASSUMPTION] (all three must PASS; an INCONCLUSIVE case is not a PASS and, as in the A1 family entry, makes the family FAIL once no case is left to run). The case statuses are listed so that an INCONCLUSIVE is not read as a failure of the method. See docs/validation/T-023-results.md."
     },
     {
       "test_id": "B1-2012-01",
@@ -853,12 +1316,124 @@
       "test_id": "B2",
       "family": "B",
       "title": "Planted sensor jump detected",
-      "case": "Random cells and regions",
-      "criterion": "Flagged within 3 months in at least 90% of at least 50 trials; false flags in under 5% of unplanted series",
-      "threshold": "pre-registered at G1 (D-028)",
-      "measured": {},
-      "status": "NOT_RUN",
-      "notes": "Not run: T-024 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+      "case": "200 trials: a jump (factor 1.5 to 3, up or down) in one witness of a random fire region or a random single cell from a random month in 2012-2021, planted in the in-memory aggregated table",
+      "criterion": "Flagged (WITNESS_DISAGREEMENT or a disagreement scale of at least 1.5) in the jump month or the two after in at least 90% of trials, and false flags in under 5% of unplanted series",
+      "threshold": "detection >= 90% and false flags < 5% (locked at G1, D-028)",
+      "measured": {
+        "trials": 200,
+        "detection": {
+          "k": 169,
+          "n": 200,
+          "share": 0.845,
+          "wilson95": [
+            0.7883930940765792,
+            0.8886036307231068
+          ]
+        },
+        "false_flags_unplanted_twin_window": {
+          "k": 50,
+          "n": 200,
+          "share": 0.25,
+          "wilson95": [
+            0.195081680068175,
+            0.31434098312045833
+          ]
+        },
+        "by_type": {
+          "REGION": {
+            "trials": 100,
+            "detection": 1.0,
+            "false_flags": 0.39
+          },
+          "CELL": {
+            "trials": 100,
+            "detection": 0.69,
+            "false_flags": 0.11
+          }
+        },
+        "seed": 20261115
+      },
+      "status": "FAIL",
+      "notes": "Readings of the plan [ASSUMPTION], task prompt section 15 items 1 to 5. False flag = the same rule on the unplanted twin of each trial (same three months): the rate under pure chance for two witnesses is about 13% over three months. See docs/validation/T-024-results.md."
+    },
+    {
+      "test_id": "B2-CODE-ONLY",
+      "family": "B",
+      "title": "Planted sensor jump detected: reason code only (supplementary)",
+      "case": "Same 200 trials",
+      "criterion": "Flagged = WITNESS_DISAGREEMENT only (S > 2)",
+      "threshold": "detection >= 90% and false flags < 5%",
+      "measured": {
+        "detection": {
+          "k": 147,
+          "n": 200,
+          "share": 0.735,
+          "wilson95": [
+            0.6698242380737758,
+            0.7913184585289089
+          ]
+        },
+        "false_flags_unplanted_twin_window": {
+          "k": 26,
+          "n": 200,
+          "share": 0.13,
+          "wilson95": [
+            0.0902820227966932,
+            0.18366351872248404
+          ]
+        }
+      },
+      "status": "FAIL",
+      "notes": "Supplementary reading; the official entry is B2."
+    },
+    {
+      "test_id": "B2-FALSE-FLAG-MONTHLY",
+      "family": "B",
+      "title": "False flags of unplanted series per month and per series (supplementary)",
+      "case": "17881 unplanted entity-months (regions and cell pool, 2012-2021, two or more witnesses, estimate >= 5)",
+      "criterion": "Share of unplanted entity-months flagged; share of entities flagged in any month",
+      "threshold": "< 5% (the plan's false-flag threshold, applied per month)",
+      "measured": {
+        "entity_months": 17881,
+        "flagged_per_month_union": {
+          "k": 999,
+          "n": 17881,
+          "share": 0.055869358536994575,
+          "wilson95": [
+            0.05259744521403049,
+            0.05933206019589298
+          ]
+        },
+        "flagged_per_month_code": {
+          "k": 316,
+          "n": 17881,
+          "share": 0.017672389687377662,
+          "wilson95": [
+            0.015842215149262755,
+            0.01970976110306801
+          ]
+        },
+        "entities_flagged_anywhere_union": {
+          "k": 271,
+          "n": 1000,
+          "share": 0.271,
+          "wilson95": [
+            0.2443667197375407,
+            0.2993859356488436
+          ]
+        },
+        "entities_flagged_anywhere_code": {
+          "k": 103,
+          "n": 1000,
+          "share": 0.103,
+          "wilson95": [
+            0.08565481000508716,
+            0.1233836362324436
+          ]
+        }
+      },
+      "status": "FAIL",
+      "notes": "Supplementary: the plan does not say what a false flag per series means; the status here applies the 5% threshold to the monthly union-rule rate."
     },
     {
       "test_id": "B3-DRIFT",
@@ -1028,24 +1603,229 @@
     {
       "test_id": "C1",
       "family": "C",
-      "title": "Cross-satellite agreement",
-      "case": "All fire regions, 2018 to 2021",
-      "criterion": "At least 85% of region-months agree within the combined 90% intervals (converted S-NPP against converted NOAA-20)",
-      "threshold": "pre-registered at G1 (D-028)",
-      "measured": {},
-      "status": "NOT_RUN",
-      "notes": "Not run: T-024 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+      "title": "Cross-satellite agreement (S-NPP against NOAA-20)",
+      "case": "Fire-region-months 2018-01 to 2021-12, both converted estimates >= 5 Aqua-equivalent cell-days (630 units)",
+      "criterion": "Share of region-months where converted S-NPP and converted NOAA-20 agree within the combined 90% intervals",
+      "threshold": ">= 85% (locked at G1, D-028)",
+      "measured": {
+        "units": 630,
+        "agree": {
+          "k": 615,
+          "n": 630,
+          "share": 0.9761904761904762,
+          "wilson95": [
+            0.9610900077738446,
+            0.9855189456959104
+          ]
+        },
+        "overlap_reading": {
+          "k": 629,
+          "n": 630,
+          "share": 0.9984126984126984,
+          "wilson95": [
+            0.991064290644574,
+            0.9997197473204364
+          ]
+        },
+        "median_ratio_snpp_over_noaa20": 1.00054321271746,
+        "per_region_agree": {
+          "AUST": 1.0,
+          "BOAS": 1.0,
+          "BONA": 0.8888888888888888,
+          "CEAM": 1.0,
+          "CEAS": 1.0,
+          "EQAS": 0.9555555555555556,
+          "EURO": 0.9555555555555556,
+          "MIDE": 1.0,
+          "NHAF": 0.9333333333333333,
+          "NHSA": 1.0,
+          "SEAS": 0.9555555555555556,
+          "SHAF": 1.0,
+          "SHSA": 1.0,
+          "TENA": 0.9777777777777777
+        },
+        "in_sample": {
+          "SNPP_VIIRS": "2012-01 to 2016-12 fit: 2018-2021 and 2022-2024 are out of sample",
+          "NOAA20_VIIRS": "2018-04 to 2021-12 fit: the plan window is IN sample, 2022-01 on is out of sample"
+        }
+      },
+      "status": "PASS",
+      "notes": "Agreement = the difference within 1.645 x sqrt(sd_S^2 + sd_N^2) [ASSUMPTION 6]. The whole window is IN sample for NOAA-20 (calibration 2018-04 to 2021-12) and out of sample for S-NPP; no month is out of sample for both: see C1-OUT-OF-SAMPLE-2022-2024."
+    },
+    {
+      "test_id": "C1-OVERLAP",
+      "family": "C",
+      "title": "Cross-satellite agreement: overlapping intervals (supplementary)",
+      "case": "Same units as C1",
+      "criterion": "Share of region-months where the two 90% intervals overlap",
+      "threshold": ">= 85%",
+      "measured": {
+        "units": 630,
+        "overlap": {
+          "k": 629,
+          "n": 630,
+          "share": 0.9984126984126984,
+          "wilson95": [
+            0.991064290644574,
+            0.9997197473204364
+          ]
+        }
+      },
+      "status": "PASS",
+      "notes": "A more lenient reading than the official one; supplementary."
+    },
+    {
+      "test_id": "C1-OUT-OF-SAMPLE-2022-2024",
+      "family": "C",
+      "title": "Cross-satellite agreement in months out of sample for both witnesses (supplementary)",
+      "case": "Fire-region-months 2022-01 to 2024-04 (322 units)",
+      "criterion": "Same as C1",
+      "threshold": ">= 85% (the plan's threshold, applied to months outside the plan window)",
+      "measured": {
+        "units": 322,
+        "agree": {
+          "k": 317,
+          "n": 322,
+          "share": 0.984472049689441,
+          "wilson95": [
+            0.9641712547420462,
+            0.9933496240595956
+          ]
+        },
+        "overlap_reading": {
+          "k": 321,
+          "n": 322,
+          "share": 0.9968944099378882,
+          "wilson95": [
+            0.9826211196272577,
+            0.9994515765795544
+          ]
+        },
+        "per_region_agree": {
+          "AUST": 1.0,
+          "BOAS": 1.0,
+          "BONA": 0.9130434782608695,
+          "CEAM": 1.0,
+          "CEAS": 0.9565217391304348,
+          "EQAS": 0.9565217391304348,
+          "EURO": 0.9565217391304348,
+          "MIDE": 1.0,
+          "NHAF": 1.0,
+          "NHSA": 1.0,
+          "SEAS": 1.0,
+          "SHAF": 1.0,
+          "SHSA": 1.0,
+          "TENA": 1.0
+        }
+      },
+      "status": "PASS",
+      "notes": "Outside the plan's 2018-2021 window; ends before the earliest VIIRS night drift onset (2024-05). Supplementary only."
     },
     {
       "test_id": "CTRL",
-      "family": "C",
-      "title": "Control",
-      "case": "C8 (southern African savanna), satellite-change dates",
-      "criterion": "No ABOVE or BELOW verdict at the change dates that is absent from the Aqua-only series",
-      "threshold": "pre-registered at G1 (D-028)",
-      "measured": {},
-      "status": "NOT_RUN",
-      "notes": "Not run: T-024 (P1, not assigned). No number is reported. Listed so that the plan is complete (docs/VALIDATION_PLAN.md section 3)."
+      "family": "CTRL",
+      "title": "Control: no spurious verdicts at the satellite-change dates (box C8)",
+      "case": "Southern African savanna box C8 (20, -20, 35, -8; 720 cells), the 25 months around 2012-01 and 2018-04",
+      "criterion": "No ABOVE/BELOW verdict of the harmonized series that the Aqua-only series does not give in the same month",
+      "threshold": "0 spurious verdicts (locked at G1, D-028)",
+      "measured": {
+        "spurious_total": 3,
+        "spurious": [
+          {
+            "date": "2012-01",
+            "month": "2011-03",
+            "harmonized": "BELOW_NORMAL",
+            "aqua_only": "CANNOT_DETERMINE"
+          },
+          {
+            "date": "2012-01",
+            "month": "2011-04",
+            "harmonized": "BELOW_NORMAL",
+            "aqua_only": "CANNOT_DETERMINE"
+          },
+          {
+            "date": "2012-01",
+            "month": "2012-09",
+            "harmonized": "BELOW_NORMAL",
+            "aqua_only": "CANNOT_DETERMINE"
+          }
+        ],
+        "determinable_harmonized_months": 27,
+        "per_date": {
+          "2012-01": {
+            "months": 25,
+            "spurious": 3,
+            "harmonized_verdicts": {
+              "ABOVE_NORMAL": 5,
+              "BELOW_NORMAL": 5,
+              "WITHIN_NORMAL": 2,
+              "NO_DETECTED_ACTIVITY": 0,
+              "CANNOT_DETERMINE": 13,
+              "missing": 0
+            },
+            "aqua_only_verdicts": {
+              "ABOVE_NORMAL": 5,
+              "BELOW_NORMAL": 3,
+              "WITHIN_NORMAL": 2,
+              "NO_DETECTED_ACTIVITY": 0,
+              "CANNOT_DETERMINE": 15,
+              "missing": 0
+            },
+            "determinable_harmonized": 12
+          },
+          "2018-04": {
+            "months": 25,
+            "spurious": 0,
+            "harmonized_verdicts": {
+              "ABOVE_NORMAL": 8,
+              "BELOW_NORMAL": 3,
+              "WITHIN_NORMAL": 4,
+              "NO_DETECTED_ACTIVITY": 0,
+              "CANNOT_DETERMINE": 10,
+              "missing": 0
+            },
+            "aqua_only_verdicts": {
+              "ABOVE_NORMAL": 8,
+              "BELOW_NORMAL": 4,
+              "WITHIN_NORMAL": 2,
+              "NO_DETECTED_ACTIVITY": 0,
+              "CANNOT_DETERMINE": 11,
+              "missing": 0
+            },
+            "determinable_harmonized": 15
+          }
+        }
+      },
+      "status": "FAIL",
+      "notes": "Harmonized series against its harmonized baseline, Aqua-only series against the Aqua-measured baseline, both 2003-2022 [ASSUMPTION 8]. INCONCLUSIVE would mean fewer than 12 determinable months."
+    },
+    {
+      "test_id": "CTRL-SHARED-BASELINE",
+      "family": "CTRL",
+      "title": "Control with one shared Aqua-measured baseline (supplementary, the form of D-029)",
+      "case": "Same months as CTRL",
+      "criterion": "Same rule, both series judged against the Aqua-measured 2003-2022 baseline",
+      "threshold": "0 spurious verdicts",
+      "measured": {
+        "spurious_total": 2,
+        "spurious": [
+          {
+            "date": "2012-01",
+            "month": "2012-09",
+            "harmonized": "BELOW_NORMAL",
+            "aqua_only": "CANNOT_DETERMINE"
+          },
+          {
+            "date": "2018-04",
+            "month": "2017-10",
+            "harmonized": "ABOVE_NORMAL",
+            "aqua_only": "CANNOT_DETERMINE"
+          }
+        ],
+        "determinable_harmonized_months": 26
+      },
+      "status": "FAIL",
+      "notes": "Supplementary reading; the official entry is CTRL."
     },
     {
       "test_id": "D1-REGIONS",
@@ -1791,12 +2571,77 @@
       "test_id": "S1-CONFIDENCE-FILTER",
       "family": "S",
       "title": "Sensitivity: A1 and B1 without the confidence filter",
-      "case": "C1-C6 (A1) and all fire regions (B1)",
-      "criterion": "Conclusions unchanged (report any that change)",
-      "threshold": "pre-registered at G1",
-      "measured": {},
-      "status": "NOT_RUN",
-      "notes": "Needs the raw archive regridded without the T-005 confidence filter, and the A1 and B1 tests it re-runs; neither exists yet."
+      "case": "A1 cases C1-C6 (official readings, family), B1 at 2012-01 and 2018-04, peak-window verdicts of C1-C6; regridded without the T-005 confidence filter, T-011 ratios unchanged",
+      "criterion": "Conclusions unchanged: every A1 case status, the A1 family status, both B1 statuses and every peak-window verdict of C1-C6 equal in the filtered and unfiltered runs",
+      "threshold": "S1 (VALIDATION_PLAN section 3): conclusions unchanged, any change reported; rule fixed in docs/task-prompts/T-025b-s1-confidence.md section 9",
+      "measured": {
+        "n_compared": 22,
+        "n_changed": 0,
+        "changes": [],
+        "uncomputed": [],
+        "control": {
+          "rows_product": 31024968,
+          "rows_control": 31024968,
+          "rows_joined": 31024968,
+          "cell_days_differences": 0,
+          "detections_differences": 0,
+          "frp_differences": 0,
+          "cell_days_sum_product": 89966148,
+          "cell_days_sum_control": 89966148,
+          "ok": true
+        },
+        "regridding": {
+          "rows": {
+            "filtered": 31024968,
+            "control": 31024968,
+            "unfiltered": 31024968
+          },
+          "a1_cells": 4664,
+          "a1_months": 220,
+          "b1_months": 48,
+          "seconds": 305,
+          "detections_in_cells_outside_the_product_cell_set": {
+            "control": {
+              "detections": 0,
+              "cells": 0
+            },
+            "unfiltered": {
+              "detections": 257,
+              "cells": 230
+            }
+          }
+        },
+        "a1_status_filtered": {
+          "C1": "INCONCLUSIVE",
+          "C2": "INCONCLUSIVE",
+          "C3": "FAIL",
+          "C4": "FAIL",
+          "C5": "FAIL",
+          "C6": "FAIL"
+        },
+        "a1_status_unfiltered": {
+          "C1": "INCONCLUSIVE",
+          "C2": "INCONCLUSIVE",
+          "C3": "FAIL",
+          "C4": "FAIL",
+          "C5": "FAIL",
+          "C6": "FAIL"
+        },
+        "a1_family": [
+          "FAIL",
+          "FAIL"
+        ],
+        "b1_filtered": {
+          "2012-01": "PASS",
+          "2018-04": "PASS"
+        },
+        "b1_unfiltered": {
+          "2012-01": "PASS",
+          "2018-04": "PASS"
+        }
+      },
+      "status": "PASS",
+      "notes": "all 22 compared conclusions are unchanged. T-011 ratios not refitted [ASSUMPTION]; cell set of the product [ASSUMPTION]. See docs/validation/T-025b-results.md."
     },
     {
       "test_id": "S1",
@@ -1807,10 +2652,10 @@
       "threshold": "pre-registered at G1",
       "measured": {
         "baseline_half": "FAIL",
-        "confidence_filter_half": "NOT_RUN"
+        "confidence_filter_half": "PASS"
       },
-      "status": "NOT_RUN",
-      "notes": "Overall NOT_RUN: half of S1 cannot run yet. The baseline half ran and is reported as S1-BASELINE; its verdict-agreement check against the T-014 verdict column is also NOT_RUN until T-014 products exist."
+      "status": "FAIL",
+      "notes": "Both halves ran: S1-BASELINE FAIL (T-025) and S1-CONFIDENCE-FILTER PASS (T-025b). Overall by the rule: FAIL if either half FAILs, PASS if both PASS [ASSUMPTION, flagged for the Lead]. S1-CONFIDENCE-FILTER PASS means the conclusions do not depend on the filter, not that A1 passes (A1 is FAIL with and without it)."
     }
   ]
 }

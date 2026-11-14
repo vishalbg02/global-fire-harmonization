@@ -96,7 +96,8 @@ def test_build_reads_the_files_and_the_product_metadata_and_a_missing_file_is_an
     (products / "metadata.json").write_text(json.dumps({"contract_version": "0.1.1", "method_version": "0.1.0"}), encoding="utf-8")
     ents = all_entries()
     split = {"T-020_validation_entries.json": ents[:2], "T-021_validation_entries.json": ents[2:6],
-             "T-022_validation_entries.json": ents[6:10], "T-025_validation_entries.json": ents[10:]}
+             "T-022_validation_entries.json": ents[6:10], "T-025_validation_entries.json": ents[10:],
+             "T-023_validation_entries.json": [], "T-024_validation_entries.json": [], "T-025b_validation_entries.json": []}
     for name, tests in split.items():
         (qa / name).write_text(json.dumps({"contract_version": "0.1.1", "method_version": "x", "synthetic": False, "tests": tests}), encoding="utf-8")
     d = vi.build(qa, products, now=datetime(2026, 11, 15, 3, 0, tzinfo=UTC))
@@ -165,3 +166,19 @@ def test_a_not_run_entry_may_list_the_statuses_of_its_parts_but_no_numbers():
     assert vi.check(d) == []
     s1["measured"] = {"changed": {"n": 1}}
     assert any("no measured numbers" in p for p in vi.check(d))
+
+
+def test_a_test_id_in_two_files_keeps_the_later_entry():
+    old = entry("S1-CONFIDENCE-FILTER", "NOT_RUN", notes="not yet")
+    new = entry("S1-CONFIDENCE-FILTER", "PASS", notes="ran")
+    out = vi.merge([old, *all_entries(), new])
+    got = [t for t in out if t["test_id"] == "S1-CONFIDENCE-FILTER"]
+    assert len(got) == 1 and got[0]["status"] == "PASS"
+
+
+def test_the_overall_s1_follows_its_two_halves_and_stays_not_run_while_one_is_not_run():
+    def s1(base, conf):
+        es = [entry("S1-BASELINE", base, notes="n"), entry("S1-CONFIDENCE-FILTER", conf, notes="n"), entry("S1", "NOT_RUN", notes="half")]
+        return next(t for t in vi.resolve_s1(es) if t["test_id"] == "S1")["status"]
+    assert s1("FAIL", "PASS") == "FAIL" and s1("PASS", "PASS") == "PASS" and s1("PASS", "INCONCLUSIVE") == "INCONCLUSIVE"
+    assert s1("FAIL", "NOT_RUN") == "NOT_RUN"
