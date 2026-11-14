@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import { ApiError } from '../../api/client.ts'
 import type { Metadata } from '../../api/contract.ts'
 import type { Area, Source, ValueMode } from '../../state/selection.ts'
@@ -6,11 +6,13 @@ import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
 import { useAreaSeries } from '../area/useAreaSeries.ts'
 import { RAW_ONLY_AREA_UNAVAILABLE, isRawOnlySeries, useRawOnly } from '../../content/rawOnly.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
-import { CalendarChart } from './CalendarChart.tsx'
 import { CalendarLegend } from './CalendarLegend.tsx'
 import { CalendarTable } from './CalendarTable.tsx'
 import { ValueModeSelector } from './ValueModeSelector.tsx'
 import { buildCalendarGrid, maxActivity as seriesMaxActivity } from './grid.ts'
+
+// The chart (ECharts) is loaded when first shown (T-042).
+const CalendarChart = lazy(() => import('./CalendarChart.tsx').then((m) => ({ default: m.CalendarChart })))
 
 interface Props {
   area: Area
@@ -125,6 +127,7 @@ export function CalendarPanel({
                   </p>
                 }
               >
+                <Suspense fallback={<LoadingState what="the chart" />}>
                 <CalendarChart
                   rows={rows}
                   mode={valueMode}
@@ -134,6 +137,7 @@ export function CalendarPanel({
                   source={source}
                   onSelectMonth={onSelectMonth}
                 />
+                </Suspense>
               </ErrorBoundary>
             )}
           </div>

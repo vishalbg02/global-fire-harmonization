@@ -544,6 +544,17 @@ aside section {
   background: #fff;
 }
 
+/* "Outside the record" is hatched, so it is never told from the 100% colour by colour alone (T-042). */
+.calendar-table td.cal-outside,
+.swatch-outside {
+  background-image: repeating-linear-gradient(45deg, #6b6b6b 0 1px, transparent 1px 6px);
+}
+
+/* "No data" and "no detected activity" on the map carry a dark outline (T-042). */
+.swatch-marked {
+  border: 2px solid #1b1b1f;
+}
+
 .calendar-table td.cal-nodata {
   background: #e0e0e0;
   color: #1b1b1f;
@@ -653,3 +664,18 @@ aside section {
 .planned-tests li { margin: 0.75rem 0; }
 .planned-tests p { margin: 0.15rem 0; }
 .acknowledgement { font-style: italic; }
+
+/* Skip link (T-042): hidden until it receives keyboard focus. */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid var(--focus);
+}
+.skip-link:focus { top: 0.5rem; }
+.custom-computing { font-weight: 600; margin: 0.25rem 0; }
+main:focus { outline: none; }

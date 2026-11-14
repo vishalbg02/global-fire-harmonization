@@ -16,6 +16,9 @@ interface CustomApi {
   size: (point: [number, number]) => [number, number]
 }
 
+/** The diagonal cross on "outside the record" cells. */
+export const OUTSIDE_MARK = '#6b6b6b'
+
 interface HeatPoint {
   value: [number, number, number]
   /** Index of the row and column in the grid, used by the tooltip and the click handler. */
@@ -23,6 +26,8 @@ interface HeatPoint {
   month: number
   itemStyle: Record<string, unknown>
   label: Record<string, unknown>
+  /** An "outside the record" cell: drawn with a diagonal cross so colour is not the only cue (T-042). */
+  outside: boolean
 }
 
 /** One heatmap point per calendar cell, coloured and iconed by `cellVisual`. */
@@ -58,6 +63,7 @@ export function buildHeatPoints(
           borderType: !isSelected && cell.provisional ? 'dashed' : 'solid',
         },
         label: { show: text !== '', formatter: text, color: textColor, fontSize: 12 },
+        outside: cell.kind === 'outside',
       })
     })
   })
@@ -135,6 +141,20 @@ export function buildChartOption(
                   lineDash: dashed ? [4, 3] : undefined,
                 },
               },
+              ...(point.outside
+                ? [
+                    {
+                      type: 'line',
+                      shape: { x1: centre[0] - width / 2, y1: centre[1] - height / 2, x2: centre[0] + width / 2, y2: centre[1] + height / 2 },
+                      style: { stroke: OUTSIDE_MARK, lineWidth: 1 },
+                    },
+                    {
+                      type: 'line',
+                      shape: { x1: centre[0] - width / 2, y1: centre[1] + height / 2, x2: centre[0] + width / 2, y2: centre[1] - height / 2 },
+                      style: { stroke: OUTSIDE_MARK, lineWidth: 1 },
+                    },
+                  ]
+                : []),
               {
                 type: 'text',
                 style: {
