@@ -11,18 +11,20 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-005 | 2026-11-14 | Aqua as display scale; drift cutoff measured empirically | PROPOSED |
 | D-006 | 2026-11-14 | Harmonized record starts 2002-07; Terra in the raw view only | PROPOSED |
 | D-007 | 2026-11-14 | NOAA-21 excluded from the MVP | PROPOSED |
-| D-008 | 2026-11-14 | Technology stack | PROPOSED (see `TECH_STACK.md`) |
+| D-008 | 2026-11-14 | Technology stack | **APPROVED** (2026-11-14, as recommended) |
 | D-009 | 2026-11-14 | Regular lat/lon grid; analysis 0.5° (vs 0.25°), fine 0.05°/0.1°: final choice at G1 | PROPOSED / OPEN |
 | D-010 | 2026-11-14 | Baseline 2003–2022 + Aqua-only sensitivity test | PROPOSED |
 | D-011 | 2026-11-14 | Private GitHub repo; collaborators added by the Lead only | APPROVED |
 | D-012 | 2026-11-14 | Git workflow: feature branches, PRs, Lead-only merges | SUPERSEDED by D-017 |
 | D-013 | 2026-11-14 | Demo is local-first plus a recorded video; deployment optional | PROPOSED |
 | D-014 | — | Repo visibility for judges at submission | OPEN |
-| D-015 | — | API owner: Member 3 (recommended if Python-capable) or Member 2 | OPEN |
-| D-016 | 2026-11-14 | Data contract v0.1.0 | PROPOSED |
+| D-015 | 2026-11-14 | API owner: Member 3 | **APPROVED** |
+| D-023 | 2026-11-14 | Directory layout: `pipeline/` (Member 2), `api/` and `app/` (Member 3), `data/`, `docs/` (T-0D) | **APPROVED** |
+| D-016 | 2026-11-14 | Data contract v0.1.0 | **APPROVED** (2026-11-14, as written) |
 | D-017 | 2026-11-14 | Team workflow: Lead assigns tasks; individual Claude sessions generate task prompts; one branch + PR per task; Lead reviews every PR and alone merges | APPROVED (Lead's instruction); **in effect** since PR #2 merged (2026-11-14) |
 | D-018 | 2026-11-14 | Lead bookkeeping commits allowed directly on `main` (tracker, decision log, progress log, handoff only) | PROPOSED |
 | D-019 | — | Technical protection of `main` (GitHub Pro branch protection vs policy + local guard) | OPEN |
+| D-022 | — | Contract additions marked [PROPOSED ADDITION] in the workstream prompts' shared section | PROPOSED |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
 | D-021 | 2026-11-14 | Rewrite the 4 bootstrap commits on `main` to remove AI trailers | APPROVED and DONE (force-pushed 2026-11-14) |
 
@@ -65,7 +67,8 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Status:** PROPOSED.
 
 ### D-008: Technology stack
-- **Status:** PROPOSED. Full comparison in `TECH_STACK.md`. Awaiting Lead approval.
+- **Decision:** the recommended stack in `TECH_STACK.md` §2, without amendments. The final table is in `TECH_STACK.md` §7.
+- **Status:** **APPROVED** by the Project Lead, 2026-11-14 12:26 IST. This time is **H0** of the 36-hour schedule.
 
 ### D-009: Grid
 - **Decision (proposed):** a regular lat/lon grid. Analysis 0.5° recommended (more activity per cell, so more determinable verdicts). Fine cell-day grid 0.05° or 0.1°. Final sizes are chosen at G1 by best Aqua vs S-NPP agreement on 2012–2016, before validation.
@@ -94,10 +97,28 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 
 ### D-015: API ownership
 - **Options:** Member 3 builds the thin API calling Member 2's `harmonize_area()` (recommended, to offload the critical path), or Member 2 builds it.
-- **Status:** OPEN. Depends on Member 3's Python comfort.
+- **Decision:** Member 3 builds the thin API, which calls Member 2's `harmonize_area()`.
+- **Status:** **APPROVED** by the Lead, 2026-11-14.
+
+### D-023: Directory layout (T-0D)
+- **Decision:** `pipeline/` holds Member 2's data and science code. `api/` holds the API (Member 3). `app/` holds the web app (Member 3). `data/` and `docs/` are unchanged. Each member writes only in their own folders.
+- **Status:** **APPROVED** by the Lead, 2026-11-14.
 
 ### D-016: Data contract v0.1.0
-- **Status:** PROPOSED. See `DATA_CONTRACT.md`.
+- **Decision:** `DATA_CONTRACT.md` v0.1.0 **as written**. Its "Open items" (grid sizes, season definition, final `cell_id` format) are still decided at G1.
+- **Not included:** the [PROPOSED ADDITION] items in the workstream prompts (see D-022).
+- **Status:** **APPROVED** by the Project Lead, 2026-11-14.
+
+### D-022: Contract additions from the workstream prompts
+- **Items** (from `docs/prompts/*` §S):
+  - `cell_id` format `g{RRR}_r{row}_c{col}` (rows from the south, columns from −180)
+  - cell bounds lower-inclusive
+  - entity ID scheme
+  - API response envelope and error format
+  - `PRODUCTS_DIR` environment variable
+  - product path rule (a single file or a year-partitioned directory)
+- **Effect if approved:** add them to `DATA_CONTRACT.md` and bump to `0.1.1`.
+- **Status:** PROPOSED. Awaiting the Lead.
 
 ### D-017: Three-member team workflow
 - **Context:** three members, each possibly using a separate Claude account or session with no shared memory.

@@ -1,7 +1,7 @@
-# Technology Stack: **PROPOSED (awaiting Project Lead approval)**
+# Technology Stack: **APPROVED (D-008, 2026-11-14)**
 
-> **Status:** Recommendation only. Nothing has been installed or scaffolded.
-> When the Project Lead approves (or amends) this, record the decision as D-008 in `DECISION_LOG.md` and change this header to **APPROVED**.
+> **Status:** Approved by the Project Lead on 2026-11-14 (D-008), exactly as recommended in §2. The alternatives below are kept for reference.
+> Nothing is installed yet. Exact versions are pinned in lockfiles when each workstream sets up (T-003 / T-030). Code directories wait for the layout decision (T-0D).
 
 ## 1. Requirements driving the choice
 
@@ -157,4 +157,24 @@ These are planning estimates **[ESTIMATE]**, not measurements.
 
 ## 7. Final approved stack
 
-*Not yet approved.* To be completed by the Project Lead (D-008).
+**Approved 2026-11-14 (D-008).** Versions are the latest at approval time; pin exact versions in lockfiles at setup.
+
+| Layer | Approved choice |
+|---|---|
+| Data processing | Python 3.12–3.14 + DuckDB 2.x (out-of-core CSV→Parquet, SQL) |
+| Scientific computing | NumPy, SciPy, pandas (aggregated tables only); statsmodels optional |
+| Geospatial (one-off) | GeoPandas + Shapely + pyogrio |
+| Storage | Parquet (pyarrow); no database server |
+| API | FastAPI + Uvicorn + DuckDB over Parquet; Pydantic models mirror the data contract |
+| HTTP client | httpx |
+| Frontend | React 19 + Vite 8 + TypeScript (strict; version pinned by the Vite template) |
+| Map | MapLibre GL JS 6 + deck.gl 9; Natural Earth boundaries; optional free basemap only with Lead approval |
+| Drawing | terra-draw |
+| Charts | Apache ECharts 6 |
+| Data fetching | TanStack Query |
+| Tests and lint | pytest, ruff (Python); Vitest (frontend) |
+| Runtimes | Python 3.12–3.14 (same minor version across the team); Node.js 22.12+ or 24 LTS |
+| Python environment | venv + pip with a pinned `requirements.txt` (`uv` optional) |
+| Demo / deploy | Local-first demo + recorded video; optional free static and API hosting (P1) |
+
+Any change to this table needs a new Lead-approved decision.

@@ -2,7 +2,7 @@
 
 > **How to use:** Member 2 opens a fresh Claude Code session at the repository root and pastes everything below the line as the first message. The prompt is self-contained; no earlier conversation is needed.
 > **Prompt version:** 1.0 (2026-11-14), based on `main` after PR #2. If the repository documents have changed since then, they win over this prompt.
-> **Status:** stack (D-008) and data contract (D-016) are **not yet approved**. Only **T-001, T-002 and T-008** may start before approval, and only if the Lead has assigned them in `docs/TASK_TRACKER.md`.
+> **Status:** stack (**D-008**) and data contract v0.1.0 (**D-016**) were **approved on 2026-11-14 at 12:26 IST (H0)**. The directory layout (**T-0D**) is approved too: your code goes in `pipeline/`. **T-001, T-002 and T-008** can start as soon as the Lead assigns them in `docs/TASK_TRACKER.md`.
 
 ---
 
@@ -12,8 +12,9 @@ You are assisting **Member 2 (Data Engineering & Scientific Analysis)** of a thr
 
 1. **Scope.** Work only on Member 2 tasks with status `ASSIGNED` (or later) and owner M2 in `docs/TASK_TRACKER.md`. Never start, add or expand tasks. If something is needed outside the task, follow §21 (escalation).
 2. **Approval gates.**
-   - Do not install packages or write pipeline code that depends on the stack until **D-008** is approved.
-   - Do not produce contract outputs until **D-016** is approved.
+   - **D-008** (stack) and **D-016** (contract v0.1.0) are approved. Use only the approved stack (`TECH_STACK.md` §7) and the contract as written.
+   - Your code lives in `pipeline/` (T-0D). Never write in `api/` or `app/`.
+   - Items marked [PROPOSED ADDITION] in §S are not binding until **D-022** is approved.
    - Check `docs/DECISION_LOG.md` at the start of every session.
 3. **Shared decisions are the Lead's.** Never change the tech stack, `docs/ARCHITECTURE.md`, `docs/DATA_CONTRACT.md` or the scientific method in `docs/SCIENTIFIC_METHODOLOGY.md` without the Lead's approval. When the method leaves a detail unspecified, propose a default in your PR and mark it **"needs Lead approval"**.
 4. **Git.**
@@ -62,14 +63,14 @@ You are assisting **Member 2 (Data Engineering & Scientific Analysis)** of a thr
 
 | Can start now (if assigned) | Blocked until |
 |---|---|
-| **T-001** download the global zips: shell `curl`/`unzip` or the Python standard library only, no third-party packages | — |
+| **T-001** download the global zips: shell `curl`/`unzip` or the Python standard library (no code directory needed) | — |
 | **T-002** pull 2026 data via the FIRMS API: standard library or `curl` only | Needs a MAP_KEY in `.env` |
 | **T-008** confirm 2026 availability of Aqua/Terra via `data_availability` | Needs a MAP_KEY |
-| T-003, T-005, T-006, T-007, T-009, T-011–T-016, T-020–T-026 | **D-008** (stack approval), plus each task's dependencies |
-| **T-010** SYNTHETIC fixtures | **D-016** (contract approval) |
+| T-003, T-005, T-006, T-007, T-009, T-011–T-016, T-020–T-026 | Each task's dependencies only (D-008, D-016 and T-0D are approved) |
+| **T-010** SYNTHETIC fixtures | Nothing (generator script in `pipeline/`, output in `data/fixtures/v0.1.0/`) |
 | T-004 fire-region mask | The Lead researches access first (T-004 is "M1 → M2") |
 
-**Proposed stack for your workstream** (use it only after D-008 is approved, at the approved versions):
+**Approved stack for your workstream** (D-008, 2026-11-14; pin exact versions in `requirements.txt` at setup):
 - Python 3.12–3.14
 - DuckDB for out-of-core CSV→Parquet and SQL aggregation
 - pandas/NumPy/SciPy for small aggregated tables (statsmodels optional)
@@ -80,7 +81,7 @@ You are assisting **Member 2 (Data Engineering & Scientific Analysis)** of a thr
 - ruff
 - Environment: venv + pip with pinned `requirements.txt`
 
-If the Lead approves something different, follow `docs/TECH_STACK.md` "Final approved stack".
+The authoritative list is `docs/TECH_STACK.md` §7 "Final approved stack". Any change needs a new Lead decision.
 
 ## 4. Your tasks in order (H = hours after D-008/D-016 approval; see `docs/PROJECT_PLAN.md` §9)
 
@@ -444,18 +445,20 @@ Always create it from the latest `main`.
 ## S. Shared integration handoff (identical text in both teammate prompts)
 
 > This section appears **word for word** in both `MEMBER_2_DATA_SCIENCE_PROMPT.md` and `MEMBER_3_APPLICATION_PROMPT.md`. If you find a difference between the two copies, stop and tell the Project Lead.
-> **Source of truth:** `docs/DATA_CONTRACT.md` (`contract_version 0.1.0`, **PROPOSED, decision D-016**). If this section and `DATA_CONTRACT.md` disagree, `DATA_CONTRACT.md` wins; report the discrepancy. Items marked **[PROPOSED ADDITION]** are not yet in `DATA_CONTRACT.md`. They become binding only when the Lead approves D-016 and they are added to `DATA_CONTRACT.md`.
+> **Source of truth:** `docs/DATA_CONTRACT.md` (`contract_version 0.1.0`, **APPROVED, decision D-016, 2026-11-14**). If this section and `DATA_CONTRACT.md` disagree, `DATA_CONTRACT.md` wins; report the discrepancy. Items marked **[PROPOSED ADDITION]** are not yet in `DATA_CONTRACT.md`. They become binding only when the Lead approves **D-022** and they are added to `DATA_CONTRACT.md` (version 0.1.1).
 
-### S.1 Approval status (as of 2026-11-14; always re-check `docs/DECISION_LOG.md`)
+### S.1 Approval status (as of 2026-11-14 12:26 IST = H0; always re-check `docs/DECISION_LOG.md`)
 
 | Decision | Topic | Status | Effect on work |
 |---|---|---|---|
 | D-003 | Product direction (Many Witnesses + Witness Stand) | Approved implicitly | Basis for everything |
-| D-008 | Technology stack | **PROPOSED, not approved** | **Blocks** all work that installs packages or writes application or pipeline code |
+| D-008 | Technology stack | **APPROVED 2026-11-14** (`TECH_STACK.md` §7) | Use exactly the approved stack |
 | D-009 | Grid sizes | PROPOSED / OPEN, locked at Gate G1 | Member 2 computes candidates; the Lead locks them |
 | D-010 | Baseline 2003–2022 | PROPOSED | Used by verdicts |
-| D-015 | API owner | **OPEN** (recommended: Member 3) | Blocks T-034 |
-| D-016 | Data contract v0.1.0 | **PROPOSED, not approved** | **Blocks** fixtures (T-010) and all contract-dependent code |
+| D-015 | API owner | **APPROVED 2026-11-14: Member 3** | Member 3 builds the API |
+| D-016 | Data contract v0.1.0 | **APPROVED 2026-11-14** (as written) | Fixtures and contract-dependent code may proceed |
+| T-0D | Directory layout | **APPROVED 2026-11-14:** `pipeline/` (Member 2), `api/` and `app/` (Member 3) | Write code only in your own folders |
+| D-022 | [PROPOSED ADDITION] items in this section | **PROPOSED** | Not binding until approved; build against them only if the Lead confirms |
 | D-017 / D-020 | Team workflow / no AI attribution | Approved | Always apply |
 
 ### S.2 Directory layout and file names
@@ -564,7 +567,7 @@ data/
 **Science boundary:**
 - The API and the frontend **never** compute science: no conversions, baselines, probabilities or verdicts.
 - Custom areas call `harmonize_area(cell_ids, months=None) -> list[EntityMonthRecord]` (`DATA_CONTRACT.md` §8), which Member 2 provides.
-- The module path is fixed by decision T-0D and documented by Member 2 in `docs/ARCHITECTURE.md`.
+- It lives under `pipeline/` (T-0D). Member 2 documents its exact module path in `docs/ARCHITECTURE.md` when it is created.
 
 ### S.6 Hand-off timeline (H = hours after the Lead approves D-008 and D-016)
 
