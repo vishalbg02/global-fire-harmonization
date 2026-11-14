@@ -333,12 +333,31 @@ def test_the_summary_and_the_status_follow_the_peak_months():
     assert summ["entity_months"] == 10 and summ["changed"] == int((~cmp.agree).sum()) and 0.0 < summ["agree"] < 1.0
 
 
-def test_the_t014_crosscheck_compares_nothing_before_baseline_products_exist():
-    em = pd.DataFrame({"entity_type": ["REGION"], "entity_id": ["E"], "year": [2015], "month": [1], "estimate": [100.0], "sd": [1.0], "verdict": ["CANNOT_DETERMINE"]})
-    assert v.crosscheck_with_t014(em, planted(1.0)[0]) == {"compared": 0, "mismatches": 0}
-    em["baseline_median"] = 100.0
-    out = v.crosscheck_with_t014(em, planted(1.0)[0])
-    assert out == {"compared": 1, "mismatches": 1}                                # the stored verdict is not what the rules give: found
+def product_like(verdict: str, raw: int = 1000) -> pd.DataFrame:
+    """SYNTHETIC entity_month-shaped frame: month 1, 2003-2022, values 90..110; the row of 2015 (estimate 100, sd 1) carries `verdict`."""
+    d = planted(1.0)[0]
+    d["raw_combined_cell_days"] = raw
+    b = v.baselines(d, v.BASE_HARMONIZED).iloc[0]       # the stored verdicts are what the rules give from the planted baseline, except 2015
+    d["verdict"] = [v.verdict_for(x, 1.0, int(b.n_years), b.p25, b.p50, b.p75, raw)[0] for x in d.estimate]
+    d.loc[d.year == 2015, "verdict"] = verdict
+    return d
+
+
+def test_the_t014_crosscheck_agrees_when_the_stored_verdicts_are_what_the_rules_give():
+    out = v.crosscheck_with_t014(product_like("WITHIN_NORMAL"))
+    assert out["compared"] == 20 and out["mismatches"] == 0 and out["mismatch_rows"] == []
+
+
+def test_the_t014_crosscheck_finds_a_planted_wrong_verdict():
+    out = v.crosscheck_with_t014(product_like("ABOVE_NORMAL"))
+    assert out["mismatches"] == 1 and out["mismatch_rows"][0]["year"] == 2015 and out["mismatch_rows"][0]["mine"] == "WITHIN_NORMAL"
+
+
+def test_the_raw_refinement_of_no_detected_activity():
+    # estimate 0 with a tiny baseline: D-028 as written says NO_DETECTED_ACTIVITY; with raw detections the product refines it to step 4
+    assert v.verdict_for(0.0, 1.0, 20, 0, 0, 1) == ("NO_DETECTED_ACTIVITY", "")
+    assert v.verdict_for(0.0, 1.0, 20, 0, 0, 1, raw=0) == ("NO_DETECTED_ACTIVITY", "")
+    assert v.verdict_for(0.0, 1.0, 20, 0, 0, 1, raw=3) == ("CANNOT_DETERMINE", "INSUFFICIENT_BASELINE")
 
 
 # ----------------------------------------------------------------------------------------------------- entries

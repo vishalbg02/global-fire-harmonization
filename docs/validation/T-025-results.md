@@ -10,6 +10,8 @@
 | **S1-BASELINE** (Aqua-measured baseline instead of the harmonized baseline) | **FAIL** (by the strict rule fixed in advance) | 12 of 13 peak-window verdicts of C1 to C6 are unchanged; one changes (C2, 2019-09, `CANNOT_DETERMINE` to `BELOW_NORMAL`). |
 | **S1-CONFIDENCE-FILTER** (A1 and B1 without the confidence filter) | **NOT_RUN** | Needs data and tests that do not exist yet (section 5). |
 | **S1** as a whole (VALIDATION_PLAN.md) | **NOT_RUN** | Half of it cannot run yet. The half that ran is reported above as S1-BASELINE. |
+| *Supplementary* **S1-T014-CROSSCHECK** (verdict rules of this task against the T-014 `verdict` column) | PASS | 0 mismatches in 68,562 entity-months (section 4.3). |
+| *Supplementary* **S1-BASELINE-PRODUCT** (product baseline against Aqua baseline, country level) | FAIL (same strict rule) | 1 of 13 peak months changes (C3 on BRA, 2020-08) (section 4.4). Does not replace S1-BASELINE. |
 
 Entries in the contract section 6 shape: `data/interim/qa/T-025_validation_entries.json` (not committed; the Lead integrates them).
 
@@ -128,9 +130,37 @@ C7 (Canada 2023) is outside the pre-registered window and not part of the status
 
 "Same verdict" is the share of entity-months with the same verdict under both baselines. For the 14 regions the 247 changes are: `CANNOT_DETERMINE` to `WITHIN_NORMAL` 84, `WITHIN_NORMAL` to `CANNOT_DETERMINE` 47, `CANNOT_DETERMINE` to `BELOW_NORMAL` 47, `CANNOT_DETERMINE` to `ABOVE_NORMAL` 34, `BELOW_NORMAL` to `CANNOT_DETERMINE` 21, `ABOVE_NORMAL` to `CANNOT_DETERMINE` 13, `ABOVE_NORMAL` to `WITHIN_NORMAL` 1. No month switches directly between `ABOVE_NORMAL` and `BELOW_NORMAL` in the regions, Canada or the boxes; in the six boxes `ABOVE_NORMAL` to `WITHIN_NORMAL` occurs twice and `WITHIN_NORMAL` to `BELOW_NORMAL` once (counts per transition are in `T-025_s1_report.json`). [VERIFIED]
 
+### 4.3 Cross-check against the T-014 product (supplementary) [VERIFIED 2026-11-15]
+Product: `entity_month.parquet` from branch `science/T-014-verdicts` (PR #52; brought into the working tree, not committed). It has 66,218 COUNTRY, 2,051 CONTINENT and 293 GLOBAL rows (68,562 in all, 2002-07 to 2026-10); it has no fire regions and no case boxes. Method: from the product's own `estimate` column I recomputed the baseline (same calendar month, 2003-2022) and, with `verdict_for`, the verdict from estimate, sd, that baseline and `raw_combined_cell_days`, and compared with the product's `verdict` (`crosscheck_with_t014`, report `data/interim/qa/T-025_t014_report.json`).
+- **Verdicts: 68,562 of 68,562 rows agree, 0 disagreements** (all COUNTRY, CONTINENT and GLOBAL rows, every month).
+- **Baselines:** where the product has a baseline (67,626 rows) my p25, p50 and p75 equal the product's exactly (largest difference 0). The other 936 rows have no estimate (the 2002-07 to 2002-09 outage months of 312 entities) and the product leaves the baseline empty there; my recomputation has one, but the verdict is `CANNOT_DETERMINE` / `OUTAGE` in both.
+- **One documented difference from D-028 as written.** The product's step 3 (`NO_DETECTED_ACTIVITY`) also requires `raw_combined_cell_days` = 0. My code first applied D-028 as written (estimate = 0 and p75 at most 1). That variant disagrees with the product in **548 rows**, all of one kind: I give `NO_DETECTED_ACTIVITY`, the product gives `CANNOT_DETERMINE`, in months where the estimate is 0 but some witness detected something (for example ABW 2012-08, raw 1; ATA 2012-03, raw 9). They go on to step 4 (baseline p50 below 5, `INSUFFICIENT_BASELINE`). The cause is that refinement, which the product marks as for the Lead to confirm. `verdict_for` now takes the raw count as an option (default: D-028 as written); the cross-check and its entry use the refinement, as the product does. The S1 results in 4.1 and 4.2 were run before this and without the refinement. It cannot change the pass/fail months of 4.1 (no C1 to C6 peak month has `NO_DETECTED_ACTIVITY`). In 4.2 it could change the count of the few months with an estimate of 0 and some detections (the transition table shows one case-box month moving to `NO_DETECTED_ACTIVITY` under the Aqua baseline); I did not re-run 4.2 with it [ASSUMPTION: the effect is a handful of months at most].
+
+### 4.4 S1-BASELINE on the product entities (supplementary) [VERIFIED 2026-11-15]
+The product baseline (the product's harmonized estimates, 2003-2022) against an Aqua-measured baseline (2003-2021, Aqua rows of the same aggregation), for the product entities that exist for this purpose: COUNTRY IDN, BRA, AUS, USA, RUS, CAN and GLOBAL. The peak windows of C1 to C6 are taken on the country that contains the box (IDN, BRA for C2 and C3, AUS, USA, RUS): a coarser area than the box, so this supplements 4.1 and does not replace it. Same rule: any changed verdict in a peak month is a FAIL.
+
+| Case (country) | Month | Estimate | Verdict, product baseline | Verdict, Aqua baseline | Unchanged |
+|---|---|---:|---|---|---|
+| C1 (IDN) | 2015-09 | 19069 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+| C1 (IDN) | 2015-10 | 17203 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+| C2 (BRA) | 2019-08 | 29763 | WITHIN_NORMAL | WITHIN_NORMAL | yes |
+| C2 (BRA) | 2019-09 | 29235 | CANNOT_DETERMINE (WIDE_INTERVAL) | CANNOT_DETERMINE (WIDE_INTERVAL) | yes |
+| C3 (BRA) | 2020-08 | 24124 | CANNOT_DETERMINE (WIDE_INTERVAL) | WITHIN_NORMAL | **NO** |
+| C3 (BRA) | 2020-09 | 37017 | WITHIN_NORMAL | WITHIN_NORMAL | yes |
+| C3 (BRA) | 2020-10 | 27158 | WITHIN_NORMAL | WITHIN_NORMAL | yes |
+| C4 (AUS) | 2019-12 | 11762 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+| C4 (AUS) | 2020-01 | 5525 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+| C5 (USA) | 2020-08 | 3341 | WITHIN_NORMAL | WITHIN_NORMAL | yes |
+| C5 (USA) | 2020-09 | 5602 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+| C6 (RUS) | 2021-07 | 22580 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+| C6 (RUS) | 2021-08 | 20048 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+| C7 (CAN, information) | 2023-06 / 2023-07 | 9514 / 12800 | ABOVE_NORMAL | ABOVE_NORMAL | yes |
+
+**Supplementary status: FAIL by the same strict rule** (1 of 13 peak months changes: BRA 2020-08, a move between `CANNOT_DETERMINE` (`WIDE_INTERVAL`) and `WITHIN_NORMAL`). It is the same kind of borderline change as in 4.1 (a different month and area), and again no `ABOVE_NORMAL` changes. All months 2012-01 to 2021-12 for these seven entities: COUNTRY 85.7% same verdict (720 entity-months, 103 changes), GLOBAL 87.5% (120 months, 15 changes); no direct switch between above and below normal. The earlier statuses (E1 PASS, S1-BASELINE FAIL, S1 NOT_RUN) are unchanged.
+
 ## 5. NOT_RUN, and why
 - **S1 without the confidence filter (A1 and B1 re-run).** It needs the raw FIRMS archive regridded without the T-005 confidence filter (the products contain filtered data only), and the A1 and B1 tests it re-runs (T-020, T-021) do not exist yet. Status NOT_RUN.
-- **S1 verdict agreement with the T-014 products.** The T-014 baseline products do not exist. `compare_baselines()` already takes entity_month-shaped frames (so it runs on the T-014 products and an Aqua-only equivalent), and `crosscheck_with_t014()` compares the verdict function used here with the T-014 `verdict` column. Neither was run on T-014 output. Until then the verdicts of 4.1 and 4.2 are computed with this task's own implementation of D-028, not with the T-014 one [ASSUMPTION: the implementations agree; the cross-check will show].
+- **S1 verdict agreement with the T-014 products.** Done after the first run, as supplementary results (4.3 and 4.4): the verdict function agrees with the product in all 68,562 rows (with the product's raw = 0 refinement of step 3). The case-box series of 4.1 and 4.2 are not in the product (it has countries, continents and the globe only), so 4.1 and 4.2 stay on this task's own aggregation.
 - **S1 overall.** NOT_RUN while a half is missing (the plan's S1 is "A1 and B1, without the confidence filter and with the Aqua baseline").
 
 ## 6. Limitations

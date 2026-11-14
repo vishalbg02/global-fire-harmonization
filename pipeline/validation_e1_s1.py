@@ -339,13 +339,17 @@ def probabilities(estimate: float, sd: float, p25: float, p75: float) -> tuple[f
     return above, below, 1.0 - above - below
 
 
-def verdict_for(estimate: float | None, sd: float | None, n_years: int, p25: float, p50: float, p75: float) -> tuple[str, str]:
-    """The verdict rules of D-028 in their fixed order. Returns (verdict, reason code or '')."""
+def verdict_for(estimate: float | None, sd: float | None, n_years: int, p25: float, p50: float, p75: float,
+                raw: float | None = None) -> tuple[str, str]:
+    """The verdict rules of D-028 in their fixed order. Returns (verdict, reason code or '').
+
+    `raw` (raw combined cell-days of the month, every witness): when given, step 3 also requires raw == 0, the refinement used by the T-014
+    product (verdicts.py); with None only the estimate is looked at (D-028 as written)."""
     if estimate is None or sd is None or not np.isfinite(estimate) or not np.isfinite(sd):
         return "CANNOT_DETERMINE", "OUTAGE"
     if n_years < MIN_BASE_YEARS or not np.isfinite(p50):
         return "CANNOT_DETERMINE", "INSUFFICIENT_BASELINE"
-    if estimate == 0 and p75 <= NO_ACTIVITY_P75:
+    if estimate == 0 and p75 <= NO_ACTIVITY_P75 and (raw is None or raw == 0):
         return "NO_DETECTED_ACTIVITY", ""
     if p50 < MIN_P50:
         return "CANNOT_DETERMINE", "INSUFFICIENT_BASELINE"
@@ -393,21 +397,76 @@ def compare_baselines(harmonized: pd.DataFrame, aqua_only: pd.DataFrame, window=
     return m
 
 
-def crosscheck_with_t014(entity_month: pd.DataFrame, harmonized: pd.DataFrame) -> dict:
-    """For the T-014 products: recompute the verdict of every entity_month row from the harmonized baseline with `verdict_for` and compare it
-    with the `verdict` column. Rows still NOT_HARMONIZED (or without baseline) are not compared. Not run until T-014 products exist."""
-    bh = baselines(harmonized, BASE_HARMONIZED)
-    em = entity_month[entity_month["baseline_median"].notna()] if "baseline_median" in entity_month else entity_month.iloc[0:0]
-    if em.empty:
-        return {"compared": 0, "mismatches": 0}
+def crosscheck_with_t014(entity_month: pd.DataFrame, use_raw: bool = True) -> dict:
+    """Compare this module's verdict rules with the `verdict` column of the T-014 `entity_month` product.
+
+    The baseline is recomputed here from the product's own `estimate` column (same calendar month, 2003-2022, `baselines`), the verdict with
+    `verdict_for` from estimate, sd, the recomputed baseline and, if `use_raw`, `raw_combined_cell_days` (the refinement of step 3 in the
+    product). Rows are compared on the verdict and the three baseline percentiles of the product. Returns counts and every mismatch."""
+    em = entity_month
+    bh = baselines(em, BASE_HARMONIZED)
     m = em.merge(bh, on=["entity_type", "entity_id", "month"], how="left")
-    bad = 0
+    verd, reason = [], []
     for r in m.itertuples():
         est = None if pd.isna(r.estimate) else float(r.estimate)
         sd = None if pd.isna(r.sd) else float(r.sd)
-        v, _ = verdict_for(est, sd, 0 if pd.isna(r.n_years) else int(r.n_years), r.p25, r.p50, r.p75)
-        bad += int(v != r.verdict)
-    return {"compared": len(m), "mismatches": bad}
+        raw = float(r.raw_combined_cell_days) if use_raw and "raw_combined_cell_days" in m.columns else None
+        vv, rc = verdict_for(est, sd, 0 if pd.isna(r.n_years) else int(r.n_years), r.p25, r.p50, r.p75, raw)
+        verd.append(vv), reason.append(rc)
+    m["my_verdict"], m["my_reason"] = verd, reason
+    bad = m[m.my_verdict != m.verdict]
+    out = {"compared": len(m), "mismatches": len(bad), "use_raw": use_raw,
+           "by_entity_type": {k: int(n) for k, n in m.groupby("entity_type").size().items()},
+           "mismatch_by_pair": {f"{a} (mine) vs {b} (product)": int(n) for (a, b), n in bad.groupby(["my_verdict", "verdict"]).size().items()},
+           "mismatch_rows": [{"entity_type": r.entity_type, "entity_id": r.entity_id, "year": int(r.year), "month": int(r.month),
+                              "mine": r.my_verdict, "product": r.verdict, "estimate": None if pd.isna(r.estimate) else float(r.estimate),
+                              "raw": int(r.raw_combined_cell_days)} for r in bad.head(50).itertuples()]}
+    if "baseline_median" in m.columns:
+        have = m[m.baseline_median.notna() & m.p50.notna()]
+        both_nan = int((m.baseline_median.isna() != m.p50.isna()).sum())
+        out["baseline_columns"] = {"rows_with_baseline": len(have), "presence_differs": both_nan,
+                                   "max_abs_rel_diff_p50": float(((have.p50 - have.baseline_median).abs() / have.baseline_median.where(have.baseline_median > 0)).max()),
+                                   "max_abs_diff_p25_p75": float(max((have.p25 - have.baseline_p25).abs().max(), (have.p75 - have.baseline_p75).abs().max()))}
+    return out
+
+
+PRODUCT_CASES = {"C1": ("IDN", (2015, 9), (2015, 10)), "C2": ("BRA", (2019, 8), (2019, 9)), "C3": ("BRA", (2020, 8), (2020, 10)),
+                 "C4": ("AUS", (2019, 12), (2020, 1)), "C5": ("USA", (2020, 8), (2020, 9)), "C6": ("RUS", (2021, 7), (2021, 8))}
+PRODUCT_ENTITIES = [("COUNTRY", c) for c in ("IDN", "BRA", "AUS", "USA", "RUS", "CAN")] + [("GLOBAL", "GLOBAL")]
+
+
+def run_s1_product(src: Path | None = None, work: Path | None = None) -> dict:
+    """Supplementary S1-BASELINE on the T-014 product: the harmonized series and baseline of the product (`entity_month`) against an
+    Aqua-measured baseline (2003-2021) built from the Aqua rows of the same aggregation, for the product entities IDN, BRA, AUS, USA, RUS, CAN
+    and GLOBAL. The product has no fire regions or case boxes: the peak windows of C1 to C6 are taken on the country that contains the box
+    (a coarser area than the box, so this is a supplement, not a replacement)."""
+    src = src or ROOT / "data" / "products"
+    work = work or WORK_S1
+    em = pq.read_table(src / "entity_month.parquet").to_pandas()
+    cells = pq.read_table(src / "cells.parquet").to_pandas()
+    parts = [pd.DataFrame({"entity_type": et, "entity_id": eid, "entity_name": eid,
+                           "cell_id": sorted(cells.cell_id if et == "GLOBAL" else cells.loc[cells.country_iso3 == eid, "cell_id"])})
+             for et, eid in PRODUCT_ENTITIES]
+    members = pd.concat(parts, ignore_index=True)
+    n_cells = {(et, eid): int(n) for (et, eid), n in members.groupby(["entity_type", "entity_id"]).size().items()}
+    paths = hz.Paths(products=src, tmp=work / "duck_p")
+    paths.tmp.mkdir(parents=True, exist_ok=True)
+    con = duckdb.connect()
+    con.execute(f"SET temp_directory='{paths.tmp.as_posix()}'")
+    con.register("members_df", members)
+    con.execute("CREATE TEMP TABLE members AS SELECT * FROM members_df")
+    agg = hz.aggregate(con, paths, "members", None)
+    aqua = records_frame(hz.records_from(agg[agg.witness == "AQUA_MODIS"].reset_index(drop=True), n_cells, aqua_from={"D": None, "N": None}))
+    keys = set(PRODUCT_ENTITIES)
+    prod = em[[(a, b) in keys for a, b in zip(em.entity_type, em.entity_id, strict=True)]][["entity_type", "entity_id", "year", "month", "estimate", "sd"]]
+    cmp = compare_baselines(prod, aqua, window=((2012, 1), (2023, 12)))
+    cases = {cid: (eid, first, last) for cid, (eid, first, last) in PRODUCT_CASES.items()}
+    rows = case_changes(cmp, cases)
+    rows7 = case_changes(cmp, {"C7": ("CAN", (2023, 6), (2023, 7))})
+    win = cmp[(cmp.year * 100 + cmp.month) <= 202112]
+    shutil.rmtree(work, ignore_errors=True)
+    return {"entities": [f"{a}:{b}" for a, b in PRODUCT_ENTITIES], "window_2012_2021": summarise_s1(win), "case_peak_months": rows,
+            "c7_canada_informational": rows7, "status_baseline": s1_status(rows)}
 
 
 def case_changes(cmp: pd.DataFrame, cases: dict) -> list[dict]:
@@ -506,7 +565,7 @@ def region_table(e1: dict) -> str:
     return "\n".join(lines)
 
 
-def build_entries(e1: dict | None, s1: dict | None) -> list[dict]:
+def build_entries(e1: dict | None, s1: dict | None, t014: dict | None = None) -> list[dict]:
     """Entries in the shape of DATA_CONTRACT.md section 6."""
     entries = []
     if e1 is not None:
@@ -541,6 +600,21 @@ def build_entries(e1: dict | None, s1: dict | None) -> list[dict]:
             "case": "C1-C6", "criterion": "Conclusions unchanged (report any that change)", "threshold": "pre-registered at G1",
             "measured": {"baseline_half": s1["status_baseline"], "confidence_filter_half": "NOT_RUN"}, "status": "NOT_RUN",
             "notes": "Overall NOT_RUN: half of S1 cannot run yet. The baseline half ran and is reported as S1-BASELINE; its verdict-agreement check against the T-014 verdict column is also NOT_RUN until T-014 products exist."})
+    if t014 is not None:
+        x = t014["crosscheck"]
+        entries.append({
+            "test_id": "S1-T014-CROSSCHECK", "family": "S", "title": "Verdict rules of this task against the verdict column of the T-014 entity_month product",
+            "case": "every COUNTRY, CONTINENT and GLOBAL entity-month of the product", "criterion": "same verdict in every row (baseline recomputed from the product estimates)",
+            "threshold": "0 mismatches", "measured": {"compared": x["compared"], "mismatches": x["mismatches"], "baseline_columns": x.get("baseline_columns"),
+                                                      "without_raw_refinement_mismatches": t014["crosscheck_without_raw"]["mismatches"]},
+            "status": "PASS" if x["mismatches"] == 0 else "FAIL", "notes": "Supplementary. The product's step 3 also requires raw combined cell-days = 0 (a refinement of D-028 as written)."})
+        sp = t014["s1_product"]
+        entries.append({
+            "test_id": "S1-BASELINE-PRODUCT", "family": "S", "title": "Sensitivity (supplementary): product baseline against Aqua-measured baseline, country level",
+            "case": "IDN, BRA, AUS, USA, RUS, CAN, GLOBAL in the T-014 product; peak windows of C1-C6 taken on the containing country",
+            "criterion": "Verdict unchanged in every peak-window month", "threshold": "no change in any peak-window month",
+            "measured": {"peak_months": len(sp["case_peak_months"]), "changed": sum(1 for r in sp["case_peak_months"] if not r["unchanged"]), "summary": sp["window_2012_2021"]},
+            "status": sp["status_baseline"], "notes": "Supplementary to S1-BASELINE (case boxes); countries are coarser than the boxes. Does not replace it."})
     return entries
 
 
@@ -554,10 +628,11 @@ def write_outputs(e1: dict | None, s1: dict | None, qa: Path | None = None) -> l
         if rep is not None:
             (qa / name).write_text(json.dumps(rep, indent=1, default=str), encoding="utf-8")
             paths.append(qa / name)
+    t014 = _load(qa / "T-025_t014_report.json")
     e1 = e1 if e1 is not None else _load(qa / "T-025_e1_report.json")
     s1 = s1 if s1 is not None else _load(qa / "T-025_s1_report.json")
     paths.append(qa / "T-025_validation_entries.json")
-    paths[-1].write_text(json.dumps(build_entries(e1, s1), indent=1, default=str), encoding="utf-8")
+    paths[-1].write_text(json.dumps(build_entries(e1, s1, t014), indent=1, default=str), encoding="utf-8")
     return paths
 
 
@@ -567,7 +642,7 @@ def _load(path: Path) -> dict | None:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("which", choices=["e1", "s1", "all", "entries"], nargs="?", default="all")
+    ap.add_argument("which", choices=["e1", "s1", "all", "entries", "t014"], nargs="?", default="all")
     ap.add_argument("--boot", type=int, default=cal.BOOTSTRAP)
     args = ap.parse_args(argv)
     e1 = s1 = None
@@ -579,6 +654,13 @@ def main(argv: list[str] | None = None) -> int:
         print("S1: baseline sensitivity")
         s1 = run_s1()
         print(s1["status_baseline"], json.dumps(s1["summary"], indent=1))
+    if args.which == "t014":
+        em = pq.read_table(ROOT / "data" / "products" / "entity_month.parquet").to_pandas()
+        rep = {"crosscheck": crosscheck_with_t014(em), "crosscheck_without_raw": crosscheck_with_t014(em, use_raw=False), "s1_product": run_s1_product()}
+        rep["crosscheck_without_raw"].pop("mismatch_rows")
+        QA.mkdir(parents=True, exist_ok=True)
+        (QA / "T-025_t014_report.json").write_text(json.dumps(rep, indent=1, default=str), encoding="utf-8")
+        print(rep["crosscheck"]["mismatches"], rep["s1_product"]["status_baseline"])
     if args.which == "entries":
         print("entries from the reports already written")
     print([str(p) for p in write_outputs(e1, s1)])
