@@ -193,7 +193,7 @@ def main() -> int:
     avail = fetch_availability(today)
     OUT.mkdir(parents=True, exist_ok=True)
     new_log = not LOG.exists()
-    log = open(LOG, "a", encoding="utf-8", newline="")
+    log = open(LOG, "a", encoding="utf-8", newline="")  # noqa: SIM115  closed after the pool finishes
     w = csv.writer(log, delimiter="\t")
     if new_log:
         w.writerow(LOG_COLUMNS)
