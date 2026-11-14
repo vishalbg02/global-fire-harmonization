@@ -120,9 +120,9 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
     id: 'combining',
     title: 'Combining the witnesses, and the uncertainty',
     paragraphs: [
-      'Status of this step: built as pipeline/harmonize.py, method version 0.1.0-combined-no-baseline. It was approved by the Lead on 2026-11-14 (PR #43).',
-      'For an area and a month, each witness gives an Aqua-equivalent estimate: the ratio times its cell-days, summed over strata and over day and night. Raw cell-days are summed per witness and stratum before they are converted. Day and night are converted separately and added.',
-      'The estimates of the witnesses are combined with a precision-weighted mean. A witness with a smaller variance counts for more. Only witnesses with every day of the month available count. If none counts, there is no estimate.',
+      'Status of this step: built as pipeline/harmonize.py. The method version of harmonize_area() is 0.1.0-combined-no-baseline. It was approved by the Lead on 2026-11-14 (PR #43). The harmonized products (T-014) have method version 0.1.0.',
+      'For an area and a month, each witness gives an Aqua-equivalent estimate: the ratio times its cell-days, summed over strata, separately for day and for night. Raw cell-days are summed per witness and stratum before they are converted.',
+      'For each month the witnesses are combined with a precision-weighted mean separately for day and for night, and the two combined estimates are added. The disagreement factor S is computed over both parts together. The variances of the two parts add. A witness with a smaller variance counts for more. Only witnesses with every day of the month available count. If none counts, there is no estimate.',
       'The variance of each witness has two parts. First, counting noise: an overdispersion factor (phi) times the count, plus a term that grows with the square of the size of the estimate (kappa times the estimate squared). Second, ratio error, which is shared: strata that use the same ratio share the same error, so these errors are added fully correlated.',
       'Phi and kappa were estimated once, on the calibration fit periods only. By day phi is 2.25 and kappa is 0.0084. By night phi is 2.47 and kappa is 0.0164. They apply to every witness. They are lower bounds, because the ratios were fitted on the same months.',
       'Disagreement inflation: if the witnesses disagree more than their variances allow, the combined standard deviation is multiplied by S = sqrt(chi-squared / (N - 1)). This is applied only when S is above 1. The reason code WITNESS_DISAGREEMENT is given only when S is above 2 (the Lead\'s decision).',
@@ -132,7 +132,7 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
       'LIMITATION: strata that share no ratio source are treated as independent. The region estimates share the global one, so the interval of a very large area can still be too narrow. The witnesses see the same fires, so intervals may be optimistic. The phi and kappa fit is not perfect in every size band.',
       'Whether the interval width is right is test D1 (coverage on the 2017 to 2021 holdout). It has not been run.',
     ],
-    labels: ['APPROVED', 'VERIFIED', 'LIMITATION', 'NOT_BUILT_YET'],
+    labels: ['APPROVED', 'VERIFIED', 'LIMITATION'],
     source:
       'pipeline/harmonize.py, module docstring; docs/DATA_SOURCES.md, "Combining the witnesses and harmonize_area() (T-013)"; docs/SCIENTIFIC_METHODOLOGY.md, sections 4.4 and 4.5',
   },
@@ -359,7 +359,7 @@ export const PLANNED_TESTS: readonly PlannedTest[] = [
 ]
 
 export const PLANNED_TESTS_NOTE =
-  'These are plans, not results. The validation plan fixes the pass rules before any result exists (pre-registration): they are to be locked by the Project Lead at Gate G1, and any later change must be logged with a reason, with the original threshold kept visible. Results, including failures, are published where they exist. Passing these tests would show the method behaves correctly where tested. It would not establish global accuracy. Test IDs C1 (cross-satellite agreement) and case IDs C1 to C8 (validation cases) are different things that share a label in the plan.'
+  'These are plans, not results. The validation plan fixes the pass rules before any result exists (pre-registration): they were locked by the Project Lead at Gate G1 (D-028, 2026-11-14), and any later change must be logged with a reason, with the original threshold kept visible. Results, including failures, are published where they exist. Passing these tests would show the method behaves correctly where tested. It would not establish global accuracy. Test IDs C1 (cross-satellite agreement) and case IDs C1 to C8 (validation cases) are different things that share a label in the plan.'
 
 /** Validation cases of docs/VALIDATION_PLAN.md section 2 (proposed; their anomaly magnitudes are unknown until computed). */
 export const VALIDATION_CASES: readonly { id: string; case: string; role: string }[] = [
