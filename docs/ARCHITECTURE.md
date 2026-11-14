@@ -1,4 +1,4 @@
-# Architecture: **PROPOSED (awaiting approval; depends on D-008 tech stack)**
+# Architecture: **PROPOSED** (the stack it builds on was approved as D-008 on 2026-11-14; the directory layout T-0D and API owner D-015 are still open)
 
 ## 1. Overview
 

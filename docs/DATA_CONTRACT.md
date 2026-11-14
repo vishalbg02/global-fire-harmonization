@@ -1,4 +1,4 @@
-# Data Contract: `contract_version: 0.1.0` · **PROPOSED (awaiting approval)**
+# Data Contract: `contract_version: 0.1.0` · **APPROVED (D-016, 2026-11-14)**
 
 This document is the only interface between Member 2 (pipeline) and Member 3 (application). Change it first, with approval, then change the code. Bump `contract_version` on every change: patch for additions, minor for breaking changes.
 
@@ -142,6 +142,17 @@ harmonize_area(cell_ids: list[str], months: list[(year, month)] | None) -> list[
 ```
 
 The return shape is §4. It must be deterministic for the same inputs and `method_version`. It is used by both the batch entity aggregation and the custom-area API.
+
+## Status of additions
+
+The workstream prompts (`docs/prompts/`, shared section §S) list items marked **[PROPOSED ADDITION]**:
+- `cell_id` format and cell-bound convention
+- entity IDs
+- API envelope and error format
+- `PRODUCTS_DIR`
+- the product path rule
+
+They are **not part of v0.1.0** until the Lead approves them (D-022). Approving them means adding them here and bumping the contract to `0.1.1`.
 
 ## Open items (decide at G1)
 

@@ -4,7 +4,7 @@ NASA Space Apps Challenge 2026 project for the challenge
 **[Harmonization of MODIS and VIIRS Hot Spots](https://www.spaceappschallenge.org/2026/challenges/modis-and-viirs-hot-spots/)**.
 
 > **Status (2026-11-14):** Planning and repository setup. **No application code yet.**
-> The technology stack and data contract are **PROPOSED and awaiting Project Lead approval.**
+> The technology stack (D-008) and data contract v0.1.0 (D-016) were **approved on 2026-11-14**. Implementation starts once the directory layout (T-0D) is decided.
 > See [`docs/HANDOFF.md`](docs/HANDOFF.md) for the exact current state.
 
 ## What we are building
@@ -34,9 +34,9 @@ A hotspot is a satellite pixel flagged as containing fire. It is **not** a fire 
 | [`docs/task-prompts/`](docs/task-prompts/) | One generated implementation prompt per assigned task |
 | [`docs/HANDOFF.md`](docs/HANDOFF.md) | **Start here when resuming**: exact current state |
 | [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) | Vision, scope, features, milestones, 36-hour schedule |
-| [`docs/TECH_STACK.md`](docs/TECH_STACK.md) | Technology recommendation (PROPOSED) |
+| [`docs/TECH_STACK.md`](docs/TECH_STACK.md) | Technology stack (APPROVED, D-008) |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Components, data flow, integration boundaries (PROPOSED) |
-| [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md) | Data formats exchanged between workstreams (PROPOSED) |
+| [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md) | Data formats exchanged between workstreams (APPROVED v0.1.0, D-016) |
 | [`docs/SCIENTIFIC_METHODOLOGY.md`](docs/SCIENTIFIC_METHODOLOGY.md) | Harmonization science, uncertainty, limitations |
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | NASA data sources, access, verified facts |
 | [`docs/VALIDATION_PLAN.md`](docs/VALIDATION_PLAN.md) | Witness Stand cases, pass/fail criteria, results |
@@ -50,7 +50,7 @@ A hotspot is a satellite pixel flagged as containing fire. It is **not** a fire 
 
 ## Setup
 
-No application exists yet, so there is nothing to install. Setup instructions will be added once the stack is approved (see `docs/TECH_STACK.md`). Planned prerequisites, subject to approval:
+No application exists yet, so there is nothing to install. Setup instructions are added by the setup tasks (T-003, T-030). Prerequisites from the approved stack (`docs/TECH_STACK.md` §7):
 
 - Python 3.12–3.14
 - Node.js 22 LTS or 24 LTS (Node 20 is end-of-life)

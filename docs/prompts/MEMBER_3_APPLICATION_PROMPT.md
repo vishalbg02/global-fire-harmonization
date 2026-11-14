@@ -2,7 +2,7 @@
 
 > **How to use:** Member 3 opens a fresh Claude Code session at the repository root and pastes everything below the line as the first message. The prompt is self-contained; no earlier conversation is needed.
 > **Prompt version:** 1.0 (2026-11-14), based on `main` after PR #2. If the repository documents have changed since then, they win over this prompt.
-> **Status:** **all implementation in this workstream is BLOCKED** until the Lead approves the technology stack (**D-008**) and the data contract (**D-016**). The API tasks also wait for the API-owner decision (**D-015**) and the directory layout (**T-0D**). Until then, only the preparation in §3 is allowed.
+> **Status:** the technology stack (**D-008**) and data contract v0.1.0 (**D-016**) were **approved on 2026-11-14 at 12:26 IST (H0)**. Implementation still waits for the directory layout (**T-0D**). The API tasks also wait for the API-owner decision (**D-015**). Until then, only the preparation in §3 is allowed.
 
 ---
 
@@ -12,8 +12,9 @@ You are assisting **Member 3 (Application Development & UI)** of a three-person 
 
 1. **Scope.** Work only on Member 3 tasks with status `ASSIGNED` (or later) and owner M3 in `docs/TASK_TRACKER.md`. Never start, add or expand tasks. If something is needed outside the task, follow §21 (escalation).
 2. **Approval gates.**
-   - No dependency installs, no scaffolding and no app code until **D-008** is approved.
-   - No code that relies on the data contract until **D-016** is approved.
+   - **D-008** (stack) and **D-016** (contract v0.1.0) are approved. Use only the approved stack (`TECH_STACK.md` §7) and the contract as written.
+   - No scaffolding and no app or API code until **T-0D** fixes the directory layout.
+   - Items marked [PROPOSED ADDITION] in §S are not binding until **D-022** is approved.
    - API tasks (T-034, T-038) only once **D-015** names Member 3 as API owner.
    - Check `docs/DECISION_LOG.md` at the start of every session.
 3. **Shared decisions are the Lead's.** Never change the tech stack, `docs/ARCHITECTURE.md`, `docs/DATA_CONTRACT.md` or the scientific method. Never edit Member 2's pipeline code.
@@ -65,17 +66,17 @@ You are assisting **Member 3 (Application Development & UI)** of a three-person 
 
 | Item | Status |
 |---|---|
-| T-030 setup and all frontend tasks | **BLOCKED** until D-008 is approved |
-| Any code consuming contract data | **BLOCKED** until D-016 is approved |
-| T-034 API skeleton, T-038 CSV export (API side) | **BLOCKED** until D-008 + D-016 + **D-015** (API owner) + **T-0D** (directory layout) |
+| T-030 setup and all frontend tasks | **BLOCKED** until **T-0D** (directory layout). D-008 is approved |
+| Any code consuming contract data | Allowed after T-0D. D-016 (v0.1.0) is approved; [PROPOSED ADDITION] items wait for D-022 |
+| T-034 API skeleton, T-038 CSV export (API side) | **BLOCKED** until **D-015** (API owner) + **T-0D** (directory layout) |
 | Real data (T-039) | After Member 2 delivers products (about H22) |
 
-**Allowed before approval (no repository changes unless a task is assigned):**
+**Allowed now, before T-0D (no repository changes unless a task is assigned):**
 - Read all the documents above.
-- Make sure Node.js **22.12+ or 24 LTS** can be installed on your machine; Node 20 is end-of-life and too old for Vitest 5. If you're unsure about installing anything, ask the Lead first.
+- Install Node.js **22.12+ or 24 LTS** on your machine (part of the approved stack; Node 20 is end-of-life and too old for Vitest 5).
 - Prepare questions for the Lead about any unclear UI requirement.
 
-**Proposed stack for your workstream** (use it only after D-008 is approved, at the approved versions):
+**Approved stack for your workstream** (D-008, 2026-11-14; pin exact versions in lockfiles at setup):
 - **Frontend:** React 19 + Vite 8 + TypeScript (strict, at the version the Vite template pins)
 - **Map:** MapLibre GL JS 6 + deck.gl 9 for the grid layer
 - **Drawing:** terra-draw (rectangle in the MVP, polygon in P1)
@@ -85,7 +86,7 @@ You are assisting **Member 3 (Application Development & UI)** of a three-person 
 - **Country boundaries:** Natural Earth admin-0 (public domain)
 - **API, if D-015 assigns it to you:** FastAPI + Uvicorn + DuckDB reading Parquet; Pydantic models mirroring the contract; pytest
 
-If the Lead approves something different, follow `docs/TECH_STACK.md` "Final approved stack".
+The authoritative list is `docs/TECH_STACK.md` §7 "Final approved stack". Any change needs a new Lead decision.
 
 ## 4. Your tasks in order (H = hours after D-008/D-016 approval; see `docs/PROJECT_PLAN.md` §9)
 
@@ -99,7 +100,7 @@ If the Lead approves something different, follow `docs/TECH_STACK.md` "Final app
 | F. Overview + methods | T-040 anomaly list, T-041 methods + validation page | H28 (**feature freeze**) | `validation_results.json` (~H26) |
 | G. Polish (P1) | T-042 performance + accessibility, T-043 static fallback build / optional deploy, T-044 polygon area | H32 | Lead decides |
 
-## 5. Application architecture (from `docs/ARCHITECTURE.md`; proposed until D-008)
+## 5. Application architecture (from `docs/ARCHITECTURE.md`; stack approved, directory layout pending T-0D)
 
 ```
 Member 2 products (Parquet + JSON) ──► API (Python; reads PRODUCTS_DIR; imports harmonize_area()) ──► Web app (SPA)
@@ -369,18 +370,20 @@ Always create it from the latest `main`.
 ## S. Shared integration handoff (identical text in both teammate prompts)
 
 > This section appears **word for word** in both `MEMBER_2_DATA_SCIENCE_PROMPT.md` and `MEMBER_3_APPLICATION_PROMPT.md`. If you find a difference between the two copies, stop and tell the Project Lead.
-> **Source of truth:** `docs/DATA_CONTRACT.md` (`contract_version 0.1.0`, **PROPOSED, decision D-016**). If this section and `DATA_CONTRACT.md` disagree, `DATA_CONTRACT.md` wins; report the discrepancy. Items marked **[PROPOSED ADDITION]** are not yet in `DATA_CONTRACT.md`. They become binding only when the Lead approves D-016 and they are added to `DATA_CONTRACT.md`.
+> **Source of truth:** `docs/DATA_CONTRACT.md` (`contract_version 0.1.0`, **APPROVED, decision D-016, 2026-11-14**). If this section and `DATA_CONTRACT.md` disagree, `DATA_CONTRACT.md` wins; report the discrepancy. Items marked **[PROPOSED ADDITION]** are not yet in `DATA_CONTRACT.md`. They become binding only when the Lead approves **D-022** and they are added to `DATA_CONTRACT.md` (version 0.1.1).
 
-### S.1 Approval status (as of 2026-11-14; always re-check `docs/DECISION_LOG.md`)
+### S.1 Approval status (as of 2026-11-14 12:26 IST = H0; always re-check `docs/DECISION_LOG.md`)
 
 | Decision | Topic | Status | Effect on work |
 |---|---|---|---|
 | D-003 | Product direction (Many Witnesses + Witness Stand) | Approved implicitly | Basis for everything |
-| D-008 | Technology stack | **PROPOSED, not approved** | **Blocks** all work that installs packages or writes application or pipeline code |
+| D-008 | Technology stack | **APPROVED 2026-11-14** (`TECH_STACK.md` §7) | Use exactly the approved stack |
 | D-009 | Grid sizes | PROPOSED / OPEN, locked at Gate G1 | Member 2 computes candidates; the Lead locks them |
 | D-010 | Baseline 2003–2022 | PROPOSED | Used by verdicts |
 | D-015 | API owner | **OPEN** (recommended: Member 3) | Blocks T-034 |
-| D-016 | Data contract v0.1.0 | **PROPOSED, not approved** | **Blocks** fixtures (T-010) and all contract-dependent code |
+| D-016 | Data contract v0.1.0 | **APPROVED 2026-11-14** (as written) | Fixtures and contract-dependent code may proceed (after T-0D) |
+| T-0D | Directory layout (pipeline / API / app folders) | **OPEN** | **Blocks** every task that creates code directories |
+| D-022 | [PROPOSED ADDITION] items in this section | **PROPOSED** | Not binding until approved; build against them only if the Lead confirms |
 | D-017 / D-020 | Team workflow / no AI attribution | Approved | Always apply |
 
 ### S.2 Directory layout and file names
