@@ -12,7 +12,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-006 | 2026-11-14 | Harmonized record starts 2002-07; Terra in the raw view only | PROPOSED |
 | D-007 | 2026-11-14 | NOAA-21 excluded from the MVP | PROPOSED |
 | D-008 | 2026-11-14 | Technology stack | **APPROVED** (2026-11-14, as recommended) |
-| D-009 | 2026-11-14 | Regular lat/lon grid; analysis 0.5° (vs 0.25°), fine 0.05°/0.1°: final choice at G1 | PROPOSED / OPEN |
+| D-009 | 2026-11-14 | Regular lat/lon grid: analysis 0.5°, fine 0.05° (locked at G1 on the Aqua vs S-NPP 2012–2016 test) | APPROVED (2026-11-14) |
 | D-010 | 2026-11-14 | Baseline 2003–2022 + Aqua-only sensitivity test | PROPOSED |
 | D-011 | 2026-11-14 | Private GitHub repo; collaborators added by the Lead only | APPROVED |
 | D-012 | 2026-11-14 | Git workflow: feature branches, PRs, Lead-only merges | SUPERSEDED by D-017 |
@@ -71,8 +71,18 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Status:** **APPROVED** by the Project Lead, 2026-11-14 12:26 IST. This time is **H0** of the 36-hour schedule.
 
 ### D-009: Grid
-- **Decision (proposed):** a regular lat/lon grid. Analysis 0.5° recommended (more activity per cell, so more determinable verdicts). Fine cell-day grid 0.05° or 0.1°. Final sizes are chosen at G1 by best Aqua vs S-NPP agreement on 2012–2016, before validation.
-- **Status:** PROPOSED / OPEN.
+- **Decision:** a regular lat/lon grid with an **analysis grid of 0.5°** and a **fine cell-day grid of 0.05°**. A fine cell belongs to the analysis cell that holds its centre.
+- **How it was chosen (pre-registered rule):** best Aqua vs S-NPP agreement on 2012–2016 (SP data, approved filters and static mask, day and night combined), measured before any validation. Member 2's test (PR #27), measured:
+
+  | Fine | Analysis | Spearman | Both > 0 | Aqua ≥ 5 cell-days |
+  |---|---|---|---|---|
+  | 0.05° | 0.25° | 0.672 | 13.3% | 4.5% |
+  | **0.05°** | **0.5°** | **0.739** | **21.0%** | **8.8%** |
+  | 0.1° | 0.25° | 0.664 | 13.2% | 4.1% |
+  | 0.1° | 0.5° | 0.733 | 21.0% | 8.4% |
+
+- **Known consequences:** Aqua night activity is thin (Spearman 0.41–0.51), so night strata will rely on pooling. Only about 9% of cell-months reach Aqua ≥ 5 cell-days, so cell-level verdicts will often be `CANNOT_DETERMINE`; country and continent are the main verdict levels. The 0.05° fine cell is close to a MODIS edge pixel at high latitudes; the 0.1° alternative scored slightly lower (0.733).
+- **Status:** APPROVED by the Lead, 2026-11-14 (G1).
 
 ### D-010: Baseline
 - **Decision (proposed):** 2003–2022, same calendar month, harmonized values. Sensitivity test S1 uses an Aqua-measured baseline (2003–2021).
