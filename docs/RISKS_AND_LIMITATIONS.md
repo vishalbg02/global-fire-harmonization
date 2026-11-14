@@ -56,6 +56,7 @@ Likelihood and impact: L (low) · M (medium) · H (high).
 | P1 | Tens of thousands of cells per month in the browser | WebGL grid layer; per-month payloads; 0.5° analysis grid |
 | P2 | Custom-area queries over many cells | DuckDB over partitioned Parquet; cap the area size if needed (disclose) |
 | P3 | Free hosting cold starts or limits | Local demo primary; static fallback for preset views |
+| P4 | Polygon custom area uses the centre rule (T-044): a grid cell belongs when its centre lies inside the polygon (boundary included), so a cell covered 60% with its centre outside is left out, a cell covered 40% with its centre inside is included, and a small polygon may contain no cell centre (422). Limits: 3 to 100 points, inside the world box, no antimeridian crossing, no self-intersection; coordinates kept to 4 decimals; no offline copy | Rule written in `api/README.md` and next to the polygon in the app; tested against a brute-force check on fixtures and real products; the grid is 0.5 degrees, so treat areas smaller than a few cells as approximate |
 
 ## 4. Data limitations (permanent; disclose in the app)
 

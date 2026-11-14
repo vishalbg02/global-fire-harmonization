@@ -1,5 +1,6 @@
 import type { Bbox } from '../api/contract.ts'
 import { checkBbox, customArea } from './bbox.ts'
+import { polygonArea, ringFromLinkText, ringToLinkText } from './polygon.ts'
 import { initialSelection, WORLD } from './selection.ts'
 import type { Area, MapMode, Selection, Source, ValueMode } from './selection.ts'
 
@@ -12,7 +13,9 @@ const MONTH = /^(\d{4})-(0[1-9]|1[0-2])$/
 
 function areaToText(area: Area): string {
   if (area.entity_type === 'GLOBAL') return 'GLOBAL'
-  if (area.entity_type === 'CUSTOM') return `CUSTOM:${area.bbox.join(',')}`
+  if (area.entity_type === 'CUSTOM') {
+    return area.polygon === undefined ? `CUSTOM:${area.bbox.join(',')}` : `POLY:${ringToLinkText(area.polygon)}`
+  }
   return `${area.entity_type}:${area.entity_id}`
 }
 
@@ -36,6 +39,10 @@ function areaFromText(text: string | null): Area | null {
   }
   if (kind === 'CONTINENT' && CONTINENT_ID.test(rest)) {
     return { entity_type: 'CONTINENT', entity_id: rest, entity_name: rest }
+  }
+  if (kind === 'POLY') {
+    const ring = ringFromLinkText(rest)
+    return ring === null ? null : polygonArea(ring)
   }
   if (kind === 'CUSTOM') {
     const parts = rest.split(',')
