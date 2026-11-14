@@ -75,9 +75,9 @@ Rows read from the CSVs of the 46 zips (2002 to 2025) and the 2026 API files (T-
 
 Computed by `python pipeline/qa_filters.py` over all 582,050,574 rows. Nothing was dropped, de-duplicated or altered; every filter below is counted, not applied.
 
-**Value domains.** No row has latitude or longitude out of range, a date outside its file's year, an invalid time (`acq_time_utc` 0000 to 2359, minutes below 60), a confidence value outside its domain (MODIS 0 to 100, VIIRS l/n/h), a `daynight` value other than D or N, a `type` other than 0 to 3, a non-positive `scan` or `track`, or a missing key field. The one exception is **478 rows with a negative `frp`** (values from -59.2 to -0.01 MW, scattered across the three sensors and many years; kept as they are, and the harmonization uses `cell_days`, not FRP).
+**Value domains.** No row has latitude or longitude out of range, a date outside its file's year, an invalid time (`acq_time_utc` 0000 to 2359, minutes below 60), a confidence value outside its domain (MODIS 0 to 100, VIIRS l/n/h), a `daynight` value other than D or N, a `type` other than 0 to 3, a non-positive `scan` or `track`, or a missing key field. The one exception is **478 rows with a negative `frp`** (values from -59.2 to -0.01 MW, scattered across the three sensors and many years; kept as delivered in the normalized data). **Decision, approved by the Lead 2026-11-14:** negative `frp` is treated as `null` when summing `frp_sum_mw`; cell-day counts are unaffected.
 
-**Duplicates.** Exact duplicates on (satellite, lat, lon, date, time): 252 rows in total (244 repeat inside the same country file, 8 appear only in another country's file), which is 0.00004% of the rows. Partitions do not overlap in time, so there are no duplicates between the 2025 zip and the 2026 API data. Not removed.
+**Duplicates.** Exact duplicates on (satellite, lat, lon, date, time): 252 rows in total (244 repeat inside the same country file, 8 appear only in another country's file), which is 0.00004% of the rows. Partitions do not overlap in time, so there are no duplicates between the 2025 zip and the 2026 API data. Not removed from the normalized data. **Lead decision (2026-11-14):** remove exact duplicates when computing cell-days in T-006; they cannot change presence-based cell-days anyway.
 
 **Filter funnel** (`SCIENTIFIC_METHODOLOGY.md` §4.1; counted only):
 
@@ -111,7 +111,7 @@ Standard-data rows by `type` (the filter keeps type 0):
 | 0.1° | 0.7 | 4,612 | 733,125 (4.9%) | 81.7% | 0.49% | 91.9% |
 | 0.1° | 0.9 | 2,151 | 488,701 (3.3%) | 57.2% | 0.20% | 95.1% |
 
-**Proposal (needs Lead approval; D-009 is open):** fine grid 0.05°, share static at least 0.5, at least 10 detections. It masks 10,929 cells and 808,973 of the 14,858,627 NRT rows (5.4%), removes 87.8% of static detections on held-out years, and wrongly removes 0.55% of fire detections. The 0.1° grid removes slightly more static detections at the same share but loses more fire. A higher share lowers the fire loss and the recall. The mask files stay local. The proposed setting is not applied anywhere yet.
+**Decision, approved by the Lead 2026-11-14:** the static-source mask uses 0.05° cells, a static share of at least 0.5 and at least 10 detections, built on SP data. This also fits a 0.05° fine grid for D-009 / T-051, which is not locked yet. Evidence: fine grid 0.05°, share static at least 0.5, at least 10 detections. It masks 10,929 cells and 808,973 of the 14,858,627 NRT rows (5.4%), removes 87.8% of static detections on held-out years, and wrongly removes 0.55% of fire detections. The 0.1° grid removes slightly more static detections at the same share but loses more fire. A higher share lowers the fire loss and the recall. The setting is approved but not yet applied anywhere; the mask files stay local.
 
 **Day/night against the solar zenith rule** (night when the zenith angle is above 85 degrees; 0.5% sample; rows within 1 degree of the limit excluded):
 
@@ -124,7 +124,7 @@ Standard-data rows by `type` (the filter keeps type 0):
 | VIIRS_SNPP | NRT | 32,996 | 32,991 (99.98%) |
 | VIIRS_SNPP | SP | 1,451,276 | 1,450,888 (99.97%) |
 
-NRT day/night agrees with the zenith rule almost as well as SP does (99.87% to 99.99%), so recomputing it for NRT rows (prompt §9, needs Lead approval) would change very few rows. Measured only; no row was recomputed.
+NRT day/night agrees with the zenith rule almost as well as SP does (99.87% to 99.99%), so recomputing it would change very few rows. **Decision, approved by the Lead 2026-11-14: not recomputed.** FIRMS's `daynight` is kept as delivered, because source values are not altered. Measured only.
 
 ## 2. NASA FIRMS area API: **2026 data**
 
