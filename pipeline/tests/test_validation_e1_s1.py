@@ -8,6 +8,7 @@ already right). Nothing here is a result on real data.
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -364,3 +365,12 @@ def test_the_region_table_lists_every_region(e1_run):
 def test_the_fit_window_is_the_t011_snpp_window():
     assert v.FIT_WINDOW == ((2012, 1), (2016, 12)) and v.REQUIRED_WINS == 11 and v.MIN_CELL_DAYS == 20.0
     assert not np.isnan(v.MIN_UNITS)
+
+
+def test_entries_are_built_from_both_reports_even_when_the_tests_ran_separately(e1_run, tmp_path):
+    s1 = {"case_peak_months": [{"unchanged": False}], "summary": {}, "status_baseline": "FAIL"}
+    v.write_outputs(e1_run, None, qa=tmp_path)
+    paths = v.write_outputs(None, s1, qa=tmp_path)
+    entries = {e["test_id"]: e for e in json.loads((tmp_path / "T-025_validation_entries.json").read_text(encoding="utf-8"))}
+    assert set(entries) == {"E1", "S1-BASELINE", "S1-CONFIDENCE-FILTER", "S1"} and entries["S1-BASELINE"]["status"] == "FAIL"
+    assert (tmp_path / "T-025_e1_report.json").exists() and (tmp_path / "T-025_validation_entries.json") in paths

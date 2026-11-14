@@ -16,7 +16,7 @@ Two validation tests are implemented, run on the final T-011 products, and recor
 - Dependencies (must be MERGED first): T-011 (merged). T-012 and T-013 code is on main. The T-014 baseline products do not exist yet.
 
 ## 4. Relevant files and directories
-- Read: `CLAUDE.md`, `docs/TEAM_WORKFLOW.md` §4, `docs/DECISION_LOG.md` D-005 and D-028, `docs/VALIDATION_PLAN.md`, `docs/SCIENTIFIC_METHODOLOGY.md` §4.3 to §4.6 and §7, `docs/DATA_SOURCES.md` (T-011, T-012, T-013), `docs/DATA_CONTRACT.md` §6, `pipeline/calibration.py`, `pipeline/harmonize.py`, `pipeline/holdout.py`, `data/products/*.parquet`
+- Read: the assistant instructions file at the repository root, `docs/TEAM_WORKFLOW.md` §4, `docs/DECISION_LOG.md` D-005 and D-028, `docs/VALIDATION_PLAN.md`, `docs/SCIENTIFIC_METHODOLOGY.md` §4.3 to §4.6 and §7, `docs/DATA_SOURCES.md` (T-011, T-012, T-013), `docs/DATA_CONTRACT.md` §6, `pipeline/calibration.py`, `pipeline/harmonize.py`, `pipeline/holdout.py`, `data/products/*.parquet`
 - Create/modify:
   - `docs/task-prompts/T-025-test-e1-s1.md` (this file)
   - `pipeline/validation_e1_s1.py`, `pipeline/tests/test_validation_e1_s1.py`

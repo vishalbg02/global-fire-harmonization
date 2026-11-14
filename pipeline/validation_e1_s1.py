@@ -545,23 +545,29 @@ def build_entries(e1: dict | None, s1: dict | None) -> list[dict]:
 
 
 def write_outputs(e1: dict | None, s1: dict | None, qa: Path | None = None) -> list[Path]:
+    """Write the report of each test that ran now; the entries file is built from both reports (a report written by an earlier run is used for
+    a test that did not run now)."""
     qa = qa or QA
     qa.mkdir(parents=True, exist_ok=True)
     paths = []
-    if e1 is not None:
-        paths.append(qa / "T-025_e1_report.json")
-        paths[-1].write_text(json.dumps(e1, indent=1, default=str), encoding="utf-8")
-    if s1 is not None:
-        paths.append(qa / "T-025_s1_report.json")
-        paths[-1].write_text(json.dumps(s1, indent=1, default=str), encoding="utf-8")
+    for name, rep in (("T-025_e1_report.json", e1), ("T-025_s1_report.json", s1)):
+        if rep is not None:
+            (qa / name).write_text(json.dumps(rep, indent=1, default=str), encoding="utf-8")
+            paths.append(qa / name)
+    e1 = e1 if e1 is not None else _load(qa / "T-025_e1_report.json")
+    s1 = s1 if s1 is not None else _load(qa / "T-025_s1_report.json")
     paths.append(qa / "T-025_validation_entries.json")
     paths[-1].write_text(json.dumps(build_entries(e1, s1), indent=1, default=str), encoding="utf-8")
     return paths
 
 
+def _load(path: Path) -> dict | None:
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("which", choices=["e1", "s1", "all"], nargs="?", default="all")
+    ap.add_argument("which", choices=["e1", "s1", "all", "entries"], nargs="?", default="all")
     ap.add_argument("--boot", type=int, default=cal.BOOTSTRAP)
     args = ap.parse_args(argv)
     e1 = s1 = None
@@ -573,6 +579,8 @@ def main(argv: list[str] | None = None) -> int:
         print("S1: baseline sensitivity")
         s1 = run_s1()
         print(s1["status_baseline"], json.dumps(s1["summary"], indent=1))
+    if args.which == "entries":
+        print("entries from the reports already written")
     print([str(p) for p in write_outputs(e1, s1)])
     return 0
 
