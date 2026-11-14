@@ -9,7 +9,7 @@ import { AreaPicker } from './components/area/AreaPicker.tsx'
 import { resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
-import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly } from './content/rawOnly.ts'
+import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
 import { CellInfo } from './components/map/CellInfo.tsx'
@@ -119,6 +119,11 @@ export default function App() {
   // The API layer follows the shared Raw / Harmonized control and the map mode.
   // Raw-only products have no harmonized values: the views show raw activity and say so.
   const rawOnly = isRawOnly(meta.data)
+  // The note is decided per series: preset areas are raw-only for now, a custom-area series is
+  // harmonized and carries no raw-only note (it is hidden while that series is still loading).
+  const areaSeries = useAreaSeries(area)
+  const noteShown =
+    rawOnly && (area.entity_type === 'CUSTOM' ? false : isRawOnlySeries(areaSeries.data, rawOnly))
   const layer = effectiveLayer(rawOnly ? { ...selection, source: 'raw', mapMode: 'activity' } : selection)
   const cells = useQuery({
     queryKey: ['map', selection.month?.year, selection.month?.month, layer],
@@ -145,7 +150,7 @@ export default function App() {
         <h1>Global Fire Harmonization</h1>
         <p className="subtitle">Satellite-detected fire activity, harmonized across MODIS and VIIRS</p>
       </header>
-      {rawOnly && (
+      {noteShown && (
         <p className="raw-only-note" role="status">
           {RAW_ONLY_NOTE}
         </p>

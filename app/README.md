@@ -43,7 +43,7 @@ The address bar always holds the selection, so a link reproduces the view. Query
 
 ## Raw-only data
 
-When `metadata.method_version` ends in `-raw-only` (real raw counts, no harmonization yet, T-039 phase 1) the app shows a "Raw data only, harmonization in progress" note, forces the raw / activity views, disables Harmonized, Verdict and % of normal with the reason written out, and shows "Not available yet" in the evidence panel, the anomaly list and the chart. The SYNTHETIC banner follows `metadata.synthetic` only. Real products are never mixed with fixtures.
+When `metadata.method_version` ends in `-raw-only` (real raw counts, no harmonization yet, T-039 phase 1) the app shows a "Raw data only, harmonization in progress" note, forces the raw / activity views, disables Harmonized, Verdict and % of normal with the reason written out, and shows "Not available yet" in the evidence panel, the anomaly list and the chart. The raw-only note and the per-area wording are decided per series from its records (`method_version` ending in `-raw-only`, or the `NOT_HARMONIZED` reason code), not from the global metadata: a preset area is raw-only for now, while a custom-area series from `harmonize_area()` is shown with its harmonized estimate and interval and no raw-only note (its `% of normal` stays unavailable until a baseline exists, T-014). The map controls still follow the metadata, because the map products are raw-only. The SYNTHETIC banner follows `metadata.synthetic` only. Real products are never mixed with fixtures.
 
 ## Custom areas
 
