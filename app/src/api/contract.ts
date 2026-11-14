@@ -411,3 +411,79 @@ export function parseMetadata(raw: unknown): Metadata {
     citation: str(o, 'citation', what),
   }
 }
+
+export const TEST_STATUSES = ['PASS', 'FAIL', 'INCONCLUSIVE', 'NOT_RUN'] as const
+export type TestStatus = (typeof TEST_STATUSES)[number]
+
+export type MeasuredValue = number | string | boolean | null
+
+/** One test of validation_results.json (contract section 6), exactly as stored. */
+export interface ValidationTest {
+  test_id: string
+  family: string
+  title: string
+  case: string
+  criterion: string
+  threshold: string
+  measured: Record<string, MeasuredValue>
+  status: TestStatus
+  notes: string
+}
+
+/** GET /api/validation: validation_results.json, served as is. */
+export interface ValidationResults {
+  contract_version: string
+  method_version: string
+  generated_at: string
+  synthetic: boolean
+  tests: ValidationTest[]
+}
+
+function parseMeasured(raw: unknown, what: string): Record<string, MeasuredValue> {
+  const o = asRecord(raw, `${what} measured`)
+  const out: Record<string, MeasuredValue> = {}
+  for (const [key, value] of Object.entries(o)) {
+    if (
+      value !== null &&
+      typeof value !== 'number' &&
+      typeof value !== 'string' &&
+      typeof value !== 'boolean'
+    ) {
+      throw new ContractError(`${what}: measured "${key}" must be a number, text, true/false or null`)
+    }
+    out[key] = value
+  }
+  return out
+}
+
+export function parseValidationTest(raw: unknown): ValidationTest {
+  const what = 'validation test'
+  const o = asRecord(raw, what)
+  return {
+    test_id: str(o, 'test_id', what),
+    family: str(o, 'family', what),
+    title: str(o, 'title', what),
+    case: str(o, 'case', what),
+    criterion: str(o, 'criterion', what),
+    threshold: str(o, 'threshold', what),
+    measured: parseMeasured(field(o, 'measured', what), what),
+    status: oneOf(field(o, 'status', what), TEST_STATUSES, 'status', what),
+    notes: str(o, 'notes', what),
+  }
+}
+
+export function parseValidationResults(raw: unknown): ValidationResults {
+  const what = 'validation results'
+  const o = asRecord(raw, what)
+  const synthetic = field(o, 'synthetic', what)
+  if (typeof synthetic !== 'boolean') throw new ContractError(`${what}: "synthetic" must be a boolean`)
+  const tests = field(o, 'tests', what)
+  if (!Array.isArray(tests)) throw new ContractError(`${what}: "tests" must be a list`)
+  return {
+    contract_version: str(o, 'contract_version', what),
+    method_version: str(o, 'method_version', what),
+    generated_at: str(o, 'generated_at', what),
+    synthetic,
+    tests: tests.map(parseValidationTest),
+  }
+}

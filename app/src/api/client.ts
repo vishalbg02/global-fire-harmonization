@@ -1,4 +1,4 @@
-import type { Anomaly, Bbox, EntityEvidence, EntityItem, EntityMonth, MapCell, MapLayer, Metadata } from './contract.ts'
+import type { Anomaly, Bbox, EntityEvidence, EntityItem, EntityMonth, MapCell, MapLayer, Metadata, ValidationResults } from './contract.ts'
 import {
   decodeMonth,
   enterStaticMode,
@@ -20,6 +20,7 @@ import {
   parseEntityMonths,
   parseMapCells,
   parseMetadata,
+  parseValidationResults,
 } from './contract.ts'
 
 // Contract v0.1.0 does not define a response envelope or error format (the D-022
@@ -126,6 +127,10 @@ export async function fetchMeta(base: string = apiBaseUrl()): Promise<Metadata> 
     async () => parseMetadata(await getJson(`${base}/api/meta`)),
     staticMeta,
   )
+}
+
+export async function fetchValidation(base: string = apiBaseUrl()): Promise<ValidationResults> {
+  return parseValidationResults(await getJson(`${base}/api/validation`))
 }
 
 export async function fetchMapCells(

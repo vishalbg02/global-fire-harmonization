@@ -11,6 +11,7 @@ import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { useStaticManifest } from './api/staticData.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
+import { PAGE_PARAM, METHODS_PAGE, methodsHref, pageFromSearch } from './content/methodsLink.ts'
 import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
@@ -27,22 +28,26 @@ import { customArea } from './state/bbox.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
+const MethodsPage = lazy(() => import('./components/methods/MethodsPage.tsx').then((m) => ({ default: m.MethodsPage })))
 // The map (MapLibre, deck.gl and the draw tool) is loaded when first needed, so the first load is small (T-042).
 const MapView = lazy(() => import('./components/map/MapView.tsx').then((m) => ({ default: m.MapView })))
 
 export default function App() {
   // The selection starts from the link (area, month, source, map mode, value mode), if any.
   const [selection, dispatch] = useReducer(selectionReducer, null, () => selectionFromUrl(window.location.search))
+  const [page, setPage] = useState<'map' | 'methods'>(() => pageFromSearch(window.location.search))
   const [drawing, setDrawing] = useState(false)
   const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
 
   // Keep the link in step with the selection, so the address bar can be shared.
   useEffect(() => {
-    const query = encodeSelection(selection)
+    const params = new URLSearchParams(encodeSelection(selection))
+    if (page === 'methods') params.set(PAGE_PARAM, METHODS_PAGE)
+    const query = params.toString()
     const url = `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`
     window.history.replaceState(null, '', url)
-  }, [selection])
+  }, [selection, page])
 
   const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
   const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
@@ -134,7 +139,7 @@ export default function App() {
   const cells = useQuery({
     queryKey: ['map', selection.month?.year, selection.month?.month, layer],
     queryFn: () => fetchMapCells(selection.month!.year, selection.month!.month, layer),
-    enabled: selection.month !== null,
+    enabled: selection.month !== null && page === 'map',
     retry: false,
   })
 
@@ -159,12 +164,35 @@ export default function App() {
       <header>
         <h1>Global Fire Harmonization</h1>
         <p className="subtitle">Satellite-detected fire activity, harmonized across MODIS and VIIRS</p>
+        {page === 'map' && (
+          <a
+            className="methods-link"
+            href={methodsHref()}
+            onClick={(e) => {
+              e.preventDefault()
+              setPage('methods')
+              window.scrollTo(0, 0)
+            }}
+          >
+            Methods and validation
+          </a>
+        )}
       </header>
-      {noteShown && (
+      {page === 'map' && noteShown && (
         <p className="raw-only-note" role="status">
           {RAW_ONLY_NOTE}
         </p>
       )}
+      {page === 'methods' ? (
+        <Suspense fallback={<LoadingState what="the methods page" />}>
+          <MethodsPage
+            onBack={() => {
+              setPage('map')
+              window.scrollTo(0, 0)
+            }}
+          />
+        </Suspense>
+      ) : (
       <main id="main-content" tabIndex={-1}>
         <div className="controls">
           <MonthSelector
@@ -287,6 +315,7 @@ export default function App() {
         </div>
         <WitnessPanel area={area} onShowWorld={() => dispatch({ type: 'clear-entity' })} />
       </main>
+      )}
     </div>
     </RawOnlyContext.Provider>
   )
