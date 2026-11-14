@@ -41,6 +41,10 @@ Open the address Vite prints (use `localhost`). While `metadata.synthetic` is `t
 
 The address bar always holds the selection, so a link reproduces the view. Query parameters (all optional, defaults left out): `area` (`COUNTRY:IDN`, `CONTINENT:AS`, `GLOBAL`, or `CUSTOM:west,south,east,north`), `month` (`2015-09`), `source` (`raw` or `harmonized`), `map` (`verdict` or `activity`) and `value` (`pct` or `activity`). Unknown or malformed values are ignored. Raw with % of normal, or raw with the verdict map, cannot be selected together.
 
+## Methods and validation page (T-041)
+
+A "Methods and validation" link in the header opens a page (`?page=methods`, kept in the link; no router library). It holds the method in plain language (`src/content/methods.ts`, drafted from the approved decisions and `docs/DATA_SOURCES.md`, each statement labelled APPROVED, PROPOSED, VERIFIED, LIMITATION, OPEN or NOT_BUILT_YET, with its source), what each verdict and reason code means (from the approved reason texts), the D-009 grid evidence, the validation results exactly as `GET /api/validation` serves them, a separate "Planned tests (not run yet)" list that has no status and is never part of the results, and the FIRMS acknowledgement (from `/api/meta`), the seven dataset DOIs and the references. Results are shown in file order, each status as text plus an icon; FAIL and INCONCLUSIVE are drawn with a heavier border than PASS; an empty list says no test has been run yet. Each reason code in the evidence panel links to its entry on the page.
+
 ## Performance and accessibility (T-042)
 
 - **Code splitting:** the map (MapLibre, deck.gl, the draw tool) and the two charts (ECharts) load when first needed. The first-load chunk went from 2,816.61 kB (about 794 kB gzipped) to 314 kB (about 92 kB gzipped). Every chunk is under 500 kB except `maplibre-gl` (1.06 MB, one library) and its own worker (519 kB), which load only with the map; the build warning limit is set to 1,100 kB for that reason (`vite.config.ts`).
