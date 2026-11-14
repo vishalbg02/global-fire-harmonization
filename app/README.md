@@ -2,7 +2,7 @@
 
 Frontend for the Global Fire Harmonization project (working name: *Many Witnesses*). Owner: Member 3. Task: T-030 (setup and skeleton).
 
-**Status:** application shell only. It shows a placeholder page and no data. The map, calendar, charts and evidence panels are added by later tasks (T-031 onward). The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
+**Status:** T-031 adds the global map (country layer, analysis-cell layer, month selector, layer modes, legend, tooltip). The calendar, charts and evidence panels are added by later tasks. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
 
 ## Prerequisites
 
@@ -23,6 +23,14 @@ Run all commands from this `app/` directory.
 | `npm run lint` | Run the template's default linter (Oxlint) |
 | `npm run preview` | Serve the built `dist/` locally |
 
+## Configuration
+
+- `VITE_API_BASE_URL`: base URL of the API (for example `http://localhost:8000`). Optional; it holds no secret. Without a reachable API the map still shows the country layer and reports that data are not available. Contract v0.1.0 defines no response envelope, so the client expects the bare payload of `GET /api/meta` and `GET /api/map`.
+
+## Country boundaries
+
+`public/geo/ne_110m_admin_0_countries.geojson` is Natural Earth admin-0 countries at 1:110m (public domain), file `geojson/ne_110m_admin_0_countries.geojson` from the `nvkelso/natural-earth-vector` repository at tag `v5.1.2`, 838,726 bytes, 177 features, unmodified. The app takes each country's ISO 3166-1 alpha-3 code from `ISO_A3_EH`, because `ISO_A3` is `-99` for Norway and France. Three features (Northern Cyprus, Somaliland, Kosovo) have no ISO code in this file; they are drawn but cannot be selected, and no code is invented for them.
+
 ## Stack (approved, D-008)
 
 React 19, Vite 8, TypeScript (strict), MapLibre GL JS 6, deck.gl 9 (installed as the individual modules `@deck.gl/core`, `@deck.gl/layers`, `@deck.gl/react` and `@deck.gl/maplibre`, not the `deck.gl` meta-package, which pulls in unused ArcGIS and Vaadin packages), terra-draw, Apache ECharts 6, TanStack Query, Vitest. The map, drawing and chart libraries are installed but not used yet. Exact versions are pinned in `package-lock.json`.
@@ -31,17 +39,22 @@ React 19, Vite 8, TypeScript (strict), MapLibre GL JS 6, deck.gl 9 (installed as
 
 ```
 app/
-├── index.html          page entry
+├── index.html              page entry
 ├── src/
-│   ├── main.tsx        app root; mounts the TanStack Query provider
-│   ├── App.tsx         placeholder shell
-│   ├── index.css       base styles and visible focus
-│   └── *.test.ts(x)    Vitest tests
-├── public/             static files
-└── package.json        scripts and dependencies
+│   ├── main.tsx            app root; mounts the TanStack Query provider
+│   ├── App.tsx             map page: wires selection, data queries and components
+│   ├── index.css           styles and visible focus
+│   ├── api/                contract types and parsers (contract.ts), typed client (client.ts)
+│   ├── state/              selection state (selection.ts), month list (months.ts)
+│   ├── content/            verdict presentation and short reason labels
+│   ├── components/map/     map, legend, month and layer selectors, tooltip, colour scale
+│   ├── components/common/  synthetic banner, loading/error/empty states
+│   └── **/*.test.ts(x)     Vitest tests (mock data inside test files is SYNTHETIC)
+├── public/geo/             Natural Earth country boundaries
+└── package.json            scripts and dependencies
 ```
 
-Folders for the API client, state, components and content are added when the task that needs them starts.
+Folders for later views are added when the task that needs them starts.
 
 ## Pointer for the root README (proposed, awaiting Lead approval)
 

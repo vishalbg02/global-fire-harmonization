@@ -1,16 +1,14 @@
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import App from './App.tsx'
+import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 
-describe('App shell', () => {
-  it('renders the project heading and the placeholder statement', () => {
-    const html = renderToString(<App />)
-    expect(html).toContain('Global Fire Harmonization')
-    expect(html).toContain('Application shell only')
+describe('synthetic banner', () => {
+  it('is shown, with the required text, when metadata.synthetic is true', () => {
+    const html = renderToString(<SyntheticBanner synthetic={true} />)
+    expect(html).toContain('SYNTHETIC DATA — not NASA observations')
   })
 
-  it('shows no data values', () => {
-    const html = renderToString(<App />)
-    expect(html).not.toMatch(/\d+%/)
+  it('is not shown when metadata.synthetic is false', () => {
+    expect(renderToString(<SyntheticBanner synthetic={false} />)).toBe('')
   })
 })
