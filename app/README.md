@@ -53,6 +53,17 @@ A "Methods and validation" link in the header opens a page (`?page=methods`, kep
 - **Contrast:** `src/content/contrast.test.ts` reads the tokens in `src/index.css` and checks WCAG 2.1 AA text contrast. The app has one (light) theme.
 - **Loading:** a custom area shows "Computing this area… A new area can take several seconds." while it computes.
 
+## Offline copy of the preset views (T-043)
+
+The app can run from static files written by `api/fire_api/static_export.py` (see `api/README.md`), with no API:
+
+- **Static-only build** (no API calls at all): `VITE_STATIC_ONLY=1 npm run build`, with the files in `public/data/` (the build copies them into `dist/data/`).
+- **Runtime fallback** in the normal build: if the API cannot be reached and a copy exists, the app switches to it. An answer of the API (404, 422, 503) is never replaced by the copy.
+- In both cases a notice says "Offline copy" with the date it was made and the data snapshot. The map, calendar, evidence, witness chart, anomaly list and the CSV of every preset area work; custom areas (typed or drawn) and the CSV of a box are disabled with "Custom areas need the live service. This offline copy has the preset views only."
+- **Which copy:** the full copy (all months, about 474 MB gzipped) is for the demo laptop, generated on that machine; the 24-month copy (`--latest-months 24`, measured 55.3 MB gzipped, 225 MB raw) is for any web host. The two commands are in `api/README.md`. In a 24-month copy the month slider and the map month picker list only the months that have a map (the manifest's list), a month chosen in the calendar that has no map says "No offline map for this month", and a note reads "Offline copy: map available for <first>–<last>; the calendar and charts cover every month." The calendar, series, evidence and CSVs cover every month in both.
+- The files are generated, never committed (`public/data/` is ignored). Publishing them is documented, not done: serve `dist/` with its `data/` folder from any static host (nothing is deployed from this repository without the Lead's go-ahead and a named host).
+- `src/api/staticData.ts` reads the files and decodes the columnar map months; `src/api/client.ts` chooses between the API and the copy in one place (`route`).
+
 ## Raw-only data
 
 When `metadata.method_version` ends in `-raw-only` (real raw counts, no harmonization yet, T-039 phase 1) the app shows a "Raw data only, harmonization in progress" note, forces the raw / activity views, disables Harmonized, Verdict and % of normal with the reason written out, and shows "Not available yet" in the evidence panel, the anomaly list and the chart. The raw-only note and the per-area wording are decided per series from its records (`method_version` ending in `-raw-only`, or the `NOT_HARMONIZED` reason code), not from the global metadata: a preset area is raw-only for now, while a custom-area series from `harmonize_area()` is shown with its harmonized estimate and interval and no raw-only note (its `% of normal` stays unavailable until a baseline exists, T-014). The map controls still follow the metadata, because the map products are raw-only. The SYNTHETIC banner follows `metadata.synthetic` only. Real products are never mixed with fixtures.
@@ -64,6 +75,7 @@ A custom rectangle is sent to `POST /api/series/custom`; the API returns the ser
 ## Configuration
 
 - `VITE_API_BASE_URL`: base URL of the API (for example `http://localhost:8000`). Optional; it holds no secret. Without a reachable API the map still shows the country layer and reports that data are not available. Contract v0.1.0 defines no response envelope, so the client expects the bare payload of `GET /api/meta` and `GET /api/map`.
+- `VITE_STATIC_ONLY`: set to `1` to build for a deployment with no API (the app reads the static files in `public/data/` only; see "Offline copy" above). Build-time, no secret.
 
 ## Country boundaries
 

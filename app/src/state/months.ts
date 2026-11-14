@@ -36,3 +36,25 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 export function monthLabel(m: { year: number; month: number }): string {
   return `${MONTH_NAMES[m.month - 1]} ${m.year}`
 }
+
+/**
+ * The months that have a map in the offline copy: the manifest's list, in the order of `all`
+ * (so the provisional marks stay). `null` (the live service, or a copy of the full data range)
+ * keeps every month. The calendar, series, evidence and CSVs are not limited by this (T-043).
+ */
+export function offlineMapMonths(
+  all: readonly MonthOption[],
+  manifestMonths: readonly string[] | null,
+): MonthOption[] {
+  if (manifestMonths === null) return [...all]
+  const listed = new Set(manifestMonths)
+  return all.filter((m) => listed.has(monthKey(m.year, m.month)))
+}
+
+/** True when the month has a map (always, outside the offline copy). */
+export function hasOfflineMap(
+  manifestMonths: readonly string[] | null,
+  month: { year: number; month: number } | null,
+): boolean {
+  return manifestMonths === null || month === null || manifestMonths.includes(monthKey(month.year, month.month))
+}

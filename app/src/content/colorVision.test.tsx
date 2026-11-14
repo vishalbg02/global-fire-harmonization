@@ -246,15 +246,11 @@ describe('categorical sets: pairwise CIEDE2000 under normal vision and each simu
   it('verdict colours (src/content/verdicts.ts)', () => {
     const set: Record<string, Item> = {}
     for (const [k, p] of Object.entries(VERDICT_PRESENTATION)) set[k] = { rgb: p.color, cue: p.icon }
-    // Documented exception: both are light greys (204 and 242), so they are the same pair under
-    // every simulation (grey stays grey): CIEDE2000 about 8.5 everywhere. They differ by icon
-    // (? against the open circle) and label.
-    expectOnlyDocumented(set, [
-      'CANNOT_DETERMINE|NO_DETECTED_ACTIVITY|normal',
-      'CANNOT_DETERMINE|NO_DETECTED_ACTIVITY|protanopia',
-      'CANNOT_DETERMINE|NO_DETECTED_ACTIVITY|deuteranopia',
-      'CANNOT_DETERMINE|NO_DETECTED_ACTIVITY|tritanopia',
-    ])
+    // NO_DETECTED_ACTIVITY is a pale blue ([190, 215, 235]) so that it is seen on the land colour
+    // without an outline (the first pale grey was 2.3 from the land). One pair stays just below
+    // the threshold: that blue against the light grey of CANNOT_DETERMINE under protanopia (about
+    // 8.9). They differ by icon (? against the open circle) and label.
+    expectOnlyDocumented(set, ['CANNOT_DETERMINE|NO_DETECTED_ACTIVITY|protanopia'])
   })
 
   it('every verdict has a non-empty icon and label, all different (colour is never the only cue)', () => {
@@ -395,13 +391,19 @@ describe('neutral fills that must not be mistaken for data', () => {
 
   it('map: low-contrast fills over the land colour (cell alpha 220 and 200)', () => {
     const over = (rgb: readonly number[], alpha: number) => deltaE(overLand(rgb, alpha), MAP_LAND, 'normal')
-    expect(over(VERDICT_PRESENTATION.NO_DETECTED_ACTIVITY.color, 220)).toBeLessThan(3) // about 2.3
+    // "No detected activity" (about 65% of the real cell-months) is clear of the land colour by its
+    // pale blue alone, in every mode (13.2 normal; the tightest simulation is protanopia, 12.3).
+    for (const mode of MODES) {
+      expect(deltaE(overLand(VERDICT_PRESENTATION.NO_DETECTED_ACTIVITY.color, 220), MAP_LAND, mode)).toBeGreaterThanOrEqual(MIN_DELTA_E)
+    }
     expect(over(NO_DATA_COLOR, NO_DATA_COLOR[3])).toBeLessThan(3) // about 2.7
     // These two are separated by a dark outline, not by colour (T-042): the cell layer draws it
     // for exactly these cells (the verdict, or a null value in the activity layers).
     const cell = (verdict: string, raw: number | null) =>
       ({ verdict, raw_combined_cell_days: raw, estimate: null }) as unknown as Parameters<typeof needsOutline>[0]
-    expect(needsOutline(cell('NO_DETECTED_ACTIVITY', 0), 'verdict')).toBe(true)
+    // The verdict layer has no outline: the land would turn black at world zoom (65% of the real
+    // cell-months have no detected activity).
+    expect(needsOutline(cell('NO_DETECTED_ACTIVITY', 0), 'verdict')).toBe(false)
     expect(needsOutline(cell('CANNOT_DETERMINE', 0), 'verdict')).toBe(false)
     expect(needsOutline(cell('WITHIN_NORMAL', null), 'raw')).toBe(true)
     expect(needsOutline(cell('WITHIN_NORMAL', 0), 'raw')).toBe(false)
@@ -424,9 +426,8 @@ function at100(): Rgb {
 }
 
 describe('legends show the same non-colour cues as the map and the calendar (T-042)', () => {
-  it('the map legend marks "no detected activity" and "no data" with the dark outline', () => {
-    expect(renderToString(<Legend layer="verdict" max={0} />)).toContain('swatch swatch-marked')
-    expect(renderToString(<Legend layer="verdict" max={0} />)).toContain('dark outline')
+  it('the map legend marks "no data" with the dark outline; "no detected activity" has its own tone', () => {
+    expect(renderToString(<Legend layer="verdict" max={0} />)).not.toContain('swatch-marked')
     expect(renderToString(<Legend layer="raw" max={10} />)).toContain('No data (dark outline)')
   })
 
@@ -435,5 +436,15 @@ describe('legends show the same non-colour cues as the map and the calendar (T-0
       <CalendarLegend mode="activity" maxActivity={10} source="raw" />,
     )
     expect(html).toContain('swatch-outside')
+  })
+})
+
+describe('the verdict icons are drawn only when a cell can hold one (T-042)', () => {
+  it('uses a zoom at which a 0.5 degree cell is about as wide as the 13 px icon', async () => {
+    const { ICON_MIN_ZOOM } = await import('../components/map/MapView.tsx')
+    // A 0.5 degree cell is 0.5/360 of the world width, which is 512 x 2^zoom pixels.
+    const cellPixels = (zoom: number) => (0.5 / 360) * 512 * 2 ** zoom
+    expect(cellPixels(1.2)).toBeLessThan(2) // world zoom: a glyph per cell would cover the land
+    expect(cellPixels(ICON_MIN_ZOOM)).toBeGreaterThanOrEqual(13)
   })
 })

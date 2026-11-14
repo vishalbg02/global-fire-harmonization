@@ -28,6 +28,10 @@ const STYLE: StyleSpecification = {
 
 const COUNTRIES_URL = `${import.meta.env.BASE_URL}geo/ne_110m_admin_0_countries.geojson`
 
+const INITIAL_ZOOM = 1.2
+/** From this zoom a 0.5 degree cell is about 16 px wide, enough for its 13 px verdict icon. */
+export const ICON_MIN_ZOOM = 4.5
+
 interface Props {
   cells: readonly MapCell[] | null
   layer: MapLayer
@@ -79,6 +83,8 @@ export function MapView({
   const overlayRef = useRef<MapLibreOverlay | null>(null)
   const loaded = useRef(false)
   const wrap = useRef<HTMLDivElement>(null)
+  // Zoom of the map: the verdict icons are drawn only when a cell is big enough to hold one.
+  const [zoom, setZoom] = useState(INITIAL_ZOOM)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
   const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn })
   // Clicks are ignored while drawing, and for a moment after a rectangle is finished, so that
@@ -97,7 +103,7 @@ export function MapView({
       container: container.current,
       style: STYLE,
       center: [10, 20],
-      zoom: 1.2,
+      zoom: INITIAL_ZOOM,
       renderWorldCopies: false,
       attributionControl: false,
     })
@@ -111,6 +117,7 @@ export function MapView({
     map.addControl(overlay)
     mapRef.current = map
     overlayRef.current = overlay
+    map.on('zoomend', () => setZoom(map.getZoom()))
 
     map.on('load', () => {
       map.addSource('countries', { type: 'geojson', data: COUNTRIES_URL })
@@ -284,8 +291,10 @@ export function MapView({
         if (info.object && !clicksIgnored()) callbacks.current.onSelectCell(info.object as MapCell)
       },
     })
+    // One icon per cell is a glyph for every one of the 56,238 cells; at world zoom a cell is about 2 px,
+    // so the icons would cover the land in black. They appear when a cell can hold one.
     const icons =
-      layer === 'verdict'
+      layer === 'verdict' && zoom >= ICON_MIN_ZOOM
         ? [
             new TextLayer<MapCell>({
               id: 'cell-icons',
@@ -296,11 +305,13 @@ export function MapView({
               getSize: 13,
               getColor: [20, 20, 20, 255],
               fontFamily: 'system-ui, sans-serif',
+              // The icons are not ASCII (▲ ▼ ● ○): without this deck.gl draws only the ASCII ones (the ?).
+              characterSet: 'auto',
             }),
           ]
         : []
     overlay.setProps({ layers: [polygons, ...icons] })
-  }, [cells, layer, selectedCellId])
+  }, [cells, layer, selectedCellId, zoom])
 
   return (
     <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
