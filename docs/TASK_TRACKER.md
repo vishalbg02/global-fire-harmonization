@@ -42,7 +42,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-006 | Fine-grid cell-days → analysis cell-month per witness × day/night | M2 | P0 | T-005, D-009 | `data/T-006-gridding` | — | TODO | — | `cell_month_witness` validates against the contract |
 | T-007 | Investigate MODIS `version` values (6.2 / 6.03 / 61.03) | M2 | P1 | T-003 | `data/T-007-modis-version` | — | TODO | — | Finding documented; any method impact logged |
 | T-008 | Confirm Aqua/Terra 2026 availability via `data_availability` | M2 | P0 | MAP_KEY | `data/T-008-availability` | [#10](https://github.com/vishalbg02/global-fire-harmonization/pull/10) | MERGED (2026-11-14) | APPROVED | Result in `DATA_SOURCES.md` |
-| T-009 | FIRMS country name → ISO3 / continent mapping | M2 | P0 | T-003 | `data/T-009-country-mapping` | — | IN_REVIEW | PENDING | 100% of country files mapped |
+| T-009 | FIRMS country name → ISO3 / continent mapping | M2 | P0 | T-003 | `data/T-009-country-mapping` | [#21](https://github.com/vishalbg02/global-fire-harmonization/pull/21) | IN_REVIEW | PENDING | 100% of country files mapped |
 | T-010 | SYNTHETIC fixtures for all contract products | M2 | P0 | T-0B | `data/T-010-fixtures` | [#15](https://github.com/vishalbg02/global-fire-harmonization/pull/15) | MERGED (2026-11-14) | APPROVED | Labelled synthetic; <5 MB; validate against the contract |
 | T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | — | TODO | — | `calibration` product; pooling levels reported |
 | T-012 | Holdout evaluation 2017–2021; Aqua drift diagnostic | M2 | P0 | T-011 | `science/T-012-holdout-drift` | — | TODO | — | Scores and drift plot presented at R2 |
