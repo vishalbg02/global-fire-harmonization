@@ -51,11 +51,13 @@ export function sharedMax(cells: readonly MapCell[]): number {
 }
 
 /**
- * Cells whose meaning must not rest on a pale fill alone: "no detected activity" in the verdict
- * layer and a null value in the activity layers ("no data"). They get a dark outline (T-042).
+ * Cells whose meaning must not rest on a pale fill alone: a null value in the activity layers
+ * ("no data", which is rare). They get a dark outline (T-042). "No detected activity" in the
+ * verdict layer is common (about 65% of cell-months), so an outline would turn the land black at
+ * world zoom; it has its own pale blue tone and the icon instead.
  */
 export function needsOutline(cell: MapCell, layer: MapLayer): boolean {
-  return layer === 'verdict' ? cell.verdict === 'NO_DETECTED_ACTIVITY' : layerValue(cell, layer) === null
+  return layer !== 'verdict' && layerValue(cell, layer) === null
 }
 
 export function cellFillColor(cell: MapCell, layer: MapLayer, max: number): Rgba {
