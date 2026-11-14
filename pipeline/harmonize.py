@@ -305,10 +305,11 @@ def _aggregate_v02(con, members: str, when: str, wit: str, cmw: str, cells: str,
     # converted activity per analysis cell of every stratum-month of the strata of the members (whole strata, not only the members' cells)
     con.execute(f"""CREATE OR REPLACE TEMP TABLE act AS
         WITH ncell AS (SELECT stratum_id, count(*) AS n FROM {cells} GROUP BY stratum_id),
-             strata AS (SELECT DISTINCT stratum_id FROM mem)
+             strata AS (SELECT DISTINCT stratum_id FROM mem),
+             cs AS (SELECT c.cell_id, c.stratum_id FROM {cells} c JOIN strata USING (stratum_id))
         SELECT c.stratum_id, w.year, w.month, w.witness, w.daynight,
                sum(w.cell_days) * any_value(k.ratio) / any_value(n.n) AS x
-        FROM {cmw} w JOIN {cells} c USING (cell_id) JOIN strata USING (stratum_id) JOIN ncell n USING (stratum_id)
+        FROM {cmw} w JOIN cs c USING (cell_id) JOIN ncell n USING (stratum_id)
              JOIN {cal} k ON k.stratum_id = c.stratum_id AND k.witness = w.witness AND k.daynight = w.daynight AND k.season = {SEASON_SQL}
         WHERE w.daynight IN ('D', 'N') AND w.witness IN ('SNPP_VIIRS', 'NOAA20_VIIRS'){when}
         GROUP BY c.stratum_id, w.year, w.month, w.witness, w.daynight""")
