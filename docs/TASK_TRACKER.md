@@ -74,12 +74,12 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-032 | Calendar (years × months; % of normal / activity) | M3 | P0 | T-010 | `frontend/T-032-calendar` | [#20](https://github.com/vishalbg02/global-fire-harmonization/pull/20) | MERGED (2026-11-14) | APPROVED | Accessible ramps; legend; null shown as "no data" |
 | T-033 | Raw vs harmonized toggle | M3 | P0 | T-032 | `frontend/T-033-toggle` | [#24](https://github.com/vishalbg02/global-fire-harmonization/pull/24) | MERGED (2026-11-14) | APPROVED | Switches calendar and map |
 | T-034 | API skeleton serving fixtures (all endpoints) | M3 | P0 | T-010, T-0D | `api/T-034-api-skeleton` | [#16](https://github.com/vishalbg02/global-fire-harmonization/pull/16) | MERGED (2026-11-14) | APPROVED | Responses validate against the contract |
-| T-035 | Country/continent selection + rectangle custom area | M3 | P0 | T-034 | `frontend/T-035-area-selection` | — | TODO | — | Custom area returns a series via `harmonize_area()` |
-| T-036 | Evidence panel (verdict, probability, reason codes in plain language) | M3 | P0 | T-034 | `frontend/T-036-evidence-panel` | — | TODO | — | Every reason code has user-facing text approved by M1 |
-| T-037 | Witness comparison chart + satellite timeline + outages | M3 | P0 | T-034 | `frontend/T-037-witness-chart` | — | TODO | — | Per-witness raw and converted series |
-| T-038 | CSV export | M3 | P0 | T-034 | `api/T-038-csv-export` | — | TODO | — | Header with method version, snapshot date, citation |
+| T-035 | Country/continent selection + rectangle custom area | M3 | P0 | T-034 | `frontend/T-035-area-selection` | [#30](https://github.com/vishalbg02/global-fire-harmonization/pull/30) | MERGED (2026-11-14) | APPROVED | Custom area returns a series via `harmonize_area()` |
+| T-036 | Evidence panel (verdict, probability, reason codes in plain language) | M3 | P0 | T-034 | `frontend/T-036-evidence-panel` | [#28](https://github.com/vishalbg02/global-fire-harmonization/pull/28) | MERGED (2026-11-14) | APPROVED | Every reason code has user-facing text approved by M1 |
+| T-037 | Witness comparison chart + satellite timeline + outages | M3 | P0 | T-034 | `frontend/T-037-witness-chart` | [#33](https://github.com/vishalbg02/global-fire-harmonization/pull/33) | MERGED (2026-11-14) | APPROVED | Per-witness raw and converted series |
+| T-038 | CSV export | M3 | P0 | T-034 | `api/T-038-csv-export` | [#37](https://github.com/vishalbg02/global-fire-harmonization/pull/37) | MERGED (2026-11-14) | APPROVED | Header with method version, snapshot date, citation |
 | T-039 | Real-data integration | M3 + M2 | P0 | T-014 | `frontend/T-039-real-data` | — | TODO | — | All views on real products |
-| T-040 | Global anomaly list | M3 | P0 | T-034 | `frontend/T-040-anomaly-list` | — | TODO | — | Ranked by probability; links to the entity |
+| T-040 | Global anomaly list | M3 | P0 | T-034 | `frontend/T-040-anomaly-list` | [#35](https://github.com/vishalbg02/global-fire-harmonization/pull/35) | MERGED (2026-11-14) | APPROVED | Ranked by probability; links to the entity |
 | T-041 | Methods + validation results page | M3 | P0 | T-020+ | `frontend/T-041-methods-page` | — | TODO | — | Shows PASS/FAIL/NOT_RUN faithfully |
 | T-042 | Performance and accessibility pass | M3 | P1 | T-039 | `frontend/T-042-perf-a11y` | — | TODO | — | Keyboard navigation; colour-blind-safe check |
 | T-043 | Static fallback build; optional deploy | M3 | P1 | T-039 | `frontend/T-043-static-build` | — | TODO | — | Preset views work without the API |
