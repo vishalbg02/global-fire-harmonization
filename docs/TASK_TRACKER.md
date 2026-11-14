@@ -43,7 +43,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-007 | Investigate MODIS `version` values (6.2 / 6.03 / 61.03) | M2 | P1 | T-003 | `data/T-007-modis-version` | — | TODO | — | Finding documented; any method impact logged |
 | T-008 | Confirm Aqua/Terra 2026 availability via `data_availability` | M2 | P0 | MAP_KEY | `data/T-008-availability` | [#10](https://github.com/vishalbg02/global-fire-harmonization/pull/10) | MERGED (2026-11-14) | APPROVED | Result in `DATA_SOURCES.md` |
 | T-009 | FIRMS country name → ISO3 / continent mapping | M2 | P0 | T-003 | `data/T-009-country-mapping` | — | TODO | — | 100% of country files mapped |
-| T-010 | SYNTHETIC fixtures for all contract products | M2 | P0 | T-0B | `data/T-010-fixtures` | — | TODO | — | Labelled synthetic; <5 MB; validate against the contract |
+| T-010 | SYNTHETIC fixtures for all contract products | M2 | P0 | T-0B | `data/T-010-fixtures` | [#15](https://github.com/vishalbg02/global-fire-harmonization/pull/15) | IN_REVIEW (started on Member 2 go-ahead; Lead to confirm assignment) | PENDING | Labelled synthetic; <5 MB; validate against the contract |
 | T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | — | TODO | — | `calibration` product; pooling levels reported |
 | T-012 | Holdout evaluation 2017–2021; Aqua drift diagnostic | M2 | P0 | T-011 | `science/T-012-holdout-drift` | — | TODO | — | Scores and drift plot presented at R2 |
 | T-013 | Witness combination + disagreement inflation; `harmonize_area()` | M2 | P0 | T-011 | `science/T-013-combination` | — | TODO | — | Unit tests on synthetic data with known answers |
