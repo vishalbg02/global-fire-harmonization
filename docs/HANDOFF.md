@@ -55,6 +55,9 @@
 - `docs/TASK_TRACKER.md`: tasks and status
 - `docs/DECISION_LOG.md`: approvals
 
-## Repository verification
+## Repository verification (2026-11-14, via GitHub CLI)
 
-*(filled in after creation)*
+- URL: https://github.com/vishalbg02/global-fire-harmonization
+- `visibility: PRIVATE`, `isPrivate: true`, default branch `main`
+- Collaborators: owner only (`vishalbg02`). **None added by automation.**
+- The initial setup commits were pushed directly to `main` as a one-time bootstrap. **From now on, all changes go through PRs reviewed by the Lead** (`CONTRIBUTING.md`).

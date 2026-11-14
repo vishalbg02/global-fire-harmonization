@@ -10,7 +10,7 @@ Newest entries first. Record completed work, pending work, blockers and decision
 - Lead decision: **global scope** (D-002).
 - Verified the global data access route and measured sizes: FIRMS global yearly zips, ≈9.1 GB zipped, no login (D-004).
 - Created planning documentation, contribution workflow, `.gitignore`, `.env.example` and `data/README.md`.
-- Initialized Git and created the private GitHub repository (see `HANDOFF.md` for the URL and verification).
+- Initialized Git and created the private GitHub repository https://github.com/vishalbg02/global-fire-harmonization. Visibility verified as PRIVATE; no collaborators added.
 
 **Pending (needs Lead approval)**
 - Tech stack (D-008), data contract (D-016), API owner (D-015), repo visibility for judges (D-014).
