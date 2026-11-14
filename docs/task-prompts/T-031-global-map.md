@@ -22,7 +22,7 @@ When the task is done, the web app shows a global map with (a) Natural Earth cou
 ## 4. Relevant files and directories
 
 - Read: `CLAUDE.md`, `docs/TASK_TRACKER.md`, `docs/TEAM_WORKFLOW.md`, `docs/ARCHITECTURE.md`, `docs/DATA_CONTRACT.md`, `docs/TECH_STACK.md` (§7), `docs/DECISION_LOG.md`, `docs/prompts/MEMBER_3_APPLICATION_PROMPT.md` (§0, §5, §6, §10, §17, §18, §19, §S), `app/README.md`
-- Create/modify (nothing else):
+- Create/modify (nothing else; the Lead's answers in §15 apply):
   - `app/src/api/` (contract TypeScript types for the map payloads and a typed client)
   - `app/src/state/` (selection state: entity, month, layer mode)
   - `app/src/components/map/` (map, legend, month selector, tooltip)
@@ -111,7 +111,7 @@ Run from `app/`; paste actual output into the PR.
 
 ## 14. Git branch and PR instructions
 
-- Branch: the tracker plans `frontend/T-031-global-map`. Member 3 asked to keep working on `Swastik`. The Lead accepted `Swastik` for T-030 only (PR #5 comment), so this needs the Lead's confirmation (§15, item 1).
+- Branch: `frontend/T-031-global-map`, created from the latest `main` (the Lead's instruction on PR #13: one branch per task; `Swastik` was accepted for T-030 only).
 - First commit: this prompt file.
 - Open a DRAFT PR early; title "T-031: Global map: country layer + analysis-cell layer"; fill in `.github/pull_request_template.md`.
 - Mark Ready for review only when §11 and §12 are satisfied.
@@ -129,3 +129,13 @@ Open questions for the Lead. None is decided here.
 5. **Envelope and error format.** These are [PROPOSED ADDITION] items (D-022). Should the client assume `{"contract_version", "method_version", "synthetic", "data"}` now?
 6. **Month range and latest month.** The month selector needs `metadata.latest_month`, which comes from the fixtures or API. Until they exist, it is not wired to real data.
 7. **Base map.** No external tile dependency, as the workstream prompt says. Confirm that a plain background with country polygons is acceptable.
+
+### Lead answers (PR #13 comment) and how this prompt applies them
+
+1. **Branch:** `frontend/T-031-global-map`, created from the latest `main`; the prompt commit is moved onto it and the PR is opened from it (PR #13 is closed).
+2. **Assignment:** the Lead merges PR #12. After that, update only the T-031 row.
+3. **Natural Earth:** approved. Use admin-0 countries at **1:110m** (public domain), committed under `app/public/geo/`. The PR notes the source and version.
+4. **Cell data until T-010/T-034:** a typed client with `SYNTHETIC` mocks **in test files only**. No temporary adapter, and nothing in `data/fixtures/`.
+5. **D-022 envelope and error format:** not assumed. Code only to contract v0.1.0 until D-022 is approved.
+6. **Month selector:** takes the available months as a prop, mocked in tests. It is wired to `metadata.latest_month` once fixtures or the API exist.
+7. **Base map:** a plain background with country polygons and no external tiles is accepted (needs no key; works offline).
