@@ -11,14 +11,15 @@ import {
   witnessesPresent,
 } from './series.ts'
 
-const HARMONIZED_COLOR = '#0050c8'
-const BASELINE_COLOR = '#6b6b6b'
-const RAW_COMBINED_COLOR = '#555555'
+export const HARMONIZED_COLOR = '#0050c8'
+export const BASELINE_COLOR = '#6b6b6b'
+// Near black, so it stays apart from the grey baseline under every colour-vision type (T-042).
+export const RAW_COMBINED_COLOR = '#1b1b1f'
 const BAND_ALPHA = 0.15
 
 // Colour-blind-safe (Okabe-Ito) per witness, each paired with its own dash pattern so no two
 // lines rely on colour alone to be told apart.
-const WITNESS_STYLE: Record<Witness, { color: string; dash: number[] | undefined }> = {
+export const WITNESS_STYLE: Record<Witness, { color: string; dash: number[] | undefined }> = {
   AQUA_MODIS: { color: '#D55E00', dash: [6, 3] },
   TERRA_MODIS: { color: '#009E73', dash: [2, 2] },
   SNPP_VIIRS: { color: '#CC79A7', dash: [1, 3] },

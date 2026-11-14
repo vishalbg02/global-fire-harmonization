@@ -50,6 +50,14 @@ export function sharedMax(cells: readonly MapCell[]): number {
   return max
 }
 
+/**
+ * Cells whose meaning must not rest on a pale fill alone: "no detected activity" in the verdict
+ * layer and a null value in the activity layers ("no data"). They get a dark outline (T-042).
+ */
+export function needsOutline(cell: MapCell, layer: MapLayer): boolean {
+  return layer === 'verdict' ? cell.verdict === 'NO_DETECTED_ACTIVITY' : layerValue(cell, layer) === null
+}
+
 export function cellFillColor(cell: MapCell, layer: MapLayer, max: number): Rgba {
   if (layer === 'verdict') {
     const [r, g, b] = VERDICT_PRESENTATION[cell.verdict].color
