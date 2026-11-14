@@ -1,5 +1,5 @@
 import { MONTH_ABBR, NO_RECORD, OUTSIDE_RECORD } from '../../content/calendar.ts'
-import type { ValueMode } from '../../state/selection.ts'
+import type { Source, ValueMode } from '../../state/selection.ts'
 import { formatPctOfNormal } from '../map/format.ts'
 import type { CalendarCell, CalendarRow } from './grid.ts'
 import { cellVisual, toCss } from './scales.ts'
@@ -11,22 +11,24 @@ interface Props {
   maxActivity: number
   selected: { year: number; month: number } | null
   areaName: string
+  source: Source
   onSelectMonth: (year: number, month: number) => void
 }
 
-function valueText(cell: CalendarCell, mode: ValueMode): string {
+function valueText(cell: CalendarCell, mode: ValueMode, source: Source): string {
   const r = cell.record
   if (r === null) return ''
+  if (source === 'raw') return String(r.raw_combined_cell_days)
   if (mode === 'pct') return formatPctOfNormal(r.pct_of_normal).replace(' of normal', '')
   return r.estimate === null ? 'no data' : r.estimate.toFixed(1)
 }
 
 /** The same data as the heatmap, as a table: keyboard-operable and readable by screen readers. */
-export function CalendarTable({ rows, mode, maxActivity, selected, areaName, onSelectMonth }: Props) {
+export function CalendarTable({ rows, mode, maxActivity, selected, areaName, source, onSelectMonth }: Props) {
   return (
     <div className="calendar-table-wrap">
       <table className="calendar-table">
-        <caption>Monthly satellite-detected fire activity for {areaName}</caption>
+        <caption>{`Monthly ${source} satellite-detected fire activity for ${areaName}`}</caption>
         <thead>
           <tr>
             <th scope="col">Year</th>
@@ -58,7 +60,7 @@ export function CalendarTable({ rows, mode, maxActivity, selected, areaName, onS
                     </td>
                   )
                 }
-                const visual = cellVisual(cell.record, mode, maxActivity)
+                const visual = cellVisual(cell.record, mode, maxActivity, source)
                 const isSelected = selected?.year === cell.year && selected.month === cell.month
                 const provisional = provisionalNote(cell)
                 return (
@@ -67,12 +69,12 @@ export function CalendarTable({ rows, mode, maxActivity, selected, areaName, onS
                       type="button"
                       className={`cal-cell${isSelected ? ' cal-selected' : ''}${provisional === null ? '' : ' cal-provisional'}`}
                       style={{ background: toCss(visual.color), color: toCss(visual.text) }}
-                      aria-label={cellAriaLabel(cell)}
+                      aria-label={cellAriaLabel(cell, source)}
                       aria-pressed={isSelected}
                       onClick={() => onSelectMonth(cell.year, cell.month)}
                     >
-                      <span aria-hidden="true">{visual.icon} </span>
-                      {valueText(cell, mode)}
+                      {visual.icon !== '' && <span aria-hidden="true">{visual.icon} </span>}
+                      {valueText(cell, mode, source)}
                       {provisional !== null && <span aria-hidden="true"> P</span>}
                     </button>
                   </td>

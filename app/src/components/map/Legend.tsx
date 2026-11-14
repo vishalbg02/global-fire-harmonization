@@ -1,5 +1,6 @@
 import type { MapLayer } from '../../api/contract.ts'
 import { VERDICTS } from '../../api/contract.ts'
+import { HARMONIZED_DESCRIPTION, RAW_DESCRIPTION } from '../../content/source.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { NO_DATA_COLOR, sequentialColor } from './scale.ts'
 
@@ -37,7 +38,8 @@ export function Legend({ layer, max }: { layer: MapLayer; max: number }) {
         <span>{max > 0 ? Math.round(max) : 'no data'}</span>
       </div>
       <p className="legend-note">
-        Fire-active cell-days, Aqua-equivalent. Raw and harmonized share this scale.
+        {layer === 'raw' ? RAW_DESCRIPTION : HARMONIZED_DESCRIPTION} Raw and harmonized share this
+        colour scale.
       </p>
       <p className="legend-note">
         <span className="swatch" style={{ background: rgb(NO_DATA_COLOR) }} aria-hidden="true" />

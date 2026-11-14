@@ -2,7 +2,7 @@
 
 Frontend for the Global Fire Harmonization project (working name: *Many Witnesses*). Owner: Member 3. Task: T-030 (setup and skeleton).
 
-**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. The raw/harmonized toggle, evidence panel and witness charts are added by later tasks. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
+**Status:** the global map (T-031) and the historical calendar (T-032: years by months, % of normal or activity, with a table view) are built. A shared Raw / Harmonized control (T-033) switches the map and the calendar between the stored raw count and the harmonized estimate on one colour scale. The evidence panel and witness charts are added by later tasks. The app will talk only to the API or the static JSON export, never to Parquet files directly (`docs/ARCHITECTURE.md`).
 
 ## Prerequisites
 
@@ -63,7 +63,7 @@ app/
 │   ├── content/            verdict presentation and short reason labels
 │   ├── components/map/     map, legend, month and layer selectors, tooltip, colour scale
 │   ├── components/calendar/ calendar grid, ECharts heatmap, table view, legend, scales, tooltip text
-│   ├── components/common/  synthetic banner, loading/error/empty states, error boundary
+│   ├── components/common/  synthetic banner, loading/error/empty states, error boundary, Raw / Harmonized control
 │   └── **/*.test.ts(x)     Vitest tests (mock data inside test files is SYNTHETIC)
 ├── public/geo/             Natural Earth country boundaries
 └── package.json            scripts and dependencies

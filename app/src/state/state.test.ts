@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { monthKey, monthRange } from './months.ts'
-import { WORLD, initialSelection, selectionReducer } from './selection.ts'
+import { WORLD, effectiveLayer, initialSelection, rawAvailable, selectionReducer } from './selection.ts'
+import type { Selection } from './selection.ts'
 
 describe('monthRange', () => {
   it('spans first to latest inclusive and marks provisional months', () => {
@@ -21,12 +22,13 @@ describe('monthRange', () => {
 })
 
 describe('selectionReducer', () => {
-  it('starts with no entity, the world as the calendar area, no month, the verdict layer and % of normal', () => {
+  it('starts with no entity, the world, no month, the verdict map, harmonized data and % of normal', () => {
     expect(initialSelection).toEqual({
       entity: null,
       area: WORLD,
       month: null,
-      layer: 'verdict',
+      mapMode: 'verdict',
+      source: 'harmonized',
       valueMode: 'pct',
     })
   })
@@ -38,14 +40,15 @@ describe('selectionReducer', () => {
     expect(selectionReducer(selected, { type: 'clear-entity' }).entity).toBeNull()
   })
 
-  it('sets the month and the layer without touching the rest', () => {
+  it('sets the month and the map mode without touching the rest', () => {
     const s1 = selectionReducer(initialSelection, { type: 'set-month', year: 2015, month: 9 })
-    const s2 = selectionReducer(s1, { type: 'set-layer', layer: 'raw' })
+    const s2 = selectionReducer(s1, { type: 'set-map-mode', mapMode: 'activity' })
     expect(s2).toEqual({
       entity: null,
       area: WORLD,
       month: { year: 2015, month: 9 },
-      layer: 'raw',
+      mapMode: 'activity',
+      source: 'harmonized',
       valueMode: 'pct',
     })
   })
@@ -88,5 +91,72 @@ describe('selectionReducer', () => {
 
   it('switches the calendar value mode', () => {
     expect(selectionReducer(initialSelection, { type: 'set-value-mode', valueMode: 'activity' }).valueMode).toBe('activity')
+  })
+})
+
+
+// The shared Raw / Harmonized choice (T-033).
+const activityHarmonized: Selection = { ...initialSelection, valueMode: 'activity' }
+
+describe('raw / harmonized selection', () => {
+  it('requests the verdict layer for the verdict map, and the source for the activity map', () => {
+    expect(effectiveLayer({ mapMode: 'verdict', source: 'harmonized' })).toBe('verdict')
+    expect(effectiveLayer({ mapMode: 'activity', source: 'raw' })).toBe('raw')
+    expect(effectiveLayer({ mapMode: 'activity', source: 'harmonized' })).toBe('harmonized')
+  })
+
+  it('makes raw unavailable only in % of normal mode', () => {
+    expect(rawAvailable('pct')).toBe(false)
+    expect(rawAvailable('activity')).toBe(true)
+  })
+
+  it('refuses Raw while the calendar shows % of normal', () => {
+    expect(selectionReducer(initialSelection, { type: 'set-source', source: 'raw' })).toBe(initialSelection)
+  })
+
+  it('switches the verdict map to Activity when Raw is chosen', () => {
+    const s = selectionReducer(activityHarmonized, { type: 'set-source', source: 'raw' })
+    expect(s.source).toBe('raw')
+    expect(s.mapMode).toBe('activity')
+    expect(effectiveLayer(s)).toBe('raw')
+  })
+
+  it('keeps the map mode when Harmonized is chosen', () => {
+    const raw = selectionReducer(activityHarmonized, { type: 'set-source', source: 'raw' })
+    const back = selectionReducer(raw, { type: 'set-source', source: 'harmonized' })
+    expect(back.source).toBe('harmonized')
+    expect(back.mapMode).toBe('activity')
+    expect(effectiveLayer(back)).toBe('harmonized')
+  })
+
+  it('treats the Verdict map as harmonized: choosing it moves the source to Harmonized', () => {
+    const raw = selectionReducer(activityHarmonized, { type: 'set-source', source: 'raw' })
+    const verdict = selectionReducer(raw, { type: 'set-map-mode', mapMode: 'verdict' })
+    expect(verdict.source).toBe('harmonized')
+    expect(verdict.mapMode).toBe('verdict')
+  })
+
+  it('treats % of normal as harmonized: choosing it moves the source to Harmonized', () => {
+    const raw = selectionReducer(activityHarmonized, { type: 'set-source', source: 'raw' })
+    const pct = selectionReducer(raw, { type: 'set-value-mode', valueMode: 'pct' })
+    expect(pct.valueMode).toBe('pct')
+    expect(pct.source).toBe('harmonized')
+  })
+
+  it('never leaves raw selected together with % of normal', () => {
+    const actions = [
+      { type: 'set-value-mode', valueMode: 'activity' },
+      { type: 'set-source', source: 'raw' },
+      { type: 'set-value-mode', valueMode: 'pct' },
+      { type: 'set-source', source: 'raw' },
+      { type: 'set-map-mode', mapMode: 'verdict' },
+      { type: 'set-source', source: 'raw' },
+    ] as const
+    let state = initialSelection
+    for (const action of actions) {
+      state = selectionReducer(state, action)
+      expect(state.valueMode === 'pct' && state.source === 'raw').toBe(false)
+      expect(state.mapMode === 'verdict' && state.source === 'raw').toBe(false)
+    }
   })
 })

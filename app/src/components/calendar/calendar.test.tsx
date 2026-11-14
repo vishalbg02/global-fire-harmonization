@@ -3,11 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { ContractError, VERDICTS, parseEntityMonth } from '../../api/contract.ts'
 import type { EntityMonth } from '../../api/contract.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
+import { SourceToggle } from '../common/SourceToggle.tsx'
 import { CalendarLegend } from './CalendarLegend.tsx'
 import { CalendarTable } from './CalendarTable.tsx'
 import { ValueModeSelector } from './ValueModeSelector.tsx'
 import { buildChartOption, buildHeatPoints } from './chartOption.ts'
-import { buildCalendarGrid, maxEstimate } from './grid.ts'
+import { buildCalendarGrid, maxActivity } from './grid.ts'
 import {
   NO_DATA_RGB,
   OUTSIDE_RGB,
@@ -93,9 +94,12 @@ describe('buildCalendarGrid', () => {
     )
   })
 
-  it('finds the largest harmonized estimate and ignores null', () => {
-    expect(maxEstimate([record(2003, 1, { estimate: null }), record(2003, 2, { estimate: 40 })])).toBe(40)
-    expect(maxEstimate([record(2003, 1, { estimate: null })])).toBe(0)
+  it('takes the colour-scale maximum over raw and harmonized values and ignores a null estimate', () => {
+    const quiet = { raw_combined_cell_days: 0 }
+    expect(maxActivity([record(2003, 1, { estimate: null, ...quiet }), record(2003, 2, { estimate: 40, ...quiet })])).toBe(40)
+    expect(maxActivity([record(2003, 1, { estimate: null, ...quiet })])).toBe(0)
+    // A raw count above every estimate raises the shared maximum.
+    expect(maxActivity([record(2003, 1, { estimate: 10, raw_combined_cell_days: 70 })])).toBe(70)
   })
 })
 
@@ -245,7 +249,7 @@ describe('chart option', () => {
 describe('CalendarTable (accessible table view)', () => {
   const html = (mode: 'pct' | 'activity') =>
     renderToString(
-      <CalendarTable rows={ROWS} mode={mode} maxActivity={20} selected={{ year: 2002, month: 8 }} areaName="Indonesia" onSelectMonth={() => {}} />,
+      <CalendarTable rows={ROWS} mode={mode} maxActivity={20} selected={{ year: 2002, month: 8 }} areaName="Indonesia" source="harmonized" onSelectMonth={() => {}} />,
     )
 
   it('is a table with a caption, column headers for the months and row headers for the years', () => {
@@ -302,5 +306,140 @@ describe('CalendarLegend and ValueModeSelector', () => {
     const out = renderToString(<ValueModeSelector value="pct" onChange={() => {}} />)
     expect(out).toContain('% of normal')
     expect(out).toContain('Activity')
+  })
+})
+
+
+// ---- Raw / harmonized (T-033) ----
+
+describe('raw source on the calendar', () => {
+  const raw = record(2003, 1, { raw_combined_cell_days: 12, estimate: 8, pct_of_normal: 90, verdict: 'BELOW_NORMAL' })
+
+  it('colours by the stored raw count and shows no verdict icon', () => {
+    const visual = cellVisual(raw, 'activity', 30, 'raw')
+    expect(visual.color).toEqual(sequentialRgb(12, 30))
+    expect(visual.value).toBe(12)
+    expect(visual.icon).toBe('')
+  })
+
+  it('colours by the stored estimate and keeps the verdict icon when harmonized', () => {
+    const visual = cellVisual(raw, 'activity', 30, 'harmonized')
+    expect(visual.color).toEqual(sequentialRgb(8, 30))
+    expect(visual.icon).toBe('▼')
+  })
+
+  it('uses one colour scale for both sources: the same value gets the same colour', () => {
+    const a = record(2003, 1, { raw_combined_cell_days: 15, estimate: 3 })
+    const b = record(2003, 2, { raw_combined_cell_days: 4, estimate: 15 })
+    expect(cellVisual(a, 'activity', 30, 'raw').color).toEqual(cellVisual(b, 'activity', 30, 'harmonized').color)
+  })
+
+  it('never rescales when switching: the maximum is the same whichever source is shown', () => {
+    const records = [record(2003, 1, { raw_combined_cell_days: 60, estimate: 20 }), record(2003, 2, { raw_combined_cell_days: 5, estimate: 18 })]
+    const max = maxActivity(records)
+    expect(max).toBe(60)
+    const rawColour = cellVisual(records[1], 'activity', max, 'raw').color
+    const harmonizedColour = cellVisual(records[1], 'activity', max, 'harmonized').color
+    expect(rawColour).not.toEqual(harmonizedColour) // different values, same scale
+    expect(cellVisual(records[1], 'activity', max, 'raw').color).toEqual(sequentialRgb(5, 60))
+  })
+
+  it('keeps a real zero as a value on the raw scale, not as no data', () => {
+    const zero = record(2003, 1, { raw_combined_cell_days: 0, estimate: null })
+    expect(cellVisual(zero, 'activity', 30, 'raw').color).not.toEqual(NO_DATA_RGB)
+    expect(cellVisual(zero, 'activity', 30, 'raw').value).toBe(0)
+  })
+
+  it('keeps text readable (contrast at least 4.5) on every step of the shared scale', () => {
+    for (let v = 0; v <= 60; v += 3) {
+      const rec = record(2003, 1, { raw_combined_cell_days: v })
+      const { color, text } = cellVisual(rec, 'activity', 60, 'raw')
+      expect(contrastRatio(color, text)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it('shows only the raw count in the tooltip: no verdict, probability, interval or notes', () => {
+    const cell = buildCalendarGrid([raw], '2002-07', '2003-03', [])[1].cells[0]
+    const text = cellLines(cell, 'raw').join('\n')
+    expect(text).toContain('Jan 2003')
+    expect(text).toContain('Raw combined: 12 fire-active cell-days summed across all operating satellites (not harmonized)')
+    for (const hidden of ['Below normal', '%', 'interval', 'Notes', '▼']) expect(text).not.toContain(hidden)
+    expect(tooltipHtml(cell, 'raw')).toContain('Raw combined: 12')
+    expect(cellAriaLabel(cell, 'raw')).toContain('Raw combined: 12')
+  })
+
+  it('still marks a provisional month in raw', () => {
+    const cell = buildCalendarGrid([record(2003, 1, { data_level: 'NRT' })], '2002-07', '2003-03', [])[1].cells[0]
+    expect(cellLines(cell, 'raw').join('\n')).toContain('Provisional (NRT)')
+  })
+
+  it('draws the chart points without icons in raw', () => {
+    const rows = buildCalendarGrid([raw], '2002-07', '2003-03', [])
+    const points = buildHeatPoints(rows, 'activity', 30, null, 'raw')
+    expect(points[12].label.show).toBe(false)
+    expect(points[12].itemStyle.color).toBe(toCss(sequentialRgb(12, 30)))
+    expect(buildHeatPoints(rows, 'activity', 30, null, 'harmonized')[12].label.formatter).toBe('▼')
+  })
+
+  it('shows raw counts in the table view, without icons, with the source in the caption', () => {
+    const rows = buildCalendarGrid([raw], '2002-07', '2003-03', [])
+    const html = renderToString(
+      <CalendarTable rows={rows} mode="activity" maxActivity={30} selected={null} areaName="Indonesia" source="raw" onSelectMonth={() => {}} />,
+    )
+    expect(html).toContain('raw satellite-detected fire activity')
+    expect(html).toContain('>12<')
+    expect(html).not.toContain('▼')
+    expect(html).toContain('aria-label="Jan 2003. Raw combined: 12')
+  })
+
+  it('the calendar legend uses the approved raw wording, drops the verdict icons and states the shared scale', () => {
+    const html = renderToString(<CalendarLegend mode="activity" maxActivity={30} source="raw" />)
+    expect(html).toContain('Raw: fire-active cell-days summed across all operating satellites')
+    expect(html).toContain('Not comparable across years, because the number of satellites changes.')
+    expect(html).toContain('share this colour scale')
+    expect(html).not.toContain('Above normal')
+    expect(html).toContain('Raw has no verdict icons')
+  })
+})
+
+describe('SourceToggle', () => {
+  const html = (value: 'raw' | 'harmonized', rawDisabled: boolean) =>
+    renderToString(<SourceToggle value={value} onChange={() => {}} rawDisabled={rawDisabled} />)
+
+  it('offers Raw and Harmonized', () => {
+    const out = html('harmonized', false)
+    expect(out).toContain('Raw')
+    expect(out).toContain('Harmonized')
+    expect(out).toContain('Data shown')
+  })
+
+  it('disables Raw in % of normal mode and writes the reason out as visible text, not a tooltip', () => {
+    const out = html('harmonized', true)
+    expect(out).toContain('aria-disabled="true"')
+    expect(out).toContain('Raw is not available in % of normal mode')
+    expect(out).toContain('needs a baseline, which exists only for harmonized data')
+    expect(out).not.toContain('title=')
+  })
+
+  it('ties the disabled Raw option to the explanation for screen readers, and keeps it focusable', () => {
+    const out = html('harmonized', true)
+    expect(out).toMatch(/aria-describedby="[^"]*-unavailable"/)
+    expect(out).toMatch(/id="[^"]*-unavailable"/)
+    expect(out).not.toMatch(/<input[^>]*\sdisabled(=|\s|>)/) // not natively disabled
+  })
+
+  it('has no disabled option and no explanation when Raw is available', () => {
+    const out = html('raw', false)
+    expect(out).not.toContain('aria-disabled')
+    expect(out).not.toContain('Raw is not available')
+  })
+
+  it('describes the selected source with the approved raw wording', () => {
+    expect(html('raw', false)).toContain('Not comparable across years, because the number of satellites changes.')
+    expect(html('harmonized', false)).toContain('Harmonized: fire-active cell-days, Aqua-equivalent.')
+  })
+
+  it('carries the one-sentence caption on why raw counts jump', () => {
+    expect(html('harmonized', false)).toContain('Raw counts jump when satellites join or leave; harmonized values adjust for this.')
   })
 })

@@ -168,7 +168,7 @@ export function MapView({ cells, layer, selectedCellId, selectedCountryIso3, onS
           }}
           role="tooltip"
         >
-          <CellInfo cell={hover.cell} />
+          <CellInfo cell={hover.cell} layer={layer} />
         </div>
       )}
     </div>

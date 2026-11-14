@@ -1,6 +1,6 @@
 import type { EntityMonth } from '../../api/contract.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
-import type { ValueMode } from '../../state/selection.ts'
+import type { Source, ValueMode } from '../../state/selection.ts'
 import { sequentialColor } from '../map/scale.ts'
 
 export type Rgb = readonly [number, number, number]
@@ -77,8 +77,23 @@ export interface CellVisual {
   value: number | null
 }
 
-/** Colour shows the value; the icon shows the verdict (both value modes). */
-export function cellVisual(record: EntityMonth, mode: ValueMode, maxActivity: number): CellVisual {
+/**
+ * Colour shows the value; the icon shows the verdict.
+ *
+ * Raw shows the stored `raw_combined_cell_days` (never null; a real zero is a value) on the same
+ * scale as the harmonized estimate and has no verdict icon: verdicts belong to the harmonized
+ * estimate. The raw source has no % of normal, because the contract has no raw baseline.
+ */
+export function cellVisual(
+  record: EntityMonth,
+  mode: ValueMode,
+  maxActivity: number,
+  source: Source = 'harmonized',
+): CellVisual {
+  if (source === 'raw') {
+    const color = sequentialRgb(record.raw_combined_cell_days, maxActivity)
+    return { color, text: readableText(color), icon: '', value: record.raw_combined_cell_days }
+  }
   const value = mode === 'pct' ? record.pct_of_normal : record.estimate
   const color =
     value === null

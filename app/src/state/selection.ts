@@ -15,8 +15,17 @@ export interface SelectedEntity {
   entity_name: string
 }
 
-/** What the calendar colours by. Raw versus harmonized is a separate control (T-033). */
+/** What the calendar colours by. */
 export type ValueMode = 'pct' | 'activity'
+
+/**
+ * Which stored value the activity views show: the raw combined count (`raw_combined_cell_days`)
+ * or the harmonized estimate (`estimate`). One shared choice for the calendar and the map.
+ */
+export type Source = 'raw' | 'harmonized'
+
+/** The map shows the verdict (always harmonized) or the activity of the chosen source. */
+export type MapMode = 'verdict' | 'activity'
 
 export const WORLD: Area = { entity_type: 'GLOBAL', entity_id: 'GLOBAL', entity_name: 'World' }
 
@@ -29,7 +38,8 @@ export interface Selection {
   area: Area
   /** null until the available months are known. */
   month: { year: number; month: number } | null
-  layer: MapLayer
+  mapMode: MapMode
+  source: Source
   valueMode: ValueMode
 }
 
@@ -37,15 +47,27 @@ export type SelectionAction =
   | { type: 'select-entity'; entity: SelectedEntity }
   | { type: 'clear-entity' }
   | { type: 'set-month'; year: number; month: number }
-  | { type: 'set-layer'; layer: MapLayer }
+  | { type: 'set-map-mode'; mapMode: MapMode }
+  | { type: 'set-source'; source: Source }
   | { type: 'set-value-mode'; valueMode: ValueMode }
 
 export const initialSelection: Selection = {
   entity: null,
   area: WORLD,
   month: null,
-  layer: 'verdict',
+  mapMode: 'verdict',
+  source: 'harmonized',
   valueMode: 'pct',
+}
+
+/** The `layer` value to request from GET /api/map for the current selection. */
+export function effectiveLayer(selection: Pick<Selection, 'mapMode' | 'source'>): MapLayer {
+  return selection.mapMode === 'verdict' ? 'verdict' : selection.source
+}
+
+/** Raw has no baseline in the contract, so it is unavailable in % of normal mode. */
+export function rawAvailable(valueMode: ValueMode): boolean {
+  return valueMode !== 'pct'
 }
 
 export function selectionReducer(state: Selection, action: SelectionAction): Selection {
@@ -59,10 +81,21 @@ export function selectionReducer(state: Selection, action: SelectionAction): Sel
       return { ...state, entity: null, area: WORLD }
     case 'set-month':
       return { ...state, month: { year: action.year, month: action.month } }
-    case 'set-layer':
-      return { ...state, layer: action.layer }
+    case 'set-map-mode':
+      // A verdict exists only for the harmonized estimate, so Verdict implies Harmonized.
+      return action.mapMode === 'verdict'
+        ? { ...state, mapMode: 'verdict', source: 'harmonized' }
+        : { ...state, mapMode: 'activity' }
+    case 'set-source':
+      if (action.source === 'harmonized') return { ...state, source: 'harmonized' }
+      // Raw is refused in % of normal mode; choosing Raw on the verdict map moves it to Activity.
+      if (!rawAvailable(state.valueMode)) return state
+      return { ...state, source: 'raw', mapMode: 'activity' }
     case 'set-value-mode':
-      return { ...state, valueMode: action.valueMode }
+      // % of normal exists only for harmonized data, so it implies Harmonized.
+      return action.valueMode === 'pct'
+        ? { ...state, valueMode: 'pct', source: 'harmonized' }
+        : { ...state, valueMode: 'activity' }
   }
 }
 

@@ -1,10 +1,33 @@
-import type { MapCell } from '../../api/contract.ts'
+import type { MapCell, MapLayer } from '../../api/contract.ts'
+import { RAW_DESCRIPTION } from '../../content/source.ts'
 import { REASON_CODE_SHORT } from '../../content/reasonCodes.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { NO_DATA, formatEstimate, formatPctOfNormal, verdictProbability } from './format.ts'
 
-/** Cell details: used for the hover tooltip and for the selected-cell panel. */
-export function CellInfo({ cell }: { cell: MapCell }) {
+/**
+ * Cell details: used for the hover tooltip and for the selected-cell panel.
+ * On the raw layer only the stored raw count is shown: no verdict, probability, interval or
+ * notes, which belong to the harmonized estimate.
+ */
+export function CellInfo({ cell, layer = 'harmonized' }: { cell: MapCell; layer?: MapLayer }) {
+  if (layer === 'raw') {
+    return (
+      <dl className="cell-info">
+        <dt>Cell</dt>
+        <dd>{cell.cell_id}</dd>
+        <dt>Raw combined (fire-active cell-days)</dt>
+        <dd>{cell.raw_combined_cell_days}</dd>
+        <dt>Source</dt>
+        <dd>{RAW_DESCRIPTION}</dd>
+        {cell.data_level !== 'SP' && (
+          <>
+            <dt>Data level</dt>
+            <dd>{`Provisional (${cell.data_level})`}</dd>
+          </>
+        )}
+      </dl>
+    )
+  }
   const verdict = VERDICT_PRESENTATION[cell.verdict]
   const probability = verdictProbability(cell)
   return (
@@ -32,7 +55,7 @@ export function CellInfo({ cell }: { cell: MapCell }) {
       {cell.data_level !== 'SP' && (
         <>
           <dt>Data level</dt>
-          <dd>Provisional ({cell.data_level})</dd>
+          <dd>{`Provisional (${cell.data_level})`}</dd>
         </>
       )}
       {cell.estimate === null && cell.pct_of_normal === null && (

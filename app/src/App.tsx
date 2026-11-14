@@ -4,15 +4,16 @@ import { fetchMapCells, fetchMeta } from './api/client.ts'
 import type { MapCell } from './api/contract.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
+import { SourceToggle } from './components/common/SourceToggle.tsx'
 import { CellInfo } from './components/map/CellInfo.tsx'
-import { LayerSelector } from './components/map/LayerSelector.tsx'
 import { Legend } from './components/map/Legend.tsx'
+import { MapModeSelector } from './components/map/MapModeSelector.tsx'
 import { MapView } from './components/map/MapView.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { monthRange } from './state/months.ts'
-import { initialSelection, selectionReducer } from './state/selection.ts'
+import { effectiveLayer, initialSelection, rawAvailable, selectionReducer } from './state/selection.ts'
 
 export default function App() {
   const [selection, dispatch] = useReducer(selectionReducer, initialSelection)
@@ -34,9 +35,11 @@ export default function App() {
     }
   }, [months, selection.month])
 
+  // The API layer follows the shared Raw / Harmonized control and the map mode.
+  const layer = effectiveLayer(selection)
   const cells = useQuery({
-    queryKey: ['map', selection.month?.year, selection.month?.month, selection.layer],
-    queryFn: () => fetchMapCells(selection.month!.year, selection.month!.month, selection.layer),
+    queryKey: ['map', selection.month?.year, selection.month?.month, layer],
+    queryFn: () => fetchMapCells(selection.month!.year, selection.month!.month, layer),
     enabled: selection.month !== null,
     retry: false,
   })
@@ -62,12 +65,20 @@ export default function App() {
             value={selection.month}
             onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
           />
-          <LayerSelector value={selection.layer} onChange={(layer) => dispatch({ type: 'set-layer', layer })} />
+          <SourceToggle
+            value={selection.source}
+            onChange={(source) => dispatch({ type: 'set-source', source })}
+            rawDisabled={!rawAvailable(selection.valueMode)}
+          />
+          <MapModeSelector
+            value={selection.mapMode}
+            onChange={(mapMode) => dispatch({ type: 'set-map-mode', mapMode })}
+          />
         </div>
         <div className="map-area">
           <MapView
             cells={cellList}
-            layer={selection.layer}
+            layer={layer}
             selectedCellId={selection.entity?.entity_type === 'CELL' ? selection.entity.entity_id : null}
             selectedCountryIso3={selection.entity?.entity_type === 'COUNTRY' ? selection.entity.entity_id : null}
             onSelectCell={(cell) =>
@@ -78,7 +89,7 @@ export default function App() {
             }
           />
           <aside>
-            <Legend layer={selection.layer} max={max} />
+            <Legend layer={layer} max={max} />
             <section aria-label="Selection" className="selection">
               <h2>Selection</h2>
               {selection.entity === null && <EmptyState message="Select a cell or a country on the map." />}
@@ -88,7 +99,7 @@ export default function App() {
                   later task.
                 </p>
               )}
-              {selectedCell !== null && <CellInfo cell={selectedCell} />}
+              {selectedCell !== null && <CellInfo cell={selectedCell} layer={layer} />}
             </section>
             <section aria-label="Data status" className="status">
               {(meta.isPending || cells.isPending) && selection.month !== null && <LoadingState what="map data" />}
@@ -106,6 +117,7 @@ export default function App() {
           meta={meta.data ?? null}
           selectedMonth={selection.month}
           valueMode={selection.valueMode}
+          source={selection.source}
           onValueModeChange={(valueMode) => dispatch({ type: 'set-value-mode', valueMode })}
           onSelectMonth={(year, month) => dispatch({ type: 'set-month', year, month })}
           onShowWorld={() => dispatch({ type: 'clear-entity' })}

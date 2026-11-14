@@ -1,6 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core'
 import { MONTH_ABBR } from '../../content/calendar.ts'
-import type { ValueMode } from '../../state/selection.ts'
+import type { Source, ValueMode } from '../../state/selection.ts'
 import type { CalendarRow } from './grid.ts'
 import { cellVisual, NO_DATA_RGB, OUTSIDE_RGB, toCss } from './scales.ts'
 import { cellLines, tooltipHtml } from './text.ts'
@@ -31,6 +31,7 @@ export function buildHeatPoints(
   mode: ValueMode,
   maxActivity: number,
   selected: { year: number; month: number } | null,
+  source: Source = 'harmonized',
 ): HeatPoint[] {
   const points: HeatPoint[] = []
   rows.forEach((row, y) => {
@@ -41,7 +42,7 @@ export function buildHeatPoints(
       let textColor = '#000000'
       if (cell.kind === 'no-record') color = NO_DATA_RGB
       if (cell.kind === 'record' && cell.record !== null) {
-        const visual = cellVisual(cell.record, mode, maxActivity)
+        const visual = cellVisual(cell.record, mode, maxActivity, source)
         color = visual.color
         text = visual.icon
         textColor = toCss(visual.text)
@@ -70,10 +71,11 @@ export function buildChartOption(
   maxActivity: number,
   selected: { year: number; month: number } | null,
   areaName: string,
+  source: Source = 'harmonized',
 ): EChartsCoreOption {
   const cellByKey = new Map<string, CalendarRow['cells'][number]>()
   for (const row of rows) for (const cell of row.cells) cellByKey.set(`${cell.year}-${cell.month}`, cell)
-  const points = buildHeatPoints(rows, mode, maxActivity, selected)
+  const points = buildHeatPoints(rows, mode, maxActivity, selected, source)
   const first = rows[0]?.year
   const last = rows[rows.length - 1]?.year
   return {
@@ -81,7 +83,7 @@ export function buildChartOption(
     aria: {
       enabled: true,
       label: {
-        description: `Calendar of satellite-detected fire activity for ${areaName}, one row per year from ${first} to ${last} and one column per month. Use the table view for the values.`,
+        description: `Calendar of ${source} satellite-detected fire activity for ${areaName}, one row per year from ${first} to ${last} and one column per month. Use the table view for the values.`,
       },
     },
     tooltip: {
@@ -90,7 +92,7 @@ export function buildChartOption(
       formatter: (params: unknown) => {
         const data = (params as { data?: { year?: number; month?: number } }).data
         const cell = data?.year === undefined ? undefined : cellByKey.get(`${data.year}-${data.month}`)
-        return cell === undefined ? '' : tooltipHtml(cell)
+        return cell === undefined ? '' : tooltipHtml(cell, source)
       },
     },
     grid: { left: 52, right: 8, top: 28, bottom: 8 },
@@ -154,6 +156,6 @@ export function buildChartOption(
 }
 
 /** Text of every cell, row by row (used to test that chart and table agree). */
-export function chartCellTexts(rows: readonly CalendarRow[]): string[][] {
-  return rows.map((row) => row.cells.map((cell) => cellLines(cell).join(' | ')))
+export function chartCellTexts(rows: readonly CalendarRow[], source: Source = 'harmonized'): string[][] {
+  return rows.map((row) => row.cells.map((cell) => cellLines(cell, source).join(' | ')))
 }
