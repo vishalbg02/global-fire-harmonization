@@ -29,7 +29,7 @@ export function MethodsPage({ onBack }: { onBack: () => void }) {
   const meta = useQuery({ queryKey: ['meta'], queryFn: () => fetchMeta(), retry: false })
 
   return (
-    <main className="methods-page">
+    <main id="main-content" tabIndex={-1} className="methods-page">
       <nav aria-label="Methods page">
         <button type="button" onClick={onBack}>
           Back to the map
