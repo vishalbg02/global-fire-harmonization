@@ -184,6 +184,45 @@ Computed by `python pipeline/modis_version.py` on the normalized MODIS detection
 - The static-source mask was built from standard data of all sensors from 2012 to 2025 (approved by the Lead); the 2018 rise in MODIS static share is a reason to keep reporting the mask's hold-out score per sensor, not a reason to change it.
 - **Whether to flag or adjust by `version` is the Lead's decision. Nothing was dropped.**
 
+### Gridding (T-006) **[VERIFIED 2026-11-14]**
+
+`python pipeline/gridding.py build` turns the normalized detections into two local products under `data/products/` (not committed): `cells.parquet` and `cell_month_witness.parquet`, in the schema of `DATA_CONTRACT.md` v0.1.0. Grids (D-009, locked at G1): analysis cells 0.5 degrees, fine cells 0.05 degrees; a fine cell belongs to the analysis cell that holds its centre.
+
+- **Kept detections:** confidence MODIS 30 or more and VIIRS n or h; `type = 0` for SP rows (NRT rows have no `type`); the approved static-source mask applied to every row, as in the D-009 test (**approved by the Lead 2026-11-14**: one rule across all years avoids an artificial step at the SP to NRT boundary in 2026, and the measured effect is small, a Spearman difference of 0.006 to 0.009); negative FRP counted as null in `frp_sum_mw`. The record starts in 2002-07. Result: 485,158,861 kept detections, 220,647,772 fine-cell-days.
+- **Cell-day:** a distinct `(witness, daynight, fine cell, UTC date)`. `daynight` rows are `D`, `N` and `ALL`, where `ALL` is D + N as the contract says (the D-009 test counted the union of day and night fine-cell-days instead; the difference is small).
+- **Rows:** 146,625,501 rows (48,875,167 per `daynight` value) over 56,243 active cells and 869 witness-months, written for every month a witness operated, with `cell_days = 0` where nothing was detected (77.5% of the `ALL` rows). The Parquet file is 180 MB. Witness ranges: Aqua and Terra from 2002-07, S-NPP from 2012-01, NOAA-20 from 2018-04, all to 2026-11. `data_level` of the `ALL` rows: 48,087,765 SP and 787,402 NRT.
+- **Cells:** 56,243 cells (contract check passes). Country is the one with most kept detections in the cell (zip rows only); 926 cells have none (all their kept detections come from the 2026 API data, which carries no country). Continents: EU 13,593, AS 12,127, NA 10,036, AF 8,786, SA 6,373, OC 3,611, AN 791. Fire region from T-004: 1,234 cells are `UNASSIGNED`. **`stratum_id` is a provisional rule (fire region and country), approved by the Lead 2026-11-14 as provisional.** If T-011 redefines it, T-011 documents the final rule and regenerates `cells.parquet`.
+- **`days_available` and the FIRMS `missing_data` list.** A listed day is subtracted only if the witness has no detection that day. For Aqua (26 days), Terra (31) and NOAA-20 (6) the list matches the days with no detections exactly, and no other day without detections exists. For S-NPP the list marks all 31 days of May 2026 as missing, yet the data has 20,634 to 36,564 detections on each of them. Those days count as available (evidence of data); the other 49 listed S-NPP days have no detections and are subtracted. **Approved by the Lead 2026-11-14:** a listed day counts as available when the witness has detections that day, so May 2026 S-NPP is kept (dropping it would lose 687,805 real detections). The discrepancy between the FIRMS list and the data is recorded here.
+- **Validation (verified):** `python pipeline/gridding.py validate` finds no contract problem (schema and types, enumerations, no nulls, no duplicate keys, `ALL` = D + N for `cell_days` and `detections`, `days_available` between 1 and `days_in_month`, `cell_days` at most 100 per available day, no row before a witness operated or before 2002-07, every `cell_id` in `cells.parquet`). An independent count from the interim detections equals the product: 485,158,861 detections and 220,647,772 fine-cell-days. The first build differed by 687,805 detections; the check found the S-NPP May 2026 issue above.
+
+**G1 evidence: the raw combined record shows the sensor jumps.** Global raw cell-days per month: VIIRS arrives in January 2012 and NOAA-20 in April 2018.
+
+| Month | Raw combined cell-days (all witnesses, D + N) | By witness |
+|---|---|---|
+| 2011-11 | 170,715 | Aqua: 113,865, Terra: 56,850 |
+| 2011-12 | 251,898 | Aqua: 167,238, Terra: 84,660 |
+| 2012-01 | 464,950 | Aqua: 152,025, Terra: 83,193, S-NPP: 229,732 |
+| 2012-02 | 671,082 | Aqua: 106,989, Terra: 54,459, S-NPP: 509,634 |
+| 2012-03 | 804,225 | Aqua: 159,957, Terra: 62,808, S-NPP: 581,460 |
+| 2018-01 | 872,763 | Aqua: 156,558, Terra: 82,195, S-NPP: 634,010 |
+| 2018-02 | 589,828 | Aqua: 91,453, Terra: 48,212, S-NPP: 450,163 |
+| 2018-03 | 710,489 | Aqua: 111,259, Terra: 51,528, S-NPP: 547,702 |
+| 2018-04 | 1,067,790 | Aqua: 102,513, Terra: 60,446, S-NPP: 448,261, NOAA-20: 456,570 |
+| 2018-05 | 828,692 | Aqua: 73,850, Terra: 49,365, S-NPP: 349,816, NOAA-20: 355,661 |
+
+**G1 evidence: D-009 grid-size comparison** (Aqua MODIS vs S-NPP VIIRS, SP only, 2012-01 to 2016-12; type 0, confidence and the approved static mask; D and N combined; aggregate statistics only, no validation case looked at; `pipeline/grid_test.py`):
+
+| Fine | Analysis | Active cells | Cell-months with activity | Spearman | Ratio Aqua/S-NPP median (IQR) | Both 0 / one 0 / both > 0 | Aqua ≥ 5 cell-days | Time | Output |
+|---|---|---|---|---|---|---|---|---|---|
+| 0.05° | 0.25° | 154,835 | 2,698,461 | 0.672 | 0.33 (0.20–0.50) | 71.0% / 15.8% / 13.3% | 4.5% | 6.0s | 4.7 MB |
+| 0.05° | 0.5° | 48,185 | 1,170,257 | 0.739 | 0.29 (0.17–0.48) | 59.5% / 19.5% / 21.0% | 8.8% | 4.4s | 2.2 MB |
+| 0.1° | 0.25° | 153,788 | 2,669,062 | 0.664 | 0.33 (0.21–0.50) | 71.1% / 15.7% / 13.2% | 4.1% | 5.1s | 4.5 MB |
+| 0.1° | 0.5° | 48,185 | 1,170,257 | 0.733 | 0.30 (0.18–0.50) | 59.5% / 19.5% / 21.0% | 8.4% | 4.5s | 2.1 MB |
+
+Definitions: *Active cells* are analysis cells with any activity by either satellite in the 60 months. *Both 0 / one 0 / both > 0* are shares of all active-cell x 60-month cell-months (S-NPP starts 2012-01-20). The ratio is Aqua / S-NPP where both are above 0. *Aqua ≥ 5* is the share of those cell-months with at least 5 Aqua cell-days. Time is the cell-month step; the build of the fine-cell-days took 5 to 7 seconds per fine grid.
+
+**Decision (Lead, 2026-11-14): D-009 locked at analysis 0.5 degrees and fine 0.05 degrees.** 0.05 / 0.5 has the highest Spearman (0.739), the most cell-months with both satellites active (21.0%) and the most with Aqua ≥ 5 (8.8%), and it matches the approved static-mask grid. Noted for later steps: Aqua night activity is thin (Spearman 0.41 to 0.51), so calibration will lean on pooling for night strata; only about 9% of cell-months reach Aqua ≥ 5, so cell-level verdicts will often be `CANNOT_DETERMINE` and country and continent are the main verdict levels.
+
 ## 2. NASA FIRMS area API: **2026 data**
 
 - Documentation: https://firms.modaps.eosdis.nasa.gov/api/area/
