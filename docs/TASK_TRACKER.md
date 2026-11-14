@@ -34,7 +34,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
-| T-001 | Download all global zips (MODIS 2002–2025, S-NPP 2012–2025, NOAA-20 2018–2025) | M2 | P0 | — (stack-independent) | `data/T-001-download-zips` | PR link added after the PR is opened | IN_REVIEW (tracker showed TODO; Lead to confirm assignment) | PENDING | All files present; sizes match `DATA_SOURCES.md`; snapshot recorded in `data/README.md` |
+| T-001 | Download all global zips (MODIS 2002–2025, S-NPP 2012–2025, NOAA-20 2018–2025) | M2 | P0 | — (stack-independent) | `data/T-001-download-zips` | [#7](https://github.com/vishalbg02/global-fire-harmonization/pull/7) | IN_REVIEW (tracker showed TODO; Lead to confirm assignment) | PENDING | All files present; sizes match `DATA_SOURCES.md`; snapshot recorded in `data/README.md` |
 | T-002 | Pull 2026 data via the area API (world, 5-day windows) for MODIS, S-NPP, NOAA-20; fetch `missing_data` and `data_availability` | M2 | P0 | MAP_KEY | `data/T-002-api-2026` | — | TODO | — | Complete date coverage logged; retries recorded |
 | T-003 | Unzip and normalize to the unified schema (Parquet) | M2 | P0 | T-001, T-0A, T-0D | `data/T-003-normalize` | — | TODO | — | Row counts per sensor and year recorded |
 | T-004 | Fire-region mask (GFED basis regions) or UN-subregion fallback | M1 → M2 | P0 | — | `science/T-004-region-mask` | — | TODO | — | Every analysis cell has a `fire_region` |
