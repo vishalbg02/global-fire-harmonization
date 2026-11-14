@@ -47,8 +47,9 @@ export function WitnessPanel({ area, onShowWorld }: Props) {
 
       <p className="legend-note">{JUMP_CAPTION}</p>
       <p className="legend-note">
-        Marks on the chart (and the Notes column of the table): a red line marks an outage month; a
-        purple band marks Aqua-drift-era months; an olive band marks provisional months.
+        Marks on the chart (and the Notes column of the table): a red vertical line marks an
+        outage month; a purple dashed line marks an Aqua-drift-era month; an olive dotted line
+        marks a provisional month.
       </p>
 
       {series.isPending && <LoadingState what="the satellite comparison" />}

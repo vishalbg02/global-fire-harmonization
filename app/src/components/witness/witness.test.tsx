@@ -10,7 +10,7 @@ import { WORLD } from '../../state/selection.ts'
 import { SatelliteTimeline } from './SatelliteTimeline.tsx'
 import { WitnessPanel } from './WitnessPanel.tsx'
 import { WitnessTable } from './WitnessTable.tsx'
-import { buildMonthMarks, buildWitnessChartOption, mergeIntoRuns } from './chartOption.ts'
+import { buildMonthMarks, buildWitnessChartOption } from './chartOption.ts'
 import {
   fieldSeries,
   monthLabel,
@@ -176,19 +176,19 @@ describe('buildWitnessChartOption', () => {
     expect(findSeries('Harmonized (90% interval)').data).toEqual([10, 10, 10, 10, null]) // 20-10 for the 4 populated months
   })
 
-  it('places outage months on the harmonized line\'s markLine and drift months as a markArea band on it', () => {
+  it('places outage months on the harmonized line\'s markLine and drift months on the raw line\'s', () => {
     expect((findSeries('Harmonized estimate').markLine as { data: { xAxis: string }[] }).data).toEqual([
       { xAxis: '2015-09' },
     ])
-    const driftArea = findSeries('Harmonized estimate').markArea as { data: [{ xAxis: string }, { xAxis: string }][] }
-    expect(driftArea.data).toEqual([[{ name: 'Aqua drift era', xAxis: '2022-01' }, { xAxis: '2022-01' }]])
+    expect((findSeries('Raw combined (all satellites)').markLine as { data: { xAxis: string }[] }).data).toEqual([
+      { xAxis: '2022-01' },
+    ])
   })
 
-  it('merges a long run of flagged months into one band instead of one mark per month', () => {
-    const categories = ['2022-01', '2022-02', '2022-03', '2022-04']
-    expect(mergeIntoRuns(categories, ['2022-01', '2022-02', '2022-04'])).toEqual([
-      ['2022-01', '2022-02'],
-      ['2022-04', '2022-04'],
+  it('places provisional months on the last witness line\'s markLine', () => {
+    const lastWitnessName = WITNESS_NAMES.SNPP_VIIRS // last witness present in SERIES, in contract order
+    expect((findSeries(lastWitnessName).markLine as { data: { xAxis: string }[] }).data).toEqual([
+      { xAxis: '2026-10' },
     ])
   })
 

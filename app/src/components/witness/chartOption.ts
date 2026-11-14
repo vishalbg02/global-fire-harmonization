@@ -51,34 +51,6 @@ function markLine(months: readonly string[], color: string, lineType: 'solid' | 
   }
 }
 
-/**
- * Merges a list of months into contiguous runs, using their position in `categories` to decide
- * adjacency (so a long run, e.g. "every month since the Aqua-drift cutoff", becomes one shaded
- * band instead of one line per month). Each run is [start, end] inclusive.
- */
-export function mergeIntoRuns(categories: readonly string[], months: readonly string[]): [string, string][] {
-  const indexOf = new Map(categories.map((c, i) => [c, i]))
-  const indices = months.map((m) => indexOf.get(m)).filter((i): i is number => i !== undefined).sort((a, b) => a - b)
-  const runs: [number, number][] = []
-  for (const i of indices) {
-    const last = runs[runs.length - 1]
-    if (last !== undefined && i === last[1] + 1) last[1] = i
-    else runs.push([i, i])
-  }
-  return runs.map(([a, b]) => [categories[a], categories[b]])
-}
-
-/** A shaded band over each contiguous run of months, named for the legend and tooltip. */
-function markArea(categories: readonly string[], months: readonly string[], color: string, name: string) {
-  return {
-    name,
-    silent: true,
-    itemStyle: { color, opacity: 0.12 },
-    label: { show: false },
-    data: mergeIntoRuns(categories, months).map(([start, end]) => [{ name, xAxis: start }, { xAxis: end }]),
-  }
-}
-
 /** A band from `low` to `high`, drawn as a stacked invisible line plus a filled area on top. */
 function band(low: (number | null)[], high: (number | null)[], color: string, name: string) {
   const diff = low.map((l, i) => {
@@ -140,7 +112,6 @@ export function buildWitnessChartOption(records: readonly EntityMonth[]): EChart
       symbol: 'none',
       lineStyle: { color: HARMONIZED_COLOR, width: 2 },
       markLine: markLine(marks.outage, '#b00020', 'solid'),
-      markArea: markArea(categories, marks.drift, '#8e44ad', 'Aqua drift era'),
     },
     {
       name: 'Raw combined (all satellites)',
@@ -148,14 +119,15 @@ export function buildWitnessChartOption(records: readonly EntityMonth[]): EChart
       data: rawCombinedSeries(records),
       symbol: 'none',
       lineStyle: { color: RAW_COMBINED_COLOR, type: 'dashed', width: 1.5 },
-      markArea: markArea(categories, marks.provisional, '#8a6d00', 'Provisional'),
+      markLine: markLine(marks.drift, '#8e44ad', 'dashed'),
     },
-    ...witnesses.map((w) => ({
+    ...witnesses.map((w, i) => ({
       name: WITNESS_NAMES[w],
       type: 'line',
       data: witnessSeries(records, w),
       symbol: 'none',
       lineStyle: { color: WITNESS_STYLE[w].color, type: WITNESS_STYLE[w].dash ?? 'solid', width: 1.2 },
+      markLine: i === witnesses.length - 1 ? markLine(marks.provisional, '#8a6d00', 'dotted') : undefined,
     })),
   ]
 
