@@ -1,6 +1,7 @@
 import type { HarmonizedFields, Witness } from '../../api/contract.ts'
 import { ACTIVITY_UNITS } from '../../content/calendar.ts'
 import { NOT_AVAILABLE_YET, isRawOnlyRecord, useRawOnly } from '../../content/rawOnly.ts'
+import { methodsHref } from '../../content/methodsLink.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { WITNESS_NAMES } from '../../content/witnesses.ts'
@@ -115,7 +116,10 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
           <ul className="evidence-reasons">
             {record.reason_codes.map((code) => (
               <li key={code}>
-                {REASON_TEXTS[code]} <small className="reason-code">{code}</small>
+                {REASON_TEXTS[code]} <small className="reason-code">{code}</small>{' '}
+                <a className="learn-more" href={methodsHref(`reason-${code}`)}>
+                  Learn more
+                </a>
               </li>
             ))}
           </ul>

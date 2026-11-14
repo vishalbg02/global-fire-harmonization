@@ -137,8 +137,12 @@ describe('EvidenceBody: the seven items', () => {
     expect(body(evidence(), null)).not.toContain('Contract version')
   })
 
-  it('7. has no links yet (the methods page is T-041)', () => {
-    expect(body(evidence({ reason_codes: [...REASON_CODES] }))).not.toContain('<a ')
+  it('7. links each reason code to its place on the methods page (T-041) and has no other links', () => {
+    const html = body(evidence({ reason_codes: [...REASON_CODES] }))
+    const links = html.match(/<a [^>]*>/g) ?? []
+    expect(links).toHaveLength(REASON_CODES.length)
+    for (const code of REASON_CODES) expect(html).toContain(`page=methods#reason-${code}`)
+    expect(body(evidence({ reason_codes: [] }))).not.toContain('<a ')
   })
 })
 
