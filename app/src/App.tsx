@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ApiError, fetchAnomalies, fetchEntities, fetchMapCells, fetchMeta } from './api/client.ts'
 import type { Anomaly, Bbox, EntityItem, MapCell } from './api/contract.ts'
@@ -15,7 +15,6 @@ import { SourceToggle } from './components/common/SourceToggle.tsx'
 import { CellInfo } from './components/map/CellInfo.tsx'
 import { Legend } from './components/map/Legend.tsx'
 import { MapModeSelector } from './components/map/MapModeSelector.tsx'
-import { MapView } from './components/map/MapView.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
@@ -25,6 +24,9 @@ import { monthKey, monthRange } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
+
+// The map (MapLibre, deck.gl and the draw tool) is loaded when first needed, so the first load is small (T-042).
+const MapView = lazy(() => import('./components/map/MapView.tsx').then((m) => ({ default: m.MapView })))
 
 export default function App() {
   // The selection starts from the link (area, month, source, map mode, value mode), if any.
@@ -145,6 +147,9 @@ export default function App() {
   return (
     <RawOnlyContext.Provider value={rawOnly}>
     <div className="app">
+      <a className="skip-link" href="#main-content">
+        Skip to the controls and the map
+      </a>
       <SyntheticBanner synthetic={meta.data?.synthetic === true} />
       <header>
         <h1>Global Fire Harmonization</h1>
@@ -155,7 +160,7 @@ export default function App() {
           {RAW_ONLY_NOTE}
         </p>
       )}
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <div className="controls">
           <MonthSelector
             months={months}
@@ -175,6 +180,7 @@ export default function App() {
           />
         </div>
         <div className="map-area">
+          <Suspense fallback={<LoadingState what="the map" />}>
           <MapView
             cells={cellList}
             layer={layer}
@@ -192,6 +198,7 @@ export default function App() {
             onDrawn={chooseCustom}
             anomalyOutlines={anomalyOutlines}
           />
+          </Suspense>
           <aside>
             <AreaPicker
               area={area}

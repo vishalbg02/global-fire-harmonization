@@ -102,6 +102,11 @@ export function MapView({
       attributionControl: false,
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+    // The focusable map canvas gets a name and its keyboard keys (MapLibre: arrows pan, plus and minus zoom).
+    map.getCanvas().setAttribute(
+      'aria-label',
+      'Map canvas. Use the arrow keys to pan and the plus and minus keys to zoom. Choose an area with the search, the typed box or the lists.',
+    )
     const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
     map.addControl(overlay)
     mapRef.current = map

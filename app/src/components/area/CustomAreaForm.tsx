@@ -28,6 +28,10 @@ const FIELDS: readonly { key: keyof BboxFields; label: string; hint: string }[] 
  * A custom rectangle by typed west, south, east and north (degrees, WGS84). The typed form is
  * the keyboard route to a custom area; drawing on the map is pointer-only.
  */
+/** Shown while a custom area is computed; a new area can take several seconds (T-042). */
+export const CUSTOM_COMPUTING =
+  'Computing this area from the satellite records. A new area can take several seconds.'
+
 export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, serverMessage, loading }: Props) {
   const [fields, setFields] = useState<BboxFields>({
     west: initial === null ? '' : String(initial[0]),
@@ -49,7 +53,7 @@ export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, se
   }
 
   return (
-    <form className="custom-area" onSubmit={submit} noValidate aria-labelledby="custom-area-title">
+    <form aria-busy={loading} className="custom-area" onSubmit={submit} noValidate aria-labelledby="custom-area-title">
       <h3 id="custom-area-title">Custom area</h3>
       <div className="bbox-fields">
         {FIELDS.map((f) => (
@@ -77,6 +81,11 @@ export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, se
           {drawing ? 'Cancel drawing' : 'Draw on the map'}
         </button>
       </div>
+      {loading && (
+        <p className="custom-computing" role="status">
+          {CUSTOM_COMPUTING}
+        </p>
+      )}
       {drawing && (
         <p className="legend-note" role="status">
           Click two opposite corners on the map. Drawing needs a pointer; use the fields above to

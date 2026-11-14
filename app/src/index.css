@@ -624,3 +624,18 @@ aside section {
   border-bottom: 1px solid #8a6d00;
   font-weight: 600;
 }
+
+/* Skip link (T-042): hidden until it receives keyboard focus. */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid var(--focus);
+}
+.skip-link:focus { top: 0.5rem; }
+.custom-computing { font-weight: 600; margin: 0.25rem 0; }
+main:focus { outline: none; }
