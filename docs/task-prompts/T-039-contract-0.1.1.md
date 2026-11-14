@@ -22,7 +22,7 @@ Make the API and the app accept contract 0.1.1, so Member 2's raw-only products 
 
 ## 4. Behaviour notes
 
-- The app already treats `-raw-only` methods as "harmonization in progress" and hides the "Why" section, so `NOT_HARMONIZED` is shown only where reason codes are listed (map tooltip).
+- The app already treats `-raw-only` methods as "harmonization in progress". Lead review on this PR: the evidence panel must show the `NOT_HARMONIZED` text, so the "Why" section now appears in raw-only mode when the record carries reason codes (the empty "no caveats" message stays hidden).
 - No value is computed; the code is read as stored.
 
 ## 5. Acceptance

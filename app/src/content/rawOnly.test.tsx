@@ -117,9 +117,19 @@ describe('evidence while only raw data exist', () => {
     expect(html).not.toContain('Satellites used')
     expect(html).not.toContain('No satellite contributed')
     expect(html).not.toContain('No caveats')
+    // The stored reason code is still explained; only the empty "no caveats" message is hidden.
+    expect(html).not.toContain('No caveats are recorded')
     expect(html).toContain('Aqua MODIS: 431')
     expect(html).toContain('S-NPP VIIRS: 2990')
     expect(html).toContain('Method version: 0.1.0-raw-only')
+  })
+
+  it('shows the NOT_HARMONIZED text under Why when the record carries it (contract 0.1.1)', () => {
+    const record = { ...evidence(), reason_codes: ['NOT_HARMONIZED' as const] }
+    const html = rawOnly(<EvidenceBody record={record} rawByWitness={record.raw_by_witness} contractVersion="0.1.1" />)
+    expect(html).toContain('Why')
+    expect(html).toContain("Harmonized values aren&#x27;t computed yet; this shows raw satellite data only.")
+    expect(html).toContain('NOT_HARMONIZED')
   })
 
   it('is unchanged when the products are harmonized', () => {
