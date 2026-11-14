@@ -22,7 +22,7 @@ All facts are marked with their verification status. Re-verify anything marked *
 
 - **Not available as zips [VERIFIED]:** any 2026 file; NOAA-21 (`viirs-jpss2` and `viirs-noaa21` return nothing).
 - **Unzipped size [ESTIMATE]:** about 4.5× expansion, measured on 2020 (MODIS 78 MB → 350 MB; S-NPP 368 MB → 1,625 MB). Total ≈41 GB.
-- **Row count [ESTIMATE]:** ≈475 million detections, derived from typical line length. To be measured during ingestion (T-005).
+- **Row count [VERIFIED 2026-11-14, T-003]:** 546,469,853 detections in the 46 zips (the earlier estimate was ≈475 million), before any filtering. Per sensor and year: see "Row counts per sensor and year" below.
 
 ### Columns [VERIFIED 2026-11-14 from file headers]
 
@@ -35,6 +35,41 @@ All facts are marked with their verification status. Re-verify anything marked *
   - `type` (archive data only): 0 = presumed vegetation fire, 1 = active volcano, 2 = other static land source, 3 = offshore.
 - **Data-quality question [OPEN, T-007]:** the MODIS `version` field varies (`6.2` in 2012, `6.03` in 2020, `61.03` in 2025).
 - **Coverage note:** country files contain only detections attributed to a country. Open-ocean detections, and possibly some disputed areas, are absent. Acceptable, because we filter offshore and static sources anyway.
+
+### Row counts per sensor and year (T-003) **[VERIFIED 2026-11-14]**
+
+Rows read from the CSVs of the 46 zips (2002 to 2025) and the 2026 API files (T-002), and written to `data/interim/detections/` in the unified schema. Nothing was filtered, de-duplicated or dropped, so these are raw counts. For every sensor-year the rows read equal the rows written. No value failed to cast, no unexpected columns or satellite codes were found, and no row had a date outside its year.
+
+| Year | MODIS (Terra + Aqua) | VIIRS S-NPP | VIIRS NOAA-20 | Total |
+|---|---|---|---|---|
+| 2002 | 3,699,859 | - | - | 3,699,859 |
+| 2003 | 5,149,401 | - | - | 5,149,401 |
+| 2004 | 5,092,534 | - | - | 5,092,534 |
+| 2005 | 5,125,152 | - | - | 5,125,152 |
+| 2006 | 4,688,046 | - | - | 4,688,046 |
+| 2007 | 5,134,642 | - | - | 5,134,642 |
+| 2008 | 4,818,997 | - | - | 4,818,997 |
+| 2009 | 4,456,446 | - | - | 4,456,446 |
+| 2010 | 4,715,142 | - | - | 4,715,142 |
+| 2011 | 4,699,314 | - | - | 4,699,314 |
+| 2012 | 4,959,509 | 20,864,680 | - | 25,824,189 |
+| 2013 | 4,226,648 | 19,296,980 | - | 23,523,628 |
+| 2014 | 4,434,374 | 20,190,209 | - | 24,624,583 |
+| 2015 | 4,741,228 | 21,329,469 | - | 26,070,697 |
+| 2016 | 4,415,910 | 20,247,889 | - | 24,663,799 |
+| 2017 | 4,453,181 | 19,984,137 | - | 24,437,318 |
+| 2018 | 4,184,262 | 19,067,085 | 14,524,817 | 37,776,164 |
+| 2019 | 4,578,188 | 20,990,294 | 20,742,304 | 46,310,786 |
+| 2020 | 4,440,623 | 20,619,331 | 20,385,806 | 45,445,760 |
+| 2021 | 4,384,343 | 20,247,675 | 20,059,802 | 44,691,820 |
+| 2022 | 3,789,164 | 17,164,365 | 18,043,578 | 38,997,107 |
+| 2023 | 4,664,302 | 21,750,317 | 21,288,380 | 47,702,999 |
+| 2024 | 4,848,247 | 20,976,982 | 22,511,092 | 48,336,321 |
+| 2025 | 3,693,555 | 18,415,101 | 18,376,493 | 40,485,149 |
+| 2026 (API) | 3,098,525 | 15,461,912 | 17,020,284 | 35,580,721 |
+| **Total** | **112,491,592** | **296,606,426** | **172,952,556** | **582,050,574** |
+
+2026 combines standard (SP) and near-real-time (NRT) API data. Terra and Aqua, S-NPP (`N`) and NOAA-20 (`N20`) appear only in their own sensor's files. Counts per satellite and data level are in `data/interim/detections/row_counts.tsv` (not committed).
 
 ## 2. NASA FIRMS area API: **2026 data**
 
