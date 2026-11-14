@@ -186,7 +186,7 @@ Computed by `python pipeline/modis_version.py` on the normalized MODIS detection
 
 ### Gridding (T-006) **[VERIFIED 2026-11-14]**
 
-`python pipeline/gridding.py build` turns the normalized detections into two local products under `data/products/` (not committed): `cells.parquet` and `cell_month_witness.parquet`, in the schema of `DATA_CONTRACT.md` v0.1.0. Grids (D-009, locked at G1): analysis cells 0.5 degrees, fine cells 0.05 degrees; a fine cell belongs to the analysis cell that holds its centre.
+`python pipeline/gridding.py build` turns the normalized detections into two local products under `data/products/` (committed via Git LFS from T-014a on, D-027): `cells.parquet` and `cell_month_witness.parquet`, in the schema of `DATA_CONTRACT.md` v0.1.0. Grids (D-009, locked at G1): analysis cells 0.5 degrees, fine cells 0.05 degrees; a fine cell belongs to the analysis cell that holds its centre.
 
 - **Kept detections:** confidence MODIS 30 or more and VIIRS n or h; `type = 0` for SP rows (NRT rows have no `type`); the approved static-source mask applied to every row, as in the D-009 test (**approved by the Lead 2026-11-14**: one rule across all years avoids an artificial step at the SP to NRT boundary in 2026, and the measured effect is small, a Spearman difference of 0.006 to 0.009); negative FRP counted as null in `frp_sum_mw`. The record starts in 2002-07. Result: 485,158,861 kept detections, 220,647,772 fine-cell-days.
 - **Cell-day:** a distinct `(witness, daynight, fine cell, UTC date)`. `daynight` rows are `D`, `N` and `ALL`, where `ALL` is D + N as the contract says (the D-009 test counted the union of day and night fine-cell-days instead; the difference is small).
@@ -225,7 +225,7 @@ Definitions: *Active cells* are analysis cells with any activity by either satel
 
 ### Calibration (T-011) **[VERIFIED 2026-11-14 unless labelled]**
 
-`python pipeline/calibration.py` writes `data/products/calibration.parquet` (local, not committed; 96,384 rows = 4,016 strata x 2 witnesses x 3 day/night values x 4 seasons; contract check passes) and regenerates `cells.parquet` with the final `stratum_id`. The full run with 1,000 bootstrap replicates takes about 80 seconds.
+`python pipeline/calibration.py` writes `data/products/calibration.parquet` (committed via Git LFS from T-014a on, D-027; 96,384 rows = 4,016 strata x 2 witnesses x 3 day/night values x 4 seasons; contract check passes) and regenerates `cells.parquet` with the final `stratum_id`. The full run with 1,000 bootstrap replicates takes about 80 seconds.
 
 - **Ratio:** sum of Aqua `cell_days` / sum of witness `cell_days` per stratum x day/night x season. It is the multiplier that converts the witness to the Aqua-equivalent scale. `D` and `N` have their own ratios; `ALL` is fitted on the `ALL` cell-days and is informational only (the combination converts `D` and `N`).
 - **Fit periods:** S-NPP 2012-01 to 2016-12, NOAA-20 2018-04 to 2021-12. The held-out years (2017 to 2021 for S-NPP) are never read. S-NPP uses 58 of 60 months (2012-01 and 2012-03 are partial), NOAA-20 all 45.
@@ -238,7 +238,7 @@ Definitions: *Active cells* are analysis cells with any activity by either satel
 
 **The products below are built with the D-025 mask** (the approved T-005 mask plus persistent night sources) and the one-month burst rule. Figures for the T-005 mask alone appear as "before" where they matter.
 
-- **Regenerated products** (`gridding.py build`, `validate`, then `calibration.py`; all local, not committed):
+- **Regenerated products** (`gridding.py build`, `validate`, then `calibration.py`; committed via Git LFS from T-014a on, D-027):
   - The independent recount matches the product: 483,456,394 kept detections and 219,583,156 fine-cell-days.
   - `cell_month_witness.parquet`: 146,612,466 rows, 56,238 cells, 869 witness-months; it validates against the contract.
   - `calibration.parquet`: 96,384 rows (4,016 strata); it validates against the contract. The run takes 80 seconds.

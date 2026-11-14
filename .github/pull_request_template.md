@@ -39,7 +39,7 @@
 - [ ] Implements only the assigned task; no scope expansion
 - [ ] Conforms to `docs/DATA_CONTRACT.md` (no unapproved contract changes)
 - [ ] No unapproved changes to the stack, architecture or scientific methodology
-- [ ] No secrets, `.env` files, credentials or large/data files committed
+- [ ] No secrets, `.env` files or credentials committed; no raw/interim data; any `data/products/` file goes through Git LFS (D-027)
 - [ ] No validation claimed as passed unless it actually ran; synthetic data labelled `SYNTHETIC`
 - [ ] Branch is up to date with `main`
 - [ ] Commits use my own Git identity; no AI tool names or AI-generated attribution in commits, this PR, the branch name or code comments (D-020)

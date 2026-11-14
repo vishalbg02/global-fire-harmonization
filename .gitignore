@@ -7,10 +7,11 @@
 secrets/
 credentials*.json
 
-# ---- Data (never commit NASA archives or generated products) ----
+# ---- Data (raw and interim never committed; products only via Git LFS, D-027) ----
 data/*
 !data/README.md
 !data/fixtures/
+!data/products/
 data/fixtures/**/*.zip
 *.zip
 *.duckdb

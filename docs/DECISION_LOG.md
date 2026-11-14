@@ -24,9 +24,12 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-017 | 2026-11-14 | Team workflow: Lead assigns tasks; individual Claude sessions generate task prompts; one branch + PR per task; Lead reviews every PR and alone merges | APPROVED (Lead's instruction); **in effect** since PR #2 merged (2026-11-14) |
 | D-018 | 2026-11-14 | Lead bookkeeping commits allowed directly on `main` (tracker, decision log, progress log, handoff only) | PROPOSED |
 | D-019 | — | Technical protection of `main` (GitHub Pro branch protection vs policy + local guard) | OPEN |
-| D-022 | — | Contract additions marked [PROPOSED ADDITION] in the workstream prompts' shared section | PROPOSED |
+| D-022 | 2026-11-14 | Contract additions from the workstream prompts (cell_id, cell bounds, entity IDs, PRODUCTS_DIR, path rule); envelope and error format not adopted → contract 0.1.1 | **APPROVED** (2026-11-14) |
 | D-020 | 2026-11-14 | No AI names or AI-generated attribution in commits, PRs, branch names, code comments, credits or metadata; human Git identity only | APPROVED (Lead's instruction) |
 | D-021 | 2026-11-14 | Rewrite the 4 bootstrap commits on `main` to remove AI trailers | APPROVED and DONE (force-pushed 2026-11-14) |
+| D-027 | 2026-11-14 | Contract products in `data/products/` are committed through Git LFS; raw and interim data stay out of Git | **APPROVED** (2026-11-14) |
+| D-026 | 2026-11-14 | Reason code `NOT_HARMONIZED` and raw-only products (contract 0.1.1) | **APPROVED** (2026-11-14) |
+| D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
 | D-024 | 2026-11-14 | Add `terra-draw-maplibre-gl-adapter` 1.5.0 to the frontend stack (drawing the custom rectangle on the MapLibre map, T-035) | **APPROVED** (2026-11-14) |
 
 ---
@@ -131,6 +134,9 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Effect if approved:** add them to `DATA_CONTRACT.md` and bump to `0.1.1`.
 - **Status:** PROPOSED. Awaiting the Lead.
 
+- **Decision (2026-11-14):** approved, except the API response envelope and error format, which are not adopted (bare payloads and FastAPI's default errors, per the Lead's T-034 answer). `PRODUCTS_DIR` defaults to `data/products`. Entity IDs include `AN` (it has data) and Kosovo `XKX`.
+- **Status:** **APPROVED** by the Lead, 2026-11-14 → `DATA_CONTRACT.md` 0.1.1.
+
 ### D-017: Three-member team workflow
 - **Context:** three members, each possibly using a separate Claude account or session with no shared memory.
 - **Decision:**
@@ -197,3 +203,16 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 - **Not changed:** the low night ratios in savanna and agricultural fire regions are accepted as a hypothesis (real regional differences: VIIRS sees more small night fires than MODIS). T-012 and validation test E1 by region are to check it.
 - **Limitations accepted:** the 8 Bolivian cells still flagged (cause open) and the Fagradalsfjall NOAA-20 JJA night ratio (a season-year test would move about 23% of `LOCAL` rows). Both are recorded in `docs/RISKS_AND_LIMITATIONS.md` (S12 to S15).
 - **Status:** **APPROVED by the Lead 2026-11-14** (PR #36, after the re-run).
+
+### D-026: Reason code `NOT_HARMONIZED` and raw-only products
+- **Context:** Member 3 needed real data before harmonization exists (T-039 phase 1). Member 2 published raw-only `cell_month_harmonized` and `entity_month` (T-014a, PR #40).
+- **Decision:** add the reason code `NOT_HARMONIZED` (contract 0.1.1). A raw-only row fills only the raw fields; every harmonized field is `null`, `witnesses_used = []`, `verdict = CANNOT_DETERMINE`, `reason_codes = ["NOT_HARMONIZED"]`, and `method_version` ends in `-raw-only`. T-014 replaces these products.
+- **User-facing text:** "Harmonized values aren't computed yet; this shows raw satellite data only."
+- **Status:** **APPROVED** by the Lead, 2026-11-14.
+
+### D-027: Contract products through Git LFS
+- **Context:** real products (about 180 MB for `cell_month_witness.parquet` alone) were shared outside Git (WhatsApp or Drive) with checksums. That is error-prone, and GitHub rejects normal files over 100 MB.
+- **Decision:** commit the contract products in `data/products/` through **Git LFS**. `.gitattributes` tracks `data/products/**/*.parquet`; small JSON products are normal Git files. Members run `git lfs install` once per machine.
+- **Not changed:** NASA raw archives (`data/raw/`, about 9.7 GB) and interim files (`data/interim/`, about 6.3 GB) are never committed. They are reproducible from FIRMS and the pipeline, and are too large for the LFS quota.
+- **Cost:** every committed version stays in LFS history and counts against the account's LFS storage and bandwidth quota, so products are committed only when they change.
+- **Status:** **APPROVED** by the Lead, 2026-11-14 (replaces the earlier "never commit products" rule).

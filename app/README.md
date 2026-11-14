@@ -41,6 +41,10 @@ Open the address Vite prints (use `localhost`). While `metadata.synthetic` is `t
 
 The address bar always holds the selection, so a link reproduces the view. Query parameters (all optional, defaults left out): `area` (`COUNTRY:IDN`, `CONTINENT:AS`, `GLOBAL`, or `CUSTOM:west,south,east,north`), `month` (`2015-09`), `source` (`raw` or `harmonized`), `map` (`verdict` or `activity`) and `value` (`pct` or `activity`). Unknown or malformed values are ignored. Raw with % of normal, or raw with the verdict map, cannot be selected together.
 
+## Raw-only data
+
+When `metadata.method_version` ends in `-raw-only` (real raw counts, no harmonization yet, T-039 phase 1) the app shows a "Raw data only, harmonization in progress" note, forces the raw / activity views, disables Harmonized, Verdict and % of normal with the reason written out, and shows "Not available yet" in the evidence panel, the anomaly list and the chart. The SYNTHETIC banner follows `metadata.synthetic` only. Real products are never mixed with fixtures.
+
 ## Custom areas
 
 A custom rectangle is sent to `POST /api/series/custom`; the API returns the series, and the calendar and evidence panel show it. Until Member 2's `harmonize_area()` is delivered, the API answers `503` and the app shows that message. Boxes must have west less than east (boxes that cross the antimeridian are not supported) and south less than north. A rectangle can also be drawn on the map with two clicks (terra-draw with `terra-draw-maplibre-gl-adapter`, D-024); drawing needs a pointer, so the typed fields are the keyboard route.
