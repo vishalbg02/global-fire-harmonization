@@ -198,3 +198,41 @@ def test_summary_has_regions_daynight_total_and_both_coverages():
     assert set(s["coverage"]) == {"with_phi_kappa", "with_phi_only", "poisson_only"}
     assert s["coverage"]["with_phi_kappa"]["total"]["units"] == 1
     assert s["by_daynight"]["T"]["ours"]["units"] == 1
+
+
+# ---------------------------------------------------- the Lead's coverage checks (PR #43): 50% interval, bands, widening factor
+def test_coverage_of_the_50_percent_interval_and_the_widening_factor_by_hand():
+    actual = np.array([0.0] * 10)
+    pred = np.array([float(x) for x in (0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0)])   # errors 0.2 ... 2.0, sd 1
+    var = np.ones(10)
+    assert ho.coverage(actual, pred, var, z=ho.Z50) == 0.3                      # |error| <= 0.6745: 0.2, 0.4, 0.6
+    assert ho.coverage(actual, pred, var) == 0.8                                # |error| <= 1.645: up to 1.6
+    c = ho.widening_factor(actual, pred, var)                                   # 90% needs 9 of 10 inside: |error| 1.8 <= 1.645 c
+    assert c == pytest.approx(1.8 / ho.Z90, abs=1e-6) and ho.coverage(actual, pred, var, c=c) == 0.9
+    assert ho.widening_factor(actual, actual, var) < 1e-6                         # already covered: the smallest c is 0
+    assert np.isnan(ho.widening_factor([], [], []))
+
+
+def units_for_check(n_per_cell, widths):
+    rows = []
+    for year, dn, actual, pred, var in widths:
+        rows += [{"year": year, "daynight": dn, "actual": actual, "pred_ours": pred, "var_ours": var} for _ in range(n_per_cell)]
+    return pd.DataFrame(rows)
+
+
+def test_lead_check_splits_by_band_period_and_fits_c_on_2017_2018_only():
+    early = [(2017 + i % 2, "D", 50.0, 50.0 + 5.0 * (i - 5), 9.0) for i in range(11)]          # errors -25 .. 25, sd 3
+    late = [(2019 + i % 3, "D", 600.0, 600.0, 1.0) for i in range(10)] + [(2020, "N", 30.0, 90.0, 1.0)]
+    u = pd.concat([units_for_check(1, early), units_for_check(1, late)], ignore_index=True)
+    out = ho.lead_check(u, u.iloc[0:0].assign(daynight="T"))
+    assert out["by_period"]["2017-2018"]["units"] == 11 and out["by_period"]["2019-2021"]["units"] == 11
+    assert out["by_band"]["D|20-100"]["units"] == 11 and out["by_band"]["D|500-"]["units"] == 10 and out["by_band"]["N|20-100"]["units"] == 1
+    w = out["widening"]
+    assert w["fitted_on"] == "2017-2018 only" and w["applied"] is False and w["c_for_90"] > 1.0
+    # c is the one that gives 90% coverage on 2017-2018 and nothing in 2019-2021 influences it
+    early_only = u[u.year < 2019]
+    assert ho.coverage(early_only.actual, early_only.pred_ours, early_only.var_ours, c=w["c_for_90"]) >= 0.9
+    changed = u.copy()
+    changed.loc[changed.year >= 2019, "pred_ours"] = 0.0
+    assert ho.lead_check(changed, u.iloc[0:0].assign(daynight="T"))["widening"]["c_for_90"] == w["c_for_90"]
+    assert out["all"]["coverage_50"] <= out["all"]["coverage_90"]

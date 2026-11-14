@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import sys
+from itertools import pairwise
 from pathlib import Path
 
 import duckdb
@@ -34,6 +35,9 @@ from calibration import FITS, SEASON_OF
 
 ROOT = Path(__file__).resolve().parents[1]
 Z90 = hz.Z90
+Z50 = 0.6744897501960817   # the 50% interval, a second check of the coverage (Lead, PR #43)
+SIZE_BANDS = (5.0, 20.0, 100.0, 500.0)   # lower edges, Aqua cell-days of a unit
+SPLIT_YEAR = 2019   # widening factor on 2017-2018, honest coverage on 2019-2021
 START, END = (2017, 1), (2021, 12)
 MIN_CELL_DAYS = 20.0
 SENSITIVITY = (5.0, 100.0)
@@ -134,10 +138,10 @@ def metrics(u: pd.DataFrame, method: str) -> dict:
             "bias_by_year": by_year}
 
 
-def coverage(actual, pred, var_pred, var_aqua=0.0) -> float:
-    """Share of actual values inside pred +/- 1.645 x sqrt(var_pred + var_aqua)."""
+def coverage(actual, pred, var_pred, var_aqua=0.0, z: float = Z90, c: float = 1.0) -> float:
+    """Share of actual values inside pred +/- z x c x sqrt(var_pred + var_aqua) (z = 1.645: the 90% interval; c: a widening factor)."""
     actual, pred = np.asarray(actual, float), np.asarray(pred, float)
-    half = Z90 * np.sqrt(np.asarray(var_pred, float) + np.asarray(var_aqua, float))
+    half = z * c * np.sqrt(np.asarray(var_pred, float) + np.asarray(var_aqua, float))
     return float(np.mean(np.abs(actual - pred) <= half)) if len(actual) else float("nan")
 
 
@@ -146,6 +150,56 @@ def coverage_of(u: pd.DataFrame, var_col: str) -> dict:
         return {"units": 0}
     c = coverage(u.actual, u.pred_ours, u[var_col])
     return {"units": len(u), "coverage": c, "within_target": bool(COVERAGE_TARGET[0] <= c <= COVERAGE_TARGET[1])}
+
+
+def widening_factor(actual, pred, var, level_z: float = Z90, target: float = 0.90) -> float:
+    """The smallest c >= 0 for which pred +/- z x c x sd covers `target` of the actual values (bisection; nan without units).
+
+    This is the pre-registered rule of the Lead (PR #43): estimate it on 2017-2018 only. It is reported, and applied only if the
+    coverage of the final model is below 80%.
+    """
+    actual, pred, var = (np.asarray(x, float) for x in (actual, pred, var))
+    if len(actual) == 0:
+        return float("nan")
+    lo, hi = 0.0, 1.0
+    while coverage(actual, pred, var, z=level_z, c=hi) < target and hi < 1e4:
+        hi *= 2.0
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        if coverage(actual, pred, var, z=level_z, c=mid) < target:
+            lo = mid
+        else:
+            hi = mid
+    return float(hi)
+
+
+def band_edges(bands=SIZE_BANDS):
+    edges = list(bands) + [np.inf]
+    return list(pairwise(edges))
+
+
+def lead_check(u: pd.DataFrame, t: pd.DataFrame, var_col: str = "var_ours") -> dict:
+    """Coverage of the 90% and 50% intervals of the final model: overall, by day/night, by size band (Aqua cell-days), the
+    day+night total, and by period (2017-2018 against 2019-2021) with the widening factor c fitted on 2017-2018 only."""
+    def both(x: pd.DataFrame) -> dict:
+        if len(x) == 0:
+            return {"units": 0}
+        return {"units": len(x), "coverage_90": coverage(x.actual, x.pred_ours, x[var_col]),
+                "coverage_50": coverage(x.actual, x.pred_ours, x[var_col], z=Z50)}
+    out: dict = {"all": both(u), "total": both(t), "by_daynight": {dn: both(u[u.daynight == dn]) for dn in ("D", "N")}, "by_band": {}}
+    for dn in ("D", "N"):
+        for lo, hi in band_edges():
+            sel = u[(u.daynight == dn) & (u.actual >= lo) & (u.actual < hi)]
+            out["by_band"][f"{dn}|{lo:g}-{'' if np.isinf(hi) else format(hi, 'g')}"] = both(sel)
+    early, late = u[u.year < SPLIT_YEAR], u[u.year >= SPLIT_YEAR]
+    c90 = widening_factor(early.actual, early.pred_ours, early[var_col])
+    c50 = widening_factor(early.actual, early.pred_ours, early[var_col], level_z=Z50, target=0.50)
+    out["by_period"] = {"2017-2018": both(early), "2019-2021": both(late)}
+    out["widening"] = {"fitted_on": "2017-2018 only", "c_for_90": c90, "c_for_50": c50, "applied": False,
+                       "coverage_2019_2021_with_c": {
+                           "90": float(coverage(late.actual, late.pred_ours, late[var_col], c=c90)) if len(late) and np.isfinite(c90) else None,
+                           "50": float(coverage(late.actual, late.pred_ours, late[var_col], z=Z50, c=c50)) if len(late) and np.isfinite(c50) else None}}
+    return out
 
 
 def summarise(u: pd.DataFrame, t: pd.DataFrame) -> dict:
@@ -194,6 +248,7 @@ def evaluate(agg: pd.DataFrame, glob: pd.DataFrame, entity_type: str, min_cell_d
     s["min_cell_days"] = min_cell_days
     s["entity_type"] = entity_type
     s["losses"] = losses(s)
+    s["lead_check"] = lead_check(u, t)
     return s
 
 
@@ -234,7 +289,7 @@ def run(paths: hz.Paths | None = None, phi: dict[str, float] | None = None, kapp
         res = {"main": evaluate(agg, glob, et, MIN_CELL_DAYS, phi, kappa), "sensitivity": {}}
         for thr in SENSITIVITY:
             s = evaluate(agg, glob, et, thr, phi, kappa)
-            res["sensitivity"][str(int(thr))] = {k: s[k] for k in ("all", "by_daynight", "coverage", "losses")}
+            res["sensitivity"][str(int(thr))] = {k: s[k] for k in ("all", "by_daynight", "coverage", "losses", "lead_check")}
         out["units"][et] = res
     (paths.products.parent / "interim" / "qa").mkdir(parents=True, exist_ok=True)
     (paths.products.parent / "interim" / "qa" / "holdout_report.json").write_text(json.dumps(out, indent=1), encoding="utf-8")

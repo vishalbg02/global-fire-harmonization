@@ -568,6 +568,40 @@ Source: `python pipeline/holdout.py`; the report is `data/interim/qa/holdout_rep
 - By group (at least 30 units, final model): 7 of 14 region groups are inside 80% to 97% for D/N units (range 0.70 to 0.96) and 7 of 14 for region totals (0.67 to 1.00). 45 of 87 countries are inside for D/N units (range 0.39 to 1.00); 16 of 19 countries for totals (0.68 to 0.96). The pooled number meets the target, but roughly half of the individual regions and countries fall below 80%.
 - Lowest country D/N unit coverages (at least 30 units) include DZA 0.41, MWI 0.39, DEU 0.56, JPN 0.57, CHN 0.58 and PER 0.54; reasons were not investigated. **[OPEN]**
 
+**Coverage check asked by the Lead on PR #43 [VERIFIED]** (final model `phi` and `kappa`; 90% and 50% intervals; the rule below was fixed by the Lead before these numbers were seen).
+
+| Level | Units | 90% interval | 50% interval |
+|---|---|---|---|
+| Regions, day/night units | 1,466 | **0.818** | 0.471 |
+| Regions, day | 830 | 0.870 | 0.516 |
+| Regions, night | 636 | 0.750 | 0.414 |
+| Regions, day+night total | 636 | 0.847 | 0.497 |
+| Countries, day/night units | 6,409 | **0.811** | 0.439 |
+| Countries, day | 4,798 | 0.817 | 0.448 |
+| Countries, night | 1,611 | 0.794 | 0.412 |
+| Countries, day+night total | 1,600 | 0.826 | 0.463 |
+
+**By size band** (Aqua cell-days of the unit; 90% interval and 50% interval in brackets; units in brackets of the band at 20 or more; the 5 to 20 band comes from the run with a minimum of 5):
+
+| Band | Regions D | Regions N | Countries D | Countries N |
+|---|---|---|---|---|
+| 5 to 20 | 0.828 (0.483), n 29 | 0.582 (0.276), n 134 | 0.831 (0.482), n 1,750 | 0.858 (0.486), n 1,118 |
+| 20 to 100 | 0.727 (0.273), n 22 | 0.712 (0.349), n 229 | 0.814 (0.424), n 1,852 | 0.779 (0.396), n 926 |
+| 100 to 500 | 0.770 (0.415), n 135 | 0.752 (0.407), n 226 | 0.764 (0.409), n 1,239 | 0.830 (0.429), n 529 |
+| 500 and more | 0.895 (0.544), n 673 | 0.796 (0.503), n 181 | 0.858 (0.501), n 1,707 | 0.763 (0.449), n 156 |
+
+**By period** (the Lead's split: a widening factor `c` on 2017 to 2018 only, coverage on 2019 to 2021):
+
+| Level | 90%, 2017-2018 | 90%, 2019-2021 | 50%, 2017-2018 | 50%, 2019-2021 |
+|---|---|---|---|---|
+| Regions | 0.828 (587 units) | 0.811 (879) | 0.504 | 0.449 |
+| Countries | 0.824 (2,520) | 0.803 (3,889) | 0.437 | 0.440 |
+
+**The pre-registered rule (Lead, PR #43):** if coverage is below 80%, estimate one factor `c` on 2017 to 2018 only and report 2019 to 2021 with it; if it is 80% to 97%, change nothing and report it; above 97%, report only.
+- **Applied here:** the pooled coverage of the 90% interval is 0.818 (regions) and 0.811 (countries), inside 80% to 97%, so **nothing is changed** and the honest holdout number is **0.811 and 0.803 on 2019 to 2021**.
+- **Not met, and not hidden:** night units alone (0.750 regions, 0.794 countries), the 100 to 500 and 20 to 100 bands at region level (0.71 to 0.77), country night over 500 cell-days (0.763), and the 5 to 20 band at region night (0.582). The 50% interval covers 0.47 and 0.44, below 50%, so the intervals are slightly too narrow in the middle as well.
+- **For information, not applied:** the smallest `c` giving 90% on 2017 to 2018 is 1.26 (regions) and 1.31 (countries); with it, the coverage on 2019 to 2021 would be 0.877 and 0.887 (the 50% interval, `c` 0.97 and 1.16: 0.439 and 0.500).
+
 **Sensitivity to the minimum Aqua cell-days**
 
 | Level | min | n D | n N | MALE ours D / N | with_phi_kappa coverage: D/N, D, N, total | with_phi_only: D/N, total |
