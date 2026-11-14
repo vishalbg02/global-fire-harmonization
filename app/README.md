@@ -41,6 +41,10 @@ Open the address Vite prints (use `localhost`). While `metadata.synthetic` is `t
 
 The address bar always holds the selection, so a link reproduces the view. Query parameters (all optional, defaults left out): `area` (`COUNTRY:IDN`, `CONTINENT:AS`, `GLOBAL`, or `CUSTOM:west,south,east,north`), `month` (`2015-09`), `source` (`raw` or `harmonized`), `map` (`verdict` or `activity`) and `value` (`pct` or `activity`). Unknown or malformed values are ignored. Raw with % of normal, or raw with the verdict map, cannot be selected together.
 
+## Methods and validation page (T-041)
+
+A "Methods and validation" link in the header opens a page (`?page=methods`, kept in the link; no router library). It holds the method in plain language (`src/content/methods.ts`, drafted from the approved decisions and `docs/DATA_SOURCES.md`, each statement labelled APPROVED, PROPOSED, VERIFIED, LIMITATION, OPEN or NOT_BUILT_YET, with its source), what each verdict and reason code means (from the approved reason texts), the D-009 grid evidence, the validation results exactly as `GET /api/validation` serves them, a separate "Planned tests (not run yet)" list that has no status and is never part of the results, and the FIRMS acknowledgement (from `/api/meta`), the seven dataset DOIs and the references. Results are shown in file order, each status as text plus an icon; FAIL and INCONCLUSIVE are drawn with a heavier border than PASS; an empty list says no test has been run yet. Each reason code in the evidence panel links to its entry on the page.
+
 ## Performance and accessibility (T-042)
 
 - **Code splitting:** the map (MapLibre, deck.gl, the draw tool) and the two charts (ECharts) load when first needed. The first-load chunk went from 2,816.61 kB (about 794 kB gzipped) to 314 kB (about 92 kB gzipped). Every chunk is under 500 kB except `maplibre-gl` (1.06 MB, one library) and its own worker (519 kB), which load only with the map; the build warning limit is set to 1,100 kB for that reason (`vite.config.ts`).
@@ -48,6 +52,17 @@ The address bar always holds the selection, so a link reproduces the view. Query
 - **Colour vision:** `src/content/colorVision.ts` simulates protanopia, deuteranopia and tritanopia (Machado, Oliveira and Fernandes 2009) and its tests check every ramp and colour set (threshold CIEDE2000 10, chosen for this project, not a standard). The raw-combined line is near black because it was too close to the baseline grey. Pairs that still fall below the threshold are pinned in the tests with the cue that separates them (icon, dash pattern or width).
 - **Contrast:** `src/content/contrast.test.ts` reads the tokens in `src/index.css` and checks WCAG 2.1 AA text contrast. The app has one (light) theme.
 - **Loading:** a custom area shows "Computing this area… A new area can take several seconds." while it computes.
+
+## Offline copy of the preset views (T-043)
+
+The app can run from static files written by `api/fire_api/static_export.py` (see `api/README.md`), with no API:
+
+- **Static-only build** (no API calls at all): `VITE_STATIC_ONLY=1 npm run build`, with the files in `public/data/` (the build copies them into `dist/data/`).
+- **Runtime fallback** in the normal build: if the API cannot be reached and a copy exists, the app switches to it. An answer of the API (404, 422, 503) is never replaced by the copy.
+- In both cases a notice says "Offline copy" with the date it was made and the data snapshot. The map, calendar, evidence, witness chart, anomaly list and the CSV of every preset area work; custom areas (typed or drawn) and the CSV of a box are disabled with "Custom areas need the live service. This offline copy has the preset views only."
+- **Which copy:** the full copy (all months, about 474 MB gzipped) is for the demo laptop, generated on that machine; the 24-month copy (`--latest-months 24`, measured 55.3 MB gzipped, 225 MB raw) is for any web host. The two commands are in `api/README.md`. In a 24-month copy the month slider and the map month picker list only the months that have a map (the manifest's list), a month chosen in the calendar that has no map says "No offline map for this month", and a note reads "Offline copy: map available for <first>–<last>; the calendar and charts cover every month." The calendar, series, evidence and CSVs cover every month in both.
+- The files are generated, never committed (`public/data/` is ignored). Publishing them is documented, not done: serve `dist/` with its `data/` folder from any static host (nothing is deployed from this repository without the Lead's go-ahead and a named host).
+- `src/api/staticData.ts` reads the files and decodes the columnar map months; `src/api/client.ts` chooses between the API and the copy in one place (`route`).
 
 ## Raw-only data
 
@@ -60,6 +75,7 @@ A custom rectangle is sent to `POST /api/series/custom`; the API returns the ser
 ## Configuration
 
 - `VITE_API_BASE_URL`: base URL of the API (for example `http://localhost:8000`). Optional; it holds no secret. Without a reachable API the map still shows the country layer and reports that data are not available. Contract v0.1.0 defines no response envelope, so the client expects the bare payload of `GET /api/meta` and `GET /api/map`.
+- `VITE_STATIC_ONLY`: set to `1` to build for a deployment with no API (the app reads the static files in `public/data/` only; see "Offline copy" above). Build-time, no secret.
 
 ## Country boundaries
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Bbox } from '../../api/contract.ts'
+import { STATIC_CUSTOM_MESSAGE, useStaticManifest } from '../../api/staticData.ts'
 import { parseBboxFields } from '../../state/bbox.ts'
 import type { BboxFields } from '../../state/bbox.ts'
 
@@ -33,6 +34,8 @@ export const CUSTOM_COMPUTING =
   'Computing this area from the satellite records. A new area can take several seconds.'
 
 export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, serverMessage, loading }: Props) {
+  // The offline copy has the preset views only (T-043): the form says so and cannot be submitted.
+  const offline = useStaticManifest() !== null
   const [fields, setFields] = useState<BboxFields>({
     west: initial === null ? '' : String(initial[0]),
     south: initial === null ? '' : String(initial[1]),
@@ -74,13 +77,18 @@ export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, se
         Latitude and longitude in degrees (WGS84). West must be less than east, and south less than north.
       </p>
       <div className="custom-actions">
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || offline}>
           Show custom area
         </button>
-        <button type="button" onClick={onToggleDrawing} aria-pressed={drawing}>
+        <button type="button" onClick={onToggleDrawing} aria-pressed={drawing} disabled={offline}>
           {drawing ? 'Cancel drawing' : 'Draw on the map'}
         </button>
       </div>
+      {offline && (
+        <p className="form-error" role="status">
+          {STATIC_CUSTOM_MESSAGE}
+        </p>
+      )}
       {loading && (
         <p className="custom-computing" role="status">
           {CUSTOM_COMPUTING}

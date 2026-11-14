@@ -16,11 +16,7 @@ export function Legend({ layer, max }: { layer: MapLayer; max: number }) {
             const p = VERDICT_PRESENTATION[v]
             return (
               <li key={v}>
-                <span
-                  className={v === 'NO_DETECTED_ACTIVITY' ? 'swatch swatch-marked' : 'swatch'}
-                  style={{ background: rgb(p.color) }}
-                  aria-hidden="true"
-                >
+                <span className="swatch" style={{ background: rgb(p.color) }} aria-hidden="true">
                   {p.icon}
                 </span>
                 {p.label}
@@ -29,8 +25,9 @@ export function Legend({ layer, max }: { layer: MapLayer; max: number }) {
           })}
         </ul>
         <p className="legend-note">
-          Each verdict is also given as an icon and text, not colour alone. A dark outline on a cell
-          marks "no detected activity".
+          Each verdict is also given as an icon and text, not colour alone. The icons appear on the
+          map when you zoom in far enough for a cell to hold one; the verdict is always in the
+          tooltip and in the evidence panel.
         </p>
       </section>
     )
