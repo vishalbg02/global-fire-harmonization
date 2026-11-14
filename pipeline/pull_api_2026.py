@@ -184,9 +184,10 @@ def main() -> int:
     today = dt.date.today().isoformat()
 
     if args.check:
-        avail_file = sorted(AVAIL.glob("data_availability_*.csv"))[-1]
-        rows = csv.DictReader(open(avail_file, encoding="utf-8"))
-        avail = {r["data_id"]: (dt.date.fromisoformat(r["min_date"]), dt.date.fromisoformat(r["max_date"])) for r in rows}
+        avail_file = max(AVAIL.glob("data_availability_*.csv"))
+        with open(avail_file, encoding="utf-8") as fh:
+            avail = {r["data_id"]: (dt.date.fromisoformat(r["min_date"]), dt.date.fromisoformat(r["max_date"]))
+                     for r in csv.DictReader(fh)}
         return 0 if check_coverage(avail) else 1
 
     avail = fetch_availability(today)
@@ -219,7 +220,7 @@ def main() -> int:
             tmp.replace(path)  # atomic: a stopped run never leaves a half-written .csv
             row = [source, start, days, level, len(body.splitlines()) - 1, attempts, "OK"]
             ok = True
-        except Exception as e:  # log and continue; never fill gaps
+        except Exception as e:  # noqa: BLE001  log and continue; never fill gaps
             row = [source, start, days, level, "", RETRIES, "FAIL: " + redact(str(e))]
             print("  FAIL:", redact(str(e)), flush=True)
             ok = False
