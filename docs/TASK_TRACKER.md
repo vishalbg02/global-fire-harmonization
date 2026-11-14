@@ -71,7 +71,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 |---|---|---|---|---|---|---|---|---|---|
 | T-030 | Environment setup per the approved stack; app skeleton | M3 | P0 | T-0A, T-0D | `Swastik` (accepted for this task only) | [#5](https://github.com/vishalbg02/global-fire-harmonization/pull/5) | MERGED (2026-11-14) | APPROVED | Runs locally for M1 and M3 |
 | T-031 | Global map: country layer + analysis-cell layer | M3 | P0 | T-030, T-010 | `frontend/T-031-global-map` | [#14](https://github.com/vishalbg02/global-fire-harmonization/pull/14) | MERGED (2026-11-14) | APPROVED | Selected month renders; tooltip per cell |
-| T-032 | Calendar (years × months; % of normal / activity) | M3 | P0 | T-010 | `frontend/T-032-calendar` | — | TODO | — | Accessible ramps; legend; null shown as "no data" |
+| T-032 | Calendar (years × months; % of normal / activity) | M3 | P0 | T-010 | `frontend/T-032-calendar` | [#20](https://github.com/vishalbg02/global-fire-harmonization/pull/20) | MERGED (2026-11-14) | APPROVED | Accessible ramps; legend; null shown as "no data" |
 | T-033 | Raw vs harmonized toggle | M3 | P0 | T-032 | `frontend/T-033-toggle` | — | TODO | — | Switches calendar and map |
 | T-034 | API skeleton serving fixtures (all endpoints) | M3 | P0 | T-010, T-0D | `api/T-034-api-skeleton` | [#16](https://github.com/vishalbg02/global-fire-harmonization/pull/16) | MERGED (2026-11-14) | APPROVED | Responses validate against the contract |
 | T-035 | Country/continent selection + rectangle custom area | M3 | P0 | T-034 | `frontend/T-035-area-selection` | — | TODO | — | Custom area returns a series via `harmonize_area()` |
