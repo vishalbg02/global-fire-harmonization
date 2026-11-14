@@ -55,7 +55,7 @@ None from NASA. No keys. The generator uses a fixed random seed so output is rep
 Labelled synthetic; under 5 MB; validate against the contract.
 
 ## 12. Required tests
-`python -m pytest pipeline/tests -q`: each file matches the contract schema and enums; null rules hold; every verdict, reason code and required edge case is present; total size under 5 MB; regenerating with the same seed gives identical content; `synthetic` flags are set. `python -m ruff check pipeline` passes.
+`python -m pytest pipeline/tests -q`: each file matches the contract schema and enums; null rules hold; every verdict, reason code and required edge case is present; total size under 5 MB; regenerating with the same seed gives identical content; `synthetic` flags are set. `python -m ruff check pipeline/make_fixtures.py pipeline/contract_check.py pipeline/tests` passes. (`ruff` also reports findings in the earlier T-001 and T-008 scripts; those files are outside this task and are reported, not changed.)
 
 ## 13. Documentation updates
 `docs/TASK_TRACKER.md` row T-010; `data/fixtures/v0.1.0/README.md` (how it was generated, edge-case list).

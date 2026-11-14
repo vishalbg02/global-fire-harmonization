@@ -1,0 +1,85 @@
+{
+  "contract_version": "0.1.0",
+  "method_version": "SYNTHETIC-0.0.0",
+  "generated_at": "2026-11-14T00:00:00Z",
+  "synthetic": true,
+  "tests": [
+    {
+      "test_id": "SYNTHETIC-A1-INDONESIA-2015",
+      "family": "A",
+      "title": "Real anomaly preserved (two independent paths)",
+      "case": "Indonesia Sep-Oct 2015",
+      "criterion": "Same direction; peak month +-1; magnitudes overlap within 90% intervals",
+      "threshold": "SYNTHETIC placeholder (real thresholds are pre-registered at G1)",
+      "measured": {
+        "aqua_only_pct_of_normal": 410.0,
+        "snpp_only_pct_of_normal": 380.0
+      },
+      "status": "PASS",
+      "notes": "SYNTHETIC EXAMPLE — not a result"
+    },
+    {
+      "test_id": "SYNTHETIC-B1-SNPP-START",
+      "family": "B",
+      "title": "No spurious step when a satellite starts",
+      "case": "S-NPP start 2012-01",
+      "criterion": "No step larger than the placeholder tolerance",
+      "threshold": "SYNTHETIC placeholder (real thresholds are pre-registered at G1)",
+      "measured": {
+        "step_pct": 31.0
+      },
+      "status": "FAIL",
+      "notes": "SYNTHETIC EXAMPLE — not a result"
+    },
+    {
+      "test_id": "SYNTHETIC-B3-AQUA-DRIFT",
+      "family": "B",
+      "title": "Known artifact handled",
+      "case": "Aqua drift era from 2022-01",
+      "criterion": "Drift flagged; Aqua excluded from witnesses_used",
+      "threshold": "SYNTHETIC placeholder (real thresholds are pre-registered at G1)",
+      "measured": {
+        "months_flagged": 59
+      },
+      "status": "PASS",
+      "notes": "SYNTHETIC EXAMPLE — not a result"
+    },
+    {
+      "test_id": "SYNTHETIC-D1-COVERAGE",
+      "family": "D",
+      "title": "Interval coverage on holdout",
+      "case": "Holdout 2017-2021",
+      "criterion": "Nominal 90% coverage within tolerance",
+      "threshold": "SYNTHETIC placeholder (real thresholds are pre-registered at G1)",
+      "measured": {
+        "coverage": null
+      },
+      "status": "INCONCLUSIVE",
+      "notes": "SYNTHETIC EXAMPLE — not a result"
+    },
+    {
+      "test_id": "SYNTHETIC-D2-GAPS",
+      "family": "D",
+      "title": "Gaps shown as gaps",
+      "case": "Outage month 2016-02",
+      "criterion": "Outage months flagged, never filled",
+      "threshold": "SYNTHETIC placeholder (real thresholds are pre-registered at G1)",
+      "measured": {},
+      "status": "NOT_RUN",
+      "notes": "SYNTHETIC EXAMPLE — not a result"
+    },
+    {
+      "test_id": "SYNTHETIC-CTRL-QUIET",
+      "family": "CTRL",
+      "title": "Quiet months stay quiet",
+      "case": "Fire-free desert cells",
+      "criterion": "NO_DETECTED_ACTIVITY, never BELOW_NORMAL",
+      "threshold": "SYNTHETIC placeholder (real thresholds are pre-registered at G1)",
+      "measured": {
+        "cells_checked": 8
+      },
+      "status": "PASS",
+      "notes": "SYNTHETIC EXAMPLE — not a result"
+    }
+  ]
+}
