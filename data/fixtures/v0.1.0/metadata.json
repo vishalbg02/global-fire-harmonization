@@ -25,8 +25,8 @@
     "NOAA20_VIIRS"
   ],
   "data_snapshot": {
-    "zips_downloaded": null,
-    "api_pulled": null
+    "zips_downloaded": "2026-11-14",
+    "api_pulled": "2026-11-14"
   },
   "citation": "SYNTHETIC DATA, not NASA observations. Real products will cite NASA FIRMS (LANCE, ESDIS)."
 }

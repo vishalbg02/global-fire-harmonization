@@ -482,7 +482,7 @@ def write_json(out: Path, months) -> dict:
         "baseline_years": list(BASELINE_YEARS), "first_month": "2002-07", "latest_month": "2026-11",
         "provisional_months": ["2026-08", "2026-09", "2026-10", "2026-11"],
         "witnesses": ["AQUA_MODIS", "SNPP_VIIRS", "NOAA20_VIIRS"],
-        "data_snapshot": {"zips_downloaded": None, "api_pulled": None},
+        "data_snapshot": {"zips_downloaded": "2026-11-14", "api_pulled": "2026-11-14"},
         "citation": "SYNTHETIC DATA, not NASA observations. Real products will cite NASA FIRMS (LANCE, ESDIS).",
     }
     tests = [
@@ -583,7 +583,7 @@ seed; regenerate with `python pipeline/make_fixtures.py`. Check against the cont
 Calibration ratios, the Aqua drift cutoff, the outage month, verdict thresholds (p ≥ {P_ABOVE} / {P_BELOW} / {P_WITHIN}),
 the disagreement flag ({DISAGREE_FLAG}), baseline rule (same calendar month, 2003 to 2022, at least {MIN_BASELINE_VALUES} values),
 fire-region codes, strata and the day/night split are all placeholders. The grid decision (D-009) and `fine_deg` are open, so
-`metadata.grid.fine_deg` is `null`. `data_snapshot` dates are `null` because no real snapshot exists for synthetic data.
+`metadata.grid.fine_deg` is `null`. `data_snapshot` carries the real download date of the project's snapshot (2026-11-14) so the app can show a date; the fixture values are not that data.
 Probabilities are `null` for `NO_DETECTED_ACTIVITY`, `CANNOT_DETERMINE` without a baseline, and null estimates.
 Entity values add the cell estimates and combine their standard deviations as if independent (placeholder).
 

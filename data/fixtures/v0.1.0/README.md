@@ -45,7 +45,7 @@ seed; regenerate with `python pipeline/make_fixtures.py`. Check against the cont
 Calibration ratios, the Aqua drift cutoff, the outage month, verdict thresholds (p ≥ 0.8 / 0.8 / 0.5),
 the disagreement flag (1.25), baseline rule (same calendar month, 2003 to 2022, at least 10 values),
 fire-region codes, strata and the day/night split are all placeholders. The grid decision (D-009) and `fine_deg` are open, so
-`metadata.grid.fine_deg` is `null`. `data_snapshot` dates are `null` because no real snapshot exists for synthetic data.
+`metadata.grid.fine_deg` is `null`. `data_snapshot` carries the real download date of the project's snapshot (2026-11-14) so the app can show a date; the fixture values are not that data.
 Probabilities are `null` for `NO_DETECTED_ACTIVITY`, `CANNOT_DETERMINE` without a baseline, and null estimates.
 Entity values add the cell estimates and combine their standard deviations as if independent (placeholder).
 
