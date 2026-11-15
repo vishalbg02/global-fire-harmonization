@@ -36,19 +36,19 @@ describe('MonthPicker render (T-087)', () => {
   })
 })
 
-describe('MonthSelector with the picker (T-087)', () => {
+describe('MonthSelector with the picker (T-087, the timeline of T-093)', () => {
   const html = renderToString(<MonthSelector months={months} value={{ year: 2019, month: 12 }} onChange={noop} />)
 
-  it('keeps the existing controls and adds year steps, year ticks and the picker button', () => {
+  it('keeps previous and next month, the slider, year ticks and the picker button (year steps are Page Up and Page Down on the slider)', () => {
     expect(html).toContain('aria-label="Previous month"')
     expect(html).toContain('aria-label="Next month"')
     expect(html).toContain('aria-label="Month slider"')
-    expect(html).toContain(`aria-label="${T.PREVIOUS_YEAR_LABEL}"`)
-    expect(html).toContain(`aria-label="${T.NEXT_YEAR_LABEL}"`)
+    expect(html).toContain('role="slider"')
+    expect(html).not.toContain(`aria-label="${T.PREVIOUS_YEAR_LABEL}"`)
     expect(html).toContain('December 2019')
     expect(html).toContain('aria-haspopup="dialog"')
     expect(html).toContain('aria-expanded="false"')
-    for (const year of [2005, 2010, 2015, 2020, 2025]) expect(html).toContain(`>${year}<`)
+    for (const year of [2002, 2006, 2010, 2014, 2018, 2022, 2026]) expect(html).toContain(`>${year}<`)
   })
 
   it('has the picker closed to start with, and describes the keys for the slider', () => {
@@ -56,12 +56,14 @@ describe('MonthSelector with the picker (T-087)', () => {
     expect(html).toContain(T.SLIDER_HINT)
   })
 
-  it('disables the year steps at the ends of the record and with no month', () => {
+  it('disables the steps at the ends of the record and with no month', () => {
     const atEnd = renderToString(<MonthSelector months={months} value={{ year: 2026, month: 11 }} onChange={noop} />)
-    expect(atEnd).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Next year"/)
+    expect(atEnd).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Next month"/)
+    expect(atEnd).not.toMatch(/<button[^>]*disabled=""[^>]*aria-label="Previous month"/)
     const none = renderToString(<MonthSelector months={[]} value={null} onChange={noop} />)
     expect(none).toContain('No month available')
-    expect(none).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Previous year"/)
+    expect(none).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Previous month"/)
+    expect(none).toContain('aria-disabled="true"')
   })
 })
 

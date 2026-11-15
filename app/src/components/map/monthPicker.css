@@ -1,123 +1,7 @@
-/* Month picker (T-087). Existing tokens only; no gradients, no shadows. */
-.month-selector {
-  position: relative;
-}
+/* Month picker (T-087). Existing tokens only; no gradients, no shadows. The month control around it is the timeline
+   (components/timeline/timeline.css), which opens this popover upwards. */
 
-/* The slider: a wider track, a 24 px thumb (the hit area is the 28 px row), year ticks underneath. */
-.month-selector .month-slider {
-  position: relative;
-  flex: 0 1 240px;
-  min-width: 140px;
-  padding-bottom: 18px;
-}
-
-.month-selector .month-slider input[type='range'] {
-  display: block;
-  width: 100%;
-  height: 28px;
-  margin: 0;
-  background: transparent;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  accent-color: var(--brand);
-}
-
-.month-selector .month-slider input[type='range']::-webkit-slider-runnable-track {
-  height: 6px;
-  background: var(--border);
-  border-radius: var(--radius);
-}
-
-.month-selector .month-slider input[type='range']::-moz-range-track {
-  height: 6px;
-  background: var(--border);
-  border-radius: var(--radius);
-}
-
-.month-selector .month-slider input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 24px;
-  height: 24px;
-  margin-top: -9px;
-  background: var(--brand);
-  border: 2px solid var(--surface);
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
-.month-selector .month-slider input[type='range']::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  background: var(--brand);
-  border: 2px solid var(--surface);
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
-.month-selector .month-slider input[type='range']:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.month-selector .month-slider input[type='range']:disabled {
-  cursor: default;
-  opacity: 0.5;
-}
-
-/* Ticks: the track runs between the thumb centres, so the tick area is inset by half a thumb. */
-.month-ticks {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 24px;
-  height: 14px;
-  pointer-events: none;
-}
-
-.month-tick {
-  position: absolute;
-  top: 0;
-  width: 1px;
-  height: 4px;
-  background: var(--muted);
-}
-
-.month-tick.is-labelled {
-  height: 7px;
-}
-
-.month-tick-label {
-  position: absolute;
-  top: 8px;
-  left: 0;
-  transform: translateX(-50%);
-  font-family: var(--font-mono);
-  font-size: var(--t-12);
-  line-height: 1;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.month-hint {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.month-year-step {
-  min-width: 36px;
-  font-size: var(--t-12);
-}
-
-.month-picker-trigger {
-  white-space: nowrap;
-}
-
-/* The popover, below the month control. */
+/* The popover, below its button by default. */
 .month-picker-anchor {
   position: absolute;
   top: 100%;
@@ -274,11 +158,6 @@
 
 /* Phone: the picker fills the width, each year is two rows of six months, and the touch targets grow. */
 @media (max-width: 640px) {
-  .month-selector .month-slider {
-    flex: 1 1 100%;
-    order: 5;
-  }
-
   .month-picker-anchor {
     width: 100%;
     left: 0;
@@ -298,12 +177,6 @@
   }
 
   .month-picker .month-picker-month {
-    min-height: 44px;
-  }
-
-  .month-year-step,
-  .month-selector .btn-icon {
-    min-width: 44px;
     min-height: 44px;
   }
 

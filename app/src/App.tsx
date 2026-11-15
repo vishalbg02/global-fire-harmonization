@@ -48,7 +48,7 @@ import { MapModeSelector } from './components/map/MapModeSelector.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
-import { MonthSelector } from './components/map/MonthSelector.tsx'
+import { Timeline } from './components/timeline/Timeline.tsx'
 import { useMapCells } from './state/useMapCells.ts'
 import { hasOfflineMap, monthKey, monthLabel, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
@@ -456,10 +456,15 @@ export default function App() {
               </div>
             </section>
             <section className="timeline-zone" aria-label={UI.TIMELINE_LABEL} data-tour="month" data-playing={playing}>
-              <MonthSelector
+              <Timeline
                 months={mapMonths}
                 value={selection.month}
                 onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
+                meta={meta.data ?? null}
+                series={areaSeries.data}
+                source={rawOnly ? 'raw' : selection.source}
+                playing={playing}
+                onPlayingChange={setPlaying}
               />
             </section>
             <MapSourceLine methodVersion={meta.data?.method_version ?? null} />

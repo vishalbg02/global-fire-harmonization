@@ -183,7 +183,8 @@
 /* ---- Zone C: time ---- */
 .timeline-zone {
   position: relative;
-  padding: var(--s-8) var(--s-16);
+  container: timeline / inline-size;
+  padding: var(--s-8) var(--s-16) var(--s-4);
   background: var(--surface);
   border-top: var(--rule);
   min-width: 0;
