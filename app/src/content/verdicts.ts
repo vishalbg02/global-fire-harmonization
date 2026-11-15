@@ -37,7 +37,7 @@ export const VERDICT_PRESENTATION: Record<Verdict, VerdictPresentation> = {
   NO_DETECTED_ACTIVITY: {
     label: 'No detected activity',
     icon: '○',
-    color: [140, 195, 125],
+    color: [245, 225, 185],
     description: 'No satellite-detected fire activity, and little expected here.',
   },
 }
