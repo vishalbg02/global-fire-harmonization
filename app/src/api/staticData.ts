@@ -2,6 +2,7 @@
 // api/fire_api/static_export.py. Every file is the API's own answer; nothing is computed here.
 
 import { useSyncExternalStore } from 'react'
+import type { CellColumns } from './mapColumns.ts'
 
 /** Message shown wherever a custom area or a drawn box is asked for in the offline copy. */
 export const STATIC_CUSTOM_MESSAGE =
@@ -125,33 +126,9 @@ export function enterStaticMode(): Promise<StaticManifest> {
 }
 
 // ------------------------------------------------------------------ the compact map layout
-export type CellColumns = Record<string, unknown[]>
-
-export interface EncodedMonth {
-  n: number
-  cell_index?: number[]
-  columns: Record<string, { const: unknown } | { dict: unknown[]; idx: number[] } | { values: unknown[] }>
-}
-
-const CELL_FIELDS = ['cell_id', 'lat_min', 'lat_max', 'lon_min', 'lon_max'] as const
-
-/** Rebuilds the API's records of one month from the shared cell list and the month's columns. */
-export function decodeMonth(encoded: EncodedMonth, cells: CellColumns): Record<string, unknown>[] {
-  const index = encoded.cell_index ?? Array.from({ length: encoded.n }, (_, i) => i)
-  const out: Record<string, unknown>[] = index.map((j) => {
-    const record: Record<string, unknown> = {}
-    for (const key of CELL_FIELDS) record[key] = (cells[key] as unknown[])[j]
-    return record
-  })
-  for (const [key, column] of Object.entries(encoded.columns)) {
-    out.forEach((record, i) => {
-      if ('const' in column) record[key] = column.const
-      else if ('dict' in column) record[key] = column.dict[column.idx[i] as number]
-      else record[key] = column.values[i]
-    })
-  }
-  return out
-}
+// The layout and its decoder are shared with GET /api/map/columns: see mapColumns.ts.
+export { decodeMonth } from './mapColumns.ts'
+export type { CellColumns, EncodedMonth } from './mapColumns.ts'
 
 let cellsPromise: Promise<CellColumns> | null = null
 
