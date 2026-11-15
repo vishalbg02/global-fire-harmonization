@@ -35,15 +35,14 @@ import type { TabId } from './state/tabs.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
 import { CellInfo } from './components/map/CellInfo.tsx'
-import { Legend } from './components/map/Legend.tsx'
 import { MapModeSelector } from './components/map/MapModeSelector.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
-import { sharedMax } from './components/map/scale.ts'
 import { hasOfflineMap, monthKey, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
+import { useStartMonth } from './state/initialMonth.ts'
 import { checkRoundedRing, polygonArea } from './state/polygon.ts'
 import type { Ring } from './state/polygon.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
@@ -181,13 +180,8 @@ export default function App() {
   const offlineMapNoteText = offline === null ? null : offlineMapNote(offline, months)
   const mapAvailable = hasOfflineMap(offline?.months ?? null, selection.month)
 
-  // Start on the latest month once the available months are known.
-  useEffect(() => {
-    const latest = months[months.length - 1]
-    if (selection.month === null && latest !== undefined) {
-      dispatch({ type: 'set-month', year: latest.year, month: latest.month })
-    }
-  }, [months, selection.month])
+  // Start on the latest determinable month (a month in the link wins), T-071.
+  useStartMonth(months, selection.month, (year, month) => dispatch({ type: 'set-month', year, month }))
 
   // The API layer follows the shared Raw / Harmonized control and the map mode.
   // Raw-only products have no harmonized values: the views show raw activity and say so.
@@ -209,7 +203,6 @@ export default function App() {
   const evidenceHeading = useRef<HTMLHeadingElement>(null)
 
   const cellList: readonly MapCell[] | null = cells.data ?? null
-  const max = cellList === null ? 0 : sharedMax(cellList)
   const selectedCell =
     selection.entity?.entity_type === 'CELL'
       ? (cellList?.find((c) => c.cell_id === selection.entity?.entity_id) ?? null)
@@ -388,6 +381,7 @@ export default function App() {
                 polygonDrawing={polygonDrawing}
                 onDrawnPolygon={choosePolygon}
                 anomalyOutlines={anomalyOutlines}
+                loading={cells.isFetching}
                 onHoverCountry={setHoverCountry}
               />
               </Suspense>
@@ -439,7 +433,6 @@ export default function App() {
                 document.getElementById('details')?.scrollIntoView({ block: 'start' })
               }}
             />
-            <Legend layer={layer} max={max} />
             <section aria-label="Selection" className="selection card">
               <h2>{UI.SELECTION_TITLE}</h2>
               {selection.entity === null && <EmptyState message={UI.SELECTION_EMPTY} />}
