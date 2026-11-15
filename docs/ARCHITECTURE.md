@@ -106,7 +106,7 @@ Details, status codes and the anomaly order: `api/README.md`. The API computes n
 | `GET /api/meta` | `metadata.json` (versions, latest month, provisional months, grid, baseline) |
 | `GET /api/entities?type=COUNTRY\|CONTINENT` | Entity list (id, name, bbox) |
 | `GET /api/map?year=&month=&layer=verdict\|raw\|harmonized` | Analysis-grid cells for one month |
-| `GET /api/map/cells`, `GET /api/map/columns?year=&month=&layer=` | The same cells and month in columns with only the fields the app reads (additive, T-073) |
+| `GET /api/map/cells`, `GET /api/map/columns?year=&month=&layer=` | The same cells and month in columns with only the fields the app reads (additive, T-073); the cell list also carries each cell's country and continent (additive, T-090) |
 | `GET /api/series?entity_type=&entity_id=` | Monthly series for a preset entity (country, continent or `GLOBAL`) |
 | `POST /api/series/custom` body `{"bbox": [W,S,E,N]}` or `{"polygon": [[lon,lat], ...]}` | Monthly series for a custom area (via `harmonize_area`) |
 | `GET /api/evidence?entity_type=&entity_id=&year=&month=` | Evidence panel payload |

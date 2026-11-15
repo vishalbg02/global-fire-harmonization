@@ -66,9 +66,15 @@ def cell_list() -> list[dict[str, Any]]:
     return products.cell_bounds()
 
 
+# Added after the five cell fields (T-090, approved by the Lead on PR #74): the country and the
+# continent of each cell as stored in cells.parquet, so a client can count an area's own cells.
+# Additive: the five fields and every other endpoint are unchanged.
+AREA_FIELDS: tuple[str, ...] = ("country_iso3", "continent")
+
+
 def build_cells() -> bytes:
-    rows = cell_list()
-    columns = {k: [r[k] for r in rows] for k in CELL_FIELDS}
+    rows = products.cell_list_with_areas()
+    columns = {k: [r[k] for r in rows] for k in (*CELL_FIELDS, *AREA_FIELDS)}
     return to_json({"n": len(rows), "columns": columns})
 
 

@@ -139,6 +139,20 @@ def cell_bounds() -> list[dict[str, Any]]:
     )
 
 
+def cell_list_with_areas() -> list[dict[str, Any]]:
+    """The cell list of `cell_bounds()` plus the country and the continent of each cell, as stored
+    in cells.parquet (a cell with no country or continent has null; nothing is computed). Same
+    order: by cell_id."""
+    return _query(
+        """
+        SELECT cell_id, lat_min, lat_max, lon_min, lon_max, country_iso3, continent
+        FROM read_parquet(?)
+        ORDER BY cell_id
+        """,
+        [str(_file("cells.parquet"))],
+    )
+
+
 def _entity_exists(entity_type: EntityType, entity_id: str) -> bool:
     rows = _query(
         "SELECT 1 AS found FROM read_parquet(?) WHERE entity_type = ? AND entity_id = ? LIMIT 1",
