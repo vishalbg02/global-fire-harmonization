@@ -1,5 +1,7 @@
 import type { ReactNode, RefObject } from 'react'
 import type { EntityMonth, Metadata } from '../../api/contract.ts'
+import type { FeaturedStory } from '../../content/featured.ts'
+import { StoryCaption } from '../layout/StoryCaption.tsx'
 import { NOT_AVAILABLE_YET, isRawOnlyRecord, useRawOnly } from '../../content/rawOnly.ts'
 import { methodsHref, reasonAnchor } from '../../content/methodsLink.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
@@ -30,6 +32,14 @@ interface Props {
   headingRef: RefObject<HTMLHeadingElement | null>
   /** The CSV download, shown at the foot of the card. */
   download: ReactNode
+  /** The "Copy link" action, shown beside the download. */
+  copyLink?: ReactNode
+  /** The featured story on screen (the area and month equal it), or null. */
+  story?: FeaturedStory | null
+  /** Opens the Analytics details with the "Compare with" search; left out where compare is not offered. */
+  onCompare?: () => void
+  /** Jumps to the Details tabs below. */
+  onDetails?: () => void
 }
 
 const parseYm = (ym: string) => ({ year: Number(ym.slice(0, 4)), month: Number(ym.slice(5, 7)) })
@@ -52,7 +62,21 @@ export function SummarySourceLine({ record, methodVersion }: { record: EntityMon
  * The summary of the selected area and month, always visible: the verdict first. Every value is
  * the stored one for that month (nothing is computed here).
  */
-export function SummaryCard({ area, month, status, errorMessage, onRetry, records, meta, headingRef, download }: Props) {
+export function SummaryCard({
+  area,
+  month,
+  status,
+  errorMessage,
+  onRetry,
+  records,
+  meta,
+  headingRef,
+  download,
+  copyLink,
+  story = null,
+  onCompare,
+  onDetails,
+}: Props) {
   const globalRawOnly = useRawOnly()
   const record =
     month === null ? undefined : records?.find((r) => r.year === month.year && r.month === month.month)
@@ -149,7 +173,21 @@ export function SummaryCard({ area, month, status, errorMessage, onRetry, record
           {methodVersion !== null && <SummarySourceLine record={record} methodVersion={methodVersion} />}
         </>
       )}
+      {story !== null && <StoryCaption story={story} />}
       <div className="summary-download">{download}</div>
+      <div className="summary-actions">
+        {copyLink}
+        {onCompare !== undefined && (
+          <button type="button" className="btn btn-secondary" onClick={onCompare}>
+            {UI.COMPARE_WITH}
+          </button>
+        )}
+        {onDetails !== undefined && (
+          <button type="button" className="btn btn-secondary" onClick={onDetails} title={UI.DETAILS_JUMP_HINT}>
+            {UI.DETAILS_JUMP}
+          </button>
+        )}
+      </div>
     </Card>
   )
 }

@@ -30,11 +30,11 @@ import {
   ScrollHint,
   TOUCH_HINT,
 } from './mapOverlays.tsx'
-import { ImageryControls, ImageryCredit } from './ImageryControls.tsx'
-import type { MapShape } from './ImageryControls.tsx'
-import { CELL_CASING_IMAGERY, applyImageryParams, cellOpacity, imageryNote, parseImageryParams, satDate, todayIso } from './gibs.ts'
+import { ImageryCredit } from './ImageryControls.tsx'
+import type { Dispatch } from 'react'
+import type { MapViewAction, MapViewState } from '../../state/mapView.ts'
+import { CELL_CASING_IMAGERY, cellOpacity, imageryNote, satDate, todayIso } from './gibs.ts'
 import {
-  GLOBE_OFFERED,
   TileCounter,
   buildStyle,
   hideImagery,
@@ -81,6 +81,12 @@ interface Props {
   loading?: boolean
   /** The selected month: Satellite view shows a day of it (T-084). */
   month?: { year: number; month: number } | null
+  /** The view choices (shape, Satellite view, day, show all verdicts): owned by the app and kept in the link (T-093). */
+  view: MapViewState
+  /** Changes a view choice from the map itself (the legend's "Show all verdicts", the fallback to flat when the globe cannot render). */
+  onView?: Dispatch<MapViewAction>
+  /** Tells the app which imagery could not be loaded, for the note beside the Satellite view control. */
+  onImageryStatus?: (status: { basemapFailed: boolean; trueColourFailed: boolean }) => void
 }
 
 const CUSTOM_SOURCE = 'custom-area'
@@ -124,7 +130,11 @@ export function MapView({
   onHoverCountry,
   loading = false,
   month = null,
+  view,
+  onView,
+  onImageryStatus,
 }: Props) {
+  void onView
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const overlayRef = useRef<MapLibreOverlay | null>(null)
@@ -134,13 +144,10 @@ export function MapView({
   const manifest = useStaticManifest()
   const offlineCopy = STATIC_ONLY || manifest !== null
   const offlineAtStart = useRef(STATIC_ONLY || staticManifest() !== null)
-  // A link may carry sat=1, satday=DD and globe=1 (defaults left out).
-  const [linked] = useState(() => parseImageryParams(window.location.search))
-  const [satOn, setSatOn] = useState(linked.sat)
-  const [satDay, setSatDay] = useState(linked.day)
-  const [shape, setShape] = useState<MapShape>(linked.globe ? 'globe' : 'flat')
-  const linkedGlobe = useRef(linked.globe)
-  const changeShapeRef = useRef<((s: MapShape) => void) | null>(null)
+  // The shape, Satellite view and its day come from the app (one state, kept in the link).
+  const { shape, satOn, satDay } = view
+  /** The projection the map has now: a new map starts flat (mercator). */
+  const projected = useRef<MapViewState['shape']>('flat')
   const [overlayGen, setOverlayGen] = useState(0)
   const [basemapFailed, setBasemapFailed] = useState(false)
   const [failedTcDate, setFailedTcDate] = useState<string | null>(null)
@@ -235,6 +242,7 @@ export function MapView({
     map.on('load', hideOverlayCanvas)
     mapRef.current = map
     overlayRef.current = overlay
+    projected.current = 'flat'
     setZoom(map.getZoom())
     map.on('zoomend', () => setZoom(map.getZoom()))
     // Imagery tiles: count loaded and failed ones; a failed layer is hidden and the plain background shows.
@@ -337,7 +345,6 @@ export function MapView({
       })
       loaded.current = true
       // Imagery state at load: Satellite view may already be on (month known) and the casings are set.
-      if (linkedGlobe.current) changeShapeRef.current?.('globe')
       paintForImagery(map, imageryRef.current.visible)
       syncTrueColour(map, imageryRef.current.date)
     })
@@ -405,30 +412,35 @@ export function MapView({
     else map.once('load', apply)
   }, [offlineCopy])
 
-  const changeShape = useCallback((next: MapShape) => {
+  // The projection follows the shape of the app's state, at load and at every change: the control, the map and the link
+  // read the same value (T-093). The cells overlay picks its view (flat or globe) when it is made, so a new one is made.
+  useEffect(() => {
     const map = mapRef.current
     if (map === null) return
-    setShape(next)
-    map.setProjection({ type: next === 'globe' ? 'globe' : 'mercator' })
-    // The cells overlay picks its view (flat or globe) when it is made: make a new one.
-    if (overlayRef.current !== null) map.removeControl(overlayRef.current)
-    const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
-    map.addControl(overlay)
-    overlayRef.current = overlay
-    setOverlayGen((g) => g + 1)
-  }, [])
+    const apply = () => {
+      if (projected.current === shape) return
+      projected.current = shape
+      map.setProjection({ type: shape === 'globe' ? 'globe' : 'mercator' })
+      if (overlayRef.current !== null) map.removeControl(overlayRef.current)
+      const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
+      map.addControl(overlay)
+      overlayRef.current = overlay
+      setOverlayGen((g) => g + 1)
+    }
+    if (loaded.current) apply()
+    else map.once('load', apply)
+    return () => {
+      map.off('load', apply)
+    }
+  }, [shape])
 
   useEffect(() => {
-    changeShapeRef.current = changeShape
-  }, [changeShape])
+    onImageryStatus?.({ basemapFailed, trueColourFailed: tcFailed })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the callback is read at that moment
+  }, [basemapFailed, tcFailed])
 
-  // Keep sat, satday and globe in the address bar (defaults left out); the app keeps them when it rewrites the link.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    applyImageryParams(params, { sat: satOn, day: satDay, globe: shape === 'globe' })
-    const query = params.toString()
-    window.history.replaceState(null, '', `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`)
-  }, [satOn, satDay, shape])
+  // A new Satellite day or month is tried afresh.
+  useEffect(() => setFailedTcDate(null), [satOn])
 
   useEffect(() => {
     const map = mapRef.current
@@ -718,23 +730,6 @@ export function MapView({
         aria-busy={loading}
       />
       {loading && <MapLoading />}
-      <ImageryControls
-        month={month}
-        offlineCopy={offlineCopy}
-        satOn={satOn}
-        onSatOn={(on) => {
-          setFailedTcDate(null)
-          setSatOn(on)
-        }}
-        satDay={satDay}
-        onSatDay={setSatDay}
-        satDateShown={tcShown ? tcDate : null}
-        shape={shape}
-        onShape={changeShape}
-        globeOffered={GLOBE_OFFERED}
-        note={imageryNote(offlineCopy, basemapFailed, tcFailed)}
-        today={today}
-      />
       <ImageryCredit
         offlineCopy={offlineCopy}
         satDateShown={tcShown ? tcDate : null}
