@@ -1,6 +1,7 @@
 import type { MapCell, MapLayer } from '../../api/contract.ts'
 import { RAW_DESCRIPTION } from '../../content/source.ts'
 import { REASON_CODE_SHORT } from '../../content/reasonCodes.ts'
+import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { NO_DATA, formatEstimate, formatPctOfNormal, verdictProbability } from './format.ts'
 
@@ -8,8 +9,17 @@ import { NO_DATA, formatEstimate, formatPctOfNormal, verdictProbability } from '
  * Cell details: used for the hover tooltip and for the selected-cell panel.
  * On the raw layer only the stored raw count is shown: no verdict, probability, interval or
  * notes, which belong to the harmonized estimate.
+ * `fullReasons` (the pinned card, T-071) adds the approved plain-language sentence of every reason.
  */
-export function CellInfo({ cell, layer = 'harmonized' }: { cell: MapCell; layer?: MapLayer }) {
+export function CellInfo({
+  cell,
+  layer = 'harmonized',
+  fullReasons = false,
+}: {
+  cell: MapCell
+  layer?: MapLayer
+  fullReasons?: boolean
+}) {
   if (layer === 'raw') {
     return (
       <dl className="cell-info">
@@ -52,6 +62,18 @@ export function CellInfo({ cell, layer = 'harmonized' }: { cell: MapCell; layer?
           ? 'None'
           : cell.reason_codes.map((code) => REASON_CODE_SHORT[code]).join('; ')}
       </dd>
+      {fullReasons && cell.reason_codes.length > 0 && (
+        <>
+          <dt>Why</dt>
+          <dd>
+            <ul className="cell-reasons">
+              {cell.reason_codes.map((code) => (
+                <li key={code}>{REASON_TEXTS[code]}</li>
+              ))}
+            </ul>
+          </dd>
+        </>
+      )}
       {cell.data_level !== 'SP' && (
         <>
           <dt>Data level</dt>

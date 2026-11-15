@@ -54,7 +54,7 @@ export function sharedMax(cells: readonly MapCell[]): number {
  * Cells whose meaning must not rest on a pale fill alone: a null value in the activity layers
  * ("no data", which is rare). They get a dark outline (T-042). "No detected activity" in the
  * verdict layer is common (about 65% of cell-months), so an outline would turn the land black at
- * world zoom; it has its own pale blue tone and the icon instead.
+ * world zoom; it has its own soft green tone and the icon instead.
  */
 export function needsOutline(cell: MapCell, layer: MapLayer): boolean {
   return layer !== 'verdict' && layerValue(cell, layer) === null
@@ -66,4 +66,21 @@ export function cellFillColor(cell: MapCell, layer: MapLayer, max: number): Rgba
     return [r, g, b, 220]
   }
   return sequentialColor(layerValue(cell, layer), max)
+}
+
+/** Below this zoom a 0.5 degree cell is about 5 px wide or less and a stroke would only make a mesh. */
+export const OUTLINE_MIN_ZOOM = 3
+/** Alpha of the ordinary cell stroke: a hint of the grid, never a mesh (T-071). */
+export const CELL_STROKE_ALPHA = 35
+
+/**
+ * Width in pixels of the ordinary (not selected, not "no data") cell stroke at a map zoom:
+ * none at world zoom, then thin and growing with the cells. The selected-cell blue outline and the
+ * dark "no data" outline are drawn separately and do not depend on this.
+ */
+export function cellStrokeWidth(zoom: number): number {
+  if (zoom < OUTLINE_MIN_ZOOM) return 0
+  if (zoom < 5) return 0.4
+  if (zoom < 6.5) return 0.7
+  return 1
 }

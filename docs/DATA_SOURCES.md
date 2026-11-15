@@ -940,3 +940,19 @@ The pooling parent in calibration is the GFED basis region (14 regions: BONA, TE
 ## 8. Acknowledgement and terms
 
 FIRMS asks users to acknowledge FIRMS, LANCE and ESDIS when sharing data. Data are provided "as is". See the README.
+
+## 9. Source links shown in the interface (T-076) **[VERIFIED 2026-11-15]**
+
+The app shows its sources (map footer, per-month source line, chart and calendar captions, featured stories). Every link comes from this table; no other URL, version or date is shown. **Verification:** each URL was requested on 2026-11-15 and answered HTTP 200 (the DOI links after redirecting to the NASA Earthdata catalogue page). The DOIs and product names are the ones in `SP_DOIS` and `NRT_DOIS` in `api/fire_api/export.py` (the CSV header block).
+
+| Shown as | Product (standard, SP) | Link |
+|---|---|---|
+| NASA FIRMS | FIRMS, the service that distributes the detections | https://www.earthdata.nasa.gov/data/tools/firms |
+| FIRMS FAQ (SP and NRT levels) | Product levels, latency, record dates (sections 3 and 4) | https://www.earthdata.nasa.gov/data/tools/firms/faq |
+| MODIS Collection 6.1 | MODIS/Aqua MYD14 V061, DOI 10.5067/MODIS/MYD14.061 | https://doi.org/10.5067/MODIS/MYD14.061 |
+| VIIRS 375 m S-NPP | VIIRS/NPP VNP14IMG V002, DOI 10.5067/VIIRS/VNP14IMG.002 | https://doi.org/10.5067/VIIRS/VNP14IMG.002 |
+| VIIRS 375 m NOAA-20 | VIIRS/JPSS1 VJ114IMG V002, DOI 10.5067/VIIRS/VJ114IMG.002 | https://doi.org/10.5067/VIIRS/VJ114IMG.002 |
+
+Near-real-time products (recent months, provisional): MODIS MCD14DL NRT, DOI 10.5067/FIRMS/MODIS/MCD14DL.NRT.0061; VIIRS S-NPP VNP14IMGT NRT, DOI 10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002; VIIRS NOAA-20 VJ114IMGT NRT, DOI 10.5067/FIRMS/VIIRS/VJ114IMGT_NRT.002 (all three resolve as above with the `https://doi.org/` prefix).
+
+**What the interface states about the data** (from `data/products/metadata.json`, never typed by hand): the first and latest month, the provisional months (near-real-time, may change when science-quality data arrive), the analysis grid (`grid.analysis_deg`, 0.5 degrees, D-009), the method version (0.1.0) and the snapshot dates. "MODIS Collection 6.1" is the product version of the DOIs above (V061); the `version` column of the detections carries finer labels (`6.2`, `6.03`, `61.03`, `6.1NRT`, section 1).

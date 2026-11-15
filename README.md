@@ -53,13 +53,12 @@ git lfs install
 git lfs pull                                   # downloads data/products/*.parquet (about 600 MB)
 ```
 
-**1. The API** (reads `data/products/`):
+**1. The API** (reads `data/products/`; start it from the repository root, because the default products folder is relative to the folder you start from):
 
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r api/requirements.txt            # Windows PowerShell: .venv\Scripts\pip install -r api\requirements.txt
-cd api
-../.venv/bin/uvicorn fire_api.main:app --port 8000       # Windows: ..\.venv\Scripts\uvicorn fire_api.main:app --port 8000
+.venv/bin/uvicorn fire_api.main:app --app-dir api --port 8000      # Windows: .venv\Scripts\uvicorn fire_api.main:app --app-dir api --port 8000
 ```
 
 Check it: `http://127.0.0.1:8000/api/meta` (versions, latest month) and the interactive docs at `http://127.0.0.1:8000/docs`.
@@ -77,8 +76,14 @@ npm run dev                                    # open the address Vite prints, u
 ```bash
 .venv/bin/python -m pytest pipeline/tests api/tests -q   # science and API tests (Windows: .venv\Scripts\python)
 .venv/bin/python -m ruff check pipeline api              # lint
-.venv/bin/python pipeline/contract_check.py data/products --real   # contract check of the real products
+.venv/bin/python pipeline/contract_check.py data/products --real   # contract check of the real products (loads the 420 MB table into memory: see below)
 cd app && npm test && npm run typecheck && npm run lint
+```
+
+The full contract check needs a lot of free memory (in the T-077 run it stopped with a memory error on a 15.6 GB machine with 7.2 GB free). To check the small tables only (about 3 seconds):
+
+```bash
+.venv/bin/python -c "import sys; sys.path.insert(0, 'pipeline'); from pathlib import Path; import contract_check as c; print(c.check_dir(Path('data/products'), real=True, only=('entity_month', 'cells', 'calibration')))"   # prints [] when conforming
 ```
 
 **No API at hand?** The app can run from a static copy of the preset views (offline mode, `app/README.md`). The API has a `SYNTHETIC` fixture mode for development (`PRODUCTS_DIR=data/fixtures/v0.1.0`); the app then shows a "SYNTHETIC DATA" banner. Never present fixture data as a result.
