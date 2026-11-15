@@ -246,11 +246,23 @@ describe('categorical sets: pairwise CIEDE2000 under normal vision and each simu
   it('verdict colours (src/content/verdicts.ts)', () => {
     const set: Record<string, Item> = {}
     for (const [k, p] of Object.entries(VERDICT_PRESENTATION)) set[k] = { rgb: p.color, cue: p.icon }
-    // NO_DETECTED_ACTIVITY is a pale blue ([190, 215, 235]) so that it is seen on the land colour
-    // without an outline (the first pale grey was 2.3 from the land). One pair stays just below
-    // the threshold: that blue against the light grey of CANNOT_DETERMINE under protanopia (about
-    // 8.9). They differ by icon (? against the open circle) and label.
-    expectOnlyDocumented(set, ['CANNOT_DETERMINE|NO_DETECTED_ACTIVITY|protanopia'])
+    // NO_DETECTED_ACTIVITY is a soft green ([140, 195, 125], T-071). The earlier pale blue sat next to
+    // BELOW_NORMAL's blue in hue (an easy confusion in practice, although the CIEDE2000 numbers were
+    // large) and was 8.9 from CANNOT_DETERMINE under protanopia. The green has no exceptions: its
+    // closest pairs are WITHIN_NORMAL, CANNOT_DETERMINE and ABOVE_NORMAL (16.8 to 18.6 under
+    // deuteranopia). The open circle icon stays.
+    expectOnlyDocumented(set, [])
+    for (const mode of MODES) {
+      for (const other of ['ABOVE_NORMAL', 'BELOW_NORMAL', 'WITHIN_NORMAL', 'CANNOT_DETERMINE'] as const) {
+        expect(deltaE(verdictRgb('NO_DETECTED_ACTIVITY'), verdictRgb(other), mode)).toBeGreaterThanOrEqual(16)
+      }
+      // Against BELOW_NORMAL: 52.0 normal, 49.5 protanopia, 51.0 deuteranopia, 23.0 tritanopia.
+      expect(deltaE(verdictRgb('NO_DETECTED_ACTIVITY'), verdictRgb('BELOW_NORMAL'), mode)).toBeGreaterThanOrEqual(20)
+    }
+    // Not a blue: green is the largest channel, so it cannot be mistaken for BELOW_NORMAL's hue.
+    const [r, g, b] = verdictRgb('NO_DETECTED_ACTIVITY')
+    expect(g).toBeGreaterThan(b)
+    expect(g).toBeGreaterThan(r)
   })
 
   it('every verdict has a non-empty icon and label, all different (colour is never the only cue)', () => {
@@ -392,7 +404,8 @@ describe('neutral fills that must not be mistaken for data', () => {
   it('map: low-contrast fills over the land colour (cell alpha 220 and 200)', () => {
     const over = (rgb: readonly number[], alpha: number) => deltaE(overLand(rgb, alpha), MAP_LAND, 'normal')
     // "No detected activity" (about 65% of the real cell-months) is clear of the land colour by its
-    // pale blue alone, in every mode (13.2 normal; the tightest simulation is protanopia, 12.3).
+    // soft green alone, in every mode (24.2 normal, 20.1 protanopia, 19.2 deuteranopia, 21.8
+    // tritanopia, at the layer alpha 220 over the land colour).
     for (const mode of MODES) {
       expect(deltaE(overLand(VERDICT_PRESENTATION.NO_DETECTED_ACTIVITY.color, 220), MAP_LAND, mode)).toBeGreaterThanOrEqual(MIN_DELTA_E)
     }
