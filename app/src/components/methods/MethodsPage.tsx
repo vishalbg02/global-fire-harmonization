@@ -12,15 +12,22 @@ import {
   PLANNED_TESTS_NOTE,
   REFERENCES,
 } from '../../content/methods.ts'
+import { IN_PLAIN_WORDS, IN_PLAIN_WORDS_TITLE } from '../../content/plainLanguage.ts'
 import { REASON_CODE_SHORT } from '../../content/reasonCodes.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { VERDICTS } from '../../api/contract.ts'
 import { reasonAnchor } from '../../content/methodsLink.ts'
 import { ValidationResultsView } from './ValidationResultsView.tsx'
+import './methodsPage.css'
 
 /**
- * The methods and validation page (T-041): the method in plain language, the validation results
+ * Ids of the sections of this page. A method section whose own id is one of these gets no alias anchor (T-089).
+ */
+const PAGE_SECTION_IDS: ReadonlySet<string> = new Set(['plain-words', 'validation', 'method', 'verdicts', 'reason-codes', 'grid', 'planned-tests', 'sources'])
+
+/**
+ * The methods and validation page (T-041, redesigned in T-089): the method in plain language, the validation results
  * as the file holds them, what each verdict and reason code means, the grid evidence, and the
  * acknowledgement, dataset DOIs and references. Nothing here is computed.
  */
@@ -35,11 +42,12 @@ export function MethodsPage({ onBack }: { onBack: () => void }) {
           Back to the map
         </button>
         <ul className="methods-toc">
+          <li><a href="#plain-words">In plain words</a></li>
+          <li><a href="#validation">Validation results</a></li>
           <li><a href="#method">Method</a></li>
           <li><a href="#verdicts">Verdicts</a></li>
           <li><a href="#reason-codes">Reason codes</a></li>
           <li><a href="#grid">Grid evidence</a></li>
-          <li><a href="#validation">Validation results</a></li>
           <li><a href="#planned-tests">Test plan</a></li>
           <li><a href="#sources">Sources and references</a></li>
         </ul>
@@ -47,10 +55,36 @@ export function MethodsPage({ onBack }: { onBack: () => void }) {
 
       <h2>Methods and validation</h2>
 
+      <section aria-labelledby="plain-words">
+        <h3 id="plain-words">{IN_PLAIN_WORDS_TITLE}</h3>
+        {IN_PLAIN_WORDS.map((p) => (
+          <p key={p} className="plain-words">
+            {p}
+          </p>
+        ))}
+      </section>
+
+      <section aria-labelledby="validation">
+        <h3 id="validation">Validation results</h3>
+        <p>
+          Shown exactly as the results file holds them. Failures are shown as prominently as passes,
+          and a test is only ever PASS if the file says so.
+        </p>
+        {validation.isPending && <LoadingState what="the validation results" />}
+        {validation.isError && (
+          <ErrorState
+            message="The validation results are not available right now."
+            onRetry={() => void validation.refetch()}
+          />
+        )}
+        {validation.data !== undefined && <ValidationResultsView results={validation.data} />}
+      </section>
+
       <section aria-labelledby="method">
         <h3 id="method">How the method works</h3>
         {METHOD_SECTIONS.map((section) => (
           <article key={section.id} id={`method-${section.id}`} className="method-section">
+            {!PAGE_SECTION_IDS.has(section.id) && <span id={section.id} className="anchor-alias" />}
             <h4>{section.title}</h4>
             {section.paragraphs.map((p) => (
               <p key={p}>{p}</p>
@@ -125,22 +159,6 @@ export function MethodsPage({ onBack }: { onBack: () => void }) {
           ))}
         </ul>
         <p className="method-meta">{`Source: ${GRID_EVIDENCE_SOURCE}`}</p>
-      </section>
-
-      <section aria-labelledby="validation">
-        <h3 id="validation">Validation results</h3>
-        <p>
-          Shown exactly as the results file holds them. Failures are shown as prominently as passes,
-          and a test is only ever PASS if the file says so.
-        </p>
-        {validation.isPending && <LoadingState what="the validation results" />}
-        {validation.isError && (
-          <ErrorState
-            message="The validation results are not available right now."
-            onRetry={() => void validation.refetch()}
-          />
-        )}
-        {validation.data !== undefined && <ValidationResultsView results={validation.data} />}
       </section>
 
       <section aria-labelledby="planned-tests" className="planned-tests">

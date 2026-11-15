@@ -902,6 +902,15 @@ FIRMS country names (e.g. `Democratic_Republic_of_the_Congo`, `Russian_Federatio
 - **Approved by the Lead 2026-11-14:** Kosovo has no ISO 3166-1 code, so the user-assigned `XKX` is used. `UMI` (United States Minor Outlying Islands) is `OC`. The continent policy is approved as written: continents follow Natural Earth (Russia `EU`; Turkey, Cyprus, Georgia, Armenia, Azerbaijan and Kazakhstan `AS`), "Seven seas" territories use the UN M49 region (ATF, MUS, SHN and SYC `AF`; HMD and UMI `OC`; MDV `AS`), and Antarctica `AN` is included because it has data.
 - Territories keep their own code (Greenland `GRL`, Hong Kong `HKG`, Norfolk Island `NFK`); they are not merged into their sovereign state. Codes in common use are used for disputed territories (Palestine `PSE`, Taiwan `TWN`); this is not a political statement.
 
+### Map country boundaries, India point of view (T-085) **[VERIFIED 2026-11-15]**
+
+The map's country outlines (hover, selection, anomaly outlines) use India's official boundary, so Jammu and Kashmir, Ladakh and Aksai Chin are drawn inside India. This is a display choice only: it changes no product value, verdict or cell attribution (cell attribution is T-086).
+
+- **Source:** Natural Earth "Admin 0 countries, India point of view", 1:10m, file `geojson/ne_10m_admin_0_countries_ind.geojson` from the `nvkelso/natural-earth-vector` repository (branch `master`), https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries_ind.geojson. Downloaded 2026-11-15, 13,242,091 bytes, 248 features, SHA-256 `3e67a5a6ddeff3247ca8400cd2514fd4a5ac6e5432823b25d610a7028597d45f`. Public domain (Natural Earth terms of use, https://www.naturalearthdata.com/about/terms-of-use/).
+- **Committed file:** `app/public/geo/ne_admin_0_countries_india_pov.geojson` (replaces `ne_110m_admin_0_countries.geojson`, the de facto line), 837,805 bytes, 243 features, SHA-256 `01fc884bf79d099abceee3be711529ccb20e17577d90a16287ccce82cc5b4769`.
+- **Processing (mapshaper 0.7.101, run once with `npx`, not a project dependency):** keep the fields `ADMIN, NAME, NAME_LONG, SOVEREIGNT, ADM0_A3, ISO_A3, ISO_A3_EH, ISO_A2_EH`; `-simplify visvalingam keep-shapes 7.5%`; coordinates rounded to 0.001 degree. Then a small script merged five dependency fragments into their parent (Brazilian Island into Brazil, Clipperton into France, Ashmore and Cartier, Indian Ocean Territories and Coral Sea Islands into Australia) so that each `ISO_A3_EH` has one feature, and restored the `NAME` the 1:110m file had for countries in both files (six names).
+- **Differences from the earlier 1:110m file:** India's outline reaches 37.05 N (was 35.49 N) and includes Jammu and Kashmir, Ladakh and Aksai Chin; Pakistan, China, Nepal, Bhutan, Bangladesh and Afghanistan follow the same line. Natural Earth's India view merges Western Sahara into Morocco, Kosovo into Serbia, Northern Cyprus into Cyprus and Somaliland into Somalia, so those four features and the id `ESH` are not in the file. 70 small states and territories that were not in the 1:110m file are added (for example Singapore, Maldives, Malta; 177 - 4 + 70 = 243). Six of the added polygons have no ISO code and cannot be selected: Dhekelia, Akrotiri, Guantanamo Bay, Bir Tawil, Spratly Islands, Scarborough Reef.
+
 ### Fire-region mask (T-004) **[VERIFIED 2026-11-14]**
 
 The pooling parent in calibration is the GFED basis region (14 regions: BONA, TENA, CEAM, NHSA, SHSA, EURO, MIDE, NHAF, SHAF, BOAS, CEAS, SEAS, EQAS, AUST). The lookup is `pipeline/fire_regions.py`; every analysis cell gets a `fire_region`.
@@ -931,6 +940,40 @@ The pooling parent in calibration is the GFED basis region (14 regions: BONA, TE
 
 - **Approved by the Lead 2026-11-14:** (1) GFED4s basis regions as the source (public, no login, the same 14 regions as GFED5; the GFED5 grids are offered over SFTP with login details published by GFED, which were not used); (2) the fallback rules above, including the code `UNASSIGNED`, which pools to the global ratio (0.09% of detections); (3) `h5py` as a **one-off build tool only**: it reads the GFED HDF5 file once and writes a plain NumPy array. It is not a runtime dependency of the pipeline, the API or the app, so the stack does not change.
 
+### India point-of-view boundary and the Jammu and Kashmir cells (T-086, D-033) **[VERIFIED 2026-11-15]**
+
+- **File:** `ne_10m_admin_0_countries_ind.geojson`, Natural Earth Admin 0 Countries, India point of view, **version 5.1.1**, **1:10m**, 13,242,091 bytes (size matches the GitHub listing), **SHA-256 `3e67a5a6ddeff3247ca8400cd2514fd4a5ac6e5432823b25d610a7028597d45f`**. Source: `https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries_ind.geojson` (repository `nvkelso/natural-earth-vector`; Natural Earth data are public domain). Downloaded on 2026-11-15 with the user's approval into an empty folder outside the repository (`C:/IgnisLine-data/ne_ind/`).
+- **Why this file:** the Lead decided (D-033, PR #74) to follow India's official boundary. Natural Earth publishes its point-of-view country files at **1:10m only**: there is no `ne_50m_admin_0_countries_ind` (checked 2026-11-15 on the Natural Earth downloads page and in the repository, `50m_cultural/` and `geojson/`; a direct request returned 404).
+- **LIMITATION, resolution mix:** the country mapping of T-009 uses the **1:50m** default boundary (version 5.1.1); this boundary is **1:10m** and more detailed. To keep the change local, only the cells in the box 72.5 to 80.5 degrees E and 32.5 to 37.2 degrees N are changed; other differences are reported, not applied.
+- **Rule** (`pipeline/kashmir_cells.py`): a cell in the box is reassigned to India if its **centre** lies inside the India polygon (ADM0_A3 = IND; even-odd ray casting over every ring, no new dependency) and its current country is Pakistan or China. A cell with no country is not given one. `cell_id`, the grid, `continent` (Asia for all three countries), `fire_region` and `stratum_id` are unchanged (the stratum is a 2.5 degree block inside a fire region, not a country), so the calibration is unaffected.
+- **Result [VERIFIED, `data/interim/qa/kashmir_cells.json`]:** the box holds 109 cells before (Pakistan 42, China 27, India 39, no country 1). **32 cells are reassigned to India: 26 from Pakistan and 6 from China.** After: India 1,221 cells (was 1,189), Pakistan 294 (was 320), China 3,285 (was 3,291). The other Pakistan and China cells of the box are not inside India's boundary (Pakistan proper, Xinjiang) and stay.
+- **Reported, not changed:** 0 Indian cells in the box have a centre outside the India polygon. **12 cells outside the box** have a centre inside India's 1:10m polygon but another country in FIRMS (Pakistan 4 along the southern India-Pakistan border, Nepal 4, Bangladesh 2, Bhutan 1, Myanmar 1: the 1:10m border differs from FIRMS's attribution); **2 cells with no country** lie inside India's polygon (centres 79.25E 35.75N and 68.25E 23.75N).
+- **Products changed (Git LFS):** `data/products/cells.parquet` (only `country_iso3` of the 32 cells) and the IND, PAK and CHN COUNTRY rows of `data/products/entity_month.parquet` (879 rows), computed by the same code (`verdicts.entity_month`) on the new cells. Every other row of `entity_month` (all other countries, continents, the world: 67,683 rows) is **the row of `main`**, verified equal. A full recomputation of those rows agrees with `main` to float rounding: the largest relative difference of a probability is 2.8e-7 where the value itself is below 1e-14; of the estimate 2.0e-15. Raw cell-days summed over IND, PAK and CHN are equal in every one of the 293 months (cells only moved between them). New SHA-256: `cells.parquet` `decd81e6d32c046fb004cdf2f7dc52c4ea0fd52c22d4398e9842662209c6558d`, `entity_month.parquet` `1d8bf0bf4ffe0948870da9f3e6b9ebabf469833866f2142d31babd97ee921195`.
+- **Effect on the rows:** `n_cells` IND 1,221 (was 1,189), PAK 294 (320), CHN 3,285 (3,291). Verdicts change in 22 country-months: IND 7, PAK 15, CHN 0 (CANNOT_DETERMINE to ABOVE_NORMAL 6, to BELOW_NORMAL 3, to WITHIN_NORMAL 7; ABOVE_NORMAL, BELOW_NORMAL and WITHIN_NORMAL (4) to CANNOT_DETERMINE 1, 1 and 4). Details in `docs/validation/T-086-kashmir-cells.md`.
+- **LIMITATION, not regenerated:** `cell_month_harmonized.parquet` keeps its values (the Lead's scope). Its cell-level caveat `DIURNAL_CAVEAT` (India, October and November from 2020, D-028) is set from the cell's country when the cell table is built, so the 32 reassigned cells do not carry it in that table until it is regenerated (the IND entity rows carry it). A caveat never changes a verdict or a value.
+
+### Map imagery: NASA GIBS Blue Marble and Aqua true colour (T-084) **[VERIFIED 2026-11-15 unless labelled]**
+
+Display only: the imagery sits under the verdict cells as context. It is not a product value, does not enter any verdict and is not stored in this repository; the visitor's browser fetches the tiles at run time.
+
+| | Basemap (always on) | Satellite view (off by default) |
+|---|---|---|
+| GIBS layer | `BlueMarble_ShadedRelief_Bathymetry` | `MODIS_Aqua_CorrectedReflectance_TrueColor` (served as `..._v6.1_STD`) |
+| Projection and tile matrix | EPSG:3857, `GoogleMapsCompatible_Level8` | EPSG:3857, `GoogleMapsCompatible_Level9` |
+| Date | fixed, `2004-08-01` (a single picture, not a time series) | one day, `YYYY-MM-DD`, chosen in the app: default the 15th of the selected month, clamped to the days that exist and to 2002-07-04 (first Aqua day) up to today |
+| URL pattern | `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2004-08-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg` | `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/{YYYY-MM-DD}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg` |
+| Raster `maxzoom` in the app | 8 (MapLibre overzooms beyond it) | 9 (same) |
+| Answers | HTTP 200 verified 2026-11-15 (`image/jpeg`) | HTTP 200 verified 2026-11-15 for 2015-09-15 (`image/jpeg`; `layer-time-actual: 2015-09-15T00:00:00Z`) |
+| Cache headers | `cache-control: public, max-age=259200` (verified 2026-11-15) | `cache-control: max-age=0, no-store, no-cache, must-revalidate` (verified 2026-11-15): the browser does not keep these tiles, so panning back asks GIBS again |
+| CORS | `access-control-allow-origin: *` (verified in the PR) | same |
+
+- **Not used:** `VIIRS_SNPP_CorrectedReflectance_TrueColor` returned 404 at this path in EPSG:3857 (verified 2026-11-15 in the PR), so Satellite view is Aqua only.
+- **Privacy [Lead decision, PR #89]:** the tiles come from `gibs.earthdata.nasa.gov`, requested by the visitor's browser. NASA GIBS receives the standard tile request, which includes the visitor's IP address and the tile coordinates, and nothing else is sent by the app. The same sentence is in the credit's tooltip on the map. The offline copy (`VITE_STATIC_ONLY`) makes no GIBS request at all and shows a note instead.
+- **Failure:** if the imagery cannot be loaded (no network, host blocked, outage) the map falls back to its plain background colour and shows one note; the verdict cells never wait on imagery. There is no app-side tile cache and no proxy.
+- **Credit wording:** "Imagery: NASA GIBS / EOSDIS" with a link to https://www.earthdata.nasa.gov/data/tools/gibs, and the layer and date on the map. **[UNVERIFIED]** that this is the exact acknowledgement wording NASA prefers; the GIBS and Earthdata pages were not checked for a required phrase.
+- **Licence [UNVERIFIED]:** NASA Earth science data and imagery are generally open for any use with acknowledgement; the exact GIBS terms page was not read in this task.
+- **Reading it:** imagery is context, not data. It has cloud and swath gaps, one day only, and no relation to a hotspot count or a verdict.
+
 ## 7. Update strategy
 
 - Historical zips are downloaded once, and the snapshot date is recorded in `metadata.json`.
@@ -940,3 +983,21 @@ The pooling parent in calibration is the GFED basis region (14 regions: BONA, TE
 ## 8. Acknowledgement and terms
 
 FIRMS asks users to acknowledge FIRMS, LANCE and ESDIS when sharing data. Data are provided "as is". See the README.
+
+## 9. Source links shown in the interface (T-076) **[VERIFIED 2026-11-15]**
+
+The app shows its sources (map footer, per-month source line, chart and calendar captions, featured stories). Every link comes from this table; no other URL, version or date is shown. **Verification:** each URL was requested on 2026-11-15 and answered HTTP 200 (the DOI links after redirecting to the NASA Earthdata catalogue page). The DOIs and product names are the ones in `SP_DOIS` and `NRT_DOIS` in `api/fire_api/export.py` (the CSV header block).
+
+| Shown as | Product (standard, SP) | Link |
+|---|---|---|
+| NASA FIRMS | FIRMS, the service that distributes the detections | https://www.earthdata.nasa.gov/data/tools/firms |
+| FIRMS FAQ (SP and NRT levels) | Product levels, latency, record dates (sections 3 and 4) | https://www.earthdata.nasa.gov/data/tools/firms/faq |
+| MODIS Collection 6.1 | MODIS/Aqua MYD14 V061, DOI 10.5067/MODIS/MYD14.061 | https://doi.org/10.5067/MODIS/MYD14.061 |
+| VIIRS 375 m S-NPP | VIIRS/NPP VNP14IMG V002, DOI 10.5067/VIIRS/VNP14IMG.002 | https://doi.org/10.5067/VIIRS/VNP14IMG.002 |
+| VIIRS 375 m NOAA-20 | VIIRS/JPSS1 VJ114IMG V002, DOI 10.5067/VIIRS/VJ114IMG.002 | https://doi.org/10.5067/VIIRS/VJ114IMG.002 |
+
+Near-real-time products (recent months, provisional): MODIS MCD14DL NRT, DOI 10.5067/FIRMS/MODIS/MCD14DL.NRT.0061; VIIRS S-NPP VNP14IMGT NRT, DOI 10.5067/FIRMS/VIIRS/VNP14IMGT_NRT.002; VIIRS NOAA-20 VJ114IMGT NRT, DOI 10.5067/FIRMS/VIIRS/VJ114IMGT_NRT.002 (all three resolve as above with the `https://doi.org/` prefix).
+
+**What the interface states about the data** (from `data/products/metadata.json`, never typed by hand): the first and latest month, the provisional months (near-real-time, may change when science-quality data arrive), the analysis grid (`grid.analysis_deg`, 0.5 degrees, D-009), the method version (0.1.0) and the snapshot dates. "MODIS Collection 6.1" is the product version of the DOIs above (V061); the `version` column of the detections carries finer labels (`6.2`, `6.03`, `61.03`, `6.1NRT`, section 1).
+
+**Name of the global series (T-092, 2026-11-15) [VERIFIED]:** the lead decided the area is called "World" everywhere (it was "Global" in `entity_name`, the story chip, the story headline and `featured.ts`, and "World" on the summary card). Only `entity_name` of the 293 `GLOBAL` rows of `entity_month.parquet` changed ("Global" to "World"); the other 68,269 rows and every other column are equal value by value to the T-086 product (compared in the PR), the entity id stays `GLOBAL`, no number or verdict changed. New SHA-256 of `entity_month.parquet`: `d92c0780b30cc4b84ae2024ca5e7e6f272f8d94700929e05613dc560f470dc40` (T-086: `1d8bf0bf4ffe0948...`). `pipeline/verdicts.py` and `pipeline/raw_only.py` write "World" for `GLOBAL`; `cells.parquet` is unchanged.

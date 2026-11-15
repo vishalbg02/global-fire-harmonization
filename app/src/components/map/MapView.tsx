@@ -1,34 +1,53 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
-import type { MapGeoJSONFeature, MapMouseEvent, StyleSpecification } from 'maplibre-gl'
+import type { MapGeoJSONFeature, MapMouseEvent } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
-import { PolygonLayer, TextLayer } from '@deck.gl/layers'
+import { GeoJsonLayer, PolygonLayer, TextLayer } from '@deck.gl/layers'
 import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
 import { bboxFromRing } from '../../state/bbox.ts'
+import { pinnedReducer } from '../../state/pinnedCell.ts'
+import { tooltipCellId } from './mapPlacement.ts'
 import { openRing } from '../../state/polygon.ts'
 import type { Ring } from '../../state/polygon.ts'
+import { WORLD_BBOX } from '../../state/selection.ts'
 import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
 import { countryIso3, countryName } from './countries.ts'
-import { cellFillColor, needsOutline, sharedMax } from './scale.ts'
+import { polygonBounds } from './countryBounds.ts'
+import { STATIC_ONLY, staticManifest, useStaticManifest } from '../../api/staticData.ts'
+import { CELL_STROKE_ALPHA, cellFillColor, cellStrokeWidth, needsOutline, sharedMax } from './scale.ts'
+import {
+  MapLegend,
+  MapLoading,
+  PinnedCellCard,
+  SCROLL_HINT,
+  SCROLL_HINT_MAC,
+  ScrollHint,
+  TOUCH_HINT,
+} from './mapOverlays.tsx'
+import { ImageryControls, ImageryCredit } from './ImageryControls.tsx'
+import type { MapShape } from './ImageryControls.tsx'
+import { CELL_CASING_IMAGERY, applyImageryParams, cellOpacity, imageryNote, parseImageryParams, satDate, todayIso } from './gibs.ts'
+import {
+  GLOBE_OFFERED,
+  TileCounter,
+  buildStyle,
+  hideImagery,
+  layerKeyOfSource,
+  paintForImagery,
+  syncTrueColour,
+} from './imagery.ts'
 
 // MapLibre 6 runs in a module worker. Bundlers do not emit it automatically, so register
 // it through Vite (works in both the dev server and the production build).
 maplibregl.setWorkerUrl(maplibreWorkerUrl)
 
-// A plain background: no external tiles, so no key and it works offline.
-const STYLE: StyleSpecification = {
-  version: 8,
-  sources: {},
-  layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#dbe7f1' } }],
-}
-
-const COUNTRIES_URL = `${import.meta.env.BASE_URL}geo/ne_110m_admin_0_countries.geojson`
+const COUNTRIES_URL = `${import.meta.env.BASE_URL}geo/ne_admin_0_countries_india_pov.geojson`
 
 const INITIAL_ZOOM = 1.2
 /** From this zoom a 0.5 degree cell is about 16 px wide, enough for its 13 px verdict icon. */
@@ -56,6 +75,12 @@ interface Props {
   onDrawnPolygon?: (ring: number[][]) => void
   /** ISO3 codes of the countries listed in the anomaly rankings, to outline (T-040). */
   anomalyOutlines: { above: readonly string[]; below: readonly string[] }
+  /** The country under the pointer (null when none): the app shows its name and verdict (T-070). */
+  onHoverCountry?: (country: { iso3: string; name: string } | null) => void
+  /** True while the month's cells are loading: shows the loading indicator on the map (T-071). */
+  loading?: boolean
+  /** The selected month: Satellite view shows a day of it (T-084). */
+  month?: { year: number; month: number } | null
 }
 
 const CUSTOM_SOURCE = 'custom-area'
@@ -96,23 +121,73 @@ export function MapView({
   polygonDrawing = false,
   onDrawnPolygon,
   anomalyOutlines,
+  onHoverCountry,
+  loading = false,
+  month = null,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const overlayRef = useRef<MapLibreOverlay | null>(null)
   const loaded = useRef(false)
   const wrap = useRef<HTMLDivElement>(null)
+  // Imagery (T-084): Blue Marble under the cells; Satellite view is a day of Aqua true colour.
+  const manifest = useStaticManifest()
+  const offlineCopy = STATIC_ONLY || manifest !== null
+  const offlineAtStart = useRef(STATIC_ONLY || staticManifest() !== null)
+  // A link may carry sat=1, satday=DD and globe=1 (defaults left out).
+  const [linked] = useState(() => parseImageryParams(window.location.search))
+  const [satOn, setSatOn] = useState(linked.sat)
+  const [satDay, setSatDay] = useState(linked.day)
+  const [shape, setShape] = useState<MapShape>(linked.globe ? 'globe' : 'flat')
+  const linkedGlobe = useRef(linked.globe)
+  const changeShapeRef = useRef<((s: MapShape) => void) | null>(null)
+  const [overlayGen, setOverlayGen] = useState(0)
+  const [basemapFailed, setBasemapFailed] = useState(false)
+  const [failedTcDate, setFailedTcDate] = useState<string | null>(null)
+  const today = useMemo(() => todayIso(), [])
+  const tcDate = !offlineCopy && satOn && month !== null ? satDate(month.year, month.month, satDay, today) : null
+  const tcFailed = tcDate !== null && failedTcDate === tcDate
+  const tcShown = tcDate !== null && !tcFailed
+  const basemapShown = !offlineCopy && !basemapFailed
+  const imageryVisible = basemapShown || tcShown
+  const tcDateRef = useRef<string | null>(null)
+  const imageryRef = useRef<{ visible: boolean; date: string | null }>({ visible: false, date: null })
+  const tiles = useRef(new TileCounter())
   // Zoom of the map: the verdict icons are drawn only when a cell is big enough to hold one.
   const [zoom, setZoom] = useState(INITIAL_ZOOM)
+  // The outline of the country under the pointer, drawn above the cells (T-070).
+  const [hoverOutline, setHoverOutline] = useState<unknown>(null)
+  const countryShapes = useRef<Map<string, unknown> | null>(null)
+  // True once the country shapes are read: the selected country's outline and fit use them.
+  const [shapesReady, setShapesReady] = useState(false)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
-  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon })
+  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry })
+  // The cell whose card is pinned on the map: until closed, Esc, or another cell is clicked (T-071).
+  const [pinned, pinDispatch] = useReducer(pinnedReducer, null)
+  useEffect(() => pinDispatch({ type: 'selection', selectedCellId }), [selectedCellId])
+  const closePinned = useCallback(() => {
+    // The card is removed, so focus that was inside it goes back to the map instead of being lost (T-074).
+    const active = document.activeElement
+    const hadFocus = active instanceof HTMLElement && active.closest('.map-pinned') !== null
+    pinDispatch({ type: 'dismiss' })
+    if (hadFocus) mapRef.current?.getCanvas().focus()
+  }, [])
+  const pinnedCell = useMemo(
+    () => (pinned === null || cells === null ? null : (cells.find((c) => c.cell_id === pinned) ?? null)),
+    [pinned, cells],
+  )
+  const legendMax = useMemo(() => (cells === null ? 0 : sharedMax(cells)), [cells])
   // Clicks are ignored while drawing, and for a moment after a rectangle is finished, so that
   // the click that ends the drawing does not also select a country or a cell.
   const ignoreClicksUntil = useRef(0)
   const drawingRef = useRef(drawing)
   useEffect(() => {
-    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon }
+    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry }
     drawingRef.current = drawing || polygonDrawing
+  })
+  useEffect(() => {
+    tcDateRef.current = tcDate
+    imageryRef.current = { visible: imageryVisible, date: tcShown ? tcDate : null }
   })
   const clicksIgnored = () => drawingRef.current || Date.now() < ignoreClicksUntil.current
 
@@ -120,11 +195,23 @@ export function MapView({
     if (container.current === null) return
     const map = new maplibregl.Map({
       container: container.current,
-      style: STYLE,
-      center: [10, 20],
-      zoom: INITIAL_ZOOM,
+      style: buildStyle(!offlineAtStart.current),
+      // Start on the same world view the World button gives: about 60S to 80N.
+      bounds: [
+        [WORLD_BBOX[0], WORLD_BBOX[1]],
+        [WORLD_BBOX[2], WORLD_BBOX[3]],
+      ],
+      fitBoundsOptions: { padding: 30 },
       renderWorldCopies: false,
       attributionControl: false,
+      // The page scrolls over the map; zoom needs Ctrl or Cmd + scroll (or the buttons or keys).
+      // Touch: one finger scrolls the page, two move the map. The messages are MapLibre's own.
+      cooperativeGestures: true,
+      locale: {
+        'CooperativeGesturesHandler.WindowsHelpText': SCROLL_HINT,
+        'CooperativeGesturesHandler.MacHelpText': SCROLL_HINT_MAC,
+        'CooperativeGesturesHandler.MobileHelpText': TOUCH_HINT,
+      },
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     // The focusable map canvas gets a name and its keyboard keys (MapLibre: arrows pan, plus and minus zoom).
@@ -134,14 +221,72 @@ export function MapView({
     )
     const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
     map.addControl(overlay)
+    // The cells canvas of the overlay is only a picture: the map canvas above is the one keyboard stop.
+    // (deck.gl makes its canvas focusable and puts the tabindex back, which gave a second, unnamed Tab stop;
+    // `inert` removes it from focus and from the accessibility tree, and the canvas takes no pointer events.)
+    const hideOverlayCanvas = () =>
+      map
+        .getContainer()
+        .querySelectorAll<HTMLCanvasElement>('canvas:not(.maplibregl-canvas)')
+        .forEach((c) => {
+          c.inert = true
+        })
+    hideOverlayCanvas()
+    map.on('load', hideOverlayCanvas)
     mapRef.current = map
     overlayRef.current = overlay
+    setZoom(map.getZoom())
     map.on('zoomend', () => setZoom(map.getZoom()))
+    // Imagery tiles: count loaded and failed ones; a failed layer is hidden and the plain background shows.
+    map.on('data', (e) => {
+      if (e.dataType !== 'source' || !('tile' in e) || e.tile === undefined) return
+      const key = layerKeyOfSource((e as { sourceId?: string }).sourceId)
+      if (key !== null) tiles.current.ok(key)
+    })
+    map.on('error', (e) => {
+      const key = layerKeyOfSource((e as { sourceId?: string }).sourceId)
+      if (key === null || !tiles.current.fail(key)) return
+      hideImagery(map, key)
+      if (key === 'basemap') setBasemapFailed(true)
+      else setFailedTcDate(tcDateRef.current)
+    })
+
+    // The same file the map layer reads (cached by the browser): the shapes for the hover outline.
+    void fetch(COUNTRIES_URL)
+      .then((r) => r.json())
+      .then((collection: { features: { properties: Record<string, unknown> }[] }) => {
+        const shapes = new Map<string, unknown>()
+        for (const f of collection.features) {
+          const iso3 = countryIso3(f.properties)
+          if (iso3 !== null) shapes.set(iso3, f)
+        }
+        countryShapes.current = shapes
+        setShapesReady(true)
+      })
+      .catch(() => {
+        countryShapes.current = null
+      })
 
     map.on('load', () => {
       map.addSource('countries', { type: 'geojson', data: COUNTRIES_URL })
       map.addLayer({ id: 'countries-fill', type: 'fill', source: 'countries', paint: { 'fill-color': '#f7f7f2', 'fill-opacity': 1 } })
+      // Over imagery a dark casing under the white border keeps it readable on cloud (T-084).
+      map.addLayer({
+        id: 'countries-line-casing',
+        type: 'line',
+        source: 'countries',
+        layout: { visibility: 'none' },
+        paint: { 'line-color': '#14181f', 'line-opacity': 0.2, 'line-width': 1.5 },
+      })
       map.addLayer({ id: 'countries-line', type: 'line', source: 'countries', paint: { 'line-color': '#8a8f98', 'line-width': 0.6 } })
+      map.addLayer({
+        id: 'anomalies-casing',
+        type: 'line',
+        source: 'countries',
+        layout: { visibility: 'none' },
+        paint: { 'line-color': '#ffffff', 'line-opacity': 0.6, 'line-width': 3.5 },
+        filter: ['in', ['get', 'ISO_A3_EH'], ['literal', []]],
+      })
       // Countries in the anomaly rankings (T-040): vermillion solid for above, dashed blue for
       // below, so the two differ by line style as well as colour. Added before the selection
       // outline so the selected country stays on top.
@@ -159,6 +304,22 @@ export function MapView({
         paint: { 'line-color': '#0072B2', 'line-width': 2, 'line-dasharray': [2, 1.5] },
         filter: ['in', ['get', 'ISO_A3_EH'], ['literal', []]],
       })
+      // Hover: the outline of the country under the pointer (T-070).
+      map.addLayer({
+        id: 'countries-hover',
+        type: 'line',
+        source: 'countries',
+        paint: { 'line-color': '#14181f', 'line-width': 2 },
+        filter: ['==', ['get', 'ISO_A3_EH'], ''],
+      })
+      map.addLayer({
+        id: 'countries-selected-casing',
+        type: 'line',
+        source: 'countries',
+        layout: { visibility: 'none' },
+        paint: { 'line-color': '#ffffff', 'line-opacity': 0.7, 'line-width': 4 },
+        filter: ['==', ['get', 'ISO_A3_EH'], ''],
+      })
       map.addLayer({
         id: 'countries-selected',
         type: 'line',
@@ -175,6 +336,10 @@ export function MapView({
         paint: { 'line-color': '#0050c8', 'line-width': 2.5, 'line-dasharray': [3, 2] },
       })
       loaded.current = true
+      // Imagery state at load: Satellite view may already be on (month known) and the casings are set.
+      if (linkedGlobe.current) changeShapeRef.current?.('globe')
+      paintForImagery(map, imageryRef.current.visible)
+      syncTrueColour(map, imageryRef.current.date)
     })
     map.on('click', 'countries-fill', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
       if (clicksIgnored()) return
@@ -182,8 +347,25 @@ export function MapView({
       const iso3 = countryIso3(props)
       if (iso3 !== null) callbacks.current.onSelectCountry(iso3, countryName(props))
     })
-    map.on('mouseenter', 'countries-fill', () => (map.getCanvas().style.cursor = 'pointer'))
-    map.on('mouseleave', 'countries-fill', () => (map.getCanvas().style.cursor = ''))
+    map.on('mouseenter', 'countries-fill', () => (map.getCanvas().style.cursor = drawingRef.current ? 'crosshair' : 'pointer'))
+    let hoverIso3: string | null = null
+    const setHover = (iso3: string | null, name = '') => {
+      if (iso3 === hoverIso3) return
+      hoverIso3 = iso3
+      if (loaded.current) map.setFilter('countries-hover', ['==', ['get', 'ISO_A3_EH'], iso3 ?? ''])
+      callbacks.current.onHoverCountry?.(iso3 === null ? null : { iso3, name })
+      setHoverOutline(iso3 === null ? null : (countryShapes.current?.get(iso3) ?? null))
+    }
+    map.on('mousemove', 'countries-fill', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+      if (drawingRef.current) return setHover(null)
+      const props = e.features?.[0]?.properties
+      const iso3 = countryIso3(props)
+      setHover(iso3, countryName(props))
+    })
+    map.on('mouseleave', 'countries-fill', () => {
+      map.getCanvas().style.cursor = ''
+      setHover(null)
+    })
 
     return () => {
       loaded.current = false
@@ -193,10 +375,68 @@ export function MapView({
     }
   }, [])
 
+  // Satellite view: add, change or remove the day's true-colour layer.
   useEffect(() => {
     const map = mapRef.current
     if (map === null) return
-    const apply = () => map.setFilter('countries-selected', ['==', ['get', 'ISO_A3_EH'], selectedCountryIso3 ?? ''])
+    const apply = () => {
+      tiles.current.reset('true-colour')
+      syncTrueColour(map, tcDate)
+    }
+    if (loaded.current) apply()
+    else map.once('load', apply)
+  }, [tcDate])
+
+  // Country layers: plain land fill on the plain background, invisible fill and casings over imagery.
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null) return
+    const apply = () => paintForImagery(map, imageryVisible)
+    if (loaded.current) apply()
+    else map.once('load', apply)
+  }, [imageryVisible])
+
+  // The offline copy (manifest found after the map was made): hide any imagery that was requested.
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null || !offlineCopy) return
+    const apply = () => hideImagery(map, 'both')
+    if (loaded.current) apply()
+    else map.once('load', apply)
+  }, [offlineCopy])
+
+  const changeShape = useCallback((next: MapShape) => {
+    const map = mapRef.current
+    if (map === null) return
+    setShape(next)
+    map.setProjection({ type: next === 'globe' ? 'globe' : 'mercator' })
+    // The cells overlay picks its view (flat or globe) when it is made: make a new one.
+    if (overlayRef.current !== null) map.removeControl(overlayRef.current)
+    const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
+    map.addControl(overlay)
+    overlayRef.current = overlay
+    setOverlayGen((g) => g + 1)
+  }, [])
+
+  useEffect(() => {
+    changeShapeRef.current = changeShape
+  }, [changeShape])
+
+  // Keep sat, satday and globe in the address bar (defaults left out); the app keeps them when it rewrites the link.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    applyImageryParams(params, { sat: satOn, day: satDay, globe: shape === 'globe' })
+    const query = params.toString()
+    window.history.replaceState(null, '', `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`)
+  }, [satOn, satDay, shape])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null) return
+    const apply = () => {
+      map.setFilter('countries-selected', ['==', ['get', 'ISO_A3_EH'], selectedCountryIso3 ?? ''])
+      map.setFilter('countries-selected-casing', ['==', ['get', 'ISO_A3_EH'], selectedCountryIso3 ?? ''])
+    }
     if (loaded.current) apply()
     else map.once('load', apply)
   }, [selectedCountryIso3])
@@ -208,6 +448,7 @@ export function MapView({
     const apply = () => {
       map.setFilter('anomalies-above', ['in', ['get', 'ISO_A3_EH'], ['literal', [...anomalyOutlines.above]]])
       map.setFilter('anomalies-below', ['in', ['get', 'ISO_A3_EH'], ['literal', [...anomalyOutlines.below]]])
+      map.setFilter('anomalies-casing', ['in', ['get', 'ISO_A3_EH'], ['literal', [...anomalyOutlines.above, ...anomalyOutlines.below]]])
     }
     if (loaded.current) apply()
     else map.once('load', apply)
@@ -230,7 +471,9 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current
     if (map === null || fit === null) return
-    const [w, s, e, n] = fit.bbox
+    // A selected country: its boundary's box (the cells stop short of the far north); else the box asked for.
+    const shape = selectedCountryIso3 === null ? null : countryShapes.current?.get(selectedCountryIso3)
+    const [w, s, e, n] = (shape === undefined || shape === null ? null : polygonBounds(shape)) ?? fit.bbox
     map.fitBounds(
       [
         [w, s],
@@ -238,7 +481,8 @@ export function MapView({
       ],
       { padding: 30, maxZoom: 6, animate: !prefersReducedMotion() },
     )
-  }, [fit])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new fit, or the shapes arriving, refits; the country is read at that moment
+  }, [fit, shapesReady])
 
   // Draw a rectangle with two clicks (terra-draw and its MapLibre adapter, D-024).
   useEffect(() => {
@@ -311,11 +555,62 @@ export function MapView({
   useEffect(() => {
     const overlay = overlayRef.current
     if (overlay === null) return
+    const opacity = cellOpacity(imageryVisible)
+    const outline: GeoJsonLayer[] =
+      hoverOutline === null
+        ? []
+        : [
+            // Over imagery the dark hover outline gets a pale casing underneath (T-084).
+            ...(imageryVisible
+              ? [
+                  new GeoJsonLayer({
+                    id: 'hover-outline-casing',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- one Natural Earth feature, read from the countries file
+                    data: hoverOutline as any,
+                    pickable: false,
+                    stroked: true,
+                    filled: false,
+                    getLineColor: [255, 255, 255, 170],
+                    getLineWidth: 5,
+                    lineWidthUnits: 'pixels',
+                  }),
+                ]
+              : []),
+            new GeoJsonLayer({
+              id: 'hover-outline',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- one Natural Earth feature, read from the countries file
+              data: hoverOutline as any,
+              pickable: false,
+              stroked: true,
+              filled: false,
+              getLineColor: [20, 24, 31, 255],
+              getLineWidth: 3,
+              lineWidthUnits: 'pixels',
+            }),
+          ]
+    // The selected country's outline, above the cells like the hover outline (T-070 follow-up).
+    const selectedShape = selectedCountryIso3 === null ? null : (countryShapes.current?.get(selectedCountryIso3) ?? null)
+    if (selectedShape !== null) {
+      outline.push(
+        new GeoJsonLayer({
+          id: 'selected-country-outline',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- one Natural Earth feature, read from the countries file
+          data: selectedShape as any,
+          pickable: false,
+          stroked: true,
+          filled: false,
+          getLineColor: [0, 80, 200, 255],
+          getLineWidth: 3,
+          lineWidthUnits: 'pixels',
+        }),
+      )
+    }
     if (cells === null || cells.length === 0) {
-      overlay.setProps({ layers: [] })
+      overlay.setProps({ layers: outline })
       return
     }
     const max = sharedMax(cells)
+    const strokeWidth = cellStrokeWidth(zoom)
     const polygons = new PolygonLayer<MapCell>({
       id: 'cells',
       data: cells as MapCell[],
@@ -328,12 +623,24 @@ export function MapView({
         [c.lon_max, c.lat_max],
         [c.lon_min, c.lat_max],
       ],
-      getFillColor: (c) => [...cellFillColor(c, layer, max)],
+      getFillColor: (c) => [...cellFillColor(c, layer, max, opacity)],
+      // A light, thin stroke that grows with the zoom (none at world zoom); the selected cell's blue
+      // outline and the dark "no data" outline stay as they were (T-071).
       getLineColor: (c) =>
-        c.cell_id === selectedCellId ? [0, 80, 200, 255] : needsOutline(c, layer) ? [27, 27, 31, 255] : [60, 60, 60, 90],
-      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : 1),
+        c.cell_id === selectedCellId
+          ? [0, 80, 200, 255]
+          : needsOutline(c, layer)
+            ? [27, 27, 31, 255]
+            : imageryVisible
+              ? [...CELL_CASING_IMAGERY]
+              : [60, 60, 60, CELL_STROKE_ALPHA],
+      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : strokeWidth),
       lineWidthUnits: 'pixels',
-      updateTriggers: { getFillColor: [layer, max], getLineColor: [selectedCellId, layer], getLineWidth: [selectedCellId, layer] },
+      updateTriggers: {
+        getFillColor: [layer, max, opacity],
+        getLineColor: [selectedCellId, layer, imageryVisible],
+        getLineWidth: [selectedCellId, layer, strokeWidth],
+      },
       onHover: (info) => {
         const box = wrap.current?.getBoundingClientRect()
         setHover(
@@ -343,7 +650,11 @@ export function MapView({
         )
       },
       onClick: (info) => {
-        if (info.object && !clicksIgnored()) callbacks.current.onSelectCell(info.object as MapCell)
+        if (info.object && !clicksIgnored()) {
+          const clicked = info.object as MapCell
+          pinDispatch({ type: 'click', cellId: clicked.cell_id })
+          callbacks.current.onSelectCell(clicked)
+        }
       },
     })
     // One icon per cell is a glyph for every one of the 56,238 cells; at world zoom a cell is about 2 px,
@@ -365,13 +676,75 @@ export function MapView({
             }),
           ]
         : []
-    overlay.setProps({ layers: [polygons, ...icons] })
-  }, [cells, layer, selectedCellId, zoom])
+    // The selected cell: a pale casing under its blue outline, so it reads on dark and on bright imagery.
+    const selected = selectedCellId === null ? undefined : cells.find((c) => c.cell_id === selectedCellId)
+    const selectedOutline =
+      selected === undefined || !imageryVisible
+        ? []
+        : [
+            new PolygonLayer<MapCell>({
+              id: 'selected-casing',
+              data: [selected],
+              pickable: false,
+              stroked: true,
+              filled: false,
+              getPolygon: (c) => [[c.lon_min, c.lat_min], [c.lon_max, c.lat_min], [c.lon_max, c.lat_max], [c.lon_min, c.lat_max]],
+              getLineColor: [255, 255, 255, 240],
+              getLineWidth: 6,
+              lineWidthUnits: 'pixels',
+            }),
+            new PolygonLayer<MapCell>({
+              id: 'selected-outline',
+              data: [selected],
+              pickable: false,
+              stroked: true,
+              filled: false,
+              getPolygon: (c) => [[c.lon_min, c.lat_min], [c.lon_max, c.lat_min], [c.lon_max, c.lat_max], [c.lon_min, c.lat_max]],
+              getLineColor: [0, 80, 200, 255],
+              getLineWidth: 3,
+              lineWidthUnits: 'pixels',
+            }),
+          ]
+    overlay.setProps({ layers: [polygons, ...selectedOutline, ...icons, ...outline] })
+  }, [cells, layer, selectedCellId, zoom, hoverOutline, selectedCountryIso3, shapesReady, imageryVisible, overlayGen])
 
   return (
     <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
-      <div ref={container} className="map" role="region" aria-label="Global fire activity map" />
-      {hover !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
+      <div
+        ref={container}
+        className="map"
+        role="region"
+        aria-label="Global fire activity map"
+        aria-busy={loading}
+      />
+      {loading && <MapLoading />}
+      <ImageryControls
+        month={month}
+        offlineCopy={offlineCopy}
+        satOn={satOn}
+        onSatOn={(on) => {
+          setFailedTcDate(null)
+          setSatOn(on)
+        }}
+        satDay={satDay}
+        onSatDay={setSatDay}
+        satDateShown={tcShown ? tcDate : null}
+        shape={shape}
+        onShape={changeShape}
+        globeOffered={GLOBE_OFFERED}
+        note={imageryNote(offlineCopy, basemapFailed, tcFailed)}
+        today={today}
+      />
+      <ImageryCredit
+        offlineCopy={offlineCopy}
+        satDateShown={tcShown ? tcDate : null}
+        note={imageryNote(offlineCopy, basemapFailed, tcFailed)}
+        basemapShown={basemapShown}
+      />
+      <ScrollHint />
+      <MapLegend layer={layer} max={legendMax} cardPinned={pinnedCell !== null} />
+      {pinnedCell !== null && <PinnedCellCard cell={pinnedCell} layer={layer} onClose={closePinned} onPointerEnter={() => setHover(null)} />}
+      {hover !== null && tooltipCellId(hover.cell.cell_id, pinned, false) !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
         <div
           className="map-tooltip"
           // Flip to the other side of the pointer near the right and bottom edges.

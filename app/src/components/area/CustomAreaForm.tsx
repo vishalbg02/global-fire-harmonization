@@ -94,7 +94,7 @@ export function CustomAreaForm({ initial, polygon, onSubmit, drawing, onToggleDr
 
   return (
     <form aria-busy={loading} className="custom-area" onSubmit={submit} noValidate aria-labelledby="custom-area-title">
-      <h3 id="custom-area-title">Custom area</h3>
+      <h2 id="custom-area-title">Custom area</h2>
       <div className="bbox-fields">
         {FIELDS.map((f) => (
           <label key={f.key}>
@@ -146,7 +146,7 @@ export function CustomAreaForm({ initial, polygon, onSubmit, drawing, onToggleDr
       <p className="legend-note">{GRID_NOTE}</p>
       {polygon !== undefined && (
         <div className="custom-polygon" role="group" aria-labelledby="custom-polygon-title">
-          <h4 id="custom-polygon-title">Custom polygon</h4>
+          <h3 id="custom-polygon-title">Custom polygon</h3>
           <label>
             Corner points, one per line: longitude, latitude (degrees)
             <textarea
