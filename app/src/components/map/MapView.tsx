@@ -28,7 +28,7 @@ const STYLE: StyleSpecification = {
   layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#dbe7f1' } }],
 }
 
-const COUNTRIES_URL = `${import.meta.env.BASE_URL}geo/ne_110m_admin_0_countries.geojson`
+const COUNTRIES_URL = `${import.meta.env.BASE_URL}geo/ne_admin_0_countries_india_pov.geojson`
 
 const INITIAL_ZOOM = 1.2
 /** From this zoom a 0.5 degree cell is about 16 px wide, enough for its 13 px verdict icon. */
