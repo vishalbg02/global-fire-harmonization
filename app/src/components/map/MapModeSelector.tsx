@@ -1,4 +1,5 @@
 import type { MapMode } from '../../state/selection.ts'
+import { SegmentedControl } from '../ui/SegmentedControl.tsx'
 
 const MODES: readonly { value: MapMode; label: string }[] = [
   { value: 'verdict', label: 'Verdict' },
@@ -17,23 +18,12 @@ export function MapModeSelector({
   verdictDisabled?: boolean
 }) {
   return (
-    <fieldset className="layer-selector">
-      <legend>Map shows</legend>
-      {MODES.map((mode) => (
-        <label key={mode.value} className={mode.value === 'verdict' && verdictDisabled ? 'is-disabled' : undefined}>
-          <input
-            type="radio"
-            name="map-mode"
-            value={mode.value}
-            checked={value === mode.value}
-            aria-disabled={(mode.value === 'verdict' && verdictDisabled) || undefined}
-            onChange={() => {
-              if (!(mode.value === 'verdict' && verdictDisabled)) onChange(mode.value)
-            }}
-          />
-          {mode.label}
-        </label>
-      ))}
-    </fieldset>
+    <SegmentedControl<MapMode>
+      legend="Map shows"
+      name="map-mode"
+      value={value}
+      onChange={onChange}
+      options={MODES.map((m) => ({ ...m, disabled: m.value === 'verdict' && verdictDisabled }))}
+    />
   )
 }

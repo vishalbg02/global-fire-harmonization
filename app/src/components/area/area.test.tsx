@@ -9,7 +9,7 @@ import type { Area } from '../../state/selection.ts'
 import { CalendarPanel } from '../calendar/CalendarPanel.tsx'
 import { ErrorState } from '../common/States.tsx'
 import { EvidencePanel } from '../evidence/EvidencePanel.tsx'
-import { AreaPicker } from './AreaPicker.tsx'
+import { CustomAreaPanel } from './CustomAreaPanel.tsx'
 import { areaFitBbox } from './resolveArea.ts'
 import { CustomAreaForm, GRID_NOTE } from './CustomAreaForm.tsx'
 import { filterEntities, matchEntity } from './countryFilter.ts'
@@ -64,17 +64,11 @@ describe('resolveArea', () => {
   })
 })
 
-const picker = (overrides: Partial<Parameters<typeof AreaPicker>[0]> = {}) =>
+const picker = (overrides: Partial<Parameters<typeof CustomAreaPanel>[0]> = {}) =>
   renderToString(
-    <AreaPicker
+    <CustomAreaPanel
       area={WORLD}
-      countries={COUNTRIES}
-      continents={CONTINENTS}
-      listsFailed={false}
-      onChooseEntity={() => {}}
-      onChooseWorld={() => {}}
       onChooseCustom={() => {}}
-      synthetic
       drawing={false}
       onToggleDrawing={() => {}}
       customMessage={null}
@@ -83,46 +77,24 @@ const picker = (overrides: Partial<Parameters<typeof AreaPicker>[0]> = {}) =>
     />,
   )
 
-describe('AreaPicker', () => {
-  it('offers the world, a labelled country search with its options, a continent choice and a custom area', () => {
+describe('CustomAreaPanel (the "Draw or type an area" panel)', () => {
+  it('holds the custom rectangle form with its messages, unchanged', () => {
     const html = picker()
-    expect(html).toContain('World')
-    expect(html).toMatch(/<label[^>]*>Country<\/label>/)
-    expect(html).toMatch(/<input[^>]*list="[^"]*-countries"/)
-    for (const c of COUNTRIES) expect(html).toContain(`<option value="${c.entity_name}"`)
-    expect(html).toMatch(/<label[^>]*>Continent<\/label>/)
-    for (const c of CONTINENTS) expect(html).toContain(`>${c.entity_name}</option>`)
     expect(html).toContain('Custom area')
-  })
-
-  it('says which area is shown, and shows the selected country in the search box', () => {
-    const area: Area = { entity_type: 'COUNTRY', entity_id: 'BRA', entity_name: 'Brazil' }
-    const html = picker({ area })
-    expect(html).toContain('Showing: Brazil')
-    expect(html).toMatch(/<input[^>]*value="Brazil"/)
-  })
-
-  it('marks the world as pressed only when it is the area', () => {
-    expect(picker()).toContain('aria-pressed="true"')
-    expect(picker({ area: { entity_type: 'COUNTRY', entity_id: 'BRA', entity_name: 'Brazil' } })).toContain('aria-pressed="false"')
-  })
-
-  it('selects the current continent in the continent choice', () => {
-    const html = picker({ area: { entity_type: 'CONTINENT', entity_id: 'AS', entity_name: 'Asia' } })
-    expect(html).toMatch(/<option value="AS" selected/)
-  })
-
-  it('says so when the lists could not be loaded, and still offers the world and a custom area', () => {
-    const html = picker({ countries: undefined, continents: undefined, listsFailed: true })
-    expect(html).toContain('could not be loaded')
-    expect(html).toContain('role="alert"')
     expect(html).toContain('Show custom area')
+    expect(html).toContain('Draw on the map')
   })
 
   it('fills the custom fields from the current custom area', () => {
     const html = picker({ area: customArea([100, 0, 101.5, 1]) })
     expect(html).toContain('value="100"')
     expect(html).toContain('value="101.5"')
+  })
+
+  it('has the polygon route when it is given', () => {
+    const html = picker({ polygon: { onSubmit: () => {}, drawing: false, onToggleDrawing: () => {}, cells: null } })
+    expect(html).toContain('Show polygon')
+    expect(html).toContain('Draw a polygon on the map')
   })
 })
 

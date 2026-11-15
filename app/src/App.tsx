@@ -1,19 +1,37 @@
 import { Suspense, lazy, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ApiError, fetchAnomalies, fetchEntities, fetchMapCells, fetchMeta } from './api/client.ts'
+import { ApiError, fetchAnomalies, fetchEntities, fetchEvidence, fetchMapCells, fetchMeta } from './api/client.ts'
 import type { Anomaly, Bbox, EntityItem, MapCell } from './api/contract.ts'
 import { AnomalyPanel } from './components/anomalies/AnomalyPanel.tsx'
 import { EXPANDED_SIZE, PAGE_SIZE, outlinedCountries, rankAnomalies, topN } from './components/anomalies/rankings.ts'
 import type { RankingTab } from './components/anomalies/rankings.ts'
-import { AreaPicker } from './components/area/AreaPicker.tsx'
+import { AreaSearch } from './components/area/AreaSearch.tsx'
+import { CustomAreaPanel } from './components/area/CustomAreaPanel.tsx'
 import { areaFitBbox, resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { useStaticManifest } from './api/staticData.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
 import { NO_OFFLINE_MAP, offlineMapNote } from './content/offline.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
-import { PAGE_PARAM, METHODS_PAGE, methodsHref, pageFromSearch } from './content/methodsLink.ts'
-import { RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
+import { PAGE_PARAM, METHODS_PAGE, pageFromSearch } from './content/methodsLink.ts'
+import { RAW_ONLY_AREA_UNAVAILABLE, RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
+import { ExportButton } from './components/export/ExportButton.tsx'
+import { Header } from './components/layout/Header.tsx'
+import { CopyLinkButton } from './components/layout/CopyLinkButton.tsx'
+import { StoryChips } from './components/layout/StoryChips.tsx'
+import type { FeaturedStory } from './content/featured.ts'
+import * as UI from './content/ui.ts'
+import { VERDICT_PRESENTATION } from './content/verdicts.ts'
+import { TopAnomalies } from './components/anomalies/TopAnomalies.tsx'
+import { MapModeSwitch, selectMode } from './components/map/MapModeSwitch.tsx'
+import type { SelectMode } from './components/map/MapModeSwitch.tsx'
+import { MapSourceLine } from './components/map/MapSourceLine.tsx'
+import { SummaryCard } from './components/summary/SummaryCard.tsx'
+import { Button } from './components/ui/Button.tsx'
+import { Card } from './components/ui/Card.tsx'
+import { Tabs } from './components/ui/Tabs.tsx'
+import { setTabParam, tabFromSearch } from './state/tabs.ts'
+import type { TabId } from './state/tabs.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
 import { CellInfo } from './components/map/CellInfo.tsx'
@@ -45,15 +63,19 @@ export default function App() {
   const [polygonDraft, setPolygonDraft] = useState<{ ring: Ring; error: string | null; seq: number } | null>(null)
   const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
+  const [tab, setTab] = useState<TabId>(() => tabFromSearch(window.location.search))
+  const [drawMenuOpen, setDrawMenuOpen] = useState(false)
+  const [hoverCountry, setHoverCountry] = useState<{ iso3: string; name: string } | null>(null)
 
   // Keep the link in step with the selection, so the address bar can be shared.
   useEffect(() => {
     const params = new URLSearchParams(encodeSelection(selection))
     if (page === 'methods') params.set(PAGE_PARAM, METHODS_PAGE)
+    setTabParam(params, tab)
     const query = params.toString()
     const url = `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`
     window.history.replaceState(null, '', url)
-  }, [selection, page])
+  }, [selection, page, tab])
 
   const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
   const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
@@ -115,7 +137,7 @@ export default function App() {
       },
       fit: found?.bbox,
     })
-    evidenceHeading.current?.focus()
+    summaryHeading.current?.focus()
   }
 
   // Typed or drawn: the same check (the API's rules and messages), then the same selection.
@@ -193,6 +215,60 @@ export default function App() {
       ? (cellList?.find((c) => c.cell_id === selection.entity?.entity_id) ?? null)
       : null
 
+  // The summary card focus target (a calendar cell or a ranking entry moves focus to the verdict).
+  const summaryHeading = useRef<HTMLHeadingElement>(null)
+
+  // Hovering a country: its verdict for the month, from its stored evidence (the same query the evidence panel uses).
+  const hoverEvidence = useQuery({
+    queryKey: ['evidence', 'COUNTRY', hoverCountry?.iso3, selection.month?.year, selection.month?.month],
+    queryFn: () => fetchEvidence('COUNTRY', hoverCountry!.iso3, selection.month!.year, selection.month!.month),
+    enabled: hoverCountry !== null && selection.month !== null && page === 'map',
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  })
+  const hoverVerdict =
+    hoverCountry === null
+      ? null
+      : hoverEvidence.data !== undefined
+        ? `${VERDICT_PRESENTATION[hoverEvidence.data.verdict].icon} ${VERDICT_PRESENTATION[hoverEvidence.data.verdict].label}`
+        : hoverEvidence.isPending
+          ? UI.HOVER_LOADING
+          : UI.HOVER_NO_VERDICT
+
+  const countryRankings = useMemo(() => rankAnomalies(anomalies.data ?? [], 'COUNTRY'), [anomalies.data])
+  const drawDisabled = offline !== null
+  const onSelectMode = (mode: SelectMode) => {
+    setDrawing(mode === 'rectangle')
+    setPolygonDrawing(mode === 'polygon')
+  }
+  const chooseStory = (story: FeaturedStory) => {
+    dispatch({ type: 'set-month', year: story.year, month: story.month })
+    if (story.entityType === 'GLOBAL') {
+      dispatch({ type: 'clear-entity' })
+      return
+    }
+    if (story.entityType === 'FIRE_REGION') return
+    const list = story.entityType === 'COUNTRY' ? countries.data : continents.data
+    dispatch({
+      type: 'select-entity',
+      entity: { entity_type: story.entityType, entity_id: story.entityId, entity_name: story.entityName },
+      fit: list?.find((e) => e.entity_id === story.entityId)?.bbox,
+    })
+  }
+  const seriesError = areaSeries.error instanceof ApiError ? areaSeries.error : null
+  const summaryError =
+    area.entity_type === 'CUSTOM'
+      ? customMessage
+      : seriesError?.status === 404
+        ? `Area not found: ${area.entity_name}. The summary is available for the countries, continents and the world that the data cover.`
+        : rawOnly && seriesError?.status === 503
+          ? RAW_ONLY_AREA_UNAVAILABLE
+          : null
+  const openMethods = () => {
+    setPage('methods')
+    window.scrollTo(0, 0)
+  }
+
   return (
     <RawOnlyContext.Provider value={rawOnly}>
     <div className="app">
@@ -201,23 +277,7 @@ export default function App() {
       </a>
       <SyntheticBanner synthetic={meta.data?.synthetic === true} />
       <OfflineNote manifest={offline} mapNote={offlineMapNoteText} />
-      <header>
-        <h1>Global Fire Harmonization</h1>
-        <p className="subtitle">Satellite-detected fire activity, harmonized across MODIS and VIIRS</p>
-        {page === 'map' && (
-          <a
-            className="methods-link"
-            href={methodsHref()}
-            onClick={(e) => {
-              e.preventDefault()
-              setPage('methods')
-              window.scrollTo(0, 0)
-            }}
-          >
-            Methods and validation
-          </a>
-        )}
-      </header>
+      <Header showMethods={page === 'map'} onOpenMethods={openMethods} />
       {page === 'map' && noteShown && (
         <p className="raw-only-note" role="status">
           {RAW_ONLY_NOTE}
@@ -234,7 +294,15 @@ export default function App() {
         </Suspense>
       ) : (
       <main id="main-content" tabIndex={-1}>
-        <div className="controls">
+        <section className="toolbar" aria-label={UI.TOOLBAR_LABEL}>
+          <AreaSearch
+            area={area}
+            countries={countries.data}
+            continents={continents.data}
+            listsFailed={countries.isError || continents.isError}
+            onChooseEntity={chooseEntity}
+            onChooseWorld={() => dispatch({ type: 'clear-entity' })}
+          />
           <MonthSelector
             months={mapMonths}
             value={selection.month}
@@ -251,86 +319,86 @@ export default function App() {
             onChange={(mapMode) => dispatch({ type: 'set-map-mode', mapMode })}
             verdictDisabled={rawOnly}
           />
-        </div>
-        <div className="map-area">
-          <Suspense fallback={<LoadingState what="the map" />}>
-          <MapView
-            cells={cellList}
-            layer={layer}
-            selectedCellId={selection.entity?.entity_type === 'CELL' ? selection.entity.entity_id : null}
-            selectedCountryIso3={selection.entity?.entity_type === 'COUNTRY' ? selection.entity.entity_id : null}
-            onSelectCell={(cell) =>
-              dispatch({ type: 'select-entity', entity: { entity_type: 'CELL', entity_id: cell.cell_id, entity_name: cell.cell_id } })
-            }
-            onSelectCountry={(iso3, name) =>
-              dispatch({ type: 'select-entity', entity: { entity_type: 'COUNTRY', entity_id: iso3, entity_name: name } })
-            }
-            fit={mapFit}
-            customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
-            customRing={area.entity_type === 'CUSTOM' ? (area.polygon ?? null) : null}
-            drawing={drawing}
-            onDrawn={chooseCustom}
-            polygonDrawing={polygonDrawing}
-            onDrawnPolygon={choosePolygon}
-            anomalyOutlines={anomalyOutlines}
-          />
-          </Suspense>
-          <aside>
-            <AreaPicker
-              area={area}
-              countries={countries.data}
-              continents={continents.data}
-              listsFailed={countries.isError || continents.isError}
-              onChooseEntity={chooseEntity}
-              onChooseWorld={() => dispatch({ type: 'clear-entity' })}
-              onChooseCustom={chooseCustom}
-              polygon={{
-                onSubmit: choosePolygon,
-                drawing: polygonDrawing,
-                onToggleDrawing: () => {
-                  setDrawing(false)
-                  setPolygonDrawing((d) => !d)
-                },
-                cells: area.entity_type === 'CUSTOM' ? (customSeries.data?.[0]?.n_cells ?? null) : null,
-                draft: polygonDraft,
+          <div className="draw-menu">
+            <Button
+              aria-expanded={drawMenuOpen}
+              aria-controls="draw-panel"
+              onClick={() => setDrawMenuOpen((o) => !o)}
+            >
+              {`${UI.DRAW_MENU} ${drawMenuOpen ? '▴' : '▾'}`}
+            </Button>
+          </div>
+          <CopyLinkButton />
+          {drawMenuOpen && (
+            <section
+              id="draw-panel"
+              className="draw-panel"
+              aria-label={UI.DRAW_MENU_TITLE}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setDrawMenuOpen(false)
               }}
-              drawing={drawing}
-              onToggleDrawing={() => {
-                setPolygonDrawing(false)
-                setDrawing((d) => !d)
-              }}
-              customMessage={customMessage}
-              customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
-              synthetic={meta.data?.synthetic === true}
-            />
-            <AnomalyPanel
-              month={selection.month}
-              provisional={
-                selection.month !== null &&
-                (meta.data?.provisional_months ?? []).includes(monthKey(selection.month.year, selection.month.month))
-              }
-              status={anomalyStatus}
-              onRetry={() => void anomalies.refetch()}
-              tab={anomalyTab}
-              onTabChange={(t) => {
-                setAnomalyTab(t)
-                setAnomalyExpanded(false)
-              }}
-              expanded={anomalyExpanded}
-              onToggleExpanded={() => setAnomalyExpanded((e) => !e)}
-              rankings={rankings}
-              totalAreas={anomalyList === undefined ? null : anomalyList.length}
-              onSelect={chooseAnomaly}
-            />
-            <Legend layer={layer} max={max} />
-            <section aria-label="Selection" className="selection">
-              <h2>Selection</h2>
-              {selection.entity === null && <EmptyState message="Select a cell or a country on the map, or choose an area above." />}
-              {selection.entity !== null && selection.entity.entity_type !== 'CELL' && (
-                <p>{`Area: ${area.entity_name}${area.entity_type === 'CUSTOM' ? '' : ` (${area.entity_id})`}`}</p>
-              )}
-              {selectedCell !== null && <CellInfo cell={selectedCell} layer={layer} />}
+            >
+              <CustomAreaPanel
+                area={area}
+                onChooseCustom={chooseCustom}
+                polygon={{
+                  onSubmit: choosePolygon,
+                  drawing: polygonDrawing,
+                  onToggleDrawing: () => {
+                    setDrawing(false)
+                    setPolygonDrawing((d) => !d)
+                  },
+                  cells: area.entity_type === 'CUSTOM' ? (customSeries.data?.[0]?.n_cells ?? null) : null,
+                  draft: polygonDraft,
+                }}
+                drawing={drawing}
+                onToggleDrawing={() => {
+                  setPolygonDrawing(false)
+                  setDrawing((d) => !d)
+                }}
+                customMessage={customMessage}
+                customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
+              />
             </section>
+          )}
+        </section>
+
+        <StoryChips areaId={area.entity_id} month={selection.month} onChoose={chooseStory} />
+
+        <div className="hero">
+          <div className="map-column">
+            <div className="map-stage">
+              <Suspense fallback={<LoadingState what="the map" />}>
+              <MapView
+                cells={cellList}
+                layer={layer}
+                selectedCellId={selection.entity?.entity_type === 'CELL' ? selection.entity.entity_id : null}
+                selectedCountryIso3={selection.entity?.entity_type === 'COUNTRY' ? selection.entity.entity_id : null}
+                onSelectCell={(cell) =>
+                  dispatch({ type: 'select-entity', entity: { entity_type: 'CELL', entity_id: cell.cell_id, entity_name: cell.cell_id } })
+                }
+                onSelectCountry={(iso3, name) =>
+                  dispatch({ type: 'select-entity', entity: { entity_type: 'COUNTRY', entity_id: iso3, entity_name: name } })
+                }
+                fit={mapFit}
+                customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
+                customRing={area.entity_type === 'CUSTOM' ? (area.polygon ?? null) : null}
+                drawing={drawing}
+                onDrawn={chooseCustom}
+                polygonDrawing={polygonDrawing}
+                onDrawnPolygon={choosePolygon}
+                anomalyOutlines={anomalyOutlines}
+                onHoverCountry={setHoverCountry}
+              />
+              </Suspense>
+              <MapModeSwitch mode={selectMode(drawing, polygonDrawing)} onChange={onSelectMode} drawDisabled={drawDisabled} />
+              {hoverCountry !== null && !drawing && !polygonDrawing && (
+                <p className="map-readout" aria-hidden="true">
+                  <strong>{hoverCountry.name}</strong>
+                  <span>{hoverVerdict}</span>
+                </p>
+              )}
+            </div>
             <section aria-label="Data status" className="status">
               {(meta.isPending || (cells.isPending && mapAvailable)) && selection.month !== null && (
                 <LoadingState what="map data" />
@@ -345,36 +413,121 @@ export default function App() {
               )}
               {cellList !== null && cellList.length === 0 && <EmptyState message="No cells for this month." />}
             </section>
+            <MapSourceLine methodVersion={meta.data?.method_version ?? null} />
+          </div>
+          <aside className="hero-side">
+            <SummaryCard
+              area={area}
+              month={selection.month}
+              status={areaSeries.isError ? 'error' : areaSeries.isPending ? 'loading' : 'ready'}
+              errorMessage={summaryError}
+              onRetry={summaryError === null || area.entity_type !== 'CUSTOM' ? () => void areaSeries.refetch() : undefined}
+              records={areaSeries.data}
+              meta={meta.data ?? null}
+              headingRef={summaryHeading}
+              download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
+            />
+            <TopAnomalies
+              month={selection.month}
+              status={anomalyStatus}
+              above={countryRankings.above}
+              rawOnly={rawOnly}
+              onSelect={chooseAnomaly}
+              onRetry={() => void anomalies.refetch()}
+              onSeeAll={() => {
+                setTab('anomalies')
+                document.getElementById('details')?.scrollIntoView({ block: 'start' })
+              }}
+            />
+            <Legend layer={layer} max={max} />
+            <section aria-label="Selection" className="selection card">
+              <h2>{UI.SELECTION_TITLE}</h2>
+              {selection.entity === null && <EmptyState message={UI.SELECTION_EMPTY} />}
+              {selection.entity !== null && selection.entity.entity_type !== 'CELL' && (
+                <p>{`Area: ${area.entity_name}${area.entity_type === 'CUSTOM' ? '' : ` (${area.entity_id})`}`}</p>
+              )}
+              {selectedCell !== null && <CellInfo cell={selectedCell} layer={layer} />}
+            </section>
           </aside>
         </div>
-        <div className="calendar-evidence">
-          <CalendarPanel
-            area={area}
-            meta={meta.data ?? null}
-            selectedMonth={selection.month}
-            valueMode={rawOnly ? 'activity' : selection.valueMode}
-            source={rawOnly ? 'raw' : selection.source}
-            onValueModeChange={(valueMode) => dispatch({ type: 'set-value-mode', valueMode })}
-            onSelectMonth={(year, month) => {
-              dispatch({ type: 'set-month', year, month })
-              evidenceHeading.current?.focus()
-            }}
-            onShowWorld={() => dispatch({ type: 'clear-entity' })}
+
+        <Card id="details" className="details" aria-label={UI.TABS_LABEL}>
+          <Tabs<TabId>
+            idBase="details"
+            label={UI.TABS_LABEL}
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              {
+                id: 'calendar',
+                label: UI.TAB_LABELS_UI.calendar,
+                panel: (
+                  <CalendarPanel
+                    area={area}
+                    meta={meta.data ?? null}
+                    selectedMonth={selection.month}
+                    valueMode={rawOnly ? 'activity' : selection.valueMode}
+                    source={rawOnly ? 'raw' : selection.source}
+                    onValueModeChange={(valueMode) => dispatch({ type: 'set-value-mode', valueMode })}
+                    onSelectMonth={(year, month) => {
+                      dispatch({ type: 'set-month', year, month })
+                      summaryHeading.current?.focus()
+                    }}
+                    onShowWorld={() => dispatch({ type: 'clear-entity' })}
+                  />
+                ),
+              },
+              {
+                id: 'satellites',
+                label: UI.TAB_LABELS_UI.satellites,
+                panel: <WitnessPanel area={area} meta={meta.data ?? null} onShowWorld={() => dispatch({ type: 'clear-entity' })} />,
+              },
+              {
+                id: 'evidence',
+                label: UI.TAB_LABELS_UI.evidence,
+                panel: (
+                  <EvidencePanel
+                    area={area}
+                    month={selection.month}
+                    cell={
+                      selection.entity?.entity_type === 'CELL'
+                        ? { id: selection.entity.entity_id, record: selectedCell, loading: cells.isPending }
+                        : null
+                    }
+                    meta={meta.data ?? null}
+                    headingRef={evidenceHeading}
+                    onShowWorld={() => dispatch({ type: 'clear-entity' })}
+                  />
+                ),
+              },
+              {
+                id: 'anomalies',
+                label: UI.TAB_LABELS_UI.anomalies,
+                panel: (
+                  <AnomalyPanel
+                    month={selection.month}
+                    provisional={
+                      selection.month !== null &&
+                      (meta.data?.provisional_months ?? []).includes(monthKey(selection.month.year, selection.month.month))
+                    }
+                    status={anomalyStatus}
+                    onRetry={() => void anomalies.refetch()}
+                    tab={anomalyTab}
+                    onTabChange={(t) => {
+                      setAnomalyTab(t)
+                      setAnomalyExpanded(false)
+                    }}
+                    expanded={anomalyExpanded}
+                    onToggleExpanded={() => setAnomalyExpanded((e) => !e)}
+                    rankings={rankings}
+                    totalAreas={anomalyList === undefined ? null : anomalyList.length}
+                    onSelect={chooseAnomaly}
+                  />
+                ),
+              },
+            ]}
           />
-          <EvidencePanel
-            area={area}
-            month={selection.month}
-            cell={
-              selection.entity?.entity_type === 'CELL'
-                ? { id: selection.entity.entity_id, record: selectedCell, loading: cells.isPending }
-                : null
-            }
-            meta={meta.data ?? null}
-            headingRef={evidenceHeading}
-            onShowWorld={() => dispatch({ type: 'clear-entity' })}
-          />
-        </div>
-        <WitnessPanel area={area} onShowWorld={() => dispatch({ type: 'clear-entity' })} />
+        </Card>
       </main>
       )}
     </div>
