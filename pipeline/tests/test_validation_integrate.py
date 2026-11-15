@@ -182,3 +182,20 @@ def test_the_overall_s1_follows_its_two_halves_and_stays_not_run_while_one_is_no
         return next(t for t in vi.resolve_s1(es) if t["test_id"] == "S1")["status"]
     assert s1("FAIL", "PASS") == "FAIL" and s1("PASS", "PASS") == "PASS" and s1("PASS", "INCONCLUSIVE") == "INCONCLUSIVE"
     assert s1("FAIL", "NOT_RUN") == "NOT_RUN"
+
+
+def test_measured_is_flattened_to_scalars_without_losing_anything():
+    nested = {"a": 1, "b": {"c": "x", "d": {"e": None, "f": True}}, "g": [], "h": ["C3", "C4"], "i": {}}
+    flat = vi.flatten_measured(nested)
+    assert flat == {"a": 1, "b.c": "x", "b.d.e": None, "b.d.f": True, "g": "[]", "h": '["C3", "C4"]', "i": "{}"}
+    assert vi.flatten_measured(None) == {} and vi.flatten_measured({}) == {}
+
+
+def test_merge_writes_only_scalar_measured_values_and_check_refuses_nested_ones():
+    e = entry("E1", measured={"wins": 14, "per_region": {"AUST": {"won": True}}, "lost": []})
+    out = vi.merge([*all_entries()[:-1], e, entry("S1")])
+    got = next(t for t in out if t["test_id"] == "E1")["measured"]
+    assert got == {"wins": 14, "per_region.AUST.won": True, "lost": "[]"}
+    d = doc_of(all_entries())
+    next(t for t in d["tests"] if t["test_id"] == "E1")["measured"] = {"x": {"y": 1}}
+    assert any("numbers, text, true/false or null" in p for p in vi.check(d))

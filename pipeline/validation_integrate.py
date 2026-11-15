@@ -103,8 +103,7 @@ def merge(entries: list[dict]) -> list[dict]:
     entries = resolve_s1(list(seen.values()))
     by_plan: dict[str, list[dict]] = {p: [] for p in PLAN_ORDER}
     for e in entries:
-        if e.get("measured") is None:                  # a harness may write null for a test that did not run: the contract wants an object
-            e = {**e, "measured": {}}
+        e = {**e, "measured": flatten_measured(e.get("measured"))}      # null becomes {}, nested values become flat keys
         p = plan_test(e["test_id"])
         if p not in by_plan:
             raise ValueError(f"entry {e['test_id']} belongs to no test of the plan {PLAN_ORDER}")
@@ -116,6 +115,30 @@ def merge(entries: list[dict]) -> list[dict]:
         elif p in NOT_RUN_TESTS:
             out.append(not_run_entry(p))
     return out
+
+
+def flatten_measured(measured: dict | None) -> dict:
+    """`measured` as the API and the app accept it: only numbers, text, true/false and null (DATA_CONTRACT.md section 6; the API model
+    `ValidationTest.measured` and the app's `parseMeasured` reject anything nested). A nested object becomes dotted keys
+    ("control.rows_product"); a list becomes its JSON text ("[]", '["C3"]'), so nothing is dropped."""
+    out: dict = {}
+
+    def walk(prefix: str, value) -> None:
+        if isinstance(value, dict):
+            if not value and prefix:
+                out[prefix] = "{}"
+            for k, v in value.items():
+                walk(f"{prefix}.{k}" if prefix else str(k), v)
+        elif isinstance(value, (list, tuple)):
+            out[prefix] = json.dumps(list(value), default=str)
+        else:
+            out[prefix] = value
+    walk("", measured or {})
+    return out
+
+
+def _is_scalar(v) -> bool:
+    return v is None or isinstance(v, (bool, int, float, str))
 
 
 def _has_number(x) -> bool:
@@ -154,6 +177,10 @@ def check(doc: dict) -> list[str]:
             problems.append(f"{t['test_id']}: a NOT_RUN entry must carry no measured numbers")
         if not isinstance(t["measured"], dict):
             problems.append(f"{t['test_id']}: measured must be an object")
+        else:
+            nested = [k for k, v in t["measured"].items() if not _is_scalar(v)]
+            if nested:
+                problems.append(f"{t['test_id']}: measured values must be numbers, text, true/false or null (the API and the app refuse more): {nested[:3]}")
         if not t["notes"] and t["status"] in ("FAIL", "INCONCLUSIVE", "NOT_RUN"):
             problems.append(f"{t['test_id']}: a {t['status']} entry needs a note that says why")
     present = {plan_test(str(i)) for i in ids}

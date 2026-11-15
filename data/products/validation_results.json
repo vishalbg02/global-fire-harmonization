@@ -1,7 +1,7 @@
 {
   "contract_version": "0.1.1",
   "method_version": "0.1.0",
-  "generated_at": "2026-11-14T21:39:37Z",
+  "generated_at": "2026-11-15T02:14:00Z",
   "synthetic": false,
   "tests": [
     {
@@ -18,282 +18,73 @@
         "snpp_only_peak_month": null,
         "official_reading": "own_baseline",
         "baseline": "D-028 as pre-registered, each path its own baseline",
-        "formal_reading": {
-          "status": "INCONCLUSIVE",
-          "same_direction": null,
-          "peak_within_tolerance": null,
-          "intervals_overlap": null,
-          "peak_month_distance": null,
-          "aqua_direction": "ABOVE",
-          "snpp_direction": null,
-          "aqua_pct_of_normal": 361.3,
-          "aqua_pct_90": [
-            328.6,
-            394.0
-          ],
-          "snpp_pct_of_normal": null,
-          "snpp_pct_90": [
-            null,
-            null
-          ],
-          "aqua_peak_month": "2015-10",
-          "snpp_peak_month": null,
-          "reasons": [
-            "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
-          ]
-        },
-        "other_readings": {
-          "shared_aqua_baseline": {
-            "status": "PASS",
-            "same_direction": true,
-            "peak_within_tolerance": true,
-            "intervals_overlap": true,
-            "peak_month_distance": 0,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": "ABOVE",
-            "aqua_pct_of_normal": 361.3,
-            "aqua_pct_90": [
-              328.6,
-              394.0
-            ],
-            "snpp_pct_of_normal": 328.2,
-            "snpp_pct_90": [
-              298.3,
-              358.0
-            ],
-            "aqua_peak_month": "2015-10",
-            "snpp_peak_month": "2015-10",
-            "reasons": []
-          },
-          "snpp_own_min10": {
-            "status": "FAIL",
-            "same_direction": true,
-            "peak_within_tolerance": true,
-            "intervals_overlap": false,
-            "peak_month_distance": 0,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": "ABOVE",
-            "aqua_pct_of_normal": 361.3,
-            "aqua_pct_90": [
-              328.6,
-              394.0
-            ],
-            "snpp_pct_of_normal": 588.9,
-            "snpp_pct_90": [
-              535.3,
-              642.4
-            ],
-            "aqua_peak_month": "2015-10",
-            "snpp_peak_month": "2015-10",
-            "reasons": [
-              "the 90% intervals do not overlap"
-            ]
-          }
-        },
-        "t014_product": {
-          "product_method_version": "0.1.0",
-          "context_combined_series": {
-            "entity": "COUNTRY:IDN",
-            "summary": {
-              "ok": true,
-              "reason": null,
-              "peak_month": "2015-10",
-              "direction": "ABOVE",
-              "pct_of_normal": 349.6,
-              "pct_low": 327.0,
-              "pct_high": 372.1,
-              "estimate": 36271.4,
-              "baseline_median": 10376.0,
-              "peak_month_pct_of_normal": 541.6
-            },
-            "months": [
-              {
-                "year": 2015,
-                "month": 6,
-                "estimate": 1456.4,
-                "pct_of_normal": 128.9,
-                "p_above": 0.0,
-                "verdict": "WITHIN_NORMAL",
-                "reason_codes": [],
-                "witnesses_used": [
-                  "AQUA_MODIS",
-                  "SNPP_VIIRS"
-                ]
-              },
-              {
-                "year": 2015,
-                "month": 7,
-                "estimate": 4229.3,
-                "pct_of_normal": 264.5,
-                "p_above": 1.0,
-                "verdict": "ABOVE_NORMAL",
-                "reason_codes": [],
-                "witnesses_used": [
-                  "AQUA_MODIS",
-                  "SNPP_VIIRS"
-                ]
-              },
-              {
-                "year": 2015,
-                "month": 8,
-                "estimate": 10627.3,
-                "pct_of_normal": 216.5,
-                "p_above": 1.0,
-                "verdict": "ABOVE_NORMAL",
-                "reason_codes": [],
-                "witnesses_used": [
-                  "AQUA_MODIS",
-                  "SNPP_VIIRS"
-                ]
-              },
-              {
-                "year": 2015,
-                "month": 9,
-                "estimate": 19068.7,
-                "pct_of_normal": 264.9,
-                "p_above": 1.0,
-                "verdict": "ABOVE_NORMAL",
-                "reason_codes": [],
-                "witnesses_used": [
-                  "AQUA_MODIS",
-                  "SNPP_VIIRS"
-                ]
-              },
-              {
-                "year": 2015,
-                "month": 10,
-                "estimate": 17202.7,
-                "pct_of_normal": 541.6,
-                "p_above": 1.0,
-                "verdict": "ABOVE_NORMAL",
-                "reason_codes": [],
-                "witnesses_used": [
-                  "AQUA_MODIS",
-                  "SNPP_VIIRS"
-                ]
-              },
-              {
-                "year": 2015,
-                "month": 11,
-                "estimate": 3039.2,
-                "pct_of_normal": 428.1,
-                "p_above": 1.0,
-                "verdict": "ABOVE_NORMAL",
-                "reason_codes": [],
-                "witnesses_used": [
-                  "AQUA_MODIS",
-                  "SNPP_VIIRS"
-                ]
-              },
-              {
-                "year": 2015,
-                "month": 12,
-                "estimate": 1084.9,
-                "pct_of_normal": 503.9,
-                "p_above": 1.0,
-                "verdict": "ABOVE_NORMAL",
-                "reason_codes": [],
-                "witnesses_used": [
-                  "AQUA_MODIS",
-                  "SNPP_VIIRS"
-                ]
-              }
-            ]
-          },
-          "crosscheck_aqua_only_baseline": {
-            "entity": "COUNTRY:IDN",
-            "n_cells": 1047,
-            "estimates_2003_2011": {
-              "n": 108,
-              "max_rel_diff": 0.0,
-              "median_rel_diff": 0.0
-            },
-            "baseline_2003_2011": {
-              "n_months": 12,
-              "max_rel_diff": 0.0
-            },
-            "baseline_2003_2022": {
-              "n_months": 12,
-              "ratio_min": 0.909,
-              "ratio_max": 1.023,
-              "ratio_median": 0.993,
-              "per_month": [
-                {
-                  "month": 1,
-                  "aqua_only_median": 308.0,
-                  "product_median": 305.8,
-                  "ratio": 1.007
-                },
-                {
-                  "month": 2,
-                  "aqua_only_median": 483.5,
-                  "product_median": 514.3,
-                  "ratio": 0.94
-                },
-                {
-                  "month": 3,
-                  "aqua_only_median": 601.5,
-                  "product_median": 606.5,
-                  "ratio": 0.992
-                },
-                {
-                  "month": 4,
-                  "aqua_only_median": 335.0,
-                  "product_median": 328.5,
-                  "ratio": 1.02
-                },
-                {
-                  "month": 5,
-                  "aqua_only_median": 612.0,
-                  "product_median": 616.0,
-                  "ratio": 0.994
-                },
-                {
-                  "month": 6,
-                  "aqua_only_median": 1130.0,
-                  "product_median": 1130.0,
-                  "ratio": 1.0
-                },
-                {
-                  "month": 7,
-                  "aqua_only_median": 1580.5,
-                  "product_median": 1598.7,
-                  "ratio": 0.989
-                },
-                {
-                  "month": 8,
-                  "aqua_only_median": 5020.5,
-                  "product_median": 4908.4,
-                  "ratio": 1.023
-                },
-                {
-                  "month": 9,
-                  "aqua_only_median": 7199.5,
-                  "product_median": 7199.5,
-                  "ratio": 1.0
-                },
-                {
-                  "month": 10,
-                  "aqua_only_median": 3120.5,
-                  "product_median": 3176.5,
-                  "ratio": 0.982
-                },
-                {
-                  "month": 11,
-                  "aqua_only_median": 645.0,
-                  "product_median": 709.9,
-                  "ratio": 0.909
-                },
-                {
-                  "month": 12,
-                  "aqua_only_median": 204.0,
-                  "product_median": 215.3,
-                  "ratio": 0.948
-                }
-              ]
-            }
-          }
-        }
+        "formal_reading.status": "INCONCLUSIVE",
+        "formal_reading.same_direction": null,
+        "formal_reading.peak_within_tolerance": null,
+        "formal_reading.intervals_overlap": null,
+        "formal_reading.peak_month_distance": null,
+        "formal_reading.aqua_direction": "ABOVE",
+        "formal_reading.snpp_direction": null,
+        "formal_reading.aqua_pct_of_normal": 361.3,
+        "formal_reading.aqua_pct_90": "[328.6, 394.0]",
+        "formal_reading.snpp_pct_of_normal": null,
+        "formal_reading.snpp_pct_90": "[null, null]",
+        "formal_reading.aqua_peak_month": "2015-10",
+        "formal_reading.snpp_peak_month": null,
+        "formal_reading.reasons": "[\"S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)\"]",
+        "other_readings.shared_aqua_baseline.status": "PASS",
+        "other_readings.shared_aqua_baseline.same_direction": true,
+        "other_readings.shared_aqua_baseline.peak_within_tolerance": true,
+        "other_readings.shared_aqua_baseline.intervals_overlap": true,
+        "other_readings.shared_aqua_baseline.peak_month_distance": 0,
+        "other_readings.shared_aqua_baseline.aqua_direction": "ABOVE",
+        "other_readings.shared_aqua_baseline.snpp_direction": "ABOVE",
+        "other_readings.shared_aqua_baseline.aqua_pct_of_normal": 361.3,
+        "other_readings.shared_aqua_baseline.aqua_pct_90": "[328.6, 394.0]",
+        "other_readings.shared_aqua_baseline.snpp_pct_of_normal": 328.2,
+        "other_readings.shared_aqua_baseline.snpp_pct_90": "[298.3, 358.0]",
+        "other_readings.shared_aqua_baseline.aqua_peak_month": "2015-10",
+        "other_readings.shared_aqua_baseline.snpp_peak_month": "2015-10",
+        "other_readings.shared_aqua_baseline.reasons": "[]",
+        "other_readings.snpp_own_min10.status": "FAIL",
+        "other_readings.snpp_own_min10.same_direction": true,
+        "other_readings.snpp_own_min10.peak_within_tolerance": true,
+        "other_readings.snpp_own_min10.intervals_overlap": false,
+        "other_readings.snpp_own_min10.peak_month_distance": 0,
+        "other_readings.snpp_own_min10.aqua_direction": "ABOVE",
+        "other_readings.snpp_own_min10.snpp_direction": "ABOVE",
+        "other_readings.snpp_own_min10.aqua_pct_of_normal": 361.3,
+        "other_readings.snpp_own_min10.aqua_pct_90": "[328.6, 394.0]",
+        "other_readings.snpp_own_min10.snpp_pct_of_normal": 588.9,
+        "other_readings.snpp_own_min10.snpp_pct_90": "[535.3, 642.4]",
+        "other_readings.snpp_own_min10.aqua_peak_month": "2015-10",
+        "other_readings.snpp_own_min10.snpp_peak_month": "2015-10",
+        "other_readings.snpp_own_min10.reasons": "[\"the 90% intervals do not overlap\"]",
+        "t014_product.product_method_version": "0.1.0",
+        "t014_product.context_combined_series.entity": "COUNTRY:IDN",
+        "t014_product.context_combined_series.summary.ok": true,
+        "t014_product.context_combined_series.summary.reason": null,
+        "t014_product.context_combined_series.summary.peak_month": "2015-10",
+        "t014_product.context_combined_series.summary.direction": "ABOVE",
+        "t014_product.context_combined_series.summary.pct_of_normal": 349.6,
+        "t014_product.context_combined_series.summary.pct_low": 327.0,
+        "t014_product.context_combined_series.summary.pct_high": 372.1,
+        "t014_product.context_combined_series.summary.estimate": 36271.4,
+        "t014_product.context_combined_series.summary.baseline_median": 10376.0,
+        "t014_product.context_combined_series.summary.peak_month_pct_of_normal": 541.6,
+        "t014_product.context_combined_series.months": "[{\"year\": 2015, \"month\": 6, \"estimate\": 1456.4, \"pct_of_normal\": 128.9, \"p_above\": 0.0, \"verdict\": \"WITHIN_NORMAL\", \"reason_codes\": [], \"witnesses_used\": [\"AQUA_MODIS\", \"SNPP_VIIRS\"]}, {\"year\": 2015, \"month\": 7, \"estimate\": 4229.3, \"pct_of_normal\": 264.5, \"p_above\": 1.0, \"verdict\": \"ABOVE_NORMAL\", \"reason_codes\": [], \"witnesses_used\": [\"AQUA_MODIS\", \"SNPP_VIIRS\"]}, {\"year\": 2015, \"month\": 8, \"estimate\": 10627.3, \"pct_of_normal\": 216.5, \"p_above\": 1.0, \"verdict\": \"ABOVE_NORMAL\", \"reason_codes\": [], \"witnesses_used\": [\"AQUA_MODIS\", \"SNPP_VIIRS\"]}, {\"year\": 2015, \"month\": 9, \"estimate\": 19068.7, \"pct_of_normal\": 264.9, \"p_above\": 1.0, \"verdict\": \"ABOVE_NORMAL\", \"reason_codes\": [], \"witnesses_used\": [\"AQUA_MODIS\", \"SNPP_VIIRS\"]}, {\"year\": 2015, \"month\": 10, \"estimate\": 17202.7, \"pct_of_normal\": 541.6, \"p_above\": 1.0, \"verdict\": \"ABOVE_NORMAL\", \"reason_codes\": [], \"witnesses_used\": [\"AQUA_MODIS\", \"SNPP_VIIRS\"]}, {\"year\": 2015, \"month\": 11, \"estimate\": 3039.2, \"pct_of_normal\": 428.1, \"p_above\": 1.0, \"verdict\": \"ABOVE_NORMAL\", \"reason_codes\": [], \"witnesses_used\": [\"AQUA_MODIS\", \"SNPP_VIIRS\"]}, {\"year\": 2015, \"month\": 12, \"estimate\": 1084.9, \"pct_of_normal\": 503.9, \"p_above\": 1.0, \"verdict\": \"ABOVE_NORMAL\", \"reason_codes\": [], \"witnesses_used\": [\"AQUA_MODIS\", \"SNPP_VIIRS\"]}]",
+        "t014_product.crosscheck_aqua_only_baseline.entity": "COUNTRY:IDN",
+        "t014_product.crosscheck_aqua_only_baseline.n_cells": 1047,
+        "t014_product.crosscheck_aqua_only_baseline.estimates_2003_2011.n": 108,
+        "t014_product.crosscheck_aqua_only_baseline.estimates_2003_2011.max_rel_diff": 0.0,
+        "t014_product.crosscheck_aqua_only_baseline.estimates_2003_2011.median_rel_diff": 0.0,
+        "t014_product.crosscheck_aqua_only_baseline.baseline_2003_2011.n_months": 12,
+        "t014_product.crosscheck_aqua_only_baseline.baseline_2003_2011.max_rel_diff": 0.0,
+        "t014_product.crosscheck_aqua_only_baseline.baseline_2003_2022.n_months": 12,
+        "t014_product.crosscheck_aqua_only_baseline.baseline_2003_2022.ratio_min": 0.909,
+        "t014_product.crosscheck_aqua_only_baseline.baseline_2003_2022.ratio_max": 1.023,
+        "t014_product.crosscheck_aqua_only_baseline.baseline_2003_2022.ratio_median": 0.993,
+        "t014_product.crosscheck_aqua_only_baseline.baseline_2003_2022.per_month": "[{\"month\": 1, \"aqua_only_median\": 308.0, \"product_median\": 305.8, \"ratio\": 1.007}, {\"month\": 2, \"aqua_only_median\": 483.5, \"product_median\": 514.3, \"ratio\": 0.94}, {\"month\": 3, \"aqua_only_median\": 601.5, \"product_median\": 606.5, \"ratio\": 0.992}, {\"month\": 4, \"aqua_only_median\": 335.0, \"product_median\": 328.5, \"ratio\": 1.02}, {\"month\": 5, \"aqua_only_median\": 612.0, \"product_median\": 616.0, \"ratio\": 0.994}, {\"month\": 6, \"aqua_only_median\": 1130.0, \"product_median\": 1130.0, \"ratio\": 1.0}, {\"month\": 7, \"aqua_only_median\": 1580.5, \"product_median\": 1598.7, \"ratio\": 0.989}, {\"month\": 8, \"aqua_only_median\": 5020.5, \"product_median\": 4908.4, \"ratio\": 1.023}, {\"month\": 9, \"aqua_only_median\": 7199.5, \"product_median\": 7199.5, \"ratio\": 1.0}, {\"month\": 10, \"aqua_only_median\": 3120.5, \"product_median\": 3176.5, \"ratio\": 0.982}, {\"month\": 11, \"aqua_only_median\": 645.0, \"product_median\": 709.9, \"ratio\": 0.909}, {\"month\": 12, \"aqua_only_median\": 204.0, \"product_median\": 215.3, \"ratio\": 0.948}]"
       },
       "status": "INCONCLUSIVE",
       "notes": "D-028 as pre-registered: each path its own baseline; the S-NPP-only path has at most 11 of 20 baseline years, so no baseline. Official result INCONCLUSIVE. D-029 (shared Aqua baseline) was adopted after this case was seen and is not applied to it; the readings under the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
@@ -312,80 +103,48 @@
         "snpp_only_peak_month": "2019-06",
         "official_reading": "shared_aqua_baseline",
         "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
-        "formal_reading": {
-          "status": "INCONCLUSIVE",
-          "same_direction": false,
-          "peak_within_tolerance": false,
-          "intervals_overlap": true,
-          "peak_month_distance": 2,
-          "aqua_direction": "WITHIN",
-          "snpp_direction": "WITHIN",
-          "aqua_pct_of_normal": 94.6,
-          "aqua_pct_90": [
-            85.4,
-            103.8
-          ],
-          "snpp_pct_of_normal": 86.1,
-          "snpp_pct_90": [
-            77.7,
-            94.5
-          ],
-          "aqua_peak_month": "2019-08",
-          "snpp_peak_month": "2019-06",
-          "reasons": [
-            "both paths are within normal: there is no anomaly to preserve"
-          ]
-        },
-        "other_readings": {
-          "own_baseline": {
-            "status": "INCONCLUSIVE",
-            "same_direction": null,
-            "peak_within_tolerance": null,
-            "intervals_overlap": null,
-            "peak_month_distance": null,
-            "aqua_direction": "WITHIN",
-            "snpp_direction": null,
-            "aqua_pct_of_normal": 94.6,
-            "aqua_pct_90": [
-              85.4,
-              103.8
-            ],
-            "snpp_pct_of_normal": null,
-            "snpp_pct_90": [
-              null,
-              null
-            ],
-            "aqua_peak_month": "2019-08",
-            "snpp_peak_month": null,
-            "reasons": [
-              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
-            ]
-          },
-          "snpp_own_min10": {
-            "status": "INCONCLUSIVE",
-            "same_direction": false,
-            "peak_within_tolerance": true,
-            "intervals_overlap": true,
-            "peak_month_distance": 0,
-            "aqua_direction": "WITHIN",
-            "snpp_direction": "WITHIN",
-            "aqua_pct_of_normal": 94.6,
-            "aqua_pct_90": [
-              85.4,
-              103.8
-            ],
-            "snpp_pct_of_normal": 106.3,
-            "snpp_pct_90": [
-              95.9,
-              116.7
-            ],
-            "aqua_peak_month": "2019-08",
-            "snpp_peak_month": "2019-08",
-            "reasons": [
-              "both paths are within normal: there is no anomaly to preserve"
-            ]
-          }
-        }
+        "formal_reading.status": "INCONCLUSIVE",
+        "formal_reading.same_direction": false,
+        "formal_reading.peak_within_tolerance": false,
+        "formal_reading.intervals_overlap": true,
+        "formal_reading.peak_month_distance": 2,
+        "formal_reading.aqua_direction": "WITHIN",
+        "formal_reading.snpp_direction": "WITHIN",
+        "formal_reading.aqua_pct_of_normal": 94.6,
+        "formal_reading.aqua_pct_90": "[85.4, 103.8]",
+        "formal_reading.snpp_pct_of_normal": 86.1,
+        "formal_reading.snpp_pct_90": "[77.7, 94.5]",
+        "formal_reading.aqua_peak_month": "2019-08",
+        "formal_reading.snpp_peak_month": "2019-06",
+        "formal_reading.reasons": "[\"both paths are within normal: there is no anomaly to preserve\"]",
+        "other_readings.own_baseline.status": "INCONCLUSIVE",
+        "other_readings.own_baseline.same_direction": null,
+        "other_readings.own_baseline.peak_within_tolerance": null,
+        "other_readings.own_baseline.intervals_overlap": null,
+        "other_readings.own_baseline.peak_month_distance": null,
+        "other_readings.own_baseline.aqua_direction": "WITHIN",
+        "other_readings.own_baseline.snpp_direction": null,
+        "other_readings.own_baseline.aqua_pct_of_normal": 94.6,
+        "other_readings.own_baseline.aqua_pct_90": "[85.4, 103.8]",
+        "other_readings.own_baseline.snpp_pct_of_normal": null,
+        "other_readings.own_baseline.snpp_pct_90": "[null, null]",
+        "other_readings.own_baseline.aqua_peak_month": "2019-08",
+        "other_readings.own_baseline.snpp_peak_month": null,
+        "other_readings.own_baseline.reasons": "[\"S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)\"]",
+        "other_readings.snpp_own_min10.status": "INCONCLUSIVE",
+        "other_readings.snpp_own_min10.same_direction": false,
+        "other_readings.snpp_own_min10.peak_within_tolerance": true,
+        "other_readings.snpp_own_min10.intervals_overlap": true,
+        "other_readings.snpp_own_min10.peak_month_distance": 0,
+        "other_readings.snpp_own_min10.aqua_direction": "WITHIN",
+        "other_readings.snpp_own_min10.snpp_direction": "WITHIN",
+        "other_readings.snpp_own_min10.aqua_pct_of_normal": 94.6,
+        "other_readings.snpp_own_min10.aqua_pct_90": "[85.4, 103.8]",
+        "other_readings.snpp_own_min10.snpp_pct_of_normal": 106.3,
+        "other_readings.snpp_own_min10.snpp_pct_90": "[95.9, 116.7]",
+        "other_readings.snpp_own_min10.aqua_peak_month": "2019-08",
+        "other_readings.snpp_own_min10.snpp_peak_month": "2019-08",
+        "other_readings.snpp_own_min10.reasons": "[\"both paths are within normal: there is no anomaly to preserve\"]"
       },
       "status": "INCONCLUSIVE",
       "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
@@ -404,80 +163,48 @@
         "snpp_only_peak_month": "2020-07",
         "official_reading": "shared_aqua_baseline",
         "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
-        "formal_reading": {
-          "status": "FAIL",
-          "same_direction": true,
-          "peak_within_tolerance": true,
-          "intervals_overlap": false,
-          "peak_month_distance": 0,
-          "aqua_direction": "ABOVE",
-          "snpp_direction": "ABOVE",
-          "aqua_pct_of_normal": 253.1,
-          "aqua_pct_90": [
-            233.0,
-            273.2
-          ],
-          "snpp_pct_of_normal": 191.9,
-          "snpp_pct_90": [
-            176.2,
-            207.6
-          ],
-          "aqua_peak_month": "2020-07",
-          "snpp_peak_month": "2020-07",
-          "reasons": [
-            "the 90% intervals do not overlap"
-          ]
-        },
-        "other_readings": {
-          "own_baseline": {
-            "status": "INCONCLUSIVE",
-            "same_direction": null,
-            "peak_within_tolerance": null,
-            "intervals_overlap": null,
-            "peak_month_distance": null,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": null,
-            "aqua_pct_of_normal": 253.1,
-            "aqua_pct_90": [
-              233.0,
-              273.2
-            ],
-            "snpp_pct_of_normal": null,
-            "snpp_pct_90": [
-              null,
-              null
-            ],
-            "aqua_peak_month": "2020-07",
-            "snpp_peak_month": null,
-            "reasons": [
-              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
-            ]
-          },
-          "snpp_own_min10": {
-            "status": "FAIL",
-            "same_direction": true,
-            "peak_within_tolerance": true,
-            "intervals_overlap": false,
-            "peak_month_distance": 0,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": "ABOVE",
-            "aqua_pct_of_normal": 253.1,
-            "aqua_pct_90": [
-              233.0,
-              273.2
-            ],
-            "snpp_pct_of_normal": 211.8,
-            "snpp_pct_90": [
-              194.5,
-              229.2
-            ],
-            "aqua_peak_month": "2020-07",
-            "snpp_peak_month": "2020-07",
-            "reasons": [
-              "the 90% intervals do not overlap"
-            ]
-          }
-        }
+        "formal_reading.status": "FAIL",
+        "formal_reading.same_direction": true,
+        "formal_reading.peak_within_tolerance": true,
+        "formal_reading.intervals_overlap": false,
+        "formal_reading.peak_month_distance": 0,
+        "formal_reading.aqua_direction": "ABOVE",
+        "formal_reading.snpp_direction": "ABOVE",
+        "formal_reading.aqua_pct_of_normal": 253.1,
+        "formal_reading.aqua_pct_90": "[233.0, 273.2]",
+        "formal_reading.snpp_pct_of_normal": 191.9,
+        "formal_reading.snpp_pct_90": "[176.2, 207.6]",
+        "formal_reading.aqua_peak_month": "2020-07",
+        "formal_reading.snpp_peak_month": "2020-07",
+        "formal_reading.reasons": "[\"the 90% intervals do not overlap\"]",
+        "other_readings.own_baseline.status": "INCONCLUSIVE",
+        "other_readings.own_baseline.same_direction": null,
+        "other_readings.own_baseline.peak_within_tolerance": null,
+        "other_readings.own_baseline.intervals_overlap": null,
+        "other_readings.own_baseline.peak_month_distance": null,
+        "other_readings.own_baseline.aqua_direction": "ABOVE",
+        "other_readings.own_baseline.snpp_direction": null,
+        "other_readings.own_baseline.aqua_pct_of_normal": 253.1,
+        "other_readings.own_baseline.aqua_pct_90": "[233.0, 273.2]",
+        "other_readings.own_baseline.snpp_pct_of_normal": null,
+        "other_readings.own_baseline.snpp_pct_90": "[null, null]",
+        "other_readings.own_baseline.aqua_peak_month": "2020-07",
+        "other_readings.own_baseline.snpp_peak_month": null,
+        "other_readings.own_baseline.reasons": "[\"S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)\"]",
+        "other_readings.snpp_own_min10.status": "FAIL",
+        "other_readings.snpp_own_min10.same_direction": true,
+        "other_readings.snpp_own_min10.peak_within_tolerance": true,
+        "other_readings.snpp_own_min10.intervals_overlap": false,
+        "other_readings.snpp_own_min10.peak_month_distance": 0,
+        "other_readings.snpp_own_min10.aqua_direction": "ABOVE",
+        "other_readings.snpp_own_min10.snpp_direction": "ABOVE",
+        "other_readings.snpp_own_min10.aqua_pct_of_normal": 253.1,
+        "other_readings.snpp_own_min10.aqua_pct_90": "[233.0, 273.2]",
+        "other_readings.snpp_own_min10.snpp_pct_of_normal": 211.8,
+        "other_readings.snpp_own_min10.snpp_pct_90": "[194.5, 229.2]",
+        "other_readings.snpp_own_min10.aqua_peak_month": "2020-07",
+        "other_readings.snpp_own_min10.snpp_peak_month": "2020-07",
+        "other_readings.snpp_own_min10.reasons": "[\"the 90% intervals do not overlap\"]"
       },
       "status": "FAIL",
       "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
@@ -496,80 +223,48 @@
         "snpp_only_peak_month": "2019-12",
         "official_reading": "shared_aqua_baseline",
         "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
-        "formal_reading": {
-          "status": "FAIL",
-          "same_direction": true,
-          "peak_within_tolerance": true,
-          "intervals_overlap": false,
-          "peak_month_distance": 0,
-          "aqua_direction": "ABOVE",
-          "snpp_direction": "ABOVE",
-          "aqua_pct_of_normal": 3962.9,
-          "aqua_pct_90": [
-            3596.4,
-            4329.4
-          ],
-          "snpp_pct_of_normal": 2313.9,
-          "snpp_pct_90": [
-            2095.6,
-            2532.3
-          ],
-          "aqua_peak_month": "2019-12",
-          "snpp_peak_month": "2019-12",
-          "reasons": [
-            "the 90% intervals do not overlap"
-          ]
-        },
-        "other_readings": {
-          "own_baseline": {
-            "status": "INCONCLUSIVE",
-            "same_direction": null,
-            "peak_within_tolerance": null,
-            "intervals_overlap": null,
-            "peak_month_distance": null,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": null,
-            "aqua_pct_of_normal": 3962.9,
-            "aqua_pct_90": [
-              3596.4,
-              4329.4
-            ],
-            "snpp_pct_of_normal": null,
-            "snpp_pct_90": [
-              null,
-              null
-            ],
-            "aqua_peak_month": "2019-12",
-            "snpp_peak_month": null,
-            "reasons": [
-              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
-            ]
-          },
-          "snpp_own_min10": {
-            "status": "FAIL",
-            "same_direction": true,
-            "peak_within_tolerance": true,
-            "intervals_overlap": false,
-            "peak_month_distance": 0,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": "ABOVE",
-            "aqua_pct_of_normal": 3962.9,
-            "aqua_pct_90": [
-              3596.4,
-              4329.4
-            ],
-            "snpp_pct_of_normal": 2090.4,
-            "snpp_pct_90": [
-              1893.1,
-              2287.7
-            ],
-            "aqua_peak_month": "2019-12",
-            "snpp_peak_month": "2019-12",
-            "reasons": [
-              "the 90% intervals do not overlap"
-            ]
-          }
-        }
+        "formal_reading.status": "FAIL",
+        "formal_reading.same_direction": true,
+        "formal_reading.peak_within_tolerance": true,
+        "formal_reading.intervals_overlap": false,
+        "formal_reading.peak_month_distance": 0,
+        "formal_reading.aqua_direction": "ABOVE",
+        "formal_reading.snpp_direction": "ABOVE",
+        "formal_reading.aqua_pct_of_normal": 3962.9,
+        "formal_reading.aqua_pct_90": "[3596.4, 4329.4]",
+        "formal_reading.snpp_pct_of_normal": 2313.9,
+        "formal_reading.snpp_pct_90": "[2095.6, 2532.3]",
+        "formal_reading.aqua_peak_month": "2019-12",
+        "formal_reading.snpp_peak_month": "2019-12",
+        "formal_reading.reasons": "[\"the 90% intervals do not overlap\"]",
+        "other_readings.own_baseline.status": "INCONCLUSIVE",
+        "other_readings.own_baseline.same_direction": null,
+        "other_readings.own_baseline.peak_within_tolerance": null,
+        "other_readings.own_baseline.intervals_overlap": null,
+        "other_readings.own_baseline.peak_month_distance": null,
+        "other_readings.own_baseline.aqua_direction": "ABOVE",
+        "other_readings.own_baseline.snpp_direction": null,
+        "other_readings.own_baseline.aqua_pct_of_normal": 3962.9,
+        "other_readings.own_baseline.aqua_pct_90": "[3596.4, 4329.4]",
+        "other_readings.own_baseline.snpp_pct_of_normal": null,
+        "other_readings.own_baseline.snpp_pct_90": "[null, null]",
+        "other_readings.own_baseline.aqua_peak_month": "2019-12",
+        "other_readings.own_baseline.snpp_peak_month": null,
+        "other_readings.own_baseline.reasons": "[\"S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)\"]",
+        "other_readings.snpp_own_min10.status": "FAIL",
+        "other_readings.snpp_own_min10.same_direction": true,
+        "other_readings.snpp_own_min10.peak_within_tolerance": true,
+        "other_readings.snpp_own_min10.intervals_overlap": false,
+        "other_readings.snpp_own_min10.peak_month_distance": 0,
+        "other_readings.snpp_own_min10.aqua_direction": "ABOVE",
+        "other_readings.snpp_own_min10.snpp_direction": "ABOVE",
+        "other_readings.snpp_own_min10.aqua_pct_of_normal": 3962.9,
+        "other_readings.snpp_own_min10.aqua_pct_90": "[3596.4, 4329.4]",
+        "other_readings.snpp_own_min10.snpp_pct_of_normal": 2090.4,
+        "other_readings.snpp_own_min10.snpp_pct_90": "[1893.1, 2287.7]",
+        "other_readings.snpp_own_min10.aqua_peak_month": "2019-12",
+        "other_readings.snpp_own_min10.snpp_peak_month": "2019-12",
+        "other_readings.snpp_own_min10.reasons": "[\"the 90% intervals do not overlap\"]"
       },
       "status": "FAIL",
       "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
@@ -588,80 +283,48 @@
         "snpp_only_peak_month": "2020-09",
         "official_reading": "shared_aqua_baseline",
         "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
-        "formal_reading": {
-          "status": "FAIL",
-          "same_direction": true,
-          "peak_within_tolerance": true,
-          "intervals_overlap": false,
-          "peak_month_distance": 0,
-          "aqua_direction": "ABOVE",
-          "snpp_direction": "ABOVE",
-          "aqua_pct_of_normal": 637.1,
-          "aqua_pct_90": [
-            571.1,
-            703.1
-          ],
-          "snpp_pct_of_normal": 375.6,
-          "snpp_pct_90": [
-            334.6,
-            416.7
-          ],
-          "aqua_peak_month": "2020-09",
-          "snpp_peak_month": "2020-09",
-          "reasons": [
-            "the 90% intervals do not overlap"
-          ]
-        },
-        "other_readings": {
-          "own_baseline": {
-            "status": "INCONCLUSIVE",
-            "same_direction": null,
-            "peak_within_tolerance": null,
-            "intervals_overlap": null,
-            "peak_month_distance": null,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": null,
-            "aqua_pct_of_normal": 637.1,
-            "aqua_pct_90": [
-              571.1,
-              703.1
-            ],
-            "snpp_pct_of_normal": null,
-            "snpp_pct_90": [
-              null,
-              null
-            ],
-            "aqua_peak_month": "2020-09",
-            "snpp_peak_month": null,
-            "reasons": [
-              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
-            ]
-          },
-          "snpp_own_min10": {
-            "status": "FAIL",
-            "same_direction": true,
-            "peak_within_tolerance": true,
-            "intervals_overlap": false,
-            "peak_month_distance": 0,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": "ABOVE",
-            "aqua_pct_of_normal": 637.1,
-            "aqua_pct_90": [
-              571.1,
-              703.1
-            ],
-            "snpp_pct_of_normal": 377.1,
-            "snpp_pct_90": [
-              335.9,
-              418.3
-            ],
-            "aqua_peak_month": "2020-09",
-            "snpp_peak_month": "2020-09",
-            "reasons": [
-              "the 90% intervals do not overlap"
-            ]
-          }
-        }
+        "formal_reading.status": "FAIL",
+        "formal_reading.same_direction": true,
+        "formal_reading.peak_within_tolerance": true,
+        "formal_reading.intervals_overlap": false,
+        "formal_reading.peak_month_distance": 0,
+        "formal_reading.aqua_direction": "ABOVE",
+        "formal_reading.snpp_direction": "ABOVE",
+        "formal_reading.aqua_pct_of_normal": 637.1,
+        "formal_reading.aqua_pct_90": "[571.1, 703.1]",
+        "formal_reading.snpp_pct_of_normal": 375.6,
+        "formal_reading.snpp_pct_90": "[334.6, 416.7]",
+        "formal_reading.aqua_peak_month": "2020-09",
+        "formal_reading.snpp_peak_month": "2020-09",
+        "formal_reading.reasons": "[\"the 90% intervals do not overlap\"]",
+        "other_readings.own_baseline.status": "INCONCLUSIVE",
+        "other_readings.own_baseline.same_direction": null,
+        "other_readings.own_baseline.peak_within_tolerance": null,
+        "other_readings.own_baseline.intervals_overlap": null,
+        "other_readings.own_baseline.peak_month_distance": null,
+        "other_readings.own_baseline.aqua_direction": "ABOVE",
+        "other_readings.own_baseline.snpp_direction": null,
+        "other_readings.own_baseline.aqua_pct_of_normal": 637.1,
+        "other_readings.own_baseline.aqua_pct_90": "[571.1, 703.1]",
+        "other_readings.own_baseline.snpp_pct_of_normal": null,
+        "other_readings.own_baseline.snpp_pct_90": "[null, null]",
+        "other_readings.own_baseline.aqua_peak_month": "2020-09",
+        "other_readings.own_baseline.snpp_peak_month": null,
+        "other_readings.own_baseline.reasons": "[\"S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)\"]",
+        "other_readings.snpp_own_min10.status": "FAIL",
+        "other_readings.snpp_own_min10.same_direction": true,
+        "other_readings.snpp_own_min10.peak_within_tolerance": true,
+        "other_readings.snpp_own_min10.intervals_overlap": false,
+        "other_readings.snpp_own_min10.peak_month_distance": 0,
+        "other_readings.snpp_own_min10.aqua_direction": "ABOVE",
+        "other_readings.snpp_own_min10.snpp_direction": "ABOVE",
+        "other_readings.snpp_own_min10.aqua_pct_of_normal": 637.1,
+        "other_readings.snpp_own_min10.aqua_pct_90": "[571.1, 703.1]",
+        "other_readings.snpp_own_min10.snpp_pct_of_normal": 377.1,
+        "other_readings.snpp_own_min10.snpp_pct_90": "[335.9, 418.3]",
+        "other_readings.snpp_own_min10.aqua_peak_month": "2020-09",
+        "other_readings.snpp_own_min10.snpp_peak_month": "2020-09",
+        "other_readings.snpp_own_min10.reasons": "[\"the 90% intervals do not overlap\"]"
       },
       "status": "FAIL",
       "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
@@ -680,80 +343,48 @@
         "snpp_only_peak_month": "2021-08",
         "official_reading": "shared_aqua_baseline",
         "baseline": "D-029: shared Aqua-measured 2003-2022 baseline for both paths",
-        "formal_reading": {
-          "status": "FAIL",
-          "same_direction": true,
-          "peak_within_tolerance": true,
-          "intervals_overlap": false,
-          "peak_month_distance": 0,
-          "aqua_direction": "ABOVE",
-          "snpp_direction": "ABOVE",
-          "aqua_pct_of_normal": 805.2,
-          "aqua_pct_90": [
-            733.3,
-            877.1
-          ],
-          "snpp_pct_of_normal": 644.8,
-          "snpp_pct_90": [
-            584.1,
-            705.6
-          ],
-          "aqua_peak_month": "2021-08",
-          "snpp_peak_month": "2021-08",
-          "reasons": [
-            "the 90% intervals do not overlap"
-          ]
-        },
-        "other_readings": {
-          "own_baseline": {
-            "status": "INCONCLUSIVE",
-            "same_direction": null,
-            "peak_within_tolerance": null,
-            "intervals_overlap": null,
-            "peak_month_distance": null,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": null,
-            "aqua_pct_of_normal": 805.2,
-            "aqua_pct_90": [
-              733.3,
-              877.1
-            ],
-            "snpp_pct_of_normal": null,
-            "snpp_pct_90": [
-              null,
-              null
-            ],
-            "aqua_peak_month": "2021-08",
-            "snpp_peak_month": null,
-            "reasons": [
-              "S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)"
-            ]
-          },
-          "snpp_own_min10": {
-            "status": "FAIL",
-            "same_direction": true,
-            "peak_within_tolerance": true,
-            "intervals_overlap": false,
-            "peak_month_distance": 0,
-            "aqua_direction": "ABOVE",
-            "snpp_direction": "ABOVE",
-            "aqua_pct_of_normal": 805.2,
-            "aqua_pct_90": [
-              733.3,
-              877.1
-            ],
-            "snpp_pct_of_normal": 284.7,
-            "snpp_pct_90": [
-              257.8,
-              311.5
-            ],
-            "aqua_peak_month": "2021-08",
-            "snpp_peak_month": "2021-08",
-            "reasons": [
-              "the 90% intervals do not overlap"
-            ]
-          }
-        }
+        "formal_reading.status": "FAIL",
+        "formal_reading.same_direction": true,
+        "formal_reading.peak_within_tolerance": true,
+        "formal_reading.intervals_overlap": false,
+        "formal_reading.peak_month_distance": 0,
+        "formal_reading.aqua_direction": "ABOVE",
+        "formal_reading.snpp_direction": "ABOVE",
+        "formal_reading.aqua_pct_of_normal": 805.2,
+        "formal_reading.aqua_pct_90": "[733.3, 877.1]",
+        "formal_reading.snpp_pct_of_normal": 644.8,
+        "formal_reading.snpp_pct_90": "[584.1, 705.6]",
+        "formal_reading.aqua_peak_month": "2021-08",
+        "formal_reading.snpp_peak_month": "2021-08",
+        "formal_reading.reasons": "[\"the 90% intervals do not overlap\"]",
+        "other_readings.own_baseline.status": "INCONCLUSIVE",
+        "other_readings.own_baseline.same_direction": null,
+        "other_readings.own_baseline.peak_within_tolerance": null,
+        "other_readings.own_baseline.intervals_overlap": null,
+        "other_readings.own_baseline.peak_month_distance": null,
+        "other_readings.own_baseline.aqua_direction": "ABOVE",
+        "other_readings.own_baseline.snpp_direction": null,
+        "other_readings.own_baseline.aqua_pct_of_normal": 805.2,
+        "other_readings.own_baseline.aqua_pct_90": "[733.3, 877.1]",
+        "other_readings.own_baseline.snpp_pct_of_normal": null,
+        "other_readings.own_baseline.snpp_pct_90": "[null, null]",
+        "other_readings.own_baseline.aqua_peak_month": "2021-08",
+        "other_readings.own_baseline.snpp_peak_month": null,
+        "other_readings.own_baseline.reasons": "[\"S-NPP-only path cannot be judged: no month of the analysis window has a pct_of_normal (no estimate or no baseline)\"]",
+        "other_readings.snpp_own_min10.status": "FAIL",
+        "other_readings.snpp_own_min10.same_direction": true,
+        "other_readings.snpp_own_min10.peak_within_tolerance": true,
+        "other_readings.snpp_own_min10.intervals_overlap": false,
+        "other_readings.snpp_own_min10.peak_month_distance": 0,
+        "other_readings.snpp_own_min10.aqua_direction": "ABOVE",
+        "other_readings.snpp_own_min10.snpp_direction": "ABOVE",
+        "other_readings.snpp_own_min10.aqua_pct_of_normal": 805.2,
+        "other_readings.snpp_own_min10.aqua_pct_90": "[733.3, 877.1]",
+        "other_readings.snpp_own_min10.snpp_pct_of_normal": 284.7,
+        "other_readings.snpp_own_min10.snpp_pct_90": "[257.8, 311.5]",
+        "other_readings.snpp_own_min10.aqua_peak_month": "2021-08",
+        "other_readings.snpp_own_min10.snpp_peak_month": "2021-08",
+        "other_readings.snpp_own_min10.reasons": "[\"the 90% intervals do not overlap\"]"
       },
       "status": "FAIL",
       "notes": "Official reading under D-029 (shared Aqua-measured 2003-2022 baseline for both paths, adopted before this case was run); the other baselines are in measured.other_readings. See docs/validation/T-020-results.md."
@@ -766,14 +397,12 @@
       "criterion": "At least 5 of the 6 clean-overlap cases C1-C6 PASS",
       "threshold": "pre-registered at G1 (D-028); a case that is INCONCLUSIVE does not count as a PASS",
       "measured": {
-        "case_status": {
-          "C1": "INCONCLUSIVE",
-          "C2": "INCONCLUSIVE",
-          "C3": "FAIL",
-          "C4": "FAIL",
-          "C5": "FAIL",
-          "C6": "FAIL"
-        },
+        "case_status.C1": "INCONCLUSIVE",
+        "case_status.C2": "INCONCLUSIVE",
+        "case_status.C3": "FAIL",
+        "case_status.C4": "FAIL",
+        "case_status.C5": "FAIL",
+        "case_status.C6": "FAIL",
         "n_pass": 0,
         "n_fail": 4,
         "n_inconclusive": 2,
@@ -794,141 +423,90 @@
         "quiet_month_rule": "lowest median 2003-2022 of the box's harmonized series, >= 15 years, earliest on a tie",
         "quiet_calendar_month": 12,
         "quiet_month_baseline_median": 114.12376834468458,
-        "baseline_medians_by_calendar_month": {
-          "1": 241.8314371471686,
-          "2": 479.59219374306,
-          "3": 595.0,
-          "4": 348.59895200307005,
-          "5": 545.0922676392248,
-          "6": 1039.5,
-          "7": 1434.0,
-          "8": 4629.0,
-          "9": 6076.0,
-          "10": 1424.0,
-          "11": 277.7615475046839,
-          "12": 114.12376834468458
-        },
-        "raw_aqua_cell_days_peak_window": {
-          "2015-09": 15751.0,
-          "2015-10": 11346.0
-        },
+        "baseline_medians_by_calendar_month.1": 241.8314371471686,
+        "baseline_medians_by_calendar_month.2": 479.59219374306,
+        "baseline_medians_by_calendar_month.3": 595.0,
+        "baseline_medians_by_calendar_month.4": 348.59895200307005,
+        "baseline_medians_by_calendar_month.5": 545.0922676392248,
+        "baseline_medians_by_calendar_month.6": 1039.5,
+        "baseline_medians_by_calendar_month.7": 1434.0,
+        "baseline_medians_by_calendar_month.8": 4629.0,
+        "baseline_medians_by_calendar_month.9": 6076.0,
+        "baseline_medians_by_calendar_month.10": 1424.0,
+        "baseline_medians_by_calendar_month.11": 277.7615475046839,
+        "baseline_medians_by_calendar_month.12": 114.12376834468458,
+        "raw_aqua_cell_days_peak_window.2015-09": 15751.0,
+        "raw_aqua_cell_days_peak_window.2015-10": 11346.0,
         "event_month": "2015-09",
-        "planting": {
-          "old": {
-            "ok": true,
-            "reason": null,
-            "witness": "AQUA_MODIS",
-            "event": "2015-09",
-            "target": "2010-12",
-            "days_in_month": 31,
-            "n_rows": 1644,
-            "removed_rows": 3288,
-            "event_days_in_month": 30,
-            "cell_days": 31502,
-            "detections": 52690,
-            "frp_sum_mw": 2083232.7999999998,
-            "data_level": "SP",
-            "totals_preserved": true,
-            "other_witnesses_in_planted_month": []
-          },
-          "new": {
-            "ok": true,
-            "reason": null,
-            "witness": "SNPP_VIIRS",
-            "event": "2015-09",
-            "target": "2023-12",
-            "days_in_month": 31,
-            "n_rows": 1644,
-            "removed_rows": 6576,
-            "event_days_in_month": 30,
-            "cell_days": 125636,
-            "detections": 449544,
-            "frp_sum_mw": 3401236.34,
-            "data_level": "SP",
-            "totals_preserved": true,
-            "other_witnesses_in_planted_month": []
-          }
-        },
-        "raw": {
-          "aqua_2010_cell_days": 15751,
-          "snpp_2023_cell_days": 62818,
-          "ratio": 3.9881912259539076,
-          "mismatch": true,
-          "direction": "inflation",
-          "large_inflation": true,
-          "threshold": 1.5
-        },
-        "harmonized_2010_aqua": {
-          "estimate": 15751.0,
-          "sd": 1215.0952189849156,
-          "ci90": [
-            13752.346221961268,
-            17749.653778038733
-          ],
-          "witnesses_used": [
-            "AQUA_MODIS"
-          ],
-          "reason_codes": [
-            "SINGLE_WITNESS"
-          ],
-          "pct_of_normal_context": 13801.682356323645
-        },
-        "harmonized_2023_snpp": {
-          "estimate": 10237.612095171116,
-          "sd": 926.4334399602212,
-          "ci90": [
-            8713.764691323417,
-            11761.459499018816
-          ],
-          "witnesses_used": [
-            "SNPP_VIIRS"
-          ],
-          "reason_codes": [
-            "SINGLE_WITNESS"
-          ],
-          "pct_of_normal_context": 8970.622196991222
-        },
+        "planting.old.ok": true,
+        "planting.old.reason": null,
+        "planting.old.witness": "AQUA_MODIS",
+        "planting.old.event": "2015-09",
+        "planting.old.target": "2010-12",
+        "planting.old.days_in_month": 31,
+        "planting.old.n_rows": 1644,
+        "planting.old.removed_rows": 3288,
+        "planting.old.event_days_in_month": 30,
+        "planting.old.cell_days": 31502,
+        "planting.old.detections": 52690,
+        "planting.old.frp_sum_mw": 2083232.7999999998,
+        "planting.old.data_level": "SP",
+        "planting.old.totals_preserved": true,
+        "planting.old.other_witnesses_in_planted_month": "[]",
+        "planting.new.ok": true,
+        "planting.new.reason": null,
+        "planting.new.witness": "SNPP_VIIRS",
+        "planting.new.event": "2015-09",
+        "planting.new.target": "2023-12",
+        "planting.new.days_in_month": 31,
+        "planting.new.n_rows": 1644,
+        "planting.new.removed_rows": 6576,
+        "planting.new.event_days_in_month": 30,
+        "planting.new.cell_days": 125636,
+        "planting.new.detections": 449544,
+        "planting.new.frp_sum_mw": 3401236.34,
+        "planting.new.data_level": "SP",
+        "planting.new.totals_preserved": true,
+        "planting.new.other_witnesses_in_planted_month": "[]",
+        "raw.aqua_2010_cell_days": 15751,
+        "raw.snpp_2023_cell_days": 62818,
+        "raw.ratio": 3.9881912259539076,
+        "raw.mismatch": true,
+        "raw.direction": "inflation",
+        "raw.large_inflation": true,
+        "raw.threshold": 1.5,
+        "harmonized_2010_aqua.estimate": 15751.0,
+        "harmonized_2010_aqua.sd": 1215.0952189849156,
+        "harmonized_2010_aqua.ci90": "[13752.346221961268, 17749.653778038733]",
+        "harmonized_2010_aqua.witnesses_used": "[\"AQUA_MODIS\"]",
+        "harmonized_2010_aqua.reason_codes": "[\"SINGLE_WITNESS\"]",
+        "harmonized_2010_aqua.pct_of_normal_context": 13801.682356323645,
+        "harmonized_2023_snpp.estimate": 10237.612095171116,
+        "harmonized_2023_snpp.sd": 926.4334399602212,
+        "harmonized_2023_snpp.ci90": "[8713.764691323417, 11761.459499018816]",
+        "harmonized_2023_snpp.witnesses_used": "[\"SNPP_VIIRS\"]",
+        "harmonized_2023_snpp.reason_codes": "[\"SINGLE_WITNESS\"]",
+        "harmonized_2023_snpp.pct_of_normal_context": 8970.622196991222,
         "harmonized_ratio_new_over_old": 0.6499658494807388,
         "difference_in_sd": -3.6082757817139326,
-        "real_event_month_context": {
-          "AQUA_MODIS": {
-            "estimate": 15751.0,
-            "sd": 1215.0952189849156
-          },
-          "SNPP_VIIRS": {
-            "estimate": 13638.035791793809,
-            "sd": 1064.6152378985596
-          }
-        },
-        "identity_check_aqua": {
-          "planted_2010_estimate": 15751.0,
-          "real_event_aqua_only_estimate": 15751.0,
-          "equal": true
-        },
-        "exploratory_event_season_ratios": {
-          "season_of_event": "SON",
-          "season_of_target": "DJF",
-          "snpp_2023_estimate": 13638.035791793809,
-          "snpp_2023_sd": 1092.1729418058567,
-          "snpp_2023_ci90": [
-            11841.571167206186,
-            15434.500416381432
-          ],
-          "intervals_overlap": true,
-          "ratio_new_over_old": 0.8658520596656599
-        },
+        "real_event_month_context.AQUA_MODIS.estimate": 15751.0,
+        "real_event_month_context.AQUA_MODIS.sd": 1215.0952189849156,
+        "real_event_month_context.SNPP_VIIRS.estimate": 13638.035791793809,
+        "real_event_month_context.SNPP_VIIRS.sd": 1064.6152378985596,
+        "identity_check_aqua.planted_2010_estimate": 15751.0,
+        "identity_check_aqua.real_event_aqua_only_estimate": 15751.0,
+        "identity_check_aqua.equal": true,
+        "exploratory_event_season_ratios.season_of_event": "SON",
+        "exploratory_event_season_ratios.season_of_target": "DJF",
+        "exploratory_event_season_ratios.snpp_2023_estimate": 13638.035791793809,
+        "exploratory_event_season_ratios.snpp_2023_sd": 1092.1729418058567,
+        "exploratory_event_season_ratios.snpp_2023_ci90": "[11841.571167206186, 15434.500416381432]",
+        "exploratory_event_season_ratios.intervals_overlap": true,
+        "exploratory_event_season_ratios.ratio_new_over_old": 0.8658520596656599,
         "intervals_overlap": false,
-        "interval_2010": [
-          13752.346221961268,
-          17749.653778038733
-        ],
-        "interval_2023": [
-          8713.764691323417,
-          11761.459499018816
-        ],
-        "reasons": [
-          "the 90% intervals of the harmonized peaks do not overlap"
-        ]
+        "interval_2010": "[13752.346221961268, 17749.653778038733]",
+        "interval_2023": "[8713.764691323417, 11761.459499018816]",
+        "reasons": "[\"the 90% intervals of the harmonized peaks do not overlap\"]"
       },
       "status": "FAIL",
       "notes": "Design fixed in docs/task-prompts/T-023-test-a2.md before any run. A planted month holds one witness (Aqua in 2010, S-NPP in 2023), so each is a single-witness estimate. See docs/validation/T-023-results.md."
@@ -945,141 +523,90 @@
         "quiet_month_rule": "lowest median 2003-2022 of the box's harmonized series, >= 15 years, earliest on a tie",
         "quiet_calendar_month": 12,
         "quiet_month_baseline_median": 130.33314392506702,
-        "baseline_medians_by_calendar_month": {
-          "1": 160.0,
-          "2": 211.93438455333006,
-          "3": 569.2329478213574,
-          "4": 1460.4647893263013,
-          "5": 1026.902311192137,
-          "6": 218.01350396260872,
-          "7": 335.0,
-          "8": 570.5,
-          "9": 480.6896728737665,
-          "10": 287.75846061045763,
-          "11": 166.66608841093546,
-          "12": 130.33314392506702
-        },
-        "raw_aqua_cell_days_peak_window": {
-          "2019-12": 6842.0,
-          "2020-01": 4373.0
-        },
+        "baseline_medians_by_calendar_month.1": 160.0,
+        "baseline_medians_by_calendar_month.2": 211.93438455333006,
+        "baseline_medians_by_calendar_month.3": 569.2329478213574,
+        "baseline_medians_by_calendar_month.4": 1460.4647893263013,
+        "baseline_medians_by_calendar_month.5": 1026.902311192137,
+        "baseline_medians_by_calendar_month.6": 218.01350396260872,
+        "baseline_medians_by_calendar_month.7": 335.0,
+        "baseline_medians_by_calendar_month.8": 570.5,
+        "baseline_medians_by_calendar_month.9": 480.6896728737665,
+        "baseline_medians_by_calendar_month.10": 287.75846061045763,
+        "baseline_medians_by_calendar_month.11": 166.66608841093546,
+        "baseline_medians_by_calendar_month.12": 130.33314392506702,
+        "raw_aqua_cell_days_peak_window.2019-12": 6842.0,
+        "raw_aqua_cell_days_peak_window.2020-01": 4373.0,
         "event_month": "2019-12",
-        "planting": {
-          "old": {
-            "ok": true,
-            "reason": null,
-            "witness": "AQUA_MODIS",
-            "event": "2019-12",
-            "target": "2010-12",
-            "days_in_month": 31,
-            "n_rows": 888,
-            "removed_rows": 1776,
-            "event_days_in_month": 31,
-            "cell_days": 13684,
-            "detections": 42514,
-            "frp_sum_mw": 5154415.6,
-            "data_level": "SP",
-            "totals_preserved": true,
-            "other_witnesses_in_planted_month": []
-          },
-          "new": {
-            "ok": true,
-            "reason": null,
-            "witness": "SNPP_VIIRS",
-            "event": "2019-12",
-            "target": "2023-12",
-            "days_in_month": 31,
-            "n_rows": 888,
-            "removed_rows": 3552,
-            "event_days_in_month": 31,
-            "cell_days": 33244,
-            "detections": 434040,
-            "frp_sum_mw": 4672796.16,
-            "data_level": "SP",
-            "totals_preserved": true,
-            "other_witnesses_in_planted_month": []
-          }
-        },
-        "raw": {
-          "aqua_2010_cell_days": 6842,
-          "snpp_2023_cell_days": 16622,
-          "ratio": 2.4294066062554807,
-          "mismatch": true,
-          "direction": "inflation",
-          "large_inflation": true,
-          "threshold": 1.5
-        },
-        "harmonized_2010_aqua": {
-          "estimate": 6842.0,
-          "sd": 529.9140843570776,
-          "ci90": [
-            5970.368896372593,
-            7713.631103627407
-          ],
-          "witnesses_used": [
-            "AQUA_MODIS"
-          ],
-          "reason_codes": [
-            "SINGLE_WITNESS"
-          ],
-          "pct_of_normal_context": 5249.623997356881
-        },
-        "harmonized_2023_snpp": {
-          "estimate": 3531.5531371928846,
-          "sd": 284.7719623928728,
-          "ci90": [
-            3063.1449419968794,
-            3999.96133238889
-          ],
-          "witnesses_used": [
-            "SNPP_VIIRS"
-          ],
-          "reason_codes": [
-            "SINGLE_WITNESS"
-          ],
-          "pct_of_normal_context": 2709.6355008694454
-        },
+        "planting.old.ok": true,
+        "planting.old.reason": null,
+        "planting.old.witness": "AQUA_MODIS",
+        "planting.old.event": "2019-12",
+        "planting.old.target": "2010-12",
+        "planting.old.days_in_month": 31,
+        "planting.old.n_rows": 888,
+        "planting.old.removed_rows": 1776,
+        "planting.old.event_days_in_month": 31,
+        "planting.old.cell_days": 13684,
+        "planting.old.detections": 42514,
+        "planting.old.frp_sum_mw": 5154415.6,
+        "planting.old.data_level": "SP",
+        "planting.old.totals_preserved": true,
+        "planting.old.other_witnesses_in_planted_month": "[]",
+        "planting.new.ok": true,
+        "planting.new.reason": null,
+        "planting.new.witness": "SNPP_VIIRS",
+        "planting.new.event": "2019-12",
+        "planting.new.target": "2023-12",
+        "planting.new.days_in_month": 31,
+        "planting.new.n_rows": 888,
+        "planting.new.removed_rows": 3552,
+        "planting.new.event_days_in_month": 31,
+        "planting.new.cell_days": 33244,
+        "planting.new.detections": 434040,
+        "planting.new.frp_sum_mw": 4672796.16,
+        "planting.new.data_level": "SP",
+        "planting.new.totals_preserved": true,
+        "planting.new.other_witnesses_in_planted_month": "[]",
+        "raw.aqua_2010_cell_days": 6842,
+        "raw.snpp_2023_cell_days": 16622,
+        "raw.ratio": 2.4294066062554807,
+        "raw.mismatch": true,
+        "raw.direction": "inflation",
+        "raw.large_inflation": true,
+        "raw.threshold": 1.5,
+        "harmonized_2010_aqua.estimate": 6842.0,
+        "harmonized_2010_aqua.sd": 529.9140843570776,
+        "harmonized_2010_aqua.ci90": "[5970.368896372593, 7713.631103627407]",
+        "harmonized_2010_aqua.witnesses_used": "[\"AQUA_MODIS\"]",
+        "harmonized_2010_aqua.reason_codes": "[\"SINGLE_WITNESS\"]",
+        "harmonized_2010_aqua.pct_of_normal_context": 5249.623997356881,
+        "harmonized_2023_snpp.estimate": 3531.5531371928846,
+        "harmonized_2023_snpp.sd": 284.7719623928728,
+        "harmonized_2023_snpp.ci90": "[3063.1449419968794, 3999.96133238889]",
+        "harmonized_2023_snpp.witnesses_used": "[\"SNPP_VIIRS\"]",
+        "harmonized_2023_snpp.reason_codes": "[\"SINGLE_WITNESS\"]",
+        "harmonized_2023_snpp.pct_of_normal_context": 2709.6355008694454,
         "harmonized_ratio_new_over_old": 0.5161580147899568,
         "difference_in_sd": -5.5028785156885185,
-        "real_event_month_context": {
-          "AQUA_MODIS": {
-            "estimate": 6842.0,
-            "sd": 529.9140843570776
-          },
-          "SNPP_VIIRS": {
-            "estimate": 3531.5531371928846,
-            "sd": 284.7719623928728
-          }
-        },
-        "identity_check_aqua": {
-          "planted_2010_estimate": 6842.0,
-          "real_event_aqua_only_estimate": 6842.0,
-          "equal": true
-        },
-        "exploratory_event_season_ratios": {
-          "season_of_event": "DJF",
-          "season_of_target": "DJF",
-          "snpp_2023_estimate": 3531.5531371928846,
-          "snpp_2023_sd": 284.7719623928728,
-          "snpp_2023_ci90": [
-            3063.1449419968794,
-            3999.96133238889
-          ],
-          "intervals_overlap": false,
-          "ratio_new_over_old": 0.5161580147899568
-        },
+        "real_event_month_context.AQUA_MODIS.estimate": 6842.0,
+        "real_event_month_context.AQUA_MODIS.sd": 529.9140843570776,
+        "real_event_month_context.SNPP_VIIRS.estimate": 3531.5531371928846,
+        "real_event_month_context.SNPP_VIIRS.sd": 284.7719623928728,
+        "identity_check_aqua.planted_2010_estimate": 6842.0,
+        "identity_check_aqua.real_event_aqua_only_estimate": 6842.0,
+        "identity_check_aqua.equal": true,
+        "exploratory_event_season_ratios.season_of_event": "DJF",
+        "exploratory_event_season_ratios.season_of_target": "DJF",
+        "exploratory_event_season_ratios.snpp_2023_estimate": 3531.5531371928846,
+        "exploratory_event_season_ratios.snpp_2023_sd": 284.7719623928728,
+        "exploratory_event_season_ratios.snpp_2023_ci90": "[3063.1449419968794, 3999.96133238889]",
+        "exploratory_event_season_ratios.intervals_overlap": false,
+        "exploratory_event_season_ratios.ratio_new_over_old": 0.5161580147899568,
         "intervals_overlap": false,
-        "interval_2010": [
-          5970.368896372593,
-          7713.631103627407
-        ],
-        "interval_2023": [
-          3063.1449419968794,
-          3999.96133238889
-        ],
-        "reasons": [
-          "the 90% intervals of the harmonized peaks do not overlap"
-        ]
+        "interval_2010": "[5970.368896372593, 7713.631103627407]",
+        "interval_2023": "[3063.1449419968794, 3999.96133238889]",
+        "reasons": "[\"the 90% intervals of the harmonized peaks do not overlap\"]"
       },
       "status": "FAIL",
       "notes": "Design fixed in docs/task-prompts/T-023-test-a2.md before any run. A planted month holds one witness (Aqua in 2010, S-NPP in 2023), so each is a single-witness estimate. See docs/validation/T-023-results.md."
@@ -1096,141 +623,90 @@
         "quiet_month_rule": "lowest median 2003-2022 of the box's harmonized series, >= 15 years, earliest on a tie",
         "quiet_calendar_month": 1,
         "quiet_month_baseline_median": 0.023677838907555863,
-        "baseline_medians_by_calendar_month": {
-          "1": 0.023677838907555863,
-          "2": 0.09439201896004806,
-          "3": 1.3135331071354066,
-          "4": 15.719066572716311,
-          "5": 187.06788602001456,
-          "6": 599.2165531320029,
-          "7": 3597.263634908617,
-          "8": 1518.0,
-          "9": 195.3394371064344,
-          "10": 26.87597176937058,
-          "11": 0.5662535624695764,
-          "12": 0.07074403991725234
-        },
-        "raw_aqua_cell_days_peak_window": {
-          "2021-07": 20635.0,
-          "2021-08": 21094.0
-        },
+        "baseline_medians_by_calendar_month.1": 0.023677838907555863,
+        "baseline_medians_by_calendar_month.2": 0.09439201896004806,
+        "baseline_medians_by_calendar_month.3": 1.3135331071354066,
+        "baseline_medians_by_calendar_month.4": 15.719066572716311,
+        "baseline_medians_by_calendar_month.5": 187.06788602001456,
+        "baseline_medians_by_calendar_month.6": 599.2165531320029,
+        "baseline_medians_by_calendar_month.7": 3597.263634908617,
+        "baseline_medians_by_calendar_month.8": 1518.0,
+        "baseline_medians_by_calendar_month.9": 195.3394371064344,
+        "baseline_medians_by_calendar_month.10": 26.87597176937058,
+        "baseline_medians_by_calendar_month.11": 0.5662535624695764,
+        "baseline_medians_by_calendar_month.12": 0.07074403991725234,
+        "raw_aqua_cell_days_peak_window.2021-07": 20635.0,
+        "raw_aqua_cell_days_peak_window.2021-08": 21094.0,
         "event_month": "2021-08",
-        "planting": {
-          "old": {
-            "ok": true,
-            "reason": null,
-            "witness": "AQUA_MODIS",
-            "event": "2021-08",
-            "target": "2010-01",
-            "days_in_month": 31,
-            "n_rows": 6522,
-            "removed_rows": 13044,
-            "event_days_in_month": 31,
-            "cell_days": 42188,
-            "detections": 104140,
-            "frp_sum_mw": 11005175.799999999,
-            "data_level": "SP",
-            "totals_preserved": true,
-            "other_witnesses_in_planted_month": []
-          },
-          "new": {
-            "ok": true,
-            "reason": null,
-            "witness": "SNPP_VIIRS",
-            "event": "2021-08",
-            "target": "2023-01",
-            "days_in_month": 31,
-            "n_rows": 6522,
-            "removed_rows": 26088,
-            "event_days_in_month": 31,
-            "cell_days": 102092,
-            "detections": 1143006,
-            "frp_sum_mw": 11535638.219999999,
-            "data_level": "SP",
-            "totals_preserved": true,
-            "other_witnesses_in_planted_month": []
-          }
-        },
-        "raw": {
-          "aqua_2010_cell_days": 21094,
-          "snpp_2023_cell_days": 51046,
-          "ratio": 2.419929837868588,
-          "mismatch": true,
-          "direction": "inflation",
-          "large_inflation": true,
-          "threshold": 1.5
-        },
-        "harmonized_2010_aqua": {
-          "estimate": 21094.0,
-          "sd": 1603.0636281819884,
-          "ci90": [
-            18457.194976950872,
-            23730.805023049128
-          ],
-          "witnesses_used": [
-            "AQUA_MODIS"
-          ],
-          "reason_codes": [
-            "SINGLE_WITNESS"
-          ],
-          "pct_of_normal_context": null
-        },
-        "harmonized_2023_snpp": {
-          "estimate": 7343.406532448044,
-          "sd": 907.0059809133352,
-          "ci90": [
-            5851.514455076067,
-            8835.298609820022
-          ],
-          "witnesses_used": [
-            "SNPP_VIIRS"
-          ],
-          "reason_codes": [
-            "SINGLE_WITNESS"
-          ],
-          "pct_of_normal_context": null
-        },
+        "planting.old.ok": true,
+        "planting.old.reason": null,
+        "planting.old.witness": "AQUA_MODIS",
+        "planting.old.event": "2021-08",
+        "planting.old.target": "2010-01",
+        "planting.old.days_in_month": 31,
+        "planting.old.n_rows": 6522,
+        "planting.old.removed_rows": 13044,
+        "planting.old.event_days_in_month": 31,
+        "planting.old.cell_days": 42188,
+        "planting.old.detections": 104140,
+        "planting.old.frp_sum_mw": 11005175.799999999,
+        "planting.old.data_level": "SP",
+        "planting.old.totals_preserved": true,
+        "planting.old.other_witnesses_in_planted_month": "[]",
+        "planting.new.ok": true,
+        "planting.new.reason": null,
+        "planting.new.witness": "SNPP_VIIRS",
+        "planting.new.event": "2021-08",
+        "planting.new.target": "2023-01",
+        "planting.new.days_in_month": 31,
+        "planting.new.n_rows": 6522,
+        "planting.new.removed_rows": 26088,
+        "planting.new.event_days_in_month": 31,
+        "planting.new.cell_days": 102092,
+        "planting.new.detections": 1143006,
+        "planting.new.frp_sum_mw": 11535638.219999999,
+        "planting.new.data_level": "SP",
+        "planting.new.totals_preserved": true,
+        "planting.new.other_witnesses_in_planted_month": "[]",
+        "raw.aqua_2010_cell_days": 21094,
+        "raw.snpp_2023_cell_days": 51046,
+        "raw.ratio": 2.419929837868588,
+        "raw.mismatch": true,
+        "raw.direction": "inflation",
+        "raw.large_inflation": true,
+        "raw.threshold": 1.5,
+        "harmonized_2010_aqua.estimate": 21094.0,
+        "harmonized_2010_aqua.sd": 1603.0636281819884,
+        "harmonized_2010_aqua.ci90": "[18457.194976950872, 23730.805023049128]",
+        "harmonized_2010_aqua.witnesses_used": "[\"AQUA_MODIS\"]",
+        "harmonized_2010_aqua.reason_codes": "[\"SINGLE_WITNESS\"]",
+        "harmonized_2010_aqua.pct_of_normal_context": null,
+        "harmonized_2023_snpp.estimate": 7343.406532448044,
+        "harmonized_2023_snpp.sd": 907.0059809133352,
+        "harmonized_2023_snpp.ci90": "[5851.514455076067, 8835.298609820022]",
+        "harmonized_2023_snpp.witnesses_used": "[\"SNPP_VIIRS\"]",
+        "harmonized_2023_snpp.reason_codes": "[\"SINGLE_WITNESS\"]",
+        "harmonized_2023_snpp.pct_of_normal_context": null,
         "harmonized_ratio_new_over_old": 0.34812773928358987,
         "difference_in_sd": -7.465574821673518,
-        "real_event_month_context": {
-          "AQUA_MODIS": {
-            "estimate": 21094.0,
-            "sd": 1603.0636281819884
-          },
-          "SNPP_VIIRS": {
-            "estimate": 15898.803058716407,
-            "sd": 1283.1261748416732
-          }
-        },
-        "identity_check_aqua": {
-          "planted_2010_estimate": 21094.0,
-          "real_event_aqua_only_estimate": 21094.0,
-          "equal": true
-        },
-        "exploratory_event_season_ratios": {
-          "season_of_event": "JJA",
-          "season_of_target": "DJF",
-          "snpp_2023_estimate": 15898.803058716412,
-          "snpp_2023_sd": 1422.4604749234695,
-          "snpp_2023_ci90": [
-            13559.06378734343,
-            18238.542330089396
-          ],
-          "intervals_overlap": false,
-          "ratio_new_over_old": 0.7537121010105439
-        },
+        "real_event_month_context.AQUA_MODIS.estimate": 21094.0,
+        "real_event_month_context.AQUA_MODIS.sd": 1603.0636281819884,
+        "real_event_month_context.SNPP_VIIRS.estimate": 15898.803058716407,
+        "real_event_month_context.SNPP_VIIRS.sd": 1283.1261748416732,
+        "identity_check_aqua.planted_2010_estimate": 21094.0,
+        "identity_check_aqua.real_event_aqua_only_estimate": 21094.0,
+        "identity_check_aqua.equal": true,
+        "exploratory_event_season_ratios.season_of_event": "JJA",
+        "exploratory_event_season_ratios.season_of_target": "DJF",
+        "exploratory_event_season_ratios.snpp_2023_estimate": 15898.803058716412,
+        "exploratory_event_season_ratios.snpp_2023_sd": 1422.4604749234695,
+        "exploratory_event_season_ratios.snpp_2023_ci90": "[13559.06378734343, 18238.542330089396]",
+        "exploratory_event_season_ratios.intervals_overlap": false,
+        "exploratory_event_season_ratios.ratio_new_over_old": 0.7537121010105439,
         "intervals_overlap": false,
-        "interval_2010": [
-          18457.194976950872,
-          23730.805023049128
-        ],
-        "interval_2023": [
-          5851.514455076067,
-          8835.298609820022
-        ],
-        "reasons": [
-          "the 90% intervals of the harmonized peaks do not overlap"
-        ]
+        "interval_2010": "[18457.194976950872, 23730.805023049128]",
+        "interval_2023": "[5851.514455076067, 8835.298609820022]",
+        "reasons": "[\"the 90% intervals of the harmonized peaks do not overlap\"]"
       },
       "status": "FAIL",
       "notes": "Design fixed in docs/task-prompts/T-023-test-a2.md before any run. A planted month holds one witness (Aqua in 2010, S-NPP in 2023), so each is a single-witness estimate. See docs/validation/T-023-results.md."
@@ -1243,11 +719,9 @@
       "criterion": "All three cases C1, C4, C6 PASS (the plan gives no family rule: [ASSUMPTION], the literal reading)",
       "threshold": "A2 as written in VALIDATION_PLAN section 3 per case; the family rule is an [ASSUMPTION] for the Lead; an INCONCLUSIVE case does not count as a PASS",
       "measured": {
-        "case_status": {
-          "C1": "FAIL",
-          "C4": "FAIL",
-          "C6": "FAIL"
-        },
+        "case_status.C1": "FAIL",
+        "case_status.C4": "FAIL",
+        "case_status.C6": "FAIL",
         "n_pass": 0,
         "n_fail": 3,
         "n_inconclusive": 0,
@@ -1321,36 +795,20 @@
       "threshold": "detection >= 90% and false flags < 5% (locked at G1, D-028)",
       "measured": {
         "trials": 200,
-        "detection": {
-          "k": 169,
-          "n": 200,
-          "share": 0.845,
-          "wilson95": [
-            0.7883930940765792,
-            0.8886036307231068
-          ]
-        },
-        "false_flags_unplanted_twin_window": {
-          "k": 50,
-          "n": 200,
-          "share": 0.25,
-          "wilson95": [
-            0.195081680068175,
-            0.31434098312045833
-          ]
-        },
-        "by_type": {
-          "REGION": {
-            "trials": 100,
-            "detection": 1.0,
-            "false_flags": 0.39
-          },
-          "CELL": {
-            "trials": 100,
-            "detection": 0.69,
-            "false_flags": 0.11
-          }
-        },
+        "detection.k": 169,
+        "detection.n": 200,
+        "detection.share": 0.845,
+        "detection.wilson95": "[0.7883930940765792, 0.8886036307231068]",
+        "false_flags_unplanted_twin_window.k": 50,
+        "false_flags_unplanted_twin_window.n": 200,
+        "false_flags_unplanted_twin_window.share": 0.25,
+        "false_flags_unplanted_twin_window.wilson95": "[0.195081680068175, 0.31434098312045833]",
+        "by_type.REGION.trials": 100,
+        "by_type.REGION.detection": 1.0,
+        "by_type.REGION.false_flags": 0.39,
+        "by_type.CELL.trials": 100,
+        "by_type.CELL.detection": 0.69,
+        "by_type.CELL.false_flags": 0.11,
         "seed": 20261115
       },
       "status": "FAIL",
@@ -1364,24 +822,14 @@
       "criterion": "Flagged = WITNESS_DISAGREEMENT only (S > 2)",
       "threshold": "detection >= 90% and false flags < 5%",
       "measured": {
-        "detection": {
-          "k": 147,
-          "n": 200,
-          "share": 0.735,
-          "wilson95": [
-            0.6698242380737758,
-            0.7913184585289089
-          ]
-        },
-        "false_flags_unplanted_twin_window": {
-          "k": 26,
-          "n": 200,
-          "share": 0.13,
-          "wilson95": [
-            0.0902820227966932,
-            0.18366351872248404
-          ]
-        }
+        "detection.k": 147,
+        "detection.n": 200,
+        "detection.share": 0.735,
+        "detection.wilson95": "[0.6698242380737758, 0.7913184585289089]",
+        "false_flags_unplanted_twin_window.k": 26,
+        "false_flags_unplanted_twin_window.n": 200,
+        "false_flags_unplanted_twin_window.share": 0.13,
+        "false_flags_unplanted_twin_window.wilson95": "[0.0902820227966932, 0.18366351872248404]"
       },
       "status": "FAIL",
       "notes": "Supplementary reading; the official entry is B2."
@@ -1395,42 +843,22 @@
       "threshold": "< 5% (the plan's false-flag threshold, applied per month)",
       "measured": {
         "entity_months": 17881,
-        "flagged_per_month_union": {
-          "k": 999,
-          "n": 17881,
-          "share": 0.055869358536994575,
-          "wilson95": [
-            0.05259744521403049,
-            0.05933206019589298
-          ]
-        },
-        "flagged_per_month_code": {
-          "k": 316,
-          "n": 17881,
-          "share": 0.017672389687377662,
-          "wilson95": [
-            0.015842215149262755,
-            0.01970976110306801
-          ]
-        },
-        "entities_flagged_anywhere_union": {
-          "k": 271,
-          "n": 1000,
-          "share": 0.271,
-          "wilson95": [
-            0.2443667197375407,
-            0.2993859356488436
-          ]
-        },
-        "entities_flagged_anywhere_code": {
-          "k": 103,
-          "n": 1000,
-          "share": 0.103,
-          "wilson95": [
-            0.08565481000508716,
-            0.1233836362324436
-          ]
-        }
+        "flagged_per_month_union.k": 999,
+        "flagged_per_month_union.n": 17881,
+        "flagged_per_month_union.share": 0.055869358536994575,
+        "flagged_per_month_union.wilson95": "[0.05259744521403049, 0.05933206019589298]",
+        "flagged_per_month_code.k": 316,
+        "flagged_per_month_code.n": 17881,
+        "flagged_per_month_code.share": 0.017672389687377662,
+        "flagged_per_month_code.wilson95": "[0.015842215149262755, 0.01970976110306801]",
+        "entities_flagged_anywhere_union.k": 271,
+        "entities_flagged_anywhere_union.n": 1000,
+        "entities_flagged_anywhere_union.share": 0.271,
+        "entities_flagged_anywhere_union.wilson95": "[0.2443667197375407, 0.2993859356488436]",
+        "entities_flagged_anywhere_code.k": 103,
+        "entities_flagged_anywhere_code.n": 1000,
+        "entities_flagged_anywhere_code.share": 0.103,
+        "entities_flagged_anywhere_code.wilson95": "[0.08565481000508716, 0.1233836362324436]"
       },
       "status": "FAIL",
       "notes": "Supplementary: the plan does not say what a false flag per series means; the status here applies the 5% threshold to the monthly union-rule rate."
@@ -1443,73 +871,55 @@
       "criterion": "drift visible as a ratio trend, reported with its onset estimate",
       "threshold": "T-012 detector fires for both VIIRS witnesses in one day/night part, negative slope, onset 2021 or later",
       "measured": {
-        "series": {
-          "D|NOAA20_VIIRS": {
-            "onset_month": "2025-06",
-            "onset_lo_month": "2020-01",
-            "onset_hi_month": "2025-06",
-            "slope_pct_per_year": -6.1080487005849005,
-            "slope_lo_pct_per_year": -9.242750611260087,
-            "slope_hi_pct_per_year": -0.46067585702622704,
-            "delta_bic": -2.7287093546597703,
-            "detected": false,
-            "n": 99,
-            "status": "ok",
-            "qualifies": false
-          },
-          "D|SNPP_VIIRS": {
-            "onset_month": "2025-06",
-            "onset_lo_month": "2019-02",
-            "onset_hi_month": "2025-06",
-            "slope_pct_per_year": -5.364645232578846,
-            "slope_lo_pct_per_year": -8.472009382294033,
-            "slope_hi_pct_per_year": -0.3987909645696175,
-            "delta_bic": -6.114501502920575,
-            "detected": false,
-            "n": 164,
-            "status": "ok",
-            "qualifies": false
-          },
-          "N|NOAA20_VIIRS": {
-            "onset_month": "2024-09",
-            "onset_lo_month": "2024-03",
-            "onset_hi_month": "2025-02",
-            "slope_pct_per_year": -18.980547990637575,
-            "slope_lo_pct_per_year": -25.435450556210082,
-            "slope_hi_pct_per_year": -14.058059055830208,
-            "delta_bic": 50.739969221323236,
-            "detected": true,
-            "n": 99,
-            "status": "ok",
-            "qualifies": true
-          },
-          "N|SNPP_VIIRS": {
-            "onset_month": "2024-05",
-            "onset_lo_month": "2022-10",
-            "onset_hi_month": "2025-04",
-            "slope_pct_per_year": -11.965957928730619,
-            "slope_lo_pct_per_year": -22.8316726354607,
-            "slope_hi_pct_per_year": -5.473951378417741,
-            "delta_bic": 28.934612241887862,
-            "detected": true,
-            "n": 164,
-            "status": "ok",
-            "qualifies": true
-          }
-        },
-        "parts": {
-          "D": {
-            "fitted": true,
-            "qualifies": false
-          },
-          "N": {
-            "fitted": true,
-            "qualifies": true
-          }
-        },
-        "qualifying_parts": [
-          "N"
-        ]
+        "series.D|NOAA20_VIIRS.onset_month": "2025-06",
+        "series.D|NOAA20_VIIRS.onset_lo_month": "2020-01",
+        "series.D|NOAA20_VIIRS.onset_hi_month": "2025-06",
+        "series.D|NOAA20_VIIRS.slope_pct_per_year": -6.1080487005849005,
+        "series.D|NOAA20_VIIRS.slope_lo_pct_per_year": -9.242750611260087,
+        "series.D|NOAA20_VIIRS.slope_hi_pct_per_year": -0.46067585702622704,
+        "series.D|NOAA20_VIIRS.delta_bic": -2.7287093546597703,
+        "series.D|NOAA20_VIIRS.detected": false,
+        "series.D|NOAA20_VIIRS.n": 99,
+        "series.D|NOAA20_VIIRS.status": "ok",
+        "series.D|NOAA20_VIIRS.qualifies": false,
+        "series.D|SNPP_VIIRS.onset_month": "2025-06",
+        "series.D|SNPP_VIIRS.onset_lo_month": "2019-02",
+        "series.D|SNPP_VIIRS.onset_hi_month": "2025-06",
+        "series.D|SNPP_VIIRS.slope_pct_per_year": -5.364645232578846,
+        "series.D|SNPP_VIIRS.slope_lo_pct_per_year": -8.472009382294033,
+        "series.D|SNPP_VIIRS.slope_hi_pct_per_year": -0.3987909645696175,
+        "series.D|SNPP_VIIRS.delta_bic": -6.114501502920575,
+        "series.D|SNPP_VIIRS.detected": false,
+        "series.D|SNPP_VIIRS.n": 164,
+        "series.D|SNPP_VIIRS.status": "ok",
+        "series.D|SNPP_VIIRS.qualifies": false,
+        "series.N|NOAA20_VIIRS.onset_month": "2024-09",
+        "series.N|NOAA20_VIIRS.onset_lo_month": "2024-03",
+        "series.N|NOAA20_VIIRS.onset_hi_month": "2025-02",
+        "series.N|NOAA20_VIIRS.slope_pct_per_year": -18.980547990637575,
+        "series.N|NOAA20_VIIRS.slope_lo_pct_per_year": -25.435450556210082,
+        "series.N|NOAA20_VIIRS.slope_hi_pct_per_year": -14.058059055830208,
+        "series.N|NOAA20_VIIRS.delta_bic": 50.739969221323236,
+        "series.N|NOAA20_VIIRS.detected": true,
+        "series.N|NOAA20_VIIRS.n": 99,
+        "series.N|NOAA20_VIIRS.status": "ok",
+        "series.N|NOAA20_VIIRS.qualifies": true,
+        "series.N|SNPP_VIIRS.onset_month": "2024-05",
+        "series.N|SNPP_VIIRS.onset_lo_month": "2022-10",
+        "series.N|SNPP_VIIRS.onset_hi_month": "2025-04",
+        "series.N|SNPP_VIIRS.slope_pct_per_year": -11.965957928730619,
+        "series.N|SNPP_VIIRS.slope_lo_pct_per_year": -22.8316726354607,
+        "series.N|SNPP_VIIRS.slope_hi_pct_per_year": -5.473951378417741,
+        "series.N|SNPP_VIIRS.delta_bic": 28.934612241887862,
+        "series.N|SNPP_VIIRS.detected": true,
+        "series.N|SNPP_VIIRS.n": 164,
+        "series.N|SNPP_VIIRS.status": "ok",
+        "series.N|SNPP_VIIRS.qualifies": true,
+        "parts.D.fitted": true,
+        "parts.D.qualifies": false,
+        "parts.N.fitted": true,
+        "parts.N.qualifies": true,
+        "qualifying_parts": "[\"N\"]"
       },
       "status": "PASS",
       "notes": ""
@@ -1522,42 +932,13 @@
       "criterion": "outage months 100% without an estimate; an incomplete witness-month is never used",
       "threshold": "100%",
       "measured": {
-        "outage_months": [
-          "2002-07",
-          "2002-08",
-          "2002-09",
-          "2026-11"
-        ],
+        "outage_months": "[\"2002-07\", \"2002-08\", \"2002-09\", \"2026-11\"]",
         "entity_months_in_outage": 60,
         "with_estimate": 0,
         "share_without_estimate": 1.0,
         "incomplete_witness_entity_months": 345,
         "incomplete_witness_used": 0,
-        "incomplete_witness_months": [
-          "2002-07 AQUA_MODIS",
-          "2002-08 AQUA_MODIS",
-          "2002-09 AQUA_MODIS",
-          "2012-01 SNPP_VIIRS",
-          "2012-03 SNPP_VIIRS",
-          "2022-04 AQUA_MODIS",
-          "2022-07 SNPP_VIIRS",
-          "2022-08 SNPP_VIIRS",
-          "2023-07 NOAA20_VIIRS",
-          "2023-09 NOAA20_VIIRS",
-          "2024-02 NOAA20_VIIRS",
-          "2024-05 SNPP_VIIRS",
-          "2024-06 SNPP_VIIRS",
-          "2024-07 SNPP_VIIRS",
-          "2024-09 SNPP_VIIRS",
-          "2024-11 SNPP_VIIRS",
-          "2026-03 SNPP_VIIRS",
-          "2026-04 SNPP_VIIRS",
-          "2026-06 SNPP_VIIRS",
-          "2026-07 SNPP_VIIRS",
-          "2026-11 AQUA_MODIS",
-          "2026-11 NOAA20_VIIRS",
-          "2026-11 SNPP_VIIRS"
-        ]
+        "incomplete_witness_months": "[\"2002-07 AQUA_MODIS\", \"2002-08 AQUA_MODIS\", \"2002-09 AQUA_MODIS\", \"2012-01 SNPP_VIIRS\", \"2012-03 SNPP_VIIRS\", \"2022-04 AQUA_MODIS\", \"2022-07 SNPP_VIIRS\", \"2022-08 SNPP_VIIRS\", \"2023-07 NOAA20_VIIRS\", \"2023-09 NOAA20_VIIRS\", \"2024-02 NOAA20_VIIRS\", \"2024-05 SNPP_VIIRS\", \"2024-06 SNPP_VIIRS\", \"2024-07 SNPP_VIIRS\", \"2024-09 SNPP_VIIRS\", \"2024-11 SNPP_VIIRS\", \"2026-03 SNPP_VIIRS\", \"2026-04 SNPP_VIIRS\", \"2026-06 SNPP_VIIRS\", \"2026-07 SNPP_VIIRS\", \"2026-11 AQUA_MODIS\", \"2026-11 NOAA20_VIIRS\", \"2026-11 SNPP_VIIRS\"]"
       },
       "status": "PASS",
       "notes": ""
@@ -1570,12 +951,7 @@
       "criterion": "outage months 100% CANNOT_DETERMINE",
       "threshold": "100%",
       "measured": {
-        "outage_months": [
-          "2002-07",
-          "2002-08",
-          "2002-09",
-          "2026-11"
-        ],
+        "outage_months": "[\"2002-07\", \"2002-08\", \"2002-09\", \"2026-11\"]",
         "entity_months_in_outage": 936,
         "cannot_determine": 936,
         "share_cannot_determine": 1.0,
@@ -1609,45 +985,31 @@
       "threshold": ">= 85% (locked at G1, D-028)",
       "measured": {
         "units": 630,
-        "agree": {
-          "k": 615,
-          "n": 630,
-          "share": 0.9761904761904762,
-          "wilson95": [
-            0.9610900077738446,
-            0.9855189456959104
-          ]
-        },
-        "overlap_reading": {
-          "k": 629,
-          "n": 630,
-          "share": 0.9984126984126984,
-          "wilson95": [
-            0.991064290644574,
-            0.9997197473204364
-          ]
-        },
+        "agree.k": 615,
+        "agree.n": 630,
+        "agree.share": 0.9761904761904762,
+        "agree.wilson95": "[0.9610900077738446, 0.9855189456959104]",
+        "overlap_reading.k": 629,
+        "overlap_reading.n": 630,
+        "overlap_reading.share": 0.9984126984126984,
+        "overlap_reading.wilson95": "[0.991064290644574, 0.9997197473204364]",
         "median_ratio_snpp_over_noaa20": 1.00054321271746,
-        "per_region_agree": {
-          "AUST": 1.0,
-          "BOAS": 1.0,
-          "BONA": 0.8888888888888888,
-          "CEAM": 1.0,
-          "CEAS": 1.0,
-          "EQAS": 0.9555555555555556,
-          "EURO": 0.9555555555555556,
-          "MIDE": 1.0,
-          "NHAF": 0.9333333333333333,
-          "NHSA": 1.0,
-          "SEAS": 0.9555555555555556,
-          "SHAF": 1.0,
-          "SHSA": 1.0,
-          "TENA": 0.9777777777777777
-        },
-        "in_sample": {
-          "SNPP_VIIRS": "2012-01 to 2016-12 fit: 2018-2021 and 2022-2024 are out of sample",
-          "NOAA20_VIIRS": "2018-04 to 2021-12 fit: the plan window is IN sample, 2022-01 on is out of sample"
-        }
+        "per_region_agree.AUST": 1.0,
+        "per_region_agree.BOAS": 1.0,
+        "per_region_agree.BONA": 0.8888888888888888,
+        "per_region_agree.CEAM": 1.0,
+        "per_region_agree.CEAS": 1.0,
+        "per_region_agree.EQAS": 0.9555555555555556,
+        "per_region_agree.EURO": 0.9555555555555556,
+        "per_region_agree.MIDE": 1.0,
+        "per_region_agree.NHAF": 0.9333333333333333,
+        "per_region_agree.NHSA": 1.0,
+        "per_region_agree.SEAS": 0.9555555555555556,
+        "per_region_agree.SHAF": 1.0,
+        "per_region_agree.SHSA": 1.0,
+        "per_region_agree.TENA": 0.9777777777777777,
+        "in_sample.SNPP_VIIRS": "2012-01 to 2016-12 fit: 2018-2021 and 2022-2024 are out of sample",
+        "in_sample.NOAA20_VIIRS": "2018-04 to 2021-12 fit: the plan window is IN sample, 2022-01 on is out of sample"
       },
       "status": "PASS",
       "notes": "Agreement = the difference within 1.645 x sqrt(sd_S^2 + sd_N^2) [ASSUMPTION 6]. The whole window is IN sample for NOAA-20 (calibration 2018-04 to 2021-12) and out of sample for S-NPP; no month is out of sample for both: see C1-OUT-OF-SAMPLE-2022-2024."
@@ -1661,15 +1023,10 @@
       "threshold": ">= 85%",
       "measured": {
         "units": 630,
-        "overlap": {
-          "k": 629,
-          "n": 630,
-          "share": 0.9984126984126984,
-          "wilson95": [
-            0.991064290644574,
-            0.9997197473204364
-          ]
-        }
+        "overlap.k": 629,
+        "overlap.n": 630,
+        "overlap.share": 0.9984126984126984,
+        "overlap.wilson95": "[0.991064290644574, 0.9997197473204364]"
       },
       "status": "PASS",
       "notes": "A more lenient reading than the official one; supplementary."
@@ -1683,40 +1040,28 @@
       "threshold": ">= 85% (the plan's threshold, applied to months outside the plan window)",
       "measured": {
         "units": 322,
-        "agree": {
-          "k": 317,
-          "n": 322,
-          "share": 0.984472049689441,
-          "wilson95": [
-            0.9641712547420462,
-            0.9933496240595956
-          ]
-        },
-        "overlap_reading": {
-          "k": 321,
-          "n": 322,
-          "share": 0.9968944099378882,
-          "wilson95": [
-            0.9826211196272577,
-            0.9994515765795544
-          ]
-        },
-        "per_region_agree": {
-          "AUST": 1.0,
-          "BOAS": 1.0,
-          "BONA": 0.9130434782608695,
-          "CEAM": 1.0,
-          "CEAS": 0.9565217391304348,
-          "EQAS": 0.9565217391304348,
-          "EURO": 0.9565217391304348,
-          "MIDE": 1.0,
-          "NHAF": 1.0,
-          "NHSA": 1.0,
-          "SEAS": 1.0,
-          "SHAF": 1.0,
-          "SHSA": 1.0,
-          "TENA": 1.0
-        }
+        "agree.k": 317,
+        "agree.n": 322,
+        "agree.share": 0.984472049689441,
+        "agree.wilson95": "[0.9641712547420462, 0.9933496240595956]",
+        "overlap_reading.k": 321,
+        "overlap_reading.n": 322,
+        "overlap_reading.share": 0.9968944099378882,
+        "overlap_reading.wilson95": "[0.9826211196272577, 0.9994515765795544]",
+        "per_region_agree.AUST": 1.0,
+        "per_region_agree.BOAS": 1.0,
+        "per_region_agree.BONA": 0.9130434782608695,
+        "per_region_agree.CEAM": 1.0,
+        "per_region_agree.CEAS": 0.9565217391304348,
+        "per_region_agree.EQAS": 0.9565217391304348,
+        "per_region_agree.EURO": 0.9565217391304348,
+        "per_region_agree.MIDE": 1.0,
+        "per_region_agree.NHAF": 1.0,
+        "per_region_agree.NHSA": 1.0,
+        "per_region_agree.SEAS": 1.0,
+        "per_region_agree.SHAF": 1.0,
+        "per_region_agree.SHSA": 1.0,
+        "per_region_agree.TENA": 1.0
       },
       "status": "PASS",
       "notes": "Outside the plan's 2018-2021 window; ends before the earliest VIIRS night drift onset (2024-05). Supplementary only."
@@ -1730,71 +1075,38 @@
       "threshold": "0 spurious verdicts (locked at G1, D-028)",
       "measured": {
         "spurious_total": 3,
-        "spurious": [
-          {
-            "date": "2012-01",
-            "month": "2011-03",
-            "harmonized": "BELOW_NORMAL",
-            "aqua_only": "CANNOT_DETERMINE"
-          },
-          {
-            "date": "2012-01",
-            "month": "2011-04",
-            "harmonized": "BELOW_NORMAL",
-            "aqua_only": "CANNOT_DETERMINE"
-          },
-          {
-            "date": "2012-01",
-            "month": "2012-09",
-            "harmonized": "BELOW_NORMAL",
-            "aqua_only": "CANNOT_DETERMINE"
-          }
-        ],
+        "spurious": "[{\"date\": \"2012-01\", \"month\": \"2011-03\", \"harmonized\": \"BELOW_NORMAL\", \"aqua_only\": \"CANNOT_DETERMINE\"}, {\"date\": \"2012-01\", \"month\": \"2011-04\", \"harmonized\": \"BELOW_NORMAL\", \"aqua_only\": \"CANNOT_DETERMINE\"}, {\"date\": \"2012-01\", \"month\": \"2012-09\", \"harmonized\": \"BELOW_NORMAL\", \"aqua_only\": \"CANNOT_DETERMINE\"}]",
         "determinable_harmonized_months": 27,
-        "per_date": {
-          "2012-01": {
-            "months": 25,
-            "spurious": 3,
-            "harmonized_verdicts": {
-              "ABOVE_NORMAL": 5,
-              "BELOW_NORMAL": 5,
-              "WITHIN_NORMAL": 2,
-              "NO_DETECTED_ACTIVITY": 0,
-              "CANNOT_DETERMINE": 13,
-              "missing": 0
-            },
-            "aqua_only_verdicts": {
-              "ABOVE_NORMAL": 5,
-              "BELOW_NORMAL": 3,
-              "WITHIN_NORMAL": 2,
-              "NO_DETECTED_ACTIVITY": 0,
-              "CANNOT_DETERMINE": 15,
-              "missing": 0
-            },
-            "determinable_harmonized": 12
-          },
-          "2018-04": {
-            "months": 25,
-            "spurious": 0,
-            "harmonized_verdicts": {
-              "ABOVE_NORMAL": 8,
-              "BELOW_NORMAL": 3,
-              "WITHIN_NORMAL": 4,
-              "NO_DETECTED_ACTIVITY": 0,
-              "CANNOT_DETERMINE": 10,
-              "missing": 0
-            },
-            "aqua_only_verdicts": {
-              "ABOVE_NORMAL": 8,
-              "BELOW_NORMAL": 4,
-              "WITHIN_NORMAL": 2,
-              "NO_DETECTED_ACTIVITY": 0,
-              "CANNOT_DETERMINE": 11,
-              "missing": 0
-            },
-            "determinable_harmonized": 15
-          }
-        }
+        "per_date.2012-01.months": 25,
+        "per_date.2012-01.spurious": 3,
+        "per_date.2012-01.harmonized_verdicts.ABOVE_NORMAL": 5,
+        "per_date.2012-01.harmonized_verdicts.BELOW_NORMAL": 5,
+        "per_date.2012-01.harmonized_verdicts.WITHIN_NORMAL": 2,
+        "per_date.2012-01.harmonized_verdicts.NO_DETECTED_ACTIVITY": 0,
+        "per_date.2012-01.harmonized_verdicts.CANNOT_DETERMINE": 13,
+        "per_date.2012-01.harmonized_verdicts.missing": 0,
+        "per_date.2012-01.aqua_only_verdicts.ABOVE_NORMAL": 5,
+        "per_date.2012-01.aqua_only_verdicts.BELOW_NORMAL": 3,
+        "per_date.2012-01.aqua_only_verdicts.WITHIN_NORMAL": 2,
+        "per_date.2012-01.aqua_only_verdicts.NO_DETECTED_ACTIVITY": 0,
+        "per_date.2012-01.aqua_only_verdicts.CANNOT_DETERMINE": 15,
+        "per_date.2012-01.aqua_only_verdicts.missing": 0,
+        "per_date.2012-01.determinable_harmonized": 12,
+        "per_date.2018-04.months": 25,
+        "per_date.2018-04.spurious": 0,
+        "per_date.2018-04.harmonized_verdicts.ABOVE_NORMAL": 8,
+        "per_date.2018-04.harmonized_verdicts.BELOW_NORMAL": 3,
+        "per_date.2018-04.harmonized_verdicts.WITHIN_NORMAL": 4,
+        "per_date.2018-04.harmonized_verdicts.NO_DETECTED_ACTIVITY": 0,
+        "per_date.2018-04.harmonized_verdicts.CANNOT_DETERMINE": 10,
+        "per_date.2018-04.harmonized_verdicts.missing": 0,
+        "per_date.2018-04.aqua_only_verdicts.ABOVE_NORMAL": 8,
+        "per_date.2018-04.aqua_only_verdicts.BELOW_NORMAL": 4,
+        "per_date.2018-04.aqua_only_verdicts.WITHIN_NORMAL": 2,
+        "per_date.2018-04.aqua_only_verdicts.NO_DETECTED_ACTIVITY": 0,
+        "per_date.2018-04.aqua_only_verdicts.CANNOT_DETERMINE": 11,
+        "per_date.2018-04.aqua_only_verdicts.missing": 0,
+        "per_date.2018-04.determinable_harmonized": 15
       },
       "status": "FAIL",
       "notes": "Harmonized series against its harmonized baseline, Aqua-only series against the Aqua-measured baseline, both 2003-2022 [ASSUMPTION 8]. INCONCLUSIVE would mean fewer than 12 determinable months."
@@ -1808,20 +1120,7 @@
       "threshold": "0 spurious verdicts",
       "measured": {
         "spurious_total": 2,
-        "spurious": [
-          {
-            "date": "2012-01",
-            "month": "2012-09",
-            "harmonized": "BELOW_NORMAL",
-            "aqua_only": "CANNOT_DETERMINE"
-          },
-          {
-            "date": "2018-04",
-            "month": "2017-10",
-            "harmonized": "ABOVE_NORMAL",
-            "aqua_only": "CANNOT_DETERMINE"
-          }
-        ],
+        "spurious": "[{\"date\": \"2012-01\", \"month\": \"2012-09\", \"harmonized\": \"BELOW_NORMAL\", \"aqua_only\": \"CANNOT_DETERMINE\"}, {\"date\": \"2018-04\", \"month\": \"2017-10\", \"harmonized\": \"ABOVE_NORMAL\", \"aqua_only\": \"CANNOT_DETERMINE\"}]",
         "determinable_harmonized_months": 26
       },
       "status": "FAIL",
@@ -1841,13 +1140,11 @@
         "day": 0.8698795180722891,
         "night": 0.75,
         "day_night_total": 0.8474842767295597,
-        "widening_factor_reported_not_applied": {
-          "fitted_on": "2017-2018 only",
-          "c_for_90": 1.261652933738922,
-          "applied": false,
-          "coverage_2019_2021_unchanged": 0.8111490329920364,
-          "coverage_2019_2021_with_c": 0.8771331058020477
-        }
+        "widening_factor_reported_not_applied.fitted_on": "2017-2018 only",
+        "widening_factor_reported_not_applied.c_for_90": 1.261652933738922,
+        "widening_factor_reported_not_applied.applied": false,
+        "widening_factor_reported_not_applied.coverage_2019_2021_unchanged": 0.8111490329920364,
+        "widening_factor_reported_not_applied.coverage_2019_2021_with_c": 0.8771331058020477
       },
       "status": "PASS",
       "notes": "Pooled reading of the criterion [ASSUMPTION]. Not a clean out-of-sample test: phi and kappa were fitted on fit-period months and the NOAA-20 pair overlaps these months on the Aqua side. No widening factor applied (Lead decision). The 50% interval covers less than 50%: the intervals are slightly too narrow in the middle. Known limits in D1-NIGHT and D1-REGIONS-EACH (risk S16)."
@@ -1865,15 +1162,7 @@
         "coverage_50": 0.4968553459119497,
         "regions_judged": 14,
         "regions_inside": 7,
-        "regions_outside": [
-          "BONA",
-          "CEAM",
-          "EURO",
-          "MIDE",
-          "NHSA",
-          "SHAF",
-          "TENA"
-        ]
+        "regions_outside": "[\"BONA\", \"CEAM\", \"EURO\", \"MIDE\", \"NHSA\", \"SHAF\", \"TENA\"]"
       },
       "status": "PASS",
       "notes": "Supplementary; the status uses the same range as the locked criterion."
@@ -1903,15 +1192,7 @@
       "measured": {
         "regions_judged": 14,
         "regions_inside": 7,
-        "regions_outside": [
-          "AUST",
-          "BOAS",
-          "BONA",
-          "CEAS",
-          "EURO",
-          "MIDE",
-          "TENA"
-        ],
+        "regions_outside": "[\"AUST\", \"BOAS\", \"BONA\", \"CEAS\", \"EURO\", \"MIDE\", \"TENA\"]",
         "lowest": 0.7043478260869566,
         "highest": 0.9591836734693877
       },
@@ -1953,12 +1234,10 @@
         "missing_estimate_despite_usable_witness": 0,
         "uses_witness_without_complete_month": 0,
         "violations": 0,
-        "perturbation": {
-          "entity_months_with_incomplete_row": 6292,
-          "changed": 0,
-          "with_estimate": 5324,
-          "without_estimate": 968
-        }
+        "perturbation.entity_months_with_incomplete_row": 6292,
+        "perturbation.changed": 0,
+        "perturbation.with_estimate": 5324,
+        "perturbation.without_estimate": 968
       },
       "status": "PASS",
       "notes": "Estimate-level part only; the verdict part needs T-014 (D2-VERDICTS). Examples of violations, if any, are in the run output."
@@ -1975,36 +1254,28 @@
         "rows_without_estimate": 224952,
         "rows_with_outage_code": 224952,
         "outage_rows_ok": 224952,
-        "violations": {
-          "no_estimate_but_not_cannot_determine_outage": 0,
-          "outage_code_with_an_estimate": 0,
-          "insufficient_or_wide_but_determinable": 0,
-          "no_detected_activity_without_zero_estimate": 0
-        },
+        "violations.no_estimate_but_not_cannot_determine_outage": 0,
+        "violations.outage_code_with_an_estimate": 0,
+        "violations.insufficient_or_wide_but_determinable": 0,
+        "violations.no_detected_activity_without_zero_estimate": 0,
         "determinable_rows": 11255646,
         "determinable_share": 0.6830821519512331,
-        "cell_level": {
-          "all": {
-            "cell_months": 16477734,
-            "cells": 56238,
-            "cell_months_normal_share": 0.029035060281953816,
-            "cell_months_not_cannot_determine_share": 0.6830821519512331,
-            "cells_with_any_normal_verdict": 0.2140545538603791,
-            "cells_with_any_not_cd_verdict": 0.997883993029624,
-            "cell_months_without_estimate": 224952,
-            "outage_rule_violations": 0
-          },
-          "land": {
-            "cell_months": 16206123,
-            "cells": 55311,
-            "cell_months_normal_share": 0.029521681403997736,
-            "cell_months_not_cannot_determine_share": 0.6780853755089974,
-            "cells_with_any_normal_verdict": 0.2176420603496592,
-            "cells_with_any_not_cd_verdict": 0.9978485292256514,
-            "cell_months_without_estimate": 221244,
-            "outage_rule_violations": 0
-          }
-        }
+        "cell_level.all.cell_months": 16477734,
+        "cell_level.all.cells": 56238,
+        "cell_level.all.cell_months_normal_share": 0.029035060281953816,
+        "cell_level.all.cell_months_not_cannot_determine_share": 0.6830821519512331,
+        "cell_level.all.cells_with_any_normal_verdict": 0.2140545538603791,
+        "cell_level.all.cells_with_any_not_cd_verdict": 0.997883993029624,
+        "cell_level.all.cell_months_without_estimate": 224952,
+        "cell_level.all.outage_rule_violations": 0,
+        "cell_level.land.cell_months": 16206123,
+        "cell_level.land.cells": 55311,
+        "cell_level.land.cell_months_normal_share": 0.029521681403997736,
+        "cell_level.land.cell_months_not_cannot_determine_share": 0.6780853755089974,
+        "cell_level.land.cells_with_any_normal_verdict": 0.2176420603496592,
+        "cell_level.land.cells_with_any_not_cd_verdict": 0.9978485292256514,
+        "cell_level.land.cell_months_without_estimate": 221244,
+        "cell_level.land.outage_rule_violations": 0
       },
       "status": "PASS",
       "notes": ""
@@ -2034,470 +1305,272 @@
         "wins": 14,
         "losses": 0,
         "not_evaluable": 0,
-        "per_region": {
-          "AUST": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 60,
-              "T": 60
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.3426591066829692,
-                "raw": 0.9046881383591618,
-                "glob": 0.33463256098285166,
-                "gloo": 0.3426591066829691
-              },
-              "N": {
-                "ours": 0.5582695159843309,
-                "raw": 2.6359009052553537,
-                "glob": 0.5094125204640001,
-                "gloo": 0.5582695159843309
-              },
-              "T": {
-                "ours": 0.39850812787723167,
-                "raw": 1.2390486719313878,
-                "glob": 0.37232819633647163,
-                "gloo": 0.3985081278772319
-              }
-            }
-          },
-          "BOAS": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 50,
-              "N": 38,
-              "T": 38
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.3669509798673619,
-                "raw": 0.8746612437778616,
-                "glob": 0.35170699625207014,
-                "gloo": 0.3669509798673619
-              },
-              "N": {
-                "ours": 0.49361676331198634,
-                "raw": 2.9566955297923276,
-                "glob": 0.46080584479879866,
-                "gloo": 0.4936167633119863
-              },
-              "T": {
-                "ours": 0.40928769085283306,
-                "raw": 1.159378142880124,
-                "glob": 0.3856905662291611,
-                "gloo": 0.40928769085283306
-              }
-            }
-          },
-          "BONA": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 56,
-              "N": 30,
-              "T": 30
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.2929528660795268,
-                "raw": 0.9378254620468864,
-                "glob": 0.29211951454044405,
-                "gloo": 0.29295286607952664
-              },
-              "N": {
-                "ours": 0.6247835464434859,
-                "raw": 2.5782597595789936,
-                "glob": 0.6219425052147949,
-                "gloo": 0.6247835464434859
-              },
-              "T": {
-                "ours": 0.35037355014584676,
-                "raw": 1.2175952818119695,
-                "glob": 0.3461594884240702,
-                "gloo": 0.35037355014584676
-              }
-            }
-          },
-          "CEAM": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 43,
-              "T": 43
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.37270156298705504,
-                "raw": 1.6311310255545175,
-                "glob": 0.3667227576038938,
-                "gloo": 0.372701562987055
-              },
-              "N": {
-                "ours": 0.3114741862468547,
-                "raw": 2.961364630049783,
-                "glob": 0.30931930788876105,
-                "gloo": 0.3114741862468547
-              },
-              "T": {
-                "ours": 0.27466680379923214,
-                "raw": 1.6950651492538644,
-                "glob": 0.2705858749829556,
-                "gloo": 0.27466680379923214
-              }
-            }
-          },
-          "CEAS": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 55,
-              "T": 55
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.1261283033783347,
-                "raw": 1.2040910715625988,
-                "glob": 0.12132745749812088,
-                "gloo": 0.12612830337833464
-              },
-              "N": {
-                "ours": 0.8180417874233588,
-                "raw": 3.541749525579815,
-                "glob": 0.7953217622393366,
-                "gloo": 0.818041787423359
-              },
-              "T": {
-                "ours": 0.11656734597738636,
-                "raw": 1.4901015892611285,
-                "glob": 0.108834773289007,
-                "gloo": 0.11656734597738636
-              }
-            }
-          },
-          "EQAS": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 31,
-              "T": 31
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.43756108442596925,
-                "raw": 1.6400843810943253,
-                "glob": 0.432553835667794,
-                "gloo": 0.4375610844259692
-              },
-              "N": {
-                "ours": 0.4308880122480488,
-                "raw": 2.7944077696344207,
-                "glob": 0.407908077877145,
-                "gloo": 0.4308880122480488
-              },
-              "T": {
-                "ours": 0.3372560229249497,
-                "raw": 1.7040151403830994,
-                "glob": 0.3346759309616734,
-                "gloo": 0.3372560229249499
-              }
-            }
-          },
-          "EURO": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 33,
-              "T": 33
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.1344277409209297,
-                "raw": 1.347972043996863,
-                "glob": 0.13440025066578964,
-                "gloo": 0.1344277409209298
-              },
-              "N": {
-                "ours": 0.2257518924286631,
-                "raw": 2.916376615031493,
-                "glob": 0.22261527908746484,
-                "gloo": 0.2257518924286628
-              },
-              "T": {
-                "ours": 0.13619946707900693,
-                "raw": 1.5776146740935622,
-                "glob": 0.13508236741072485,
-                "gloo": 0.13619946707900693
-              }
-            }
-          },
-          "MIDE": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 57,
-              "T": 57
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.3479756456698934,
-                "raw": 1.5739046700596768,
-                "glob": 0.34717501814343665,
-                "gloo": 0.3479756456698934
-              },
-              "N": {
-                "ours": 0.27077219279602516,
-                "raw": 3.038291887972787,
-                "glob": 0.26880025177051536,
-                "gloo": 0.27077219279602516
-              },
-              "T": {
-                "ours": 0.3155454705113407,
-                "raw": 1.966711181081548,
-                "glob": 0.31495472334805225,
-                "gloo": 0.3155454705113407
-              }
-            }
-          },
-          "NHAF": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 50,
-              "T": 50
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.31044592031291685,
-                "raw": 1.4220966742871197,
-                "glob": 0.16438840652548656,
-                "gloo": 0.3104459203129165
-              },
-              "N": {
-                "ours": 0.2573128931913501,
-                "raw": 3.0247099081434623,
-                "glob": 0.2052705888110105,
-                "gloo": 0.2573128931913501
-              },
-              "T": {
-                "ours": 0.18569222386313874,
-                "raw": 1.4734656352195858,
-                "glob": 0.1380906119022527,
-                "gloo": 0.1856922238631386
-              }
-            }
-          },
-          "NHSA": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 38,
-              "T": 38
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.305695493303619,
-                "raw": 1.5464577741679644,
-                "glob": 0.2949569272395307,
-                "gloo": 0.305695493303619
-              },
-              "N": {
-                "ours": 0.3223372757038524,
-                "raw": 2.7488467432687607,
-                "glob": 0.2903659648038728,
-                "gloo": 0.3223372757038526
-              },
-              "T": {
-                "ours": 0.1981309030443068,
-                "raw": 1.5846061590513378,
-                "glob": 0.19281539665408742,
-                "gloo": 0.1981309030443068
-              }
-            }
-          },
-          "SEAS": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 41,
-              "T": 41
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.39708406217495407,
-                "raw": 1.6272831232841765,
-                "glob": 0.35887300001192407,
-                "gloo": 0.39708406217495407
-              },
-              "N": {
-                "ours": 0.9756470325625999,
-                "raw": 3.908141253205087,
-                "glob": 0.9239049504903858,
-                "gloo": 0.9756470325625995
-              },
-              "T": {
-                "ours": 0.38425851151405876,
-                "raw": 1.806068838451215,
-                "glob": 0.3440911380580869,
-                "gloo": 0.3842585115140586
-              }
-            }
-          },
-          "SHAF": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 58,
-              "T": 58
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.27309407175599076,
-                "raw": 1.559197005816765,
-                "glob": 0.26293862578167637,
-                "gloo": 0.2730940717559909
-              },
-              "N": {
-                "ours": 0.6598942042243735,
-                "raw": 3.154306570800447,
-                "glob": 0.4759676750953009,
-                "gloo": 0.6598942042243736
-              },
-              "T": {
-                "ours": 0.28765180166557863,
-                "raw": 1.6169415230347692,
-                "glob": 0.27115697443668574,
-                "gloo": 0.2876518016655786
-              }
-            }
-          },
-          "SHSA": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 60,
-              "T": 60
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.11672374812183747,
-                "raw": 1.168352688869775,
-                "glob": 0.11985978036235878,
-                "gloo": 0.11672374812183739
-              },
-              "N": {
-                "ours": 0.6668558466289398,
-                "raw": 2.277288812338589,
-                "glob": 0.5415953273320435,
-                "gloo": 0.6668558466289398
-              },
-              "T": {
-                "ours": 0.13140966001231594,
-                "raw": 1.3391350599374197,
-                "glob": 0.13215610066405614,
-                "gloo": 0.13140966001231594
-              }
-            }
-          },
-          "TENA": {
-            "win": true,
-            "evaluable": true,
-            "parts": {
-              "D": true,
-              "N": true
-            },
-            "units": {
-              "D": 60,
-              "N": 42,
-              "T": 42
-            },
-            "median_abs_log_error": {
-              "D": {
-                "ours": 0.2661154824044191,
-                "raw": 0.9953473711350685,
-                "glob": 0.25956911026566076,
-                "gloo": 0.2661154824044193
-              },
-              "N": {
-                "ours": 0.7312416181517605,
-                "raw": 3.116051639184472,
-                "glob": 0.707758509305531,
-                "gloo": 0.7312416181517604
-              },
-              "T": {
-                "ours": 0.29123184059945617,
-                "raw": 1.2701652223382616,
-                "glob": 0.28668201501758084,
-                "gloo": 0.29123184059945617
-              }
-            }
-          }
-        }
+        "per_region.AUST.win": true,
+        "per_region.AUST.evaluable": true,
+        "per_region.AUST.parts.D": true,
+        "per_region.AUST.parts.N": true,
+        "per_region.AUST.units.D": 60,
+        "per_region.AUST.units.N": 60,
+        "per_region.AUST.units.T": 60,
+        "per_region.AUST.median_abs_log_error.D.ours": 0.3426591066829692,
+        "per_region.AUST.median_abs_log_error.D.raw": 0.9046881383591618,
+        "per_region.AUST.median_abs_log_error.D.glob": 0.33463256098285166,
+        "per_region.AUST.median_abs_log_error.D.gloo": 0.3426591066829691,
+        "per_region.AUST.median_abs_log_error.N.ours": 0.5582695159843309,
+        "per_region.AUST.median_abs_log_error.N.raw": 2.6359009052553537,
+        "per_region.AUST.median_abs_log_error.N.glob": 0.5094125204640001,
+        "per_region.AUST.median_abs_log_error.N.gloo": 0.5582695159843309,
+        "per_region.AUST.median_abs_log_error.T.ours": 0.39850812787723167,
+        "per_region.AUST.median_abs_log_error.T.raw": 1.2390486719313878,
+        "per_region.AUST.median_abs_log_error.T.glob": 0.37232819633647163,
+        "per_region.AUST.median_abs_log_error.T.gloo": 0.3985081278772319,
+        "per_region.BOAS.win": true,
+        "per_region.BOAS.evaluable": true,
+        "per_region.BOAS.parts.D": true,
+        "per_region.BOAS.parts.N": true,
+        "per_region.BOAS.units.D": 50,
+        "per_region.BOAS.units.N": 38,
+        "per_region.BOAS.units.T": 38,
+        "per_region.BOAS.median_abs_log_error.D.ours": 0.3669509798673619,
+        "per_region.BOAS.median_abs_log_error.D.raw": 0.8746612437778616,
+        "per_region.BOAS.median_abs_log_error.D.glob": 0.35170699625207014,
+        "per_region.BOAS.median_abs_log_error.D.gloo": 0.3669509798673619,
+        "per_region.BOAS.median_abs_log_error.N.ours": 0.49361676331198634,
+        "per_region.BOAS.median_abs_log_error.N.raw": 2.9566955297923276,
+        "per_region.BOAS.median_abs_log_error.N.glob": 0.46080584479879866,
+        "per_region.BOAS.median_abs_log_error.N.gloo": 0.4936167633119863,
+        "per_region.BOAS.median_abs_log_error.T.ours": 0.40928769085283306,
+        "per_region.BOAS.median_abs_log_error.T.raw": 1.159378142880124,
+        "per_region.BOAS.median_abs_log_error.T.glob": 0.3856905662291611,
+        "per_region.BOAS.median_abs_log_error.T.gloo": 0.40928769085283306,
+        "per_region.BONA.win": true,
+        "per_region.BONA.evaluable": true,
+        "per_region.BONA.parts.D": true,
+        "per_region.BONA.parts.N": true,
+        "per_region.BONA.units.D": 56,
+        "per_region.BONA.units.N": 30,
+        "per_region.BONA.units.T": 30,
+        "per_region.BONA.median_abs_log_error.D.ours": 0.2929528660795268,
+        "per_region.BONA.median_abs_log_error.D.raw": 0.9378254620468864,
+        "per_region.BONA.median_abs_log_error.D.glob": 0.29211951454044405,
+        "per_region.BONA.median_abs_log_error.D.gloo": 0.29295286607952664,
+        "per_region.BONA.median_abs_log_error.N.ours": 0.6247835464434859,
+        "per_region.BONA.median_abs_log_error.N.raw": 2.5782597595789936,
+        "per_region.BONA.median_abs_log_error.N.glob": 0.6219425052147949,
+        "per_region.BONA.median_abs_log_error.N.gloo": 0.6247835464434859,
+        "per_region.BONA.median_abs_log_error.T.ours": 0.35037355014584676,
+        "per_region.BONA.median_abs_log_error.T.raw": 1.2175952818119695,
+        "per_region.BONA.median_abs_log_error.T.glob": 0.3461594884240702,
+        "per_region.BONA.median_abs_log_error.T.gloo": 0.35037355014584676,
+        "per_region.CEAM.win": true,
+        "per_region.CEAM.evaluable": true,
+        "per_region.CEAM.parts.D": true,
+        "per_region.CEAM.parts.N": true,
+        "per_region.CEAM.units.D": 60,
+        "per_region.CEAM.units.N": 43,
+        "per_region.CEAM.units.T": 43,
+        "per_region.CEAM.median_abs_log_error.D.ours": 0.37270156298705504,
+        "per_region.CEAM.median_abs_log_error.D.raw": 1.6311310255545175,
+        "per_region.CEAM.median_abs_log_error.D.glob": 0.3667227576038938,
+        "per_region.CEAM.median_abs_log_error.D.gloo": 0.372701562987055,
+        "per_region.CEAM.median_abs_log_error.N.ours": 0.3114741862468547,
+        "per_region.CEAM.median_abs_log_error.N.raw": 2.961364630049783,
+        "per_region.CEAM.median_abs_log_error.N.glob": 0.30931930788876105,
+        "per_region.CEAM.median_abs_log_error.N.gloo": 0.3114741862468547,
+        "per_region.CEAM.median_abs_log_error.T.ours": 0.27466680379923214,
+        "per_region.CEAM.median_abs_log_error.T.raw": 1.6950651492538644,
+        "per_region.CEAM.median_abs_log_error.T.glob": 0.2705858749829556,
+        "per_region.CEAM.median_abs_log_error.T.gloo": 0.27466680379923214,
+        "per_region.CEAS.win": true,
+        "per_region.CEAS.evaluable": true,
+        "per_region.CEAS.parts.D": true,
+        "per_region.CEAS.parts.N": true,
+        "per_region.CEAS.units.D": 60,
+        "per_region.CEAS.units.N": 55,
+        "per_region.CEAS.units.T": 55,
+        "per_region.CEAS.median_abs_log_error.D.ours": 0.1261283033783347,
+        "per_region.CEAS.median_abs_log_error.D.raw": 1.2040910715625988,
+        "per_region.CEAS.median_abs_log_error.D.glob": 0.12132745749812088,
+        "per_region.CEAS.median_abs_log_error.D.gloo": 0.12612830337833464,
+        "per_region.CEAS.median_abs_log_error.N.ours": 0.8180417874233588,
+        "per_region.CEAS.median_abs_log_error.N.raw": 3.541749525579815,
+        "per_region.CEAS.median_abs_log_error.N.glob": 0.7953217622393366,
+        "per_region.CEAS.median_abs_log_error.N.gloo": 0.818041787423359,
+        "per_region.CEAS.median_abs_log_error.T.ours": 0.11656734597738636,
+        "per_region.CEAS.median_abs_log_error.T.raw": 1.4901015892611285,
+        "per_region.CEAS.median_abs_log_error.T.glob": 0.108834773289007,
+        "per_region.CEAS.median_abs_log_error.T.gloo": 0.11656734597738636,
+        "per_region.EQAS.win": true,
+        "per_region.EQAS.evaluable": true,
+        "per_region.EQAS.parts.D": true,
+        "per_region.EQAS.parts.N": true,
+        "per_region.EQAS.units.D": 60,
+        "per_region.EQAS.units.N": 31,
+        "per_region.EQAS.units.T": 31,
+        "per_region.EQAS.median_abs_log_error.D.ours": 0.43756108442596925,
+        "per_region.EQAS.median_abs_log_error.D.raw": 1.6400843810943253,
+        "per_region.EQAS.median_abs_log_error.D.glob": 0.432553835667794,
+        "per_region.EQAS.median_abs_log_error.D.gloo": 0.4375610844259692,
+        "per_region.EQAS.median_abs_log_error.N.ours": 0.4308880122480488,
+        "per_region.EQAS.median_abs_log_error.N.raw": 2.7944077696344207,
+        "per_region.EQAS.median_abs_log_error.N.glob": 0.407908077877145,
+        "per_region.EQAS.median_abs_log_error.N.gloo": 0.4308880122480488,
+        "per_region.EQAS.median_abs_log_error.T.ours": 0.3372560229249497,
+        "per_region.EQAS.median_abs_log_error.T.raw": 1.7040151403830994,
+        "per_region.EQAS.median_abs_log_error.T.glob": 0.3346759309616734,
+        "per_region.EQAS.median_abs_log_error.T.gloo": 0.3372560229249499,
+        "per_region.EURO.win": true,
+        "per_region.EURO.evaluable": true,
+        "per_region.EURO.parts.D": true,
+        "per_region.EURO.parts.N": true,
+        "per_region.EURO.units.D": 60,
+        "per_region.EURO.units.N": 33,
+        "per_region.EURO.units.T": 33,
+        "per_region.EURO.median_abs_log_error.D.ours": 0.1344277409209297,
+        "per_region.EURO.median_abs_log_error.D.raw": 1.347972043996863,
+        "per_region.EURO.median_abs_log_error.D.glob": 0.13440025066578964,
+        "per_region.EURO.median_abs_log_error.D.gloo": 0.1344277409209298,
+        "per_region.EURO.median_abs_log_error.N.ours": 0.2257518924286631,
+        "per_region.EURO.median_abs_log_error.N.raw": 2.916376615031493,
+        "per_region.EURO.median_abs_log_error.N.glob": 0.22261527908746484,
+        "per_region.EURO.median_abs_log_error.N.gloo": 0.2257518924286628,
+        "per_region.EURO.median_abs_log_error.T.ours": 0.13619946707900693,
+        "per_region.EURO.median_abs_log_error.T.raw": 1.5776146740935622,
+        "per_region.EURO.median_abs_log_error.T.glob": 0.13508236741072485,
+        "per_region.EURO.median_abs_log_error.T.gloo": 0.13619946707900693,
+        "per_region.MIDE.win": true,
+        "per_region.MIDE.evaluable": true,
+        "per_region.MIDE.parts.D": true,
+        "per_region.MIDE.parts.N": true,
+        "per_region.MIDE.units.D": 60,
+        "per_region.MIDE.units.N": 57,
+        "per_region.MIDE.units.T": 57,
+        "per_region.MIDE.median_abs_log_error.D.ours": 0.3479756456698934,
+        "per_region.MIDE.median_abs_log_error.D.raw": 1.5739046700596768,
+        "per_region.MIDE.median_abs_log_error.D.glob": 0.34717501814343665,
+        "per_region.MIDE.median_abs_log_error.D.gloo": 0.3479756456698934,
+        "per_region.MIDE.median_abs_log_error.N.ours": 0.27077219279602516,
+        "per_region.MIDE.median_abs_log_error.N.raw": 3.038291887972787,
+        "per_region.MIDE.median_abs_log_error.N.glob": 0.26880025177051536,
+        "per_region.MIDE.median_abs_log_error.N.gloo": 0.27077219279602516,
+        "per_region.MIDE.median_abs_log_error.T.ours": 0.3155454705113407,
+        "per_region.MIDE.median_abs_log_error.T.raw": 1.966711181081548,
+        "per_region.MIDE.median_abs_log_error.T.glob": 0.31495472334805225,
+        "per_region.MIDE.median_abs_log_error.T.gloo": 0.3155454705113407,
+        "per_region.NHAF.win": true,
+        "per_region.NHAF.evaluable": true,
+        "per_region.NHAF.parts.D": true,
+        "per_region.NHAF.parts.N": true,
+        "per_region.NHAF.units.D": 60,
+        "per_region.NHAF.units.N": 50,
+        "per_region.NHAF.units.T": 50,
+        "per_region.NHAF.median_abs_log_error.D.ours": 0.31044592031291685,
+        "per_region.NHAF.median_abs_log_error.D.raw": 1.4220966742871197,
+        "per_region.NHAF.median_abs_log_error.D.glob": 0.16438840652548656,
+        "per_region.NHAF.median_abs_log_error.D.gloo": 0.3104459203129165,
+        "per_region.NHAF.median_abs_log_error.N.ours": 0.2573128931913501,
+        "per_region.NHAF.median_abs_log_error.N.raw": 3.0247099081434623,
+        "per_region.NHAF.median_abs_log_error.N.glob": 0.2052705888110105,
+        "per_region.NHAF.median_abs_log_error.N.gloo": 0.2573128931913501,
+        "per_region.NHAF.median_abs_log_error.T.ours": 0.18569222386313874,
+        "per_region.NHAF.median_abs_log_error.T.raw": 1.4734656352195858,
+        "per_region.NHAF.median_abs_log_error.T.glob": 0.1380906119022527,
+        "per_region.NHAF.median_abs_log_error.T.gloo": 0.1856922238631386,
+        "per_region.NHSA.win": true,
+        "per_region.NHSA.evaluable": true,
+        "per_region.NHSA.parts.D": true,
+        "per_region.NHSA.parts.N": true,
+        "per_region.NHSA.units.D": 60,
+        "per_region.NHSA.units.N": 38,
+        "per_region.NHSA.units.T": 38,
+        "per_region.NHSA.median_abs_log_error.D.ours": 0.305695493303619,
+        "per_region.NHSA.median_abs_log_error.D.raw": 1.5464577741679644,
+        "per_region.NHSA.median_abs_log_error.D.glob": 0.2949569272395307,
+        "per_region.NHSA.median_abs_log_error.D.gloo": 0.305695493303619,
+        "per_region.NHSA.median_abs_log_error.N.ours": 0.3223372757038524,
+        "per_region.NHSA.median_abs_log_error.N.raw": 2.7488467432687607,
+        "per_region.NHSA.median_abs_log_error.N.glob": 0.2903659648038728,
+        "per_region.NHSA.median_abs_log_error.N.gloo": 0.3223372757038526,
+        "per_region.NHSA.median_abs_log_error.T.ours": 0.1981309030443068,
+        "per_region.NHSA.median_abs_log_error.T.raw": 1.5846061590513378,
+        "per_region.NHSA.median_abs_log_error.T.glob": 0.19281539665408742,
+        "per_region.NHSA.median_abs_log_error.T.gloo": 0.1981309030443068,
+        "per_region.SEAS.win": true,
+        "per_region.SEAS.evaluable": true,
+        "per_region.SEAS.parts.D": true,
+        "per_region.SEAS.parts.N": true,
+        "per_region.SEAS.units.D": 60,
+        "per_region.SEAS.units.N": 41,
+        "per_region.SEAS.units.T": 41,
+        "per_region.SEAS.median_abs_log_error.D.ours": 0.39708406217495407,
+        "per_region.SEAS.median_abs_log_error.D.raw": 1.6272831232841765,
+        "per_region.SEAS.median_abs_log_error.D.glob": 0.35887300001192407,
+        "per_region.SEAS.median_abs_log_error.D.gloo": 0.39708406217495407,
+        "per_region.SEAS.median_abs_log_error.N.ours": 0.9756470325625999,
+        "per_region.SEAS.median_abs_log_error.N.raw": 3.908141253205087,
+        "per_region.SEAS.median_abs_log_error.N.glob": 0.9239049504903858,
+        "per_region.SEAS.median_abs_log_error.N.gloo": 0.9756470325625995,
+        "per_region.SEAS.median_abs_log_error.T.ours": 0.38425851151405876,
+        "per_region.SEAS.median_abs_log_error.T.raw": 1.806068838451215,
+        "per_region.SEAS.median_abs_log_error.T.glob": 0.3440911380580869,
+        "per_region.SEAS.median_abs_log_error.T.gloo": 0.3842585115140586,
+        "per_region.SHAF.win": true,
+        "per_region.SHAF.evaluable": true,
+        "per_region.SHAF.parts.D": true,
+        "per_region.SHAF.parts.N": true,
+        "per_region.SHAF.units.D": 60,
+        "per_region.SHAF.units.N": 58,
+        "per_region.SHAF.units.T": 58,
+        "per_region.SHAF.median_abs_log_error.D.ours": 0.27309407175599076,
+        "per_region.SHAF.median_abs_log_error.D.raw": 1.559197005816765,
+        "per_region.SHAF.median_abs_log_error.D.glob": 0.26293862578167637,
+        "per_region.SHAF.median_abs_log_error.D.gloo": 0.2730940717559909,
+        "per_region.SHAF.median_abs_log_error.N.ours": 0.6598942042243735,
+        "per_region.SHAF.median_abs_log_error.N.raw": 3.154306570800447,
+        "per_region.SHAF.median_abs_log_error.N.glob": 0.4759676750953009,
+        "per_region.SHAF.median_abs_log_error.N.gloo": 0.6598942042243736,
+        "per_region.SHAF.median_abs_log_error.T.ours": 0.28765180166557863,
+        "per_region.SHAF.median_abs_log_error.T.raw": 1.6169415230347692,
+        "per_region.SHAF.median_abs_log_error.T.glob": 0.27115697443668574,
+        "per_region.SHAF.median_abs_log_error.T.gloo": 0.2876518016655786,
+        "per_region.SHSA.win": true,
+        "per_region.SHSA.evaluable": true,
+        "per_region.SHSA.parts.D": true,
+        "per_region.SHSA.parts.N": true,
+        "per_region.SHSA.units.D": 60,
+        "per_region.SHSA.units.N": 60,
+        "per_region.SHSA.units.T": 60,
+        "per_region.SHSA.median_abs_log_error.D.ours": 0.11672374812183747,
+        "per_region.SHSA.median_abs_log_error.D.raw": 1.168352688869775,
+        "per_region.SHSA.median_abs_log_error.D.glob": 0.11985978036235878,
+        "per_region.SHSA.median_abs_log_error.D.gloo": 0.11672374812183739,
+        "per_region.SHSA.median_abs_log_error.N.ours": 0.6668558466289398,
+        "per_region.SHSA.median_abs_log_error.N.raw": 2.277288812338589,
+        "per_region.SHSA.median_abs_log_error.N.glob": 0.5415953273320435,
+        "per_region.SHSA.median_abs_log_error.N.gloo": 0.6668558466289398,
+        "per_region.SHSA.median_abs_log_error.T.ours": 0.13140966001231594,
+        "per_region.SHSA.median_abs_log_error.T.raw": 1.3391350599374197,
+        "per_region.SHSA.median_abs_log_error.T.glob": 0.13215610066405614,
+        "per_region.SHSA.median_abs_log_error.T.gloo": 0.13140966001231594,
+        "per_region.TENA.win": true,
+        "per_region.TENA.evaluable": true,
+        "per_region.TENA.parts.D": true,
+        "per_region.TENA.parts.N": true,
+        "per_region.TENA.units.D": 60,
+        "per_region.TENA.units.N": 42,
+        "per_region.TENA.units.T": 42,
+        "per_region.TENA.median_abs_log_error.D.ours": 0.2661154824044191,
+        "per_region.TENA.median_abs_log_error.D.raw": 0.9953473711350685,
+        "per_region.TENA.median_abs_log_error.D.glob": 0.25956911026566076,
+        "per_region.TENA.median_abs_log_error.D.gloo": 0.2661154824044193,
+        "per_region.TENA.median_abs_log_error.N.ours": 0.7312416181517605,
+        "per_region.TENA.median_abs_log_error.N.raw": 3.116051639184472,
+        "per_region.TENA.median_abs_log_error.N.glob": 0.707758509305531,
+        "per_region.TENA.median_abs_log_error.N.gloo": 0.7312416181517604,
+        "per_region.TENA.median_abs_log_error.T.ours": 0.29123184059945617,
+        "per_region.TENA.median_abs_log_error.T.raw": 1.2701652223382616,
+        "per_region.TENA.median_abs_log_error.T.glob": 0.28668201501758084,
+        "per_region.TENA.median_abs_log_error.T.gloo": 0.29123184059945617
       },
       "status": "PASS",
       "notes": "S-NPP fit 2012-01 to 2016-12 only; a region left out is converted with the global ratio of the fit without it. See docs/validation/T-025-results.md."
@@ -2512,57 +1585,43 @@
       "measured": {
         "peak_months": 13,
         "changed": 1,
-        "summary": {
-          "CASE": {
-            "entity_months": 720,
-            "agree": 0.85,
-            "changed": 108,
-            "median_rel_diff_p50_aqua_vs_harmonized": 0.005957332096664381,
-            "p95_abs_rel_diff_p50": 1.0,
-            "transitions": {
-              "ABOVE_NORMAL -> CANNOT_DETERMINE": 10,
-              "ABOVE_NORMAL -> WITHIN_NORMAL": 2,
-              "BELOW_NORMAL -> CANNOT_DETERMINE": 14,
-              "CANNOT_DETERMINE -> ABOVE_NORMAL": 3,
-              "CANNOT_DETERMINE -> BELOW_NORMAL": 12,
-              "CANNOT_DETERMINE -> NO_DETECTED_ACTIVITY": 1,
-              "CANNOT_DETERMINE -> WITHIN_NORMAL": 47,
-              "WITHIN_NORMAL -> BELOW_NORMAL": 1,
-              "WITHIN_NORMAL -> CANNOT_DETERMINE": 18
-            }
-          },
-          "COUNTRY": {
-            "entity_months": 120,
-            "agree": 0.8833333333333333,
-            "changed": 14,
-            "median_rel_diff_p50_aqua_vs_harmonized": 0.014460306185380523,
-            "p95_abs_rel_diff_p50": 0.18709310257042722,
-            "transitions": {
-              "ABOVE_NORMAL -> CANNOT_DETERMINE": 1,
-              "BELOW_NORMAL -> CANNOT_DETERMINE": 3,
-              "CANNOT_DETERMINE -> ABOVE_NORMAL": 1,
-              "CANNOT_DETERMINE -> BELOW_NORMAL": 2,
-              "CANNOT_DETERMINE -> WITHIN_NORMAL": 6,
-              "WITHIN_NORMAL -> CANNOT_DETERMINE": 1
-            }
-          },
-          "REGION": {
-            "entity_months": 1680,
-            "agree": 0.8529761904761904,
-            "changed": 247,
-            "median_rel_diff_p50_aqua_vs_harmonized": 0.00735085393902879,
-            "p95_abs_rel_diff_p50": 0.12125043015018266,
-            "transitions": {
-              "ABOVE_NORMAL -> CANNOT_DETERMINE": 13,
-              "ABOVE_NORMAL -> WITHIN_NORMAL": 1,
-              "BELOW_NORMAL -> CANNOT_DETERMINE": 21,
-              "CANNOT_DETERMINE -> ABOVE_NORMAL": 34,
-              "CANNOT_DETERMINE -> BELOW_NORMAL": 47,
-              "CANNOT_DETERMINE -> WITHIN_NORMAL": 84,
-              "WITHIN_NORMAL -> CANNOT_DETERMINE": 47
-            }
-          }
-        }
+        "summary.CASE.entity_months": 720,
+        "summary.CASE.agree": 0.85,
+        "summary.CASE.changed": 108,
+        "summary.CASE.median_rel_diff_p50_aqua_vs_harmonized": 0.005957332096664381,
+        "summary.CASE.p95_abs_rel_diff_p50": 1.0,
+        "summary.CASE.transitions.ABOVE_NORMAL -> CANNOT_DETERMINE": 10,
+        "summary.CASE.transitions.ABOVE_NORMAL -> WITHIN_NORMAL": 2,
+        "summary.CASE.transitions.BELOW_NORMAL -> CANNOT_DETERMINE": 14,
+        "summary.CASE.transitions.CANNOT_DETERMINE -> ABOVE_NORMAL": 3,
+        "summary.CASE.transitions.CANNOT_DETERMINE -> BELOW_NORMAL": 12,
+        "summary.CASE.transitions.CANNOT_DETERMINE -> NO_DETECTED_ACTIVITY": 1,
+        "summary.CASE.transitions.CANNOT_DETERMINE -> WITHIN_NORMAL": 47,
+        "summary.CASE.transitions.WITHIN_NORMAL -> BELOW_NORMAL": 1,
+        "summary.CASE.transitions.WITHIN_NORMAL -> CANNOT_DETERMINE": 18,
+        "summary.COUNTRY.entity_months": 120,
+        "summary.COUNTRY.agree": 0.8833333333333333,
+        "summary.COUNTRY.changed": 14,
+        "summary.COUNTRY.median_rel_diff_p50_aqua_vs_harmonized": 0.014460306185380523,
+        "summary.COUNTRY.p95_abs_rel_diff_p50": 0.18709310257042722,
+        "summary.COUNTRY.transitions.ABOVE_NORMAL -> CANNOT_DETERMINE": 1,
+        "summary.COUNTRY.transitions.BELOW_NORMAL -> CANNOT_DETERMINE": 3,
+        "summary.COUNTRY.transitions.CANNOT_DETERMINE -> ABOVE_NORMAL": 1,
+        "summary.COUNTRY.transitions.CANNOT_DETERMINE -> BELOW_NORMAL": 2,
+        "summary.COUNTRY.transitions.CANNOT_DETERMINE -> WITHIN_NORMAL": 6,
+        "summary.COUNTRY.transitions.WITHIN_NORMAL -> CANNOT_DETERMINE": 1,
+        "summary.REGION.entity_months": 1680,
+        "summary.REGION.agree": 0.8529761904761904,
+        "summary.REGION.changed": 247,
+        "summary.REGION.median_rel_diff_p50_aqua_vs_harmonized": 0.00735085393902879,
+        "summary.REGION.p95_abs_rel_diff_p50": 0.12125043015018266,
+        "summary.REGION.transitions.ABOVE_NORMAL -> CANNOT_DETERMINE": 13,
+        "summary.REGION.transitions.ABOVE_NORMAL -> WITHIN_NORMAL": 1,
+        "summary.REGION.transitions.BELOW_NORMAL -> CANNOT_DETERMINE": 21,
+        "summary.REGION.transitions.CANNOT_DETERMINE -> ABOVE_NORMAL": 34,
+        "summary.REGION.transitions.CANNOT_DETERMINE -> BELOW_NORMAL": 47,
+        "summary.REGION.transitions.CANNOT_DETERMINE -> WITHIN_NORMAL": 84,
+        "summary.REGION.transitions.WITHIN_NORMAL -> CANNOT_DETERMINE": 47
       },
       "status": "FAIL",
       "notes": "The estimate judged is the harmonized one in both runs; only the baseline changes."
@@ -2577,68 +1636,45 @@
       "measured": {
         "n_compared": 22,
         "n_changed": 0,
-        "changes": [],
-        "uncomputed": [],
-        "control": {
-          "rows_product": 31024968,
-          "rows_control": 31024968,
-          "rows_joined": 31024968,
-          "cell_days_differences": 0,
-          "detections_differences": 0,
-          "frp_differences": 0,
-          "cell_days_sum_product": 89966148,
-          "cell_days_sum_control": 89966148,
-          "ok": true
-        },
-        "regridding": {
-          "rows": {
-            "filtered": 31024968,
-            "control": 31024968,
-            "unfiltered": 31024968
-          },
-          "a1_cells": 4664,
-          "a1_months": 220,
-          "b1_months": 48,
-          "seconds": 305,
-          "detections_in_cells_outside_the_product_cell_set": {
-            "control": {
-              "detections": 0,
-              "cells": 0
-            },
-            "unfiltered": {
-              "detections": 257,
-              "cells": 230
-            }
-          }
-        },
-        "a1_status_filtered": {
-          "C1": "INCONCLUSIVE",
-          "C2": "INCONCLUSIVE",
-          "C3": "FAIL",
-          "C4": "FAIL",
-          "C5": "FAIL",
-          "C6": "FAIL"
-        },
-        "a1_status_unfiltered": {
-          "C1": "INCONCLUSIVE",
-          "C2": "INCONCLUSIVE",
-          "C3": "FAIL",
-          "C4": "FAIL",
-          "C5": "FAIL",
-          "C6": "FAIL"
-        },
-        "a1_family": [
-          "FAIL",
-          "FAIL"
-        ],
-        "b1_filtered": {
-          "2012-01": "PASS",
-          "2018-04": "PASS"
-        },
-        "b1_unfiltered": {
-          "2012-01": "PASS",
-          "2018-04": "PASS"
-        }
+        "changes": "[]",
+        "uncomputed": "[]",
+        "control.rows_product": 31024968,
+        "control.rows_control": 31024968,
+        "control.rows_joined": 31024968,
+        "control.cell_days_differences": 0,
+        "control.detections_differences": 0,
+        "control.frp_differences": 0,
+        "control.cell_days_sum_product": 89966148,
+        "control.cell_days_sum_control": 89966148,
+        "control.ok": true,
+        "regridding.rows.filtered": 31024968,
+        "regridding.rows.control": 31024968,
+        "regridding.rows.unfiltered": 31024968,
+        "regridding.a1_cells": 4664,
+        "regridding.a1_months": 220,
+        "regridding.b1_months": 48,
+        "regridding.seconds": 305,
+        "regridding.detections_in_cells_outside_the_product_cell_set.control.detections": 0,
+        "regridding.detections_in_cells_outside_the_product_cell_set.control.cells": 0,
+        "regridding.detections_in_cells_outside_the_product_cell_set.unfiltered.detections": 257,
+        "regridding.detections_in_cells_outside_the_product_cell_set.unfiltered.cells": 230,
+        "a1_status_filtered.C1": "INCONCLUSIVE",
+        "a1_status_filtered.C2": "INCONCLUSIVE",
+        "a1_status_filtered.C3": "FAIL",
+        "a1_status_filtered.C4": "FAIL",
+        "a1_status_filtered.C5": "FAIL",
+        "a1_status_filtered.C6": "FAIL",
+        "a1_status_unfiltered.C1": "INCONCLUSIVE",
+        "a1_status_unfiltered.C2": "INCONCLUSIVE",
+        "a1_status_unfiltered.C3": "FAIL",
+        "a1_status_unfiltered.C4": "FAIL",
+        "a1_status_unfiltered.C5": "FAIL",
+        "a1_status_unfiltered.C6": "FAIL",
+        "a1_family": "[\"FAIL\", \"FAIL\"]",
+        "b1_filtered.2012-01": "PASS",
+        "b1_filtered.2018-04": "PASS",
+        "b1_unfiltered.2012-01": "PASS",
+        "b1_unfiltered.2018-04": "PASS"
       },
       "status": "PASS",
       "notes": "all 22 compared conclusions are unchanged. T-011 ratios not refitted [ASSUMPTION]; cell set of the product [ASSUMPTION]. See docs/validation/T-025b-results.md."
