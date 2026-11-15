@@ -329,6 +329,57 @@ textarea {
   border-bottom: var(--rule);
 }
 
+/* Wide screens (1360 px and up, T-087 follow-up): one row. Area, month (which wraps inside), source, layer, and the
+   Draw and Copy link buttons stacked in the last column. Below this width the flex wrap above applies. */
+@media (min-width: 1360px) {
+  .toolbar {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) auto auto auto;
+    grid-template-rows: auto auto;
+    column-gap: var(--s-16);
+    row-gap: var(--s-8);
+    align-items: end;
+  }
+
+  .toolbar > .area-search,
+  .toolbar > .month-selector,
+  .toolbar > .source-toggle,
+  .toolbar > .layer-selector {
+    grid-row: 1 / span 2;
+  }
+
+  .toolbar > .draw-menu {
+    grid-column: 5;
+    grid-row: 1;
+  }
+
+  .toolbar > .copy-link {
+    grid-column: 5;
+    grid-row: 2;
+  }
+
+  .toolbar > .draw-panel {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .toolbar .combo {
+    width: 100%;
+  }
+}
+
+/* Between phone and wide: the controls share the first row(s) and the month control takes its own row beneath them. */
+@media (min-width: 641px) and (max-width: 1359px) {
+  .toolbar > .month-selector {
+    order: 1;
+    flex: 1 1 100%;
+  }
+
+  .toolbar > .draw-panel {
+    order: 2;
+  }
+}
+
 .combo {
   position: relative;
   width: 240px;
