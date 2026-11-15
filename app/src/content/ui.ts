@@ -124,3 +124,23 @@ export const CAPTION_UNIT_HARMONIZED = 'fire-active cell-days, Aqua-equivalent'
 export const CAPTION_UNIT_RAW = 'fire-active cell-days, raw (not harmonized)'
 export const CAPTION_UNIT_WITNESS =
   'fire-active cell-days: the satellite lines are raw (not harmonized); the harmonized line is Aqua-equivalent'
+
+// Realistic Earth (T-084): imagery under the map, Satellite view, globe, credit and notes.
+export const IMAGERY_PANEL = 'Map view'
+export const IMAGERY_SATELLITE = 'Satellite view'
+export const IMAGERY_SATELLITE_HINT = 'Aqua MODIS true colour for one day of the month'
+export const IMAGERY_DAY = 'Day of the month'
+export const IMAGERY_SAT_UNAVAILABLE_NO_MONTH = 'Choose a month to use Satellite view.'
+export const IMAGERY_SAT_UNAVAILABLE_RANGE = 'Aqua imagery starts on 4 July 2002 and ends today.'
+export const IMAGERY_SHAPE = 'Map shape'
+export const IMAGERY_FLAT = 'Flat'
+export const IMAGERY_GLOBE = 'Globe'
+export const IMAGERY_BASEMAP_DATE = 'Blue Marble, shaded relief and bathymetry'
+export const IMAGERY_SAT_DATE = (date: string) => `Aqua MODIS true colour, ${date}`
+export const IMAGERY_CONTEXT = 'Imagery is context, not data: it has clouds and gaps, and it does not change a verdict.'
+export const IMAGERY_CREDIT = 'Imagery: NASA GIBS / EOSDIS'
+export const IMAGERY_CREDIT_INFO = 'About the imagery request'
+export const IMAGERY_PRIVACY =
+  'The imagery is fetched by your browser from NASA GIBS (gibs.earthdata.nasa.gov). NASA GIBS receives the standard tile request, which includes your IP address and the tile coordinates, and nothing else is sent.'
+export const IMAGERY_NOTE_FAILED = 'Imagery could not be loaded, so the plain map is shown. The verdict cells are not affected.'
+export const IMAGERY_NOTE_OFFLINE = 'Imagery needs an internet connection. This offline copy shows the plain map.'

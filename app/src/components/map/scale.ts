@@ -60,12 +60,18 @@ export function needsOutline(cell: MapCell, layer: MapLayer): boolean {
   return layer !== 'verdict' && layerValue(cell, layer) === null
 }
 
-export function cellFillColor(cell: MapCell, layer: MapLayer, max: number): Rgba {
+/**
+ * Fill colour of a cell. `opacity` (0 to 1) sets the alpha of verdict and ramp fills (the map passes a
+ * lower one over imagery, T-084). Left out, the fills keep their own alpha (220 and 210).
+ */
+export function cellFillColor(cell: MapCell, layer: MapLayer, max: number, opacity?: number): Rgba {
+  const alpha = opacity === undefined ? undefined : Math.round(Math.min(Math.max(opacity, 0), 1) * 255)
   if (layer === 'verdict') {
     const [r, g, b] = VERDICT_PRESENTATION[cell.verdict].color
-    return [r, g, b, 220]
+    return [r, g, b, alpha ?? 220]
   }
-  return sequentialColor(layerValue(cell, layer), max)
+  const c = sequentialColor(layerValue(cell, layer), max)
+  return alpha === undefined || layerValue(cell, layer) === null ? c : [c[0], c[1], c[2], alpha]
 }
 
 /** Below this zoom a 0.5 degree cell is about 5 px wide or less and a stroke would only make a mesh. */
