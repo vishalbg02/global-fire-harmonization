@@ -115,7 +115,7 @@ def solve_phi(d: np.ndarray, vc: np.ndarray, vr: np.ndarray) -> float:
     return float(np.sqrt(lo * hi))
 
 
-def fit_units(paths: Paths, min_cell_days: float, fits: dict | None = None) -> tuple[dict, dict]:
+def fit_units(paths: Paths, min_cell_days: float, fits: dict | None = None, factors: pd.DataFrame | None = None) -> tuple[dict, dict]:
     """Country-month units of the calibration fit periods only: arrays per day/night pooled over the pairs.
 
     Each pair is Aqua against one VIIRS witness inside that witness's fit period (S-NPP 2012-01 to 2016-12; NOAA-20 2018-04 to
@@ -131,7 +131,7 @@ def fit_units(paths: Paths, min_cell_days: float, fits: dict | None = None) -> t
     cells = f"read_parquet('{(paths.products / 'cells.parquet').as_posix()}')"
     con.execute(f"""CREATE TEMP TABLE members AS SELECT 'COUNTRY' AS entity_type, country_iso3 AS entity_id, country_iso3 AS entity_name, cell_id
                     FROM {cells} WHERE country_iso3 IS NOT NULL""")
-    agg = aggregate(con, paths, "members", None)
+    agg = aggregate(con, paths, "members", None, factors)
     pooled: dict[str, list] = {"D": [], "N": []}
     pairs: dict = {}
     for w, ((y0, m0), (y1, m1)) in fits.items():
@@ -222,14 +222,15 @@ def solve_dispersion(d, vc, vr, s2, size, bands=SIZE_BANDS) -> tuple[float, floa
     return float(best), float(kappa_for(best))
 
 
-def estimate_dispersion(paths: Paths | None = None, min_cell_days: float = SIZE_BANDS[0], fits: dict | None = None) -> dict:
+def estimate_dispersion(paths: Paths | None = None, min_cell_days: float = SIZE_BANDS[0], fits: dict | None = None,
+                        factors: pd.DataFrame | None = None) -> dict:
     """phi and kappa per day/night from country-months of the fit periods only, with the fit by size band.
 
     Units are country-months where both converted estimates are at least `min_cell_days` (default 5 cell-days, the lowest band).
     Returns the estimates, the number of units, and the median of d^2 / expected per size band for the phi-only model (the first
     PR #43 version) and for the phi + kappa model: near 0.455 in every band means the size dependence is captured.
     """
-    units, _ = fit_units(paths or Paths(), min_cell_days, fits)
+    units, _ = fit_units(paths or Paths(), min_cell_days, fits, factors)
     out: dict = {"min_cell_days": min_cell_days, "method": "phi and kappa jointly, chi-square(1) median per size band",
                  "phi": {}, "kappa": {}, "units": {}, "bands_phi_only": {}, "bands_phi_kappa": {}}
     for dn, (d, vc, vr, s2, size) in units.items():
@@ -241,12 +242,17 @@ def estimate_dispersion(paths: Paths | None = None, min_cell_days: float = SIZE_
 
 
 # ------------------------------------------------------------------------------------------------ data access
-def aggregate(con, paths: Paths, members: str, months: list[tuple[int, int]] | None) -> pd.DataFrame:
+def aggregate(con, paths: Paths, members: str, months: list[tuple[int, int]] | None, factors: pd.DataFrame | None = None) -> pd.DataFrame:
     """One row per entity x month x witness x day/night: converted estimate and the two parts of its variance.
 
     `members` is a table (entity_type, entity_id, entity_name, cell_id). Raw cell-days are summed per stratum first.
     e: sum of ratio x cell_days. vc: counting variance at phi = 1 (sum of ratio^2 x cell_days). vr: ratio variance, each ratio
     source (a LOCAL stratum, a region's pooled estimate, the global estimate) counted as one fully correlated group.
+
+    `factors` (method 0.2, T-020c; None = method 0.1, and the SQL is then exactly the earlier one): activity factors with the columns
+    witness, daynight, lo, hi, f, f_sd (one row per witness x day/night x activity bin). The ratio of a VIIRS stratum-month becomes
+    ratio x f(bin), the bin of its converted activity (ratio x witness cell-days of the whole stratum-month / cells of the stratum);
+    the stratum ratio error is scaled by f and the factor error is one extra fully correlated group per witness, day/night and bin.
     """
     cmw = f"read_parquet('{(paths.products / 'cell_month_witness.parquet').as_posix()}')"
     cells = f"read_parquet('{(paths.products / 'cells.parquet').as_posix()}')"
@@ -256,6 +262,8 @@ def aggregate(con, paths: Paths, members: str, months: list[tuple[int, int]] | N
     # join the (small) members to the cells first: joined the other way round, the engine joins all rows of cmw with cells before
     # filtering and a country takes minutes instead of a second
     con.execute(f"CREATE OR REPLACE TEMP TABLE mem AS SELECT m.*, c.stratum_id FROM {members} m JOIN {cells} c USING (cell_id)")
+    if factors is not None:
+        return _aggregate_v02(con, members, when, wit, cmw, cells, cal, factors)
     sql = f"""
     WITH base AS (
         SELECT m.entity_type, m.entity_id, any_value(m.entity_name) AS entity_name, m.stratum_id, w.year, w.month, w.witness, w.daynight,
@@ -285,6 +293,79 @@ def aggregate(con, paths: Paths, members: str, months: list[tuple[int, int]] | N
     FROM grp GROUP BY entity_type, entity_id, year, month, witness, daynight
     ORDER BY entity_type, entity_id, year, month, witness, daynight"""
     return con.execute(sql).df()
+
+
+def _aggregate_v02(con, members: str, when: str, wit: str, cmw: str, cells: str, cal: str, factors: pd.DataFrame) -> pd.DataFrame:
+    """`aggregate` for method 0.2: the same table with ratio x f(activity bin); see `aggregate`."""
+    need = ["witness", "daynight", "lo", "hi", "f", "f_sd"]
+    if not set(need) <= set(factors.columns):
+        raise ValueError(f"factors needs the columns {need}")
+    con.register("factors_df", factors[need])
+    con.execute("CREATE OR REPLACE TEMP TABLE fac AS SELECT * FROM factors_df")
+    # Converted activity per analysis cell of every stratum-month of the strata of the members (whole strata, not only the members' cells).
+    # Two materialised steps: with the ratio join in the same query the planner reordered the joins and spilled tens of GB on large boxes.
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE act0 AS
+        WITH strata AS (SELECT DISTINCT stratum_id FROM mem),
+             cs AS (SELECT c.cell_id, c.stratum_id FROM {cells} c JOIN strata USING (stratum_id))
+        SELECT c.stratum_id, w.year, w.month, w.witness, w.daynight, sum(w.cell_days) AS cd
+        FROM {cmw} w JOIN cs c USING (cell_id)
+        WHERE w.daynight IN ('D', 'N') AND w.witness IN ('SNPP_VIIRS', 'NOAA20_VIIRS'){when}
+        GROUP BY c.stratum_id, w.year, w.month, w.witness, w.daynight""")
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE act AS
+        WITH ncell AS (SELECT stratum_id, count(*) AS n FROM {cells} GROUP BY stratum_id)
+        SELECT a.stratum_id, a.year, a.month, a.witness, a.daynight, a.cd * k.ratio / n.n AS x
+        FROM act0 a JOIN ncell n USING (stratum_id)
+             JOIN {cal} k ON k.stratum_id = a.stratum_id AND k.witness = a.witness AND k.daynight = a.daynight
+                  AND k.season = {SEASON_SQL.replace('w.month', 'a.month')}""")
+    sql = f"""
+    WITH base AS (
+        SELECT m.entity_type, m.entity_id, any_value(m.entity_name) AS entity_name, m.stratum_id, w.year, w.month, w.witness, w.daynight,
+               sum(w.cell_days) AS cd, bool_and(w.days_available = w.days_in_month) AS complete,
+               min(w.data_level) AS lo, max(w.data_level) AS hi
+        FROM {cmw} w JOIN mem m USING (cell_id)
+        WHERE w.daynight IN ('D', 'N') AND w.witness IN ({wit}){when}
+        GROUP BY m.entity_type, m.entity_id, m.stratum_id, w.year, w.month, w.witness, w.daynight),
+    conv0 AS (
+        SELECT b.*, CASE WHEN b.witness = 'AQUA_MODIS' THEN 1.0 ELSE k.ratio END AS r0,
+               CASE WHEN b.witness = 'AQUA_MODIS' THEN 0.0 ELSE k.ratio_sd END AS rsd0,
+               CASE WHEN b.witness <> 'AQUA_MODIS' AND k.pooling_level <> 'LOCAL' THEN 1 ELSE 0 END AS pooled,
+               CASE WHEN b.witness = 'AQUA_MODIS' THEN 'AQUA' WHEN k.pooling_level = 'LOCAL' THEN b.stratum_id
+                    WHEN k.pooling_level = 'REGION' THEN split_part(b.stratum_id, '_b', 1) ELSE 'GLOBAL' END AS src
+        FROM base b LEFT JOIN {cal} k ON k.stratum_id = b.stratum_id AND k.witness = b.witness AND k.daynight = b.daynight
+             AND k.season = {SEASON_SQL.replace('w.month', 'b.month')}),
+    conv AS (
+        SELECT c.*, CASE WHEN c.witness = 'AQUA_MODIS' THEN 1.0 ELSE f.f END AS fac,
+               CASE WHEN c.witness = 'AQUA_MODIS' THEN 0.0 ELSE f.f_sd END AS fac_sd,
+               CASE WHEN c.witness = 'AQUA_MODIS' THEN NULL ELSE c.witness || '|' || c.daynight || '|' || CAST(f.lo AS VARCHAR) END AS fsrc
+        FROM conv0 c LEFT JOIN act a ON a.stratum_id = c.stratum_id AND a.year = c.year AND a.month = c.month
+             AND a.witness = c.witness AND a.daynight = c.daynight
+             LEFT JOIN fac f ON f.witness = c.witness AND f.daynight = c.daynight AND a.x >= f.lo AND a.x < f.hi),
+    conv2 AS (
+        SELECT *, r0 * fac AS r, rsd0 * fac AS rsd FROM conv),
+    grp AS (
+        SELECT entity_type, entity_id, any_value(entity_name) AS entity_name, year, month, witness, daynight, src,
+               sum(cd) AS raw, bool_and(complete) AS complete, min(lo) AS lo, max(hi) AS hi,
+               sum(r * cd) AS e, sum(r * r * cd) AS vc, power(sum(cd * rsd), 2) AS vr, sum(r) AS sr, count(*) AS nr,
+               sum(pooled * r * cd) AS e_pooled,
+               count(*) FILTER (WHERE r IS NULL) AS missing
+        FROM conv2 GROUP BY entity_type, entity_id, year, month, witness, daynight, src),
+    grpf AS (
+        SELECT entity_type, entity_id, any_value(entity_name) AS entity_name, year, month, witness, daynight, fsrc AS src,
+               CAST(0 AS DOUBLE) AS raw, true AS complete, min(lo) AS lo, max(hi) AS hi,
+               CAST(0 AS DOUBLE) AS e, CAST(0 AS DOUBLE) AS vc, power(sum(cd * r0 * fac_sd), 2) AS vr, CAST(0 AS DOUBLE) AS sr,
+               CAST(0 AS BIGINT) AS nr, CAST(0 AS DOUBLE) AS e_pooled, CAST(0 AS BIGINT) AS missing
+        FROM conv2 WHERE fsrc IS NOT NULL AND fac_sd IS NOT NULL GROUP BY entity_type, entity_id, year, month, witness, daynight, fsrc),
+    allg AS (SELECT * FROM grp UNION ALL SELECT * FROM grpf)
+    SELECT entity_type, entity_id, any_value(entity_name) AS entity_name, year, month, witness, daynight,
+           sum(raw) AS raw, bool_and(complete) AS complete, min(lo) AS lo, max(hi) AS hi,
+           sum(e) AS e, sum(vc) AS vc, sum(vr) AS vr, sum(sr) / sum(nr) AS rbar, sum(missing) AS missing, sum(e_pooled) AS e_pooled
+    FROM allg GROUP BY entity_type, entity_id, year, month, witness, daynight
+    ORDER BY entity_type, entity_id, year, month, witness, daynight"""
+    df = con.execute(sql).df()
+    bad = df[df.witness.isin(["SNPP_VIIRS", "NOAA20_VIIRS"]) & (df.e.isna() | (df.missing > 0))]    # Terra has no ratio in either method
+    if len(bad):
+        raise ValueError(f"{len(bad)} VIIRS rows have no activity factor or no calibration ratio")
+    return df
 
 
 def _level(lo: str, hi: str) -> str:

@@ -7,7 +7,7 @@ Unknown enum values, missing fields and wrong types fail validation. Nothing is 
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Verdict(StrEnum):
@@ -206,6 +206,20 @@ class ValidationResults(_Strict):
 
 
 class CustomAreaRequest(_Strict):
-    """Body of POST /api/series/custom: a bounding box [W, S, E, N] in degrees (WGS84)."""
+    """Body of POST /api/series/custom and POST /api/export.csv: exactly one of
 
-    bbox: tuple[float, float, float, float]
+    - `bbox`: a bounding box [W, S, E, N] in degrees (WGS84), or
+    - `polygon`: one outer ring of [lon, lat] points (3 to 100 different points, the first
+      point not repeated: the API closes it).
+
+    The shape of the ring is checked by `fire_api.polygon.validate_ring` (messages in `detail`).
+    """
+
+    bbox: tuple[float, float, float, float] | None = None
+    polygon: list[tuple[float, float]] | None = Field(default=None, max_length=10_000)
+
+    @model_validator(mode="after")
+    def _exactly_one(self) -> "CustomAreaRequest":
+        if (self.bbox is None) == (self.polygon is None):
+            raise ValueError("Give either bbox or polygon, not both and not neither.")
+        return self

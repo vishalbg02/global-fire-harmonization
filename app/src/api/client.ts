@@ -218,14 +218,18 @@ export async function fetchEntities(
  * POST /api/series/custom: the monthly series of a custom rectangle, computed by the API
  * through the harmonization function. On a 422 or 503 the server's message is in `ApiError.detail`.
  */
-export async function fetchCustomSeries(bbox: Bbox, base: string = apiBaseUrl()): Promise<EntityMonth[]> {
+export async function fetchCustomSeries(
+  shape: Bbox | { polygon: readonly (readonly number[])[] },
+  base: string = apiBaseUrl(),
+): Promise<EntityMonth[]> {
+  const body = 'polygon' in shape ? { polygon: shape.polygon } : { bbox: shape }
   return route(
     async () =>
       parseEntityMonths(
         await request(`${base}/api/series/custom`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bbox }),
+          body: JSON.stringify(body),
         }),
       ),
     // The offline copy has the preset views only.
@@ -265,7 +269,7 @@ export function exportQuery(area: ExportArea): string {
 /** The area an export is made for: a preset entity or a custom rectangle. */
 export type ExportArea =
   | { entity_type: SeriesEntityType; entity_id: string }
-  | { entity_type: 'CUSTOM'; entity_id: string; bbox: Bbox }
+  | { entity_type: 'CUSTOM'; entity_id: string; bbox: Bbox; polygon?: readonly (readonly number[])[] }
 
 /** The file name the server sent in `Content-Disposition`, or null when it sent none. */
 export function filenameFromDisposition(header: string | null): string | null {
@@ -315,7 +319,15 @@ async function fetchCsvFromApi(
 ): Promise<CsvDownload> {
   let response: Response
   try {
-    response = await fetch(`${base}/api/export.csv?${exportQuery(area)}`)
+    // A polygon of up to 100 points is too long for a URL: POST the same body as the series request.
+    response =
+      area.entity_type === 'CUSTOM' && area.polygon !== undefined
+        ? await fetch(`${base}/api/export.csv`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ polygon: area.polygon }),
+          })
+        : await fetch(`${base}/api/export.csv?${exportQuery(area)}`)
   } catch {
     throw new ApiError('The data service could not be reached.', null)
   }
