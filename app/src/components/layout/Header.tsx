@@ -1,6 +1,9 @@
 import { methodsHref } from '../../content/methodsLink.ts'
 import * as UI from '../../content/ui.ts'
 
+/** The id of the "How to read this" button: focus goes back to it when the panel closes. */
+export const HOW_TO_TOGGLE_ID = 'how-to-toggle'
+
 interface Props {
   /** True on the map page; the Methods link is left out on the methods page, as before. */
   showMethods: boolean
@@ -30,7 +33,7 @@ export function Header({ showMethods, onOpenMethods, howToOpen = false, onToggle
           >
             {UI.NAV_METHODS}
           </a>
-          <button type="button" className="top-link" aria-expanded={howToOpen} aria-controls="how-to-read" onClick={onToggleHowTo}>
+          <button type="button" id={HOW_TO_TOGGLE_ID} className="top-link" aria-expanded={howToOpen} aria-controls="how-to-read" onClick={onToggleHowTo}>
             {UI.NAV_HOW_TO_READ}
           </button>
         </nav>

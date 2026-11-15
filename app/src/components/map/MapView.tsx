@@ -130,7 +130,13 @@ export function MapView({
   // The cell whose card is pinned on the map: until closed, Esc, or another cell is clicked (T-071).
   const [pinned, pinDispatch] = useReducer(pinnedReducer, null)
   useEffect(() => pinDispatch({ type: 'selection', selectedCellId }), [selectedCellId])
-  const closePinned = useCallback(() => pinDispatch({ type: 'dismiss' }), [])
+  const closePinned = useCallback(() => {
+    // The card is removed, so focus that was inside it goes back to the map instead of being lost (T-074).
+    const active = document.activeElement
+    const hadFocus = active instanceof HTMLElement && active.closest('.map-pinned') !== null
+    pinDispatch({ type: 'dismiss' })
+    if (hadFocus) mapRef.current?.getCanvas().focus()
+  }, [])
   const pinnedCell = useMemo(
     () => (pinned === null || cells === null ? null : (cells.find((c) => c.cell_id === pinned) ?? null)),
     [pinned, cells],
@@ -176,6 +182,18 @@ export function MapView({
     )
     const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
     map.addControl(overlay)
+    // The cells canvas of the overlay is only a picture: the map canvas above is the one keyboard stop.
+    // (deck.gl makes its canvas focusable, which gave a second, unnamed Tab stop.)
+    const hideOverlayCanvas = () =>
+      map
+        .getContainer()
+        .querySelectorAll<HTMLCanvasElement>('canvas:not(.maplibregl-canvas)')
+        .forEach((c) => {
+          c.tabIndex = -1
+          c.setAttribute('aria-hidden', 'true')
+        })
+    hideOverlayCanvas()
+    map.on('load', hideOverlayCanvas)
     mapRef.current = map
     overlayRef.current = overlay
     setZoom(map.getZoom())
