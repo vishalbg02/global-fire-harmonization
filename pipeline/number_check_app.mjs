@@ -19,6 +19,8 @@ const fmt = await load('components/map/format.ts')
 const rankings = await load('components/anomalies/rankings.ts')
 const validation = await load('components/methods/validationFormat.ts')
 const bbox = await load('state/bbox.ts')
+const mapScale = await load('components/map/scale.ts')
+const grid = await load('components/calendar/grid.ts')
 
 if (input.probability) out.probability = input.probability.map((p) => fmt.formatProbability(p))
 if (input.pct) out.pct = input.pct.map((v) => fmt.formatPctOfNormal(v))
@@ -37,6 +39,8 @@ if (input.ranking) {
 }
 if (input.statuses) out.statuses = validation.countStatuses(input.statuses)
 if (input.bboxLabel) out.bboxLabel = input.bboxLabel.map((b) => bbox.bboxLabel(b))
+if (input.sharedMax) out.sharedMax = input.sharedMax.map((cells) => mapScale.sharedMax(cells))
+if (input.maxActivity) out.maxActivity = input.maxActivity.map((records) => grid.maxActivity(records))
 if (input.measured) out.measured = input.measured.map((v) => validation.formatMeasured(v))
 
 writeFileSync(outputPath, JSON.stringify(out))

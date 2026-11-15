@@ -22,6 +22,7 @@ import io
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -352,6 +353,46 @@ def check_computed(rep: Report, api: Api, anomalies: dict, em: pd.DataFrame, val
         rep.add("C test-status counts", shown == tally, view=name, field="counts", stored=tally, shown=shown)
 
 
+def legend_label(max_value: float) -> str:
+    """The top label of an activity legend (map/Legend.tsx and calendar/CalendarLegend.tsx): the maximum rounded, or "no data" when 0."""
+    return str(js_round(max_value)) if max_value > 0 else "no data"
+
+
+def check_legends(rep: Report, api: Api, em: pd.DataFrame, products: Path) -> None:
+    """C: the maximum of the colour scales (the legend's top label) and the custom-area label, with the app's own helpers."""
+    con = connect(products)
+    src = harmonized_view(products)
+    cell_sets, expected = [], []
+    for year, month in [(2015, 9), (2023, 7)]:
+        df = con.execute(f"SELECT raw_combined_cell_days, estimate FROM {src} WHERE year = {year} AND month = {month}").df()
+        cell_sets.append(none_if_nan(df))
+        expected.append((f"map {year}-{month:02d}", max(0.0, float(df.raw_combined_cell_days.max()), float(df.estimate.max()))))
+    series_sets, expected_s = [], []
+    for et, eid, _, _ in DEMO_VIEWS:
+        rows = em[(em.entity_type == et) & (em.entity_id == eid)]
+        series_sets.append(none_if_nan(rows[["raw_combined_cell_days", "estimate"]]))
+        expected_s.append((f"calendar {et}:{eid}", max(0.0, float(rows.raw_combined_cell_days.max()), float(rows.estimate.max()))))
+    boxes = [[100.0, 0.0, 101.0, 1.0], [-58.5, -35.0, -53.0, -30.0], [95.005, -6.125, 119.995, 4.555], [-0.004, 0.0049, 0.0051, 0.015]]
+    out = run_app({"sharedMax": cell_sets, "maxActivity": series_sets, "bboxLabel": boxes})
+    for (view, exp), got in zip(expected, out["sharedMax"], strict=True):
+        rep.add("C legend maximum", got == exp and legend_label(got) == legend_label(exp), view=view, field="scale maximum", stored=exp, shown=got)
+    for (view, exp), got in zip(expected_s, out["maxActivity"], strict=True):
+        rep.add("C legend maximum", got == exp and legend_label(got) == legend_label(exp), view=view, field="scale maximum", stored=exp, shown=got)
+    for b, got in zip(boxes, out["bboxLabel"], strict=True):
+        shown = re.fullmatch(r"W (\S+), S (\S+), E (\S+), N (\S+)", got)
+        for name, x, text in zip("WSEN", b, shown.groups() if shown else [], strict=False):
+            d = Decimal(str(x))
+            exp = format(d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP), "f")      # the decimal as typed, half away from zero
+            exp = exp[1:] if exp.startswith("-") and float(exp) == 0 else exp          # no negative zero
+            tie = abs(d * 100 - (d * 100).to_integral_value(rounding="ROUND_FLOOR") - Decimal("0.5")) == 0
+            if text != exp and tie and x < 0:
+                rep.note("C custom-area label", f"A negative coordinate that ends in exactly 5 at the third decimal ({x}) is shown as {text}, "
+                         f"not {exp}: the app rounds with Math.round, so a tie goes towards +infinity. Display and id only; the request uses the typed number.",
+                         view=str(b), shown=text, expected=exp)
+            else:
+                rep.add("C custom-area label", text == exp, view=str(b), field=name, stored=exp, shown=text)
+
+
 def check_csv(rep: Report, api: Api, em: pd.DataFrame) -> None:
     """D: the CSV export of Indonesia equals the stored rows."""
     r = api.get("/api/export.csv", entity_type="COUNTRY", entity_id="IDN")
@@ -468,6 +509,7 @@ def run(products: Path = PRODUCTS, validation_extra: Path | None = None) -> dict
     if validation_extra:
         files[f"validation_results.json ({validation_extra})"] = validation_extra
     check_computed(rep, api, anomalies, em, files)
+    check_legends(rep, api, em, products)
     print("D: CSV", flush=True)
     check_csv(rep, api, em)
     print("E: methods page text", flush=True)
