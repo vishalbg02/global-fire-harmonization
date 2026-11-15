@@ -92,6 +92,7 @@ export function AnalyticsPanel({ area, compareArea = null, onCompareChange, year
   )
   const listed = lists.status === 'ready' ? lists.value : null
   const nameOf = (a: AnalyticsArea): string => {
+    if (a.entityType === 'GLOBAL') return 'Global'
     const list = a.entityType === 'COUNTRY' ? listed?.countries : a.entityType === 'CONTINENT' ? listed?.continents : undefined
     return list?.find((e) => e.entity_id === a.entityId)?.entity_name ?? a.name
   }

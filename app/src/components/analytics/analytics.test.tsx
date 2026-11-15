@@ -71,6 +71,10 @@ describe('AnalyticsPanel', () => {
     expect(withOther).toContain('Indonesia compared with Asia')
     expect(withOther).toContain('Remove the comparison')
   })
+  it('names the world "Global" when the link carries only its id', () => {
+    const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'CONTINENT', entityId: 'AS', name: 'Asia' }} compareArea={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'GLOBAL' }} year={2019} month={12} />))
+    expect(html).toContain('Asia compared with Global')
+  })
   it('ignores a comparison with the area itself', () => {
     const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} compareArea={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} year={2015} month={9} />))
     expect(html).not.toContain('compared with')
