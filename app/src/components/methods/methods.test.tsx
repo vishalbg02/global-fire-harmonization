@@ -82,9 +82,68 @@ describe('validation results view', () => {
 
   it('shows null as "not measured" and a SYNTHETIC label for a synthetic file', () => {
     const html = renderToString(<ValidationResultsView results={file([test('T1', 'NOT_RUN')], true)} />)
-    expect(html).toContain('other: not measured')
+    expect(html).toContain('<th scope="row" title="other">Other</th><td>not measured</td>')
     expect(html).toContain('SYNTHETIC')
     expect(renderToString(<ValidationResultsView results={file([test('T1', 'NOT_RUN')])} />)).not.toContain('SYNTHETIC')
+  })
+})
+
+describe('validation overview (T-089)', () => {
+  // SYNTHETIC entries, labelled: the page structure on small known cases.
+  const entries = [
+    test('A1-C1', 'INCONCLUSIVE', { family: 'A' }),
+    test('A1-C3', 'FAIL', { family: 'A', notes: 'The intervals do not overlap.' }),
+    test('A1-FAMILY', 'FAIL', { family: 'A', title: 'Real anomaly preserved: family result' }),
+    test('B1', 'PASS', { family: 'B', measured: { 'ratio.after': 0.8181818181818182, flag: false } }),
+  ]
+  const html = renderToString(<ValidationResultsView results={file(entries)} />)
+
+  it('shows the counts, then one line per family with its status, the stored title, and a link to its detail', () => {
+    expect(html).toContain('FAIL: 2')
+    expect(html).toContain('INCONCLUSIVE: 1')
+    expect(html).toContain('PASS: 1')
+    expect(html).toContain('Results by test family')
+    expect(html).toContain('href="#test-A1-FAMILY"')
+    expect(html).toContain('<span class="family-meaning">Real anomaly preserved</span>')
+    expect(html).toContain('Real anomaly preserved: family result')  // the entry's own title stays as stored in its detail
+    expect(html.match(/class="family-row status-/g)).toHaveLength(2)
+    expect(html.indexOf('Results by test family')).toBeLessThan(html.indexOf('All tests'))
+  })
+
+  it('has one filter chip per present status with its count, and says how many entries are shown', () => {
+    expect(html).toContain('All (4)')
+    expect(html).toContain('FAIL (2)')
+    expect(html).toContain('INCONCLUSIVE (1)')
+    expect(html).toContain('PASS (1)')
+    expect(html).not.toContain('NOT RUN (')
+    expect(html).toContain('aria-pressed="true"')
+    expect(html).toContain('Showing 4 of 4 entries.')
+  })
+
+  it('opens failing and inconclusive details and their notes, and collapses the passing one', () => {
+    expect(html).toMatch(/id="test-A1-C3"[^>]*><details open=""/)
+    expect(html).toMatch(/id="test-A1-C1"[^>]*><details open=""/)
+    expect(html).toMatch(/id="test-B1"[^>]*><details>/)
+    expect(html).toContain('The intervals do not overlap.')
+  })
+
+  it('shows measured values exactly as stored, under a readable label', () => {
+    expect(html).toContain('0.8181818181818182')
+    expect(html).toContain('Ratio › after')
+    expect(html).toContain('title="ratio.after"')
+    expect(html).toContain('<td>false</td>')
+  })
+
+  it('states the family rule and, for a family without its own entry, that its status is the worst of its entries', () => {
+    expect(html).toContain('worst status of its entries')
+    const d1 = renderToString(<ValidationResultsView results={file([test('D1-A', 'PASS'), test('D1-B', 'FAIL')])} />)
+    expect(d1).toContain('the file has no family-level entry')
+    expect(d1).toContain('2 entries: 1 FAIL, 1 PASS')
+  })
+
+  it('collapses a long measured list into its own detail', () => {
+    const many = Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`k_${i}`, i]))
+    expect(renderToString(<ValidationResultsView results={file([test('E1', 'PASS', { measured: many })])} />)).toContain('Measured values (20)')
   })
 })
 
@@ -108,6 +167,26 @@ describe('methods page', () => {
     expect(html).toContain('No validation test has been run yet')
     expect(html).toContain('This is the test plan, not the results')
     expect(html).not.toContain('not run yet)')  // the plan is no longer titled "not run yet": results exist (T-027)
+  })
+
+  it('puts "In plain words" first, then the validation results, then the method (T-089), with a table of contents', () => {
+    const html = page()
+    expect(html.indexOf('id="plain-words"')).toBeLessThan(html.indexOf('id="validation"'))
+    expect(html.indexOf('id="validation"')).toBeLessThan(html.indexOf('id="method"'))
+    expect(html).toContain('In plain words')
+    expect(html).toContain('href="#plain-words"')
+    expect(html).toContain('href="#validation"')
+  })
+
+  it('keeps the anchors other parts of the app link to: reason codes, sources, and the verdict method (#baseline-verdicts)', () => {
+    const html = page()
+    expect(html).toContain('id="sources"')
+    expect(html).toContain('id="baseline-verdicts"')
+    expect(html).toContain('id="method-baseline-verdicts"')
+    expect(html.match(/id="grid"/g)).toHaveLength(1)
+    for (const code of REASON_CODES) expect(html).toContain(`id="${reasonAnchor(code)}"`)
+    const ids = [...html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1])
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
   it('takes the acknowledgement from the metadata and lists the seven dataset DOIs', () => {
