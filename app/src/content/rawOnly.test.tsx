@@ -176,8 +176,8 @@ describe('witness chart legend', () => {
       legend: { data: string[] }
     }
     const names = option.legend.data
-    expect(names).toContain('Raw combined (all satellites)')
-    expect(names).toContain('Aqua MODIS')
+    expect(names).toContain('Raw: all satellites combined')
+    expect(names).toContain('Raw: Aqua MODIS')
     expect(names.some((n) => n.startsWith('Harmonized'))).toBe(false)
     expect(names.some((n) => n.startsWith('Baseline'))).toBe(false)
   })

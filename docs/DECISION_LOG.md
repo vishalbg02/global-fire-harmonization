@@ -32,6 +32,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-026 | 2026-11-14 | Reason code `NOT_HARMONIZED` and raw-only products (contract 0.1.1) | **APPROVED** (2026-11-14) |
 | D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
 | D-024 | 2026-11-14 | Add `terra-draw-maplibre-gl-adapter` 1.5.0 to the frontend stack (drawing the custom rectangle on the MapLibre map, T-035) | **APPROVED** (2026-11-14) |
+| D-030 | 2026-11-15 | v0.2 activity-dependent conversion (post-hoc, prompted by A1 and T-020b): adopted only by a pre-registered rule; v0.1 stays visible | **NOT ADOPTED** (2026-11-15; rule not met, v0.1 stays) |
 | D-029 | 2026-11-15 | Test A1: both paths use the shared Aqua-measured 2003-2022 baseline (amends D-028 for A1 only; adopted after seeing C1, whose official result stays INCONCLUSIVE) | **APPROVED** (2026-11-15) |
 
 ---
@@ -270,3 +271,16 @@ The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the 
 - **Limit kept:** both paths now share one baseline, so A1 tests the numerators only; the baseline is itself built from Aqua, and the baseline's uncertainty is not propagated (D-028).
 - **Status:** **APPROVED** by the Lead, 2026-11-15.
 
+### D-030: v0.2 activity-dependent conversion, adopted only by a pre-registered rule **[NOT ADOPTED 2026-11-15]**
+- **Context:** A1 failed for method 0.1.0 (0 of 6 cases, D-029). T-020b (`docs/validation/T-020b-saturation.md`) confirmed by a rule fixed in advance that the Aqua/VIIRS ratio rises with activity: a ratio fitted mostly on typical months under-converts extreme months, the direction of the A1 failure. The Lead asked for a time-boxed v0.2 (PR #58, decision by 10:00 IST on 2026-11-15).
+- **Proposal (T-020c):** `ratio_v02 = ratio_v01(stratum, witness, day/night, season) x f(witness, day/night, activity bin)`, with one global factor per witness, day/night and bin fitted on the **fit periods only** (S-NPP 2012-01 to 2016-12, NOAA-20 2018-04 to 2021-12). Activity is the converted activity of the witness's own counts per analysis cell and month, in the eight bins of T-020b. `f = sum(Aqua) / sum(ratio_v01 x witness)` over the stratum-months of the bin; bins with fewer than 50 units take the nearest bin with 50 or more. The factor error is a shared, fully correlated error per bin. Everything else is as v0.1, and phi and kappa are re-estimated the same way on the fit periods. Design details: `docs/task-prompts/T-020c-v02-conversion.md` section 9.
+- **Adoption rule (fixed by the Lead on PR #58, recorded before any v0.2 result exists).** Adopt v0.2 **only if all three hold:**
+  1. holdout (T-012, 2017-2021) median absolute log error is no worse than v0.1 for regions **and** countries (day+night total);
+  2. D1 pooled 90% coverage stays within 80 to 97%;
+  3. the A1 gap (S-NPP-only over Aqua-only in the peak windows) gets smaller in at least 3 of the 4 failed cases C3 to C6.
+  If it is not ready by 10:00 IST on 2026-11-15, or any condition fails, **v0.1 stays** and the A1 FAIL stays documented as a limitation (with the saturation finding in `docs/RISKS_AND_LIMITATIONS.md`).
+- **Labelling:** a **post-hoc improvement prompted by A1**. A1 stays **FAIL for v0.1** permanently. The v0.2 A1 numbers are reported as not independent (the cases motivated the change). v0.1 and v0.2 results are shown side by side.
+- **Safety:** v0.2 is built outside `data/products/` (`data/interim/v02/`); no product changes until this decision is approved. Approval of D-030 is needed before any v0.2 product, even if the rule is met.
+- **Limits kept:** full pooling of `f` across strata at the bin level; errors of different bins and the stratum-ratio errors treated as independent; saturation as the mechanism is a hypothesis (T-020b).
+- **Result (T-020c, `docs/validation/T-020c-v02.md`, 2026-11-15):** condition 1 **not met** (holdout error of the day+night total: regions 0.0846 against 0.0863, no worse; countries 0.1021 against 0.1003, worse). Condition 2 met (D1 pooled 0.843). Condition 3 met formally (gap smaller in C3, C4, C6; not in C5). **By the rule, v0.1 stays; nothing in `data/products/` changed.** The A1 family stays FAIL for v0.1 and v0.2 does not change any A1 case status. Risk S19 added.
+- **Status:** **NOT ADOPTED** by the Lead, 2026-11-15. The pre-registered rule was not met (condition 1 failed for countries), so **method 0.1.0 stays** and A1 stays FAIL for v0.1. The v0.2 code path (`factors`, default `None`) and its report are kept for the record; the saturation finding is risk S19.

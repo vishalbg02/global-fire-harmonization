@@ -6,7 +6,7 @@ import { AnomalyPanel } from './components/anomalies/AnomalyPanel.tsx'
 import { EXPANDED_SIZE, PAGE_SIZE, outlinedCountries, rankAnomalies, topN } from './components/anomalies/rankings.ts'
 import type { RankingTab } from './components/anomalies/rankings.ts'
 import { AreaPicker } from './components/area/AreaPicker.tsx'
-import { resolveArea } from './components/area/resolveArea.ts'
+import { areaFitBbox, resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { useStaticManifest } from './api/staticData.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
@@ -26,6 +26,8 @@ import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { hasOfflineMap, monthKey, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
+import { checkRoundedRing, polygonArea } from './state/polygon.ts'
+import type { Ring } from './state/polygon.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
@@ -38,6 +40,9 @@ export default function App() {
   const [selection, dispatch] = useReducer(selectionReducer, null, () => selectionFromUrl(window.location.search))
   const [page, setPage] = useState<'map' | 'methods'>(() => pageFromSearch(window.location.search))
   const [drawing, setDrawing] = useState(false)
+  const [polygonDrawing, setPolygonDrawing] = useState(false)
+  // A polygon drawn on the map: shown in the text box with its reason when it was not accepted.
+  const [polygonDraft, setPolygonDraft] = useState<{ ring: Ring; error: string | null; seq: number } | null>(null)
   const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
 
@@ -53,6 +58,15 @@ export default function App() {
   const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
   const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
   const area = resolveArea(selection.area, countries.data, continents.data)
+  // The map shows the selected area, however it was chosen (picker, click on the map, link, typed or
+  // drawn): a new request when the area's box changes, or when the same area is asked for again.
+  const areaBox = areaFitBbox(area, countries.data, continents.data)
+  const areaBoxKey = areaBox === null ? '' : areaBox.join(',')
+  const mapFit = useMemo(
+    () => (areaBox === null ? selection.fit : { bbox: areaBox }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- areaBoxKey stands for areaBox
+    [areaBoxKey, selection.fit],
+  )
   const customSeries = useAreaSeries(area, { enabled: area.entity_type === 'CUSTOM' })
   const customError = customSeries.error instanceof ApiError ? customSeries.error : null
   const customMessage =
@@ -104,8 +118,27 @@ export default function App() {
     evidenceHeading.current?.focus()
   }
 
+  // Typed or drawn: the same check (the API's rules and messages), then the same selection.
+  const choosePolygon = (points: readonly (readonly number[])[]) => {
+    setDrawing(false)
+    setPolygonDrawing(false)
+    const check = checkRoundedRing(points)
+    if (check.ok) {
+      setPolygonDraft(null)
+      dispatch({ type: 'select-entity', entity: polygonArea(check.ring), fit: polygonArea(check.ring).bbox })
+    } else {
+      setPolygonDraft({
+        ring: points.map((p) => [p[0], p[1]]),
+        error: check.message,
+        seq: (polygonDraft?.seq ?? 0) + 1,
+      })
+    }
+  }
+
   const chooseCustom = (bbox: Bbox) => {
     setDrawing(false)
+    setPolygonDrawing(false)
+    setPolygonDraft(null)
     dispatch({ type: 'select-entity', entity: customArea(bbox) })
   }
 
@@ -232,10 +265,13 @@ export default function App() {
             onSelectCountry={(iso3, name) =>
               dispatch({ type: 'select-entity', entity: { entity_type: 'COUNTRY', entity_id: iso3, entity_name: name } })
             }
-            fit={selection.fit}
+            fit={mapFit}
             customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
+            customRing={area.entity_type === 'CUSTOM' ? (area.polygon ?? null) : null}
             drawing={drawing}
             onDrawn={chooseCustom}
+            polygonDrawing={polygonDrawing}
+            onDrawnPolygon={choosePolygon}
             anomalyOutlines={anomalyOutlines}
           />
           </Suspense>
@@ -248,8 +284,21 @@ export default function App() {
               onChooseEntity={chooseEntity}
               onChooseWorld={() => dispatch({ type: 'clear-entity' })}
               onChooseCustom={chooseCustom}
+              polygon={{
+                onSubmit: choosePolygon,
+                drawing: polygonDrawing,
+                onToggleDrawing: () => {
+                  setDrawing(false)
+                  setPolygonDrawing((d) => !d)
+                },
+                cells: area.entity_type === 'CUSTOM' ? (customSeries.data?.[0]?.n_cells ?? null) : null,
+                draft: polygonDraft,
+              }}
               drawing={drawing}
-              onToggleDrawing={() => setDrawing((d) => !d)}
+              onToggleDrawing={() => {
+                setPolygonDrawing(false)
+                setDrawing((d) => !d)
+              }}
               customMessage={customMessage}
               customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
               synthetic={meta.data?.synthetic === true}

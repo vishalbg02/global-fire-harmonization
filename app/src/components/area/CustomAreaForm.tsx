@@ -3,11 +3,35 @@ import type { FormEvent } from 'react'
 import type { Bbox } from '../../api/contract.ts'
 import { STATIC_CUSTOM_MESSAGE, useStaticManifest } from '../../api/staticData.ts'
 import { parseBboxFields } from '../../state/bbox.ts'
+import {
+  POLYGON_DRAW_HINT,
+  POLYGON_NOTE,
+  parsePolygonText,
+  polygonAnnouncement,
+  ringToLines,
+} from '../../state/polygon.ts'
+import type { Ring } from '../../state/polygon.ts'
 import type { BboxFields } from '../../state/bbox.ts'
 
 export const GRID_NOTE = 'Custom areas are approximated by the grid cells whose centres fall inside the box.'
 
+/** The polygon route of the form (T-044). */
+export interface PolygonControls {
+  onSubmit: (ring: Ring) => void
+  drawing: boolean
+  onToggleDrawing: () => void
+  /** Grid cells of the current polygon (`n_cells` of its series), null until known. */
+  cells: number | null
+  /** A polygon drawn on the map that has not been accepted, so the text box shows it and its reason. */
+  draft?: { ring: Ring; error: string | null; seq: number } | null
+  /** Set by the picker from the current area and the draft. */
+  initial?: Ring | null
+  drawError?: string | null
+  active?: boolean
+}
+
 interface Props {
+  polygon?: PolygonControls
   /** The current custom box, to fill the fields. The form is re-created when it changes. */
   initial: Bbox | null
   onSubmit: (bbox: Bbox) => void
@@ -33,7 +57,7 @@ const FIELDS: readonly { key: keyof BboxFields; label: string; hint: string }[] 
 export const CUSTOM_COMPUTING =
   'Computing this area from the satellite records. A new area can take several seconds.'
 
-export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, serverMessage, loading }: Props) {
+export function CustomAreaForm({ initial, polygon, onSubmit, drawing, onToggleDrawing, serverMessage, loading }: Props) {
   // The offline copy has the preset views only (T-043): the form says so and cannot be submitted.
   const offline = useStaticManifest() !== null
   const [fields, setFields] = useState<BboxFields>({
@@ -43,6 +67,19 @@ export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, se
     north: initial === null ? '' : String(initial[3]),
   })
   const [error, setError] = useState<string | null>(null)
+  const [polygonText, setPolygonText] = useState(polygon?.initial == null ? '' : ringToLines(polygon.initial))
+  const [polygonError, setPolygonError] = useState<string | null>(null)
+
+  const submitPolygon = (event: FormEvent) => {
+    event.preventDefault()
+    const check = parsePolygonText(polygonText)
+    if (!check.ok) {
+      setPolygonError(check.message)
+      return
+    }
+    setPolygonError(null)
+    polygon?.onSubmit(check.ring)
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -107,6 +144,49 @@ export function CustomAreaForm({ initial, onSubmit, drawing, onToggleDrawing, se
       )}
       {serverMessage !== null && <p className="form-error">{serverMessage}</p>}
       <p className="legend-note">{GRID_NOTE}</p>
+      {polygon !== undefined && (
+        <div className="custom-polygon" role="group" aria-labelledby="custom-polygon-title">
+          <h4 id="custom-polygon-title">Custom polygon</h4>
+          <label>
+            Corner points, one per line: longitude, latitude (degrees)
+            <textarea
+              rows={6}
+              value={polygonText}
+              onChange={(e) => setPolygonText(e.target.value)}
+              aria-describedby="custom-polygon-note"
+              placeholder={'100, 0\n101, 0\n101, 1'}
+              spellCheck={false}
+              disabled={offline}
+            />
+          </label>
+          <div className="custom-actions">
+            <button type="button" onClick={submitPolygon} disabled={loading || offline}>
+              Show polygon
+            </button>
+            <button type="button" onClick={polygon.onToggleDrawing} aria-pressed={polygon.drawing} disabled={offline}>
+              {polygon.drawing ? 'Cancel drawing' : 'Draw a polygon on the map'}
+            </button>
+          </div>
+          {polygon.drawing && (
+            <p className="legend-note" role="status">
+              {POLYGON_DRAW_HINT}
+            </p>
+          )}
+          {polygon.active === true && polygon.initial != null && (
+            <p className="polygon-announcement" role="status">
+              {polygonAnnouncement(polygon.initial.length, polygon.cells)}
+            </p>
+          )}
+          {(polygonError ?? polygon.drawError ?? null) !== null && (
+            <p className="form-error" role="alert">
+              {polygonError ?? polygon.drawError}
+            </p>
+          )}
+          <p id="custom-polygon-note" className="legend-note">
+            {POLYGON_NOTE}
+          </p>
+        </div>
+      )}
     </form>
   )
 }

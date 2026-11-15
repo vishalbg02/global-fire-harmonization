@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from starlette.middleware.gzip import GZipMiddleware
 
-from . import custom, export, products
+from . import custom, export, polygon, products
 from .custom import HarmonizeUnavailable
 from .models import (
     Anomaly,
@@ -32,6 +32,7 @@ from .models import (
 )
 
 CUSTOM_AREA_PATH = "/api/series/custom"
+EXPORT_PATH = "/api/export.csv"
 
 app = FastAPI(title="Global Fire Harmonization API", version="0.1.0")
 # Compresses responses of 1000 bytes or more when the client sends Accept-Encoding: gzip.
@@ -49,9 +50,20 @@ def _detail(status: int, message: str) -> JSONResponse:
 
 @app.exception_handler(RequestValidationError)
 async def invalid_request(request: Request, exc: RequestValidationError) -> JSONResponse:
-    # Invalid parameters are 400; an invalid custom-area body is 422.
-    status = 422 if request.url.path == CUSTOM_AREA_PATH else 400
-    return JSONResponse(status_code=status, content={"detail": jsonable_encoder(exc.errors())})
+    # Invalid parameters are 400; an invalid custom-area body (POST) is 422.
+    is_body = request.url.path == CUSTOM_AREA_PATH or (
+        request.url.path == EXPORT_PATH and request.method == "POST"
+    )
+    if is_body:
+        # A rule of the request shape (e.g. both bbox and polygon) comes with its own sentence.
+        errors = exc.errors()
+        for error in errors:
+            if error.get("type") == "value_error" and error.get("msg", "").startswith(
+                "Value error, "
+            ):
+                return _detail(422, error["msg"].removeprefix("Value error, "))
+        return JSONResponse(status_code=422, content={"detail": jsonable_encoder(errors)})
+    return JSONResponse(status_code=400, content={"detail": jsonable_encoder(exc.errors())})
 
 
 @app.exception_handler(products.ProductsUnavailable)
@@ -94,15 +106,37 @@ def get_series(
     return products.series(EntityType(entity_type), entity_id)
 
 
-def _custom_series(bbox: tuple[float, float, float, float]) -> list[EntityMonth]:
-    west, south, east, north = bbox
-    if not (-180 <= west < east <= 180 and -90 <= south < north <= 90):
-        raise HTTPException(
-            422, "bbox must be [W, S, E, N] with -180 <= W < E <= 180 and -90 <= S < N <= 90."
-        )
-    cell_ids = products.cells_with_centre_in(west, south, east, north)
+NO_CENTRES = "No analysis cells have their centre inside this area."
+
+
+def _cells_of(body: CustomAreaRequest) -> tuple[list[str], str, str]:
+    """The cell IDs of the area, its CSV subject line and the identifier of its file name."""
+    if body.polygon is not None:
+        try:
+            ring = polygon.validate_ring(body.polygon)
+        except polygon.PolygonError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        west, south, east, north = polygon.bounds(ring)
+        candidates = products.cell_centres_in(west, south, east, north)
+        cell_ids = polygon.centres_inside(candidates, ring)
+        subject = f"CUSTOM polygon ({len(ring)} points)"
+        ident = f"polygon-{len(ring)}pts-{polygon.digest(ring)}"
+    else:
+        assert body.bbox is not None
+        west, south, east, north = body.bbox
+        if not (-180 <= west < east <= 180 and -90 <= south < north <= 90):
+            raise HTTPException(
+                422, "bbox must be [W, S, E, N] with -180 <= W < E <= 180 and -90 <= S < N <= 90."
+            )
+        cell_ids = products.cells_with_centre_in(west, south, east, north)
+        text = ",".join(f"{p:g}" for p in body.bbox)
+        subject, ident = f"CUSTOM bbox {text}", text
     if not cell_ids:
-        raise HTTPException(422, "No analysis cells have their centre inside this area.")
+        raise HTTPException(422, NO_CENTRES)
+    return cell_ids, subject, ident
+
+
+def _custom_series_of(cell_ids: list[str]) -> list[EntityMonth]:
     try:
         # Validated, unaltered records of the single implementation of the science (cached).
         return custom.custom_series(cell_ids)
@@ -110,12 +144,33 @@ def _custom_series(bbox: tuple[float, float, float, float]) -> list[EntityMonth]
         raise HTTPException(503, str(exc)) from exc
 
 
+def _custom_series(bbox: tuple[float, float, float, float]) -> list[EntityMonth]:
+    return _custom_series_of(_cells_of(CustomAreaRequest(bbox=bbox))[0])
+
+
 @app.post(CUSTOM_AREA_PATH, response_model=list[EntityMonth])
 def post_custom_series(body: CustomAreaRequest) -> list[EntityMonth]:
-    return _custom_series(body.bbox)
+    return _custom_series_of(_cells_of(body)[0])
 
 
-@app.get("/api/export.csv")
+def _csv_response(records: list[EntityMonth], subject: str, name: str, meta: Metadata) -> Response:
+    return Response(
+        content=export.build_csv(records, meta, subject),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
+
+
+@app.post(EXPORT_PATH)
+def post_export_csv(body: CustomAreaRequest) -> Response:
+    """The monthly series of a custom area (same body as POST /api/series/custom) as CSV."""
+    cell_ids, subject, ident = _cells_of(body)
+    meta = products.metadata()
+    records = _custom_series_of(cell_ids)
+    return _csv_response(records, subject, export.filename("CUSTOM", ident, meta), meta)
+
+
+@app.get(EXPORT_PATH)
 def get_export_csv(
     entity_type: Annotated[Literal["COUNTRY", "CONTINENT", "GLOBAL"] | None, Query()] = None,
     entity_id: str | None = None,
@@ -145,11 +200,7 @@ def get_export_csv(
         records = _custom_series((parts[0], parts[1], parts[2], parts[3]))
         subject = f"CUSTOM bbox {bbox}"
         name = export.filename("CUSTOM", ",".join(f"{p:g}" for p in parts), meta)
-    return Response(
-        content=export.build_csv(records, meta, subject),
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{name}"'},
-    )
+    return _csv_response(records, subject, name, meta)
 
 
 @app.get("/api/evidence", response_model=EntityEvidence)

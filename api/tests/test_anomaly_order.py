@@ -1,5 +1,6 @@
-"""Anomaly order (T-039 phase 2): larger probability, then the larger distance from normal
-abs(ln(pct_of_normal / 100)) (missing or non-positive last), then entity_id ascending.
+"""Anomaly order (T-039 phase 2): the larger probability at the precision the app shows (0.995 or
+more is "more than 99%" and counts as equal; below that the whole percentage), then the larger
+distance from normal abs(ln(pct_of_normal / 100)) (missing or non-positive last), then entity_id.
 
 SYNTHETIC data built inside the tests, plus a check on the real products when they are present."""
 
@@ -37,6 +38,34 @@ def test_probability_comes_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         _entity("COUNTRY", "CCC", "C", 2020, 1, p_below=0.95, pct_of_normal=10.0, **BELOW),
     ]
     assert _ids(_client(tmp_path, monkeypatch, rows)) == ["BBB", "CCC", "AAA"]
+
+
+def test_every_probability_of_0_995_or_more_counts_as_equal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # "More than 99%": 1.0, 0.9999999 and 0.995 are one group, so the biggest anomaly comes first,
+    # whatever the digits beyond the display (the first of these has the smallest distance).
+    rows = [
+        _entity("COUNTRY", "AAA", "A", 2020, 1, p_above=1.0, pct_of_normal=120.0, **ABOVE),
+        _entity("COUNTRY", "BBB", "B", 2020, 1, p_above=0.9999999, pct_of_normal=500.0, **ABOVE),
+        _entity("COUNTRY", "CCC", "C", 2020, 1, p_below=0.995, pct_of_normal=2.0, **BELOW),
+        _entity("COUNTRY", "DDD", "D", 2020, 1, p_above=0.9949, pct_of_normal=900.0, **ABOVE),
+    ]
+    # CCC (2%, distance 3.9), BBB (500%, 1.6), AAA (120%, 0.18); DDD is 0.9949, shown as 99%,
+    # so it is below the group.
+    assert _ids(_client(tmp_path, monkeypatch, rows)) == ["CCC", "BBB", "AAA", "DDD"]
+
+
+def test_below_0_995_the_whole_percentage_shown_decides(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # 0.991 and 0.986 both show as 99% (a tie, so distance decides); 0.984 shows as 98%.
+    rows = [
+        _entity("COUNTRY", "AAA", "A", 2020, 1, p_above=0.991, pct_of_normal=110.0, **ABOVE),
+        _entity("COUNTRY", "BBB", "B", 2020, 1, p_above=0.986, pct_of_normal=300.0, **ABOVE),
+        _entity("COUNTRY", "CCC", "C", 2020, 1, p_above=0.984, pct_of_normal=900.0, **ABOVE),
+    ]
+    assert _ids(_client(tmp_path, monkeypatch, rows)) == ["BBB", "AAA", "CCC"]
 
 
 def test_ties_go_by_distance_from_normal_above_and_below(
@@ -104,9 +133,10 @@ def test_real_products_2015_09_order_is_non_increasing_and_stable(
 
     def key(r: dict[str, Any]) -> tuple[float, float, str]:
         p = max(v for v in (r["p_above"], r["p_below"]) if v is not None)
+        shown = 1000.0 if p >= 0.995 else math.floor(p * 100.0 + 0.5)  # what the app shows
         pct = r["pct_of_normal"]
         dist = abs(math.log(pct / 100.0)) if pct is not None and pct > 0 else -1.0
-        return (-p, -dist, r["entity_id"])
+        return (-shown, -dist, r["entity_id"])
 
     keys = [key(r) for r in first]
     assert keys == sorted(keys)

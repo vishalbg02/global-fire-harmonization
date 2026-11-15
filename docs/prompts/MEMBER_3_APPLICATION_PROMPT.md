@@ -207,7 +207,7 @@ For the selected entity and month (`GET /api/evidence`), show:
 | `WITNESS_DISAGREEMENT` | The satellites disagree more than expected, so the uncertainty was widened. |
 | `WIDE_INTERVAL` | The uncertainty range is too wide for a confident verdict. |
 | `PROVISIONAL_NRT` | Based on near-real-time data; values may change when science-quality data arrive. |
-| `AQUA_DRIFT_ERA` | Aqua MODIS's orbit has drifted, so it is not used as a witness for this period. |
+| `AQUA_DRIFT_ERA` | Aqua MODIS's orbit has drifted, so its night observations are not combined for this period (its day observations still are). |
 | `SINGLE_WITNESS` | Only one satellite contributed this month. |
 | `POOLED_CALIBRATION` | Local data were sparse, so calibration borrows from the wider region. |
 | `DIURNAL_CAVEAT` | Burning here is reported to happen increasingly outside satellite overpass times, so detections may undercount it. |

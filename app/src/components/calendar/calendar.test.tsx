@@ -413,9 +413,13 @@ describe('SourceToggle', () => {
     expect(out).toContain('Data shown')
   })
 
-  it('disables Raw in % of normal mode and writes the reason out as visible text, not a tooltip', () => {
+  it('disables Raw in % of normal mode and writes the reason out as text, not a tooltip, shown only on an attempt', () => {
     const out = html('harmonized', true)
     expect(out).toContain('aria-disabled="true"')
+    // Not a standing notice above the map: the text is there for screen readers (visually hidden)
+    // and appears for everyone when Raw is tried.
+    expect(out).toMatch(/class="visually-hidden"[^>]*>Raw is not available in % of normal mode/)
+    expect(out).not.toContain('source-unavailable')
     expect(out).toContain('Raw is not available in % of normal mode')
     expect(out).toContain('needs a baseline, which exists only for harmonized data')
     expect(out).not.toContain('title=')

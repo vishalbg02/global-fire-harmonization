@@ -20,7 +20,7 @@ The app shows stored values from the API (which serves the products as stored). 
 | Stacks the baseline and 90% interval bands as `high - low` for drawing | `witness/chartOption.ts` `band` | Drawing only; the band series have their tooltip switched off, so the difference is never shown. |
 | Custom-area bounds rounded to 2 decimals in the label and id | `state/bbox.ts` `bboxLabel`, `customId` | Display and id only (the request uses the numbers typed). |
 
-Not controlled by the app: the axis tick labels and the hover tooltip numbers of the two ECharts charts (satellite chart, calendar heatmap tooltips use `cellLines` and are controlled; the satellite chart's axis tooltip is ECharts' default number formatting, which the T-026 check should read by hovering). The CSV is written by the API and rounds nothing.
+The satellite chart's hover numbers are formatted with the same one-decimal helper as every other panel (`valueFormatter`, after the T-026 finding of unrounded values), and its axis ticks show whole numbers with thousands separators; the calendar heatmap tooltips use `cellLines`. Plotted positions are the stored values. The CSV is written by the API and rounds nothing.
 
 ## Month and probability wording
 
@@ -92,7 +92,7 @@ Product columns are those of `data/products` (`cell_month_harmonized`, `entity_m
 
 | View | Field shown | Source | Format and rounding | Unit |
 |---|---|---|---|---|
-| Satellite chart | Harmonized line and 90% band | `estimate`, `ci90_low`, `ci90_high` | Stored values plotted; tooltip and axis numbers are ECharts defaults | cell-days |
+| Satellite chart | Harmonized line and 90% band | `estimate`, `ci90_low`, `ci90_high` | Stored values plotted; hover numbers one decimal (`oneDecimal`, as in the other panels); axis ticks whole numbers with thousands separators | cell-days |
 | same | Baseline band and median | `baseline_p25`, `baseline_p75`, `baseline_median` | Same | cell-days |
 | same | Raw combined line | `raw_combined_cell_days` | Same | cell-days (raw) |
 | same | One line per satellite | `raw_by_witness` | Same; missing month is a gap, not 0 | cell-days (raw) |
@@ -134,5 +134,5 @@ Product columns are those of `data/products` (`cell_month_harmonized`, `entity_m
 2. The % of normal shown is rounded to a whole number; the CSV holds the full value (`264.8615747270596` for Indonesia 2015-09 is shown as "265% of normal").
 3. The calendar and the map colour clamp at 200% of normal and at the shared maximum; the tooltip and the table hold the true value.
 4. The "N of M in neither ranking" line and the test-status counts are computed by the app (a subtraction and a tally).
-5. The satellite chart's hover numbers are ECharts' default formatting, not the app's `toFixed(1)`.
+5. (Fixed in the T-039 review.) The satellite chart's hover numbers were ECharts' default formatting; they now use the app's one-decimal helper. The legend names mark every satellite line as raw ("Raw: Aqua MODIS", "Raw: all satellites combined").
 6. **Partial-month indicator: dropped.** `days_available` is in `cell_month_witness` only, so no served product carries it. Following the Lead's decision on PR #62 (option a), the app relies on the `OUTAGE` reason code (the chart marks it, the evidence panel explains it) and shows no partial-month count. No contract change.

@@ -5,10 +5,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
 import { PolygonLayer, TextLayer } from '@deck.gl/layers'
-import { TerraDraw, TerraDrawRectangleMode } from 'terra-draw'
+import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
 import { bboxFromRing } from '../../state/bbox.ts'
+import { openRing } from '../../state/polygon.ts'
+import type { Ring } from '../../state/polygon.ts'
 import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
@@ -43,9 +45,15 @@ interface Props {
   fit: FitRequest | null
   /** The selected custom rectangle, outlined on the map. */
   customBbox: Bbox | null
+  /** The selected custom polygon, outlined instead of its bounding box (T-044). */
+  customRing?: Ring | null
   /** While true, the user draws a rectangle with two clicks. */
   drawing: boolean
   onDrawn: (bbox: Bbox) => void
+  /** While true, the user draws a polygon: a click per corner, double-click or Enter to finish. */
+  polygonDrawing?: boolean
+  /** The drawn ring, open (first point not repeated); the app validates it like a typed one. */
+  onDrawnPolygon?: (ring: number[][]) => void
   /** ISO3 codes of the countries listed in the anomaly rankings, to outline (T-040). */
   anomalyOutlines: { above: readonly string[]; below: readonly string[] }
 }
@@ -58,6 +66,14 @@ function boxFeature(bbox: Bbox) {
     type: 'Feature' as const,
     properties: {},
     geometry: { type: 'Polygon' as const, coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] },
+  }
+}
+
+function ringFeature(ring: Ring) {
+  return {
+    type: 'Feature' as const,
+    properties: {},
+    geometry: { type: 'Polygon' as const, coordinates: [[...ring, ring[0]]] },
   }
 }
 
@@ -74,8 +90,11 @@ export function MapView({
   onSelectCountry,
   fit,
   customBbox,
+  customRing = null,
   drawing,
   onDrawn,
+  polygonDrawing = false,
+  onDrawnPolygon,
   anomalyOutlines,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
@@ -86,14 +105,14 @@ export function MapView({
   // Zoom of the map: the verdict icons are drawn only when a cell is big enough to hold one.
   const [zoom, setZoom] = useState(INITIAL_ZOOM)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
-  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn })
+  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon })
   // Clicks are ignored while drawing, and for a moment after a rectangle is finished, so that
   // the click that ends the drawing does not also select a country or a cell.
   const ignoreClicksUntil = useRef(0)
   const drawingRef = useRef(drawing)
   useEffect(() => {
-    callbacks.current = { onSelectCell, onSelectCountry, onDrawn }
-    drawingRef.current = drawing
+    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon }
+    drawingRef.current = drawing || polygonDrawing
   })
   const clicksIgnored = () => drawingRef.current || Date.now() < ignoreClicksUntil.current
 
@@ -200,11 +219,12 @@ export function MapView({
     if (map === null) return
     const apply = () => {
       const source = map.getSource(CUSTOM_SOURCE) as maplibregl.GeoJSONSource | undefined
-      source?.setData({ type: 'FeatureCollection', features: customBbox === null ? [] : [boxFeature(customBbox)] })
+      source?.setData({ type: 'FeatureCollection', features: customRing !== null ? [ringFeature(customRing)] : customBbox === null ? [] : [boxFeature(customBbox)],
+      })
     }
     if (loaded.current) apply()
     else map.once('load', apply)
-  }, [customBbox])
+  }, [customBbox, customRing])
 
   // Fit the map to an area chosen in the picker (no animation if the user prefers reduced motion).
   useEffect(() => {
@@ -252,6 +272,41 @@ export function MapView({
       }
     }
   }, [drawing])
+
+  // Draw a polygon (TerraDrawPolygonMode): one click per corner; a double-click or Enter finishes,
+  // Escape drops the polygon in progress. Double-click zoom is off meanwhile so it cannot zoom.
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null || !polygonDrawing) return
+    let draw: TerraDraw | null = null
+    const start = () => {
+      map.doubleClickZoom.disable()
+      draw = new TerraDraw({
+        adapter: new TerraDrawMapLibreGLAdapter({ map }),
+        modes: [new TerraDrawPolygonMode({ keyEvents: { cancel: 'Escape', finish: 'Enter' } })],
+      })
+      draw.start()
+      draw.setMode('polygon')
+      draw.on('finish', (id) => {
+        const feature = draw?.getSnapshot().find((f) => f.id === id)
+        const ring = feature?.geometry.type === 'Polygon' ? feature.geometry.coordinates[0] : null
+        draw?.clear()
+        ignoreClicksUntil.current = Date.now() + 400
+        if (ring === null || ring === undefined) return
+        callbacks.current.onDrawnPolygon?.(openRing(ring))
+      })
+    }
+    if (loaded.current) start()
+    else map.once('load', start)
+    return () => {
+      map.off('load', start)
+      map.doubleClickZoom.enable()
+      if (draw !== null) {
+        draw.stop()
+        draw = null
+      }
+    }
+  }, [polygonDrawing])
 
   useEffect(() => {
     const overlay = overlayRef.current

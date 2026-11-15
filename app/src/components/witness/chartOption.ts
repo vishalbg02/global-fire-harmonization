@@ -1,6 +1,7 @@
 import type { EChartsCoreOption } from 'echarts/core'
 import type { EntityMonth, Witness } from '../../api/contract.ts'
 import { WITNESS_NAMES } from '../../content/witnesses.ts'
+import { oneDecimal } from '../map/format.ts'
 import {
   fieldSeries,
   monthLabels,
@@ -34,6 +35,11 @@ export interface MonthMarks {
   provisional: string[]
 }
 
+/** The legend name of a satellite's own line: always marked as raw, as the other panels do. */
+export function rawWitnessName(witness: Witness): string {
+  return `Raw: ${WITNESS_NAMES[witness].replace(' (raw only)', '')}`
+}
+
 export function buildMonthMarks(records: readonly EntityMonth[]): MonthMarks {
   return {
     outage: monthsWithReason(records, 'OUTAGE'),
@@ -56,6 +62,9 @@ function hasValues(s: Record<string, unknown>): boolean {
   return (s.data as (number | null | undefined)[]).some((v) => v !== null && v !== undefined)
 }
 
+export const RAW_COMBINED_NAME = 'Raw: all satellites combined'
+const LOWER_BOUND_SUFFIX = ' (lower bound)'
+
 /** A band from `low` to `high`, drawn as a stacked invisible line plus a filled area on top. */
 function band(low: (number | null)[], high: (number | null)[], color: string, name: string) {
   const diff = low.map((l, i) => {
@@ -65,7 +74,7 @@ function band(low: (number | null)[], high: (number | null)[], color: string, na
   const stack = `band-${name}`
   return [
     {
-      name: `${name} (lower bound)`,
+      name: `${name}${LOWER_BOUND_SUFFIX}`,
       type: 'line' as const,
       data: low,
       stack,
@@ -101,15 +110,15 @@ export function buildWitnessChartOption(records: readonly EntityMonth[]): EChart
   const witnesses = witnessesPresent(records)
 
   const series: Record<string, unknown>[] = [
-    ...band(fieldSeries(records, 'baseline_p25'), fieldSeries(records, 'baseline_p75'), BASELINE_COLOR, 'Baseline (25th-75th percentile)'),
+    ...band(fieldSeries(records, 'baseline_p25'), fieldSeries(records, 'baseline_p75'), BASELINE_COLOR, 'Baseline 25–75%'),
     {
-      name: 'Baseline (median)',
+      name: 'Baseline median',
       type: 'line',
       data: fieldSeries(records, 'baseline_median'),
       symbol: 'none',
       lineStyle: { color: BASELINE_COLOR, type: 'dashed', width: 1 },
     },
-    ...band(fieldSeries(records, 'ci90_low'), fieldSeries(records, 'ci90_high'), HARMONIZED_COLOR, 'Harmonized (90% interval)'),
+    ...band(fieldSeries(records, 'ci90_low'), fieldSeries(records, 'ci90_high'), HARMONIZED_COLOR, 'Harmonized 90% interval'),
     {
       name: 'Harmonized estimate',
       type: 'line',
@@ -119,7 +128,7 @@ export function buildWitnessChartOption(records: readonly EntityMonth[]): EChart
       markLine: markLine(marks.outage, '#b00020', 'solid'),
     },
     {
-      name: 'Raw combined (all satellites)',
+      name: RAW_COMBINED_NAME,
       type: 'line',
       data: rawCombinedSeries(records),
       symbol: 'none',
@@ -127,7 +136,7 @@ export function buildWitnessChartOption(records: readonly EntityMonth[]): EChart
       markLine: markLine(marks.drift, '#8e44ad', 'dashed'),
     },
     ...witnesses.map((w, i) => ({
-      name: WITNESS_NAMES[w],
+      name: rawWitnessName(w),
       type: 'line',
       data: witnessSeries(records, w),
       symbol: 'none',
@@ -145,15 +154,33 @@ export function buildWitnessChartOption(records: readonly EntityMonth[]): EChart
           'Time-series chart of satellite-detected fire activity: the harmonized estimate with its uncertainty band, the historical baseline band and median, the raw combined count, and one line per satellite. Outage months, Aqua-drift-era months and provisional months are marked. Use the table view for the values.',
       },
     },
-    tooltip: { trigger: 'axis', confine: true },
+    // One decimal, as in every other panel (the stored values are long floats).
+    tooltip: {
+      trigger: 'axis',
+      confine: true,
+      valueFormatter: (v: unknown) => (typeof v === 'number' ? oneDecimal(v) : String(v ?? '')),
+    },
     // Only series that hold at least one stored value are listed (a missing product leaves none).
-    legend: { type: 'scroll', bottom: 0, data: series.filter(hasValues).map((s) => s.name as string) },
-    grid: { left: 56, right: 16, top: 24, bottom: 64 },
+    // Every series is named in the legend, wrapped over rows (no paging); the helper entries of the
+    // bands are left out.
+    legend: {
+      type: 'plain',
+      top: 0,
+      data: series
+        .filter(hasValues)
+        .map((s) => s.name as string)
+        .filter((name) => !name.endsWith(LOWER_BOUND_SUFFIX)),
+    },
+    grid: { left: 64, right: 16, top: 84, bottom: 56 },
     xAxis: { type: 'category', data: categories, boundaryGap: false },
-    yAxis: { type: 'value', name: 'fire-active cell-days' },
+    yAxis: {
+      type: 'value',
+      name: 'fire-active cell-days',
+      axisLabel: { formatter: (v: number) => (Number.isInteger(v) ? v.toLocaleString('en-US') : oneDecimal(v)) },
+    },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0 },
-      { type: 'slider', xAxisIndex: 0, bottom: 28, height: 18 },
+      { type: 'slider', xAxisIndex: 0, bottom: 8, height: 18 },
     ],
     series,
   }
