@@ -504,7 +504,19 @@ def check_methods(rep: Report, products: Path, validation_path: Path) -> None:
 
 
 # ------------------------------------------------------------------------------------------------------------- run
+def require_node() -> None:
+    """The app's TypeScript helpers are imported by node's built-in type stripping (22.6 and later; the project requires 22.12+)."""
+    try:
+        out = subprocess.run(["node", "--version"], capture_output=True, text=True, check=True).stdout.strip().lstrip("v")
+        major, minor = (int(x) for x in out.split(".")[:2])
+    except (OSError, subprocess.CalledProcessError, ValueError) as e:
+        raise SystemExit("number_check needs node 22.6 or later on the PATH (the project requires 22.12+)") from e
+    if (major, minor) < (22, 6):
+        raise SystemExit(f"number_check needs node 22.6 or later to import the app's TypeScript helpers; found {out}")
+
+
 def run(products: Path = PRODUCTS, validation_extra: Path | None = None) -> dict:
+    require_node()
     rep = Report()
     em = read_entity_month(products)
     api = Api(products)
