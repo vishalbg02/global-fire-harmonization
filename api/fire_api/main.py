@@ -7,7 +7,8 @@ unavailable.
 """
 
 import math
-from typing import Annotated, Literal
+from collections.abc import Callable
+from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
@@ -16,7 +17,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from starlette.middleware.gzip import GZipMiddleware
 
-from . import custom, export, polygon, products
+from . import custom, export, map_cache, map_columns, polygon, products
 from .custom import HarmonizeUnavailable
 from .models import (
     Anomaly,
@@ -93,10 +94,61 @@ def get_entities(type: Annotated[Literal["COUNTRY", "CONTINENT"], Query()]) -> l
     return products.entities(EntityType(type))
 
 
+MAP_CACHE_CONTROL = "public, max-age=300"
+
+
+def _accepts_gzip(header: str) -> bool:
+    for part in header.split(","):
+        coding, _, params = part.partition(";")
+        if coding.strip().lower() in ("gzip", "x-gzip", "*"):
+            return params.replace(" ", "").lower() not in ("q=0", "q=0.0", "q=0.00", "q=0.000")
+    return False
+
+
+def _cached_response(request: Request, etag: str | None, payload: Callable[[], Any]) -> Response:
+    """A cached, pre-compressed JSON answer with its validator: 304 when the client has it, gzip
+    when the client accepts it. `payload` is only called when the bytes are needed."""
+    headers = {"Cache-Control": MAP_CACHE_CONTROL, "Vary": "Accept-Encoding"}
+    if etag is not None:
+        headers["ETag"] = etag
+        tags = [t.strip() for t in request.headers.get("if-none-match", "").split(",")]
+        if etag in tags or "*" in tags:
+            return Response(status_code=304, headers=headers)
+    cached = payload()
+    if cached.etag:
+        headers["ETag"] = cached.etag
+    if _accepts_gzip(request.headers.get("accept-encoding", "")):
+        headers["Content-Encoding"] = "gzip"
+        body = cached.gzipped
+    else:
+        body = cached.identity()
+    return Response(content=body, media_type="application/json", headers=headers)
+
+
 @app.get("/api/map", response_model=list[MapCell])
-def get_map(year: Year, month: MonthParam, layer: MapLayer) -> list[MapCell]:
-    # `layer` is validated, but every layer returns the same fields (the app colours them).
-    return products.map_cells(year, month)
+def get_map(request: Request, year: Year, month: MonthParam, layer: MapLayer) -> Response:
+    # `layer` is validated, but every layer returns the same fields (the app colours them), so
+    # all layers share one cached, pre-compressed answer per month (api/fire_api/map_cache.py).
+    return _cached_response(
+        request, map_cache.validator(year, month), lambda: map_cache.payload(year, month)
+    )
+
+
+@app.get("/api/map/cells")
+def get_map_cells(request: Request) -> Response:
+    """The ids and bounds of every analysis cell, once, in columns (api/README.md)."""
+    return _cached_response(request, map_columns.cells_validator(), map_columns.cells_payload)
+
+
+@app.get("/api/map/columns")
+def get_map_columns(request: Request, year: Year, month: MonthParam, layer: MapLayer) -> Response:
+    """One map month in columns, with only the fields the app reads for the layer (api/README.md);
+    the values are those of GET /api/map."""
+    return _cached_response(
+        request,
+        map_columns.columns_validator(year, month, layer),
+        lambda: map_columns.columns_payload(year, month, layer),
+    )
 
 
 @app.get("/api/series", response_model=list[EntityMonth])

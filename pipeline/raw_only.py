@@ -66,7 +66,7 @@ def build(paths: Paths | None = None) -> dict:
         UNION ALL
         SELECT 'CONTINENT', c.continent, k.name, c.cell_id FROM {cells} c JOIN continents k ON k.code = c.continent
         UNION ALL
-        SELECT 'GLOBAL', 'GLOBAL', 'Global', c.cell_id FROM {cells} c""")
+        SELECT 'GLOBAL', 'GLOBAL', 'World', c.cell_id FROM {cells} c""")
     # the harmonized columns shared by both tables, in contract order (estimate .. method_version)
     harm = f"""{nulls_a}, {{raw}} AS raw_combined_cell_days, CAST([] AS VARCHAR[]) AS witnesses_used, CAST(0 AS BIGINT) AS n_witnesses,
                {nulls_b}, 'CANNOT_DETERMINE' AS verdict, CAST(['NOT_HARMONIZED'] AS VARCHAR[]) AS reason_codes, {{dl}} AS data_level,

@@ -116,9 +116,9 @@ describe('evidence while only raw data exist', () => {
     expect(html).not.toContain('Cannot determine')
     expect(html).not.toContain('Satellites used')
     expect(html).not.toContain('No satellite contributed')
-    expect(html).not.toContain('No caveats')
+    expect(html).not.toContain('No caveat')
     // The stored reason code is still explained; only the empty "no caveats" message is hidden.
-    expect(html).not.toContain('No caveats are recorded')
+    expect(html).not.toContain('No caveat flags are recorded')
     expect(html).toContain('Aqua MODIS: 431')
     expect(html).toContain('S-NPP VIIRS: 2990')
     expect(html).toContain('Method version: 0.1.0-raw-only')

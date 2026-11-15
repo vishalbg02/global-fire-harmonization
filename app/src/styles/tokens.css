@@ -1,0 +1,88 @@
+/* Design tokens (T-070): the one place for colour, type, space and shape.
+   Instrument look: flat panels, 1 px rules, radius 2 to 4 px, no shadows, one accent (vermillion).
+   The contrast test (src/content/contrast.test.ts) reads the colours below. */
+:root {
+  /* Colour */
+  --ink: #14181f;
+  --muted: #566070;
+  --page: #f3f5f9;
+  --surface: #ffffff;
+  --border: #d5dbe5;
+  --brand: #12233f;
+  --accent: #d55e00;
+  --focus: #0050c8;
+  --on-brand: #ffffff;
+  --on-brand-muted: #c3cde0;
+  --warn-bg: #fff3cd;
+  --warn-border: #8a6d00;
+  --danger: #b00020;
+
+  /* Verdict colours are unchanged from the map (src/content/verdicts.ts). The tints are for badges. */
+  --v-above: #d55e00;
+  --v-below: #0072b2;
+  --v-within: #999999;
+  --v-cannot: #cccccc;
+  --v-none: #bed7eb;
+  --v-above-tint: #fbe9dc;
+  --v-above-ink: #7a3400;
+  --v-below-tint: #dcecf6;
+  --v-below-ink: #00476e;
+  --v-within-tint: #ececec;
+  --v-within-ink: #2b2f36;
+  --v-cannot-tint: #f0f0f0;
+  --v-cannot-ink: #2b2f36;
+  --v-none-tint: #e6f0f8;
+  --v-none-ink: #2c4a63;
+
+  /* Type: IBM Plex, self-hosted, with a system fallback. Every number uses tabular figures. */
+  --font-sans: 'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --t-12: 12px;
+  --t-14: 14px;
+  --t-16: 16px;
+  --t-20: 20px;
+  --t-28: 28px;
+  --t-40: 40px;
+
+  /* Space */
+  --s-4: 4px;
+  --s-8: 8px;
+  --s-12: 12px;
+  --s-16: 16px;
+  --s-24: 24px;
+  --s-32: 32px;
+
+  /* Shape */
+  --radius: 3px;
+  --rule: 1px solid var(--border);
+
+  /* Names used by the older rules of index.css */
+  --text: var(--ink);
+  --text-muted: var(--muted);
+  --bg: var(--page);
+  --panel: var(--surface);
+
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  color-scheme: light;
+}
+
+/* One visible focus style for every control. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* MapLibre's zoom buttons draw their own faint ring; give them the same one (T-074). */
+.maplibregl-ctrl button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  box-shadow: none;
+}

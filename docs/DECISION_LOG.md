@@ -33,6 +33,8 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
 | D-024 | 2026-11-14 | Add `terra-draw-maplibre-gl-adapter` 1.5.0 to the frontend stack (drawing the custom rectangle on the MapLibre map, T-035) | **APPROVED** (2026-11-14) |
 | D-031 | 2026-11-15 | Keep the D-028 minimum-baseline rule for cells with unprecedented activity; no new caveat code; explained in the app and the demo | **APPROVED** (2026-11-15) |
+| D-032 | 2026-11-15 | Map: NASA GIBS imagery basemap and an optional 3D globe view (amends the plain-background basemap of TECH_STACK; CesiumJS stays rejected) | **APPROVED** (2026-11-15) |
+| D-033 | 2026-11-15 | India's official boundary: the map draws Natural Earth's India point-of-view boundaries now; the country assignment of the Jammu and Kashmir cells follows after the demo | **APPROVED** (2026-11-15) |
 | D-030 | 2026-11-15 | v0.2 activity-dependent conversion (post-hoc, prompted by A1 and T-020b): adopted only by a pre-registered rule; v0.1 stays visible | **NOT ADOPTED** (2026-11-15; rule not met, v0.1 stays) |
 | D-029 | 2026-11-15 | Test A1: both paths use the shared Aqua-measured 2003-2022 baseline (amends D-028 for A1 only; adopted after seeing C1, whose official result stays INCONCLUSIVE) | **APPROVED** (2026-11-15) |
 
@@ -290,4 +292,26 @@ The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the 
 - **Context:** D-028 gives `INSUFFICIENT_BASELINE` (verdict `CANNOT_DETERMINE`) to a cell whose baseline median is below 5 cell-days. A month far above the history of such a quiet cell therefore gets no ABOVE verdict. Measured on the T-014 products for cell-months with an estimate of at least 20 and more than 3 times the baseline p75: 39,682 cell-months worldwide are `CANNOT_DETERMINE` (all with `INSUFFICIENT_BASELINE`, 289 distinct months) against 7,942 `ABOVE_NORMAL`; in Australia in 2019-12 (Black Summer) 105 cells are `CANNOT_DETERMINE` against 4 `ABOVE_NORMAL` under the same condition (15 `ABOVE_NORMAL` cells in all of Australia that month), while the country verdict is `ABOVE_NORMAL` at 328% of normal (risk S22).
 - **Decision (Lead, 2026-11-15):** **keep the D-028 rule as it is.** No new caveat code and no change to the verdict order or the thresholds. The app explains it with the existing reason text ("There is too little historical fire activity here to define what is normal"); entity-level verdicts and custom areas carry these events, and the demo uses them rather than single cells.
 - **Why:** D-028 step 4: below 5 Aqua-equivalent cell-days there is too little normal activity to judge; the Lead kept that rule.
+- **Status:** **APPROVED** by the Lead, 2026-11-15.
+
+
+### D-032: NASA GIBS imagery basemap and an optional globe view **[APPROVED 2026-11-15]**
+- **Context:** the Lead asked for a realistic Earth view ("like Google Earth") so the map reads as the real planet, not a flat grid on a blank background. `TECH_STACK.md` allowed an optional free basemap only with the Lead's approval and rejected CesiumJS as heavy.
+- **Decision (Lead, 2026-11-15):**
+  1. **Base imagery:** NASA GIBS `BlueMarble_ShadedRelief_Bathymetry` (WMTS, EPSG:3857, no key; tile URL checked HTTP 200 on 2026-11-15).
+  2. **Optional "satellite view" layer:** NASA GIBS `MODIS_Aqua_CorrectedReflectance_TrueColor` for a chosen day of the selected month (Aqua is the reference witness; tile checked HTTP 200 for 2015-09-20). Off by default, with the date shown on the map.
+  3. **Globe:** a Globe / Flat switch using MapLibre's globe projection, only if the deck.gl cell layer renders correctly on it; otherwise flat only.
+  4. The verdict cells stay the analysis layer, drawn semi-transparent over the imagery. **No change to products, the method or the API contract.**
+  5. **The offline copy** falls back to today's plain background, with a note, because GIBS needs a network.
+  6. GIBS is credited on the map with its link, and listed in `docs/DATA_SOURCES.md` with its verification label.
+- **Why:** the imagery is NASA's own, free and citable, and fits a NASA challenge. MapLibre already supports a globe, so no new dependency is needed.
+- **Status:** **APPROVED** by the Lead, 2026-11-15. Implementation: T-084 (Member 3).
+
+### D-033: India's official boundary on the map and in the country data **[APPROVED 2026-11-15]**
+- **Context:** the Lead noticed that the map's India outline is wrong in the north. The app draws Natural Earth's default 1:110m countries (the de facto line): India reaches about 35.5°N, and Gilgit-Baltistan, Azad Kashmir and Aksai Chin are drawn as Pakistan or China. The project is presented at an event in India, where maps must show India's official boundary. Separately, cell countries come from the FIRMS country files: in the box 72.5–80.5°E, 32.5–37.2°N, 42 cells are `PAK`, 27 `CHN`, 39 `IND` and 1 unassigned (measured 2026-11-15 on `cells.parquet`).
+- **Decision (Lead, 2026-11-15):**
+  1. **Map, now (T-085, Member 2; moved from Member 3 by the Lead):** replace the country boundaries with Natural Earth's **India point-of-view** admin-0 file (`ne_10m_admin_0_countries_ind`, the same schema; India extends to 37.05°N, checked 2026-11-15), simplified to the app's size. Display only.
+  2. **Data, after the demo (T-086, Member 2):** reassign the country of the affected cells by India's official boundary (point in polygon on the same file), regenerate `cells.parquet` and the IND, PAK and CHN rows of `entity_month`, re-run the contract check, the T-026 number check and the featured-story check, and record the change in `DATA_SOURCES.md`. Continents and the world total do not change (all are in Asia).
+  3. **Until T-086 merges,** `RISKS_AND_LIMITATIONS.md` states that the country totals for India, Pakistan and China follow FIRMS's country attribution in Jammu and Kashmir.
+- **Why:** India's official map is required at an Indian event, and the fix uses the same public-domain source the project already uses. The data step changes products, so it waits until after the presentation, to keep `main` demo-ready.
 - **Status:** **APPROVED** by the Lead, 2026-11-15.

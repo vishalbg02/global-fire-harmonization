@@ -12,6 +12,8 @@ import {
   staticManifest,
 } from './staticData.ts'
 import type { EncodedMonth } from './staticData.ts'
+import { asCellAreas, asCellColumns, asEncodedMonth, decodeMapCells } from './mapColumns.ts'
+import type { CellAreas, CellColumns } from './mapColumns.ts'
 import {
   decodeRawByWitness,
   parseAnomalies,
@@ -136,15 +138,65 @@ export async function fetchValidation(base: string = apiBaseUrl()): Promise<Vali
   )
 }
 
+/**
+ * The layer asked of GET /api/map/columns. The endpoint sends the same fields for every layer (the
+ * fields the map, its tooltip and the evidence panel of a selected cell read), so the app always
+ * asks with this one value: a layer change reuses the browser's copy of the month instead of
+ * downloading it again.
+ */
+export const MAP_COLUMNS_LAYER: MapLayer = 'verdict'
+
+/** How long the shared cell list is kept: the grid does not change while the session lasts. */
+export const CELL_LIST_TTL_MS = 30 * 60 * 1000
+
+let cellList: { base: string; at: number; promise: Promise<CellColumns> } | null = null
+const columnsUnavailable = new Set<string>()
+
+/** Only for tests: forget the cell list and the memory of an API without the columnar endpoints. */
+export function resetMapColumns(): void {
+  cellList = null
+  columnsUnavailable.clear()
+}
+
+/** The shared cell list (GET /api/map/cells), fetched once and kept; a failure is not kept. `fresh` asks the server again, bypassing a copy kept by the browser. */
+function fetchCellList(base: string, fresh = false): Promise<CellColumns> {
+  const now = Date.now()
+  if (!fresh && cellList !== null && cellList.base === base && now - cellList.at < CELL_LIST_TTL_MS) return cellList.promise
+  const url = `${base}/api/map/cells`
+  const promise = (fresh ? request(url, { cache: 'no-cache' }) : getJson(url)).then(asCellColumns)
+  const entry = { base, at: now, promise }
+  cellList = entry
+  promise.catch(() => {
+    if (cellList === entry) cellList = null
+  })
+  return promise
+}
+
+async function fetchMapCellsFromApi(year: number, month: number, layer: MapLayer, base: string): Promise<MapCell[]> {
+  if (!columnsUnavailable.has(base)) {
+    const query = new URLSearchParams({ year: String(year), month: String(month), layer: MAP_COLUMNS_LAYER })
+    try {
+      const [cells, raw] = await Promise.all([fetchCellList(base), getJson(`${base}/api/map/columns?${query.toString()}`)])
+      return decodeMapCells(asEncodedMonth(raw), cells)
+    } catch (error) {
+      // An API without the columnar endpoints answers 404: use /api/map, as before.
+      if (!(error instanceof ApiError) || error.status !== 404) throw error
+      columnsUnavailable.add(base)
+      cellList = null
+    }
+  }
+  const query = new URLSearchParams({ year: String(year), month: String(month), layer })
+  return parseMapCells(await getJson(`${base}/api/map?${query.toString()}`))
+}
+
 export async function fetchMapCells(
   year: number,
   month: number,
   layer: MapLayer,
   base: string = apiBaseUrl(),
 ): Promise<MapCell[]> {
-  const query = new URLSearchParams({ year: String(year), month: String(month), layer })
   return route(
-    async () => parseMapCells(await getJson(`${base}/api/map?${query.toString()}`)),
+    () => fetchMapCellsFromApi(year, month, layer, base),
     async () => {
       // The same stored values in the compact layout: every layer has the same fields.
       const [cells, encoded] = await Promise.all([
@@ -153,6 +205,29 @@ export async function fetchMapCells(
       ])
       return parseMapCells(decodeMonth(encoded as EncodedMonth, cells))
     },
+  )
+}
+
+/**
+ * The country and continent of every analysis cell (T-090), from the shared cell list that the map already fetches (one request per
+ * session). `null` when the API does not send them (an older API, a 404) and in the offline copy, which has no cell list with areas:
+ * the caller says so instead of guessing.
+ */
+export async function fetchCellAreas(base: string = apiBaseUrl()): Promise<CellAreas | null> {
+  return route(
+    async () => {
+      try {
+        const kept = asCellAreas(await fetchCellList(base))
+        if (kept !== null) return kept
+        // The list has no area columns. It may be an answer kept by the browser's HTTP cache (the API lets it be kept for 5 minutes)
+        // from before the API sent them: ask the server once, bypassing the kept copy. An API that really does not send them still gives null.
+        return asCellAreas(await fetchCellList(base, true))
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null
+        throw error
+      }
+    },
+    async () => null,
   )
 }
 
