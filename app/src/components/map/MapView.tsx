@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import type { MapGeoJSONFeature, MapMouseEvent, StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -9,13 +9,23 @@ import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from 'terra-d
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
 import { bboxFromRing } from '../../state/bbox.ts'
+import { pinnedReducer } from '../../state/pinnedCell.ts'
 import { openRing } from '../../state/polygon.ts'
 import type { Ring } from '../../state/polygon.ts'
 import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
 import { countryIso3, countryName } from './countries.ts'
-import { cellFillColor, needsOutline, sharedMax } from './scale.ts'
+import { CELL_STROKE_ALPHA, cellFillColor, cellStrokeWidth, needsOutline, sharedMax } from './scale.ts'
+import {
+  MapLegend,
+  MapLoading,
+  PinnedCellCard,
+  SCROLL_HINT,
+  SCROLL_HINT_MAC,
+  ScrollHint,
+  TOUCH_HINT,
+} from './mapOverlays.tsx'
 
 // MapLibre 6 runs in a module worker. Bundlers do not emit it automatically, so register
 // it through Vite (works in both the dev server and the production build).
@@ -56,6 +66,8 @@ interface Props {
   onDrawnPolygon?: (ring: number[][]) => void
   /** ISO3 codes of the countries listed in the anomaly rankings, to outline (T-040). */
   anomalyOutlines: { above: readonly string[]; below: readonly string[] }
+  /** True while the month's cells are loading: shows the loading indicator on the map (T-071). */
+  loading?: boolean
 }
 
 const CUSTOM_SOURCE = 'custom-area'
@@ -96,6 +108,7 @@ export function MapView({
   polygonDrawing = false,
   onDrawnPolygon,
   anomalyOutlines,
+  loading = false,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -105,6 +118,15 @@ export function MapView({
   // Zoom of the map: the verdict icons are drawn only when a cell is big enough to hold one.
   const [zoom, setZoom] = useState(INITIAL_ZOOM)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
+  // The cell whose card is pinned on the map: until closed, Esc, or another cell is clicked (T-071).
+  const [pinned, pinDispatch] = useReducer(pinnedReducer, null)
+  useEffect(() => pinDispatch({ type: 'selection', selectedCellId }), [selectedCellId])
+  const closePinned = useCallback(() => pinDispatch({ type: 'dismiss' }), [])
+  const pinnedCell = useMemo(
+    () => (pinned === null || cells === null ? null : (cells.find((c) => c.cell_id === pinned) ?? null)),
+    [pinned, cells],
+  )
+  const legendMax = useMemo(() => (cells === null ? 0 : sharedMax(cells)), [cells])
   const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon })
   // Clicks are ignored while drawing, and for a moment after a rectangle is finished, so that
   // the click that ends the drawing does not also select a country or a cell.
@@ -125,6 +147,14 @@ export function MapView({
       zoom: INITIAL_ZOOM,
       renderWorldCopies: false,
       attributionControl: false,
+      // The page scrolls over the map; zoom needs Ctrl or Cmd + scroll (or the buttons or keys).
+      // Touch: one finger scrolls the page, two move the map. The messages are MapLibre's own.
+      cooperativeGestures: true,
+      locale: {
+        'CooperativeGesturesHandler.WindowsHelpText': SCROLL_HINT,
+        'CooperativeGesturesHandler.MacHelpText': SCROLL_HINT_MAC,
+        'CooperativeGesturesHandler.MobileHelpText': TOUCH_HINT,
+      },
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     // The focusable map canvas gets a name and its keyboard keys (MapLibre: arrows pan, plus and minus zoom).
@@ -316,6 +346,7 @@ export function MapView({
       return
     }
     const max = sharedMax(cells)
+    const strokeWidth = cellStrokeWidth(zoom)
     const polygons = new PolygonLayer<MapCell>({
       id: 'cells',
       data: cells as MapCell[],
@@ -329,11 +360,21 @@ export function MapView({
         [c.lon_min, c.lat_max],
       ],
       getFillColor: (c) => [...cellFillColor(c, layer, max)],
+      // A light, thin stroke that grows with the zoom (none at world zoom); the selected cell's blue
+      // outline and the dark "no data" outline stay as they were (T-071).
       getLineColor: (c) =>
-        c.cell_id === selectedCellId ? [0, 80, 200, 255] : needsOutline(c, layer) ? [27, 27, 31, 255] : [60, 60, 60, 90],
-      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : 1),
+        c.cell_id === selectedCellId
+          ? [0, 80, 200, 255]
+          : needsOutline(c, layer)
+            ? [27, 27, 31, 255]
+            : [60, 60, 60, CELL_STROKE_ALPHA],
+      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : strokeWidth),
       lineWidthUnits: 'pixels',
-      updateTriggers: { getFillColor: [layer, max], getLineColor: [selectedCellId, layer], getLineWidth: [selectedCellId, layer] },
+      updateTriggers: {
+        getFillColor: [layer, max],
+        getLineColor: [selectedCellId, layer],
+        getLineWidth: [selectedCellId, layer, strokeWidth],
+      },
       onHover: (info) => {
         const box = wrap.current?.getBoundingClientRect()
         setHover(
@@ -343,7 +384,11 @@ export function MapView({
         )
       },
       onClick: (info) => {
-        if (info.object && !clicksIgnored()) callbacks.current.onSelectCell(info.object as MapCell)
+        if (info.object && !clicksIgnored()) {
+          const clicked = info.object as MapCell
+          pinDispatch({ type: 'click', cellId: clicked.cell_id })
+          callbacks.current.onSelectCell(clicked)
+        }
       },
     })
     // One icon per cell is a glyph for every one of the 56,238 cells; at world zoom a cell is about 2 px,
@@ -370,7 +415,17 @@ export function MapView({
 
   return (
     <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
-      <div ref={container} className="map" role="region" aria-label="Global fire activity map" />
+      <div
+        ref={container}
+        className="map"
+        role="region"
+        aria-label="Global fire activity map"
+        aria-busy={loading}
+      />
+      {loading && <MapLoading />}
+      <ScrollHint />
+      <MapLegend layer={layer} max={legendMax} />
+      {pinnedCell !== null && <PinnedCellCard cell={pinnedCell} layer={layer} onClose={closePinned} />}
       {hover !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
         <div
           className="map-tooltip"

@@ -26,6 +26,7 @@ import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { hasOfflineMap, monthKey, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
+import { useStartMonth } from './state/initialMonth.ts'
 import { checkRoundedRing, polygonArea } from './state/polygon.ts'
 import type { Ring } from './state/polygon.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
@@ -159,13 +160,8 @@ export default function App() {
   const offlineMapNoteText = offline === null ? null : offlineMapNote(offline, months)
   const mapAvailable = hasOfflineMap(offline?.months ?? null, selection.month)
 
-  // Start on the latest month once the available months are known.
-  useEffect(() => {
-    const latest = months[months.length - 1]
-    if (selection.month === null && latest !== undefined) {
-      dispatch({ type: 'set-month', year: latest.year, month: latest.month })
-    }
-  }, [months, selection.month])
+  // Start on the latest determinable month (a month in the link wins), T-071.
+  useStartMonth(months, selection.month, (year, month) => dispatch({ type: 'set-month', year, month }))
 
   // The API layer follows the shared Raw / Harmonized control and the map mode.
   // Raw-only products have no harmonized values: the views show raw activity and say so.
@@ -266,6 +262,7 @@ export default function App() {
               dispatch({ type: 'select-entity', entity: { entity_type: 'COUNTRY', entity_id: iso3, entity_name: name } })
             }
             fit={mapFit}
+            loading={cells.isFetching}
             customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
             customRing={area.entity_type === 'CUSTOM' ? (area.polygon ?? null) : null}
             drawing={drawing}
