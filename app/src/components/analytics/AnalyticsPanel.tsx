@@ -9,9 +9,9 @@ import { AnalyticsChart } from './AnalyticsChart.tsx'
 import { annualOption, compareOption, seasonOption, wholeNumber } from './chartOptions.ts'
 import { MONTH_NAMES, annualSeries, compareSeries, coverage, rankInMonth, rankText, seasonProfile } from './compute.ts'
 import type { Box } from './compute.ts'
-import { ANNUAL_NOTE, COMPARE_NOTE, COVERAGE_NOTE, SEASON_NOTE, chartSourceSegments } from './text.ts'
+import { ANNUAL_NOTE, COMPARE_NOTE, COVERAGE_NOTE, COVERAGE_WORLD_ONLY, SEASON_NOTE, chartSourceSegments } from './text.ts'
 
-/** A preset area (the series endpoint serves countries, continents and the world). `bbox` is the area's bounding box for the coverage; null means the whole world. */
+/** A preset area (the series endpoint serves countries, continents and the world). `bbox` is accepted for compatibility and is not used: coverage is shown for the world only (Lead's decision on PR #85). */
 export interface AnalyticsArea {
   entityType: SeriesEntityType
   entityId: string
@@ -82,14 +82,19 @@ export function AnalyticsPanel({ area, compareArea = null, year, month, cells, m
     () => (compareArea === null ? Promise.resolve(null) : fetchSeries(compareArea.entityType, compareArea.entityId)),
     [compareArea?.entityType, compareArea?.entityId],
   )
+  // Coverage is exact only for the world; for a country or a continent the panel says so (Lead's decision on PR #85).
+  const worldOnly = area.entityType === 'GLOBAL'
   const metadata = useLoad<Metadata | SourceMetadata>(() => (meta === undefined ? fetchMeta() : Promise.resolve(meta)), [meta])
-  const mapCells = useLoad<readonly MapCell[]>(() => (cells === undefined ? fetchMapCells(year, month, 'verdict') : Promise.resolve(cells)), [cells, year, month])
+  const mapCells = useLoad<readonly MapCell[]>(
+    () => (!worldOnly ? Promise.resolve([]) : cells === undefined ? fetchMapCells(year, month, 'verdict') : Promise.resolve(cells)),
+    [cells, year, month, worldOnly],
+  )
 
   const records = series.status === 'ready' ? series.value : null
   const annual = useMemo(() => (records === null ? null : annualSeries(records)), [records])
   const season = useMemo(() => (records === null ? null : seasonProfile(records, year)), [records, year])
   const rank = useMemo(() => (records === null ? null : rankInMonth(records, year, month)), [records, year, month])
-  const cover = useMemo(() => (mapCells.status === 'ready' ? coverage(mapCells.value, area.bbox ?? null) : null), [mapCells, area.bbox])
+  const cover = useMemo(() => (worldOnly && mapCells.status === 'ready' ? coverage(mapCells.value, null) : null), [mapCells, worldOnly])
   const compare = useMemo(
     () => (records !== null && other.status === 'ready' && other.value !== null ? compareSeries(records, other.value) : null),
     [records, other],
@@ -167,8 +172,9 @@ export function AnalyticsPanel({ area, compareArea = null, year, month, cells, m
 
       <section aria-labelledby="an-coverage">
         <h3 id="an-coverage">Coverage, {monthName} {year}</h3>
-        <Status state={mapCells} what="the cells" />
-        {mapCells.status === 'ready' && cover === null && <p className="analytics-lede">No analysis cell lies inside this area.</p>}
+        {!worldOnly && <p className="analytics-lede">{COVERAGE_WORLD_ONLY}</p>}
+        {worldOnly && <Status state={mapCells} what="the cells" />}
+        {worldOnly && mapCells.status === 'ready' && cover === null && <p className="analytics-lede">No analysis cell is available for this month.</p>}
         {cover !== null && (
           <>
             <p className="analytics-coverage">{Math.round(cover.share * 100)}% of {wholeNumber(cover.cells)} cells have a determinable verdict</p>
