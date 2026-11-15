@@ -1,6 +1,6 @@
 # Number inventory: every number the app displays (T-039 phase 2)
 
-> For Member 2 and the Lead, to tick off in T-026. Written 2026-11-15 from the code on branch `frontend/T-039-real-verdicts` (app `app/src`, API `api/fire_api`), products T-014 (method 0.1.0, contract 0.1.1). Each row was derived by reading the component and its format helper; the file in the last column is where to look.
+> **Updated 2026-11-15 for the finished UI (T-078): the sections "Summary card and sparkline" to "Map source line, imagery and boundaries" and the methods rows were added or rewritten; the results of the check are in `docs/validation/T-078-final-number-check.md`.** For Member 2 and the Lead, to tick off in T-026. Written 2026-11-15 from the code on branch `frontend/T-039-real-verdicts` (app `app/src`, API `api/fire_api`), products T-014 (method 0.1.0, contract 0.1.1). Each row was derived by reading the component and its format helper; the file in the last column is where to look.
 
 ## Rule: the app formats, it does not compute
 
@@ -113,9 +113,57 @@ Product columns are those of `data/products` (`cell_month_harmonized`, `entity_m
 | View | Field shown | Source | Format and rounding | Unit |
 |---|---|---|---|---|
 | Validation results header | Generated, method version, contract version, synthetic | `validation_results.json` | Stored text | none |
-| Validation results | Number of tests per status (PASS, FAIL, INCONCLUSIVE, NOT_RUN) | `validation_results.json` `tests[].status` | Computed tally (see above). With `tests: []` the page says no test has been run and shows no counts. | count |
-| Validation results | Each test: id, family, title, case, criterion, threshold, status, measured values, notes | `validation_results.json` `tests[]` | Stored text; each measured value printed as `String(value)`, null as "not measured" | as stored |
+| Validation results (T-089) | Number of tests per status (PASS, FAIL, INCONCLUSIVE, NOT_RUN), the filter chip counts | `validation_results.json` `tests[].status` | Computed tally (see above): 18 PASS, 18 FAIL, 2 INCONCLUSIVE for the T-027 file. With `tests: []` the page says no test has been run and shows no counts. | count |
+| Validation results (T-089) | One line per test family: status, entry counts, the Lead's reading note for D1 | `validation_results.json` (the family-level entry, else the documented rule in `methods/validationModel.ts`; D1: the pooled entry `D1-REGIONS` is the official one, Lead decision on PR #56) | Status as stored or by the rule; "N entries: a FAIL, b PASS" counted by the app | count |
+| Validation results | Each test: id, family, title, case, criterion, threshold, status, measured values, notes | `validation_results.json` `tests[]` | Stored text; each measured value printed as stored under a label made from its key (no rounding), null as "not measured"; FAIL and INCONCLUSIVE details open with the stored notes first | as stored |
 | Method sections, planned tests, grid-choice table, case table, limitations | Figures written in the text (for example baseline 2003 to 2022, 15 baseline years, probability threshold 0.8, phi 2.25 and 2.47, kappa 0.0084 and 0.0164, 0.5 and 0.05 degree grid, holdout errors and coverage 0.818 and 0.811, share of judgeable months 29.6%, 52.7%, 34.1%) | `app/src/content/methods.ts`, sources named in each paragraph (`docs/SCIENTIFIC_METHODOLOGY.md`, `docs/DECISION_LOG.md`, `docs/DATA_SOURCES.md`, `docs/VALIDATION_PLAN.md`) | **Hand-written text, not read from a product.** Each carries its label (VERIFIED, APPROVED, LIMITATION, OPEN, HYPOTHESIS). T-026 should check them against the cited document, not against a product. | as stated |
+
+### Summary card and sparkline (T-070, T-072)
+
+| View | Field shown | Source | Format and rounding | Unit |
+|---|---|---|---|---|
+| Summary card | Title: area name and month | `entity_month.entity_name` (the world reads "World" in the card and "Global" in the stored name and in the story texts), month of the selection | `<name>, <Month> <year>` | none |
+| Summary card | Verdict badge | `entity_month.verdict` | Label and icon of `content/verdicts.ts` | none |
+| Summary card | Probability sentence | `p_above`, `p_below` or `p_within` of the verdict | `formatProbability` wording, first letter capital, a full stop (for example "More than 99% likely above normal."); none for CANNOT_DETERMINE and NO_DETECTED_ACTIVITY | % |
+| Summary card | Big number | `entity_month.pct_of_normal` | `Math.round`, then "% of normal"; null reads "no data" | % |
+| Summary card | Estimate | `entity_month.estimate` | One decimal, then the unit "fire-active cell-days, Aqua-equivalent" | cell-days |
+| Summary card | 90% interval | `ci90_low`, `ci90_high` | One decimal each, "<low> to <high>" | cell-days |
+| Summary card | Satellites, data level, method | `witnesses_used`, `data_level`, `method_version` | Names of `content/witnesses.ts`; "standard (SP)" or "near-real-time (NRT)"; "method <version>" | none |
+| Summary card | Reason lines | `reason_codes` | Texts of `content/reasonTexts.ts`; "No caveat flags are recorded for this month." when empty; the evidence note for a disagreement scale above 1 (two decimals) | none |
+| Sparkline (figure, text equivalent and hidden table) | 12 months of the estimate and the normal range | `entity_month.estimate`, `baseline_p25`, `baseline_p75` of the 12 months ending 3 months after the selected one (or at the latest month, never before the first) | One decimal; "no data" for a missing estimate (a gap in the line, never 0); "not available" for a missing range; the number of gaps and months in the text | cell-days |
+
+### Month picker and scrubber (T-087)
+
+| View | Field shown | Source | Format and rounding | Unit |
+|---|---|---|---|---|
+| Month scrubber | Position, ticks, label | `metadata.first_month` to `latest_month` (293 months for the T-014 products) | Index of the month in the record; year ticks every fifth year | month |
+| Month picker | Year select, 12 month buttons per year | `metadata.first_month`, `latest_month`, `provisional_months` | Months outside the record are disabled (here January to June 2002 and December 2026); provisional months carry "provisional" in the name and a dot | month |
+| Month picker | Typed month | The user | `YYYY-MM`, validated against the first and latest month | month |
+
+### Story chips and captions (T-072, T-079)
+
+| View | Field shown | Source | Format and rounding | Unit |
+|---|---|---|---|---|
+| Story chips | Label of each story | `app/src/content/featured.ts` | `<name>, <Mon> <year>` | none |
+| Story caption (shown only when the area and the month equal a story) | Headline, caption, notes, context, "[VERIFIED]" label, source line, query, report link | `app/src/content/featured.ts`, generated by `pipeline/featured_stories.py` from the products (`--check` fails if stale) | Text as generated: % of normal whole number, estimates and intervals whole cell-days with thousands separators, probabilities as the app words them | as in the caption |
+
+### Analytics tab (T-083, T-090)
+
+| View | Field shown | Source | Format and rounding | Unit |
+|---|---|---|---|---|
+| Raw against harmonized, by year (chart, table) | Months used, raw sum, harmonized sum per year | `entity_month.raw_combined_cell_days` and `estimate` of the months that have an estimate | **Computed by the app:** sums over the months with an estimate; whole numbers with thousands separators; a year with fewer than 12 months says "(partial)"; the text says "Sum of monthly estimates; intervals not combined" | cell-days |
+| Season profile (chart, table) | 25th, median and 75th percentile of each calendar month, and the selected year's estimate | `entity_month.baseline_p25`, `baseline_median`, `baseline_p75`, `estimate` | Whole numbers with thousands separators; "no data" when missing | cell-days |
+| Rank | "<Month> <year> is the Nth highest <Month> of the record (M years with an estimate)", ties, years without an estimate, provisional note | `entity_month.estimate` of the same calendar month in every year | **Computed by the app:** 1 plus the number of years with a strictly larger estimate; M = years with an estimate; ordinal suffix | rank |
+| Coverage | "N% of M cells have a determinable verdict" and the verdict counts | `GET /api/map/cells` and the month's cells (`verdict`) | **Computed by the app:** determinable means any verdict except CANNOT_DETERMINE; `Math.round(share x 100)`; the world only until PR #94 (countries and continents: "shown for the world only") | % and cells |
+| Compare | % of normal of two areas by month | `entity_month.pct_of_normal` | `Math.round` in the tooltip; a gap for a missing month, never 0 | % |
+
+### Map source line, imagery and boundaries (T-070, T-084, T-085)
+
+| View | Field shown | Source | Format and rounding | Unit |
+|---|---|---|---|---|
+| Map source line | Product names, "0.5° grid", "method <version>" | Names as in `SP_DOIS` and `NRT_DOIS` (`api/fire_api/export.py`); `metadata.method_version`; the grid text is a constant equal to `metadata.grid.analysis_deg` (D-009) | Text; no date is written by hand | none |
+| Imagery panel | Day of the month for the satellite picture | The selected month; default the 15th, days from the 4th in July 2002 (first Aqua imagery day, `docs/DATA_SOURCES.md` section 9) to the end of the month or today | Day number | day |
+| Country outlines, India's boundary | Shapes | `app/public/geo/ne_admin_0_countries_india_pov.geojson` (Natural Earth India point of view, `docs/DATA_SOURCES.md`) | Drawing only; no number is shown | none |
 
 ### Other places
 
