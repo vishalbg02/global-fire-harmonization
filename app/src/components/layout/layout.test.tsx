@@ -4,7 +4,7 @@ import type { EntityItem, EntityMonth, Metadata } from '../../api/contract.ts'
 import { RawOnlyContext } from '../../content/rawOnly.ts'
 import * as UI from '../../content/ui.ts'
 import { FEATURED_STORIES } from '../../content/featured.ts'
-import { TAB_IDS, setTabParam, tabFromSearch } from '../../state/tabs.ts'
+import { TAB_IDS, analyticsAvailable, effectiveTab, setTabParam, tabFromSearch } from '../../state/tabs.ts'
 import { WORLD } from '../../state/selection.ts'
 import { MAX_SEARCH_RESULTS, parseAreaOption, searchAreas } from '../area/areaSearch.ts'
 import { AreaSearch } from '../area/AreaSearch.tsx'
@@ -42,7 +42,7 @@ describe('tab in the link', () => {
     for (const t of TAB_IDS) expect(tabFromSearch(`?tab=${t}`)).toBe(t)
     expect(tabFromSearch('?tab=nope')).toBe('calendar')
     expect(tabFromSearch('')).toBe('calendar')
-    expect(TAB_IDS).toEqual(['calendar', 'satellites', 'evidence', 'anomalies'])
+    expect(TAB_IDS).toEqual(['calendar', 'satellites', 'evidence', 'anomalies', 'analytics'])
   })
   it('writes the tab, leaving the default out', () => {
     const p = new URLSearchParams('area=GLOBAL')
@@ -50,6 +50,14 @@ describe('tab in the link', () => {
     expect(p.get('tab')).toBe('evidence')
     setTabParam(p, 'calendar')
     expect(p.has('tab')).toBe(false)
+  })
+  it('offers Analytics for presets and hides it for a custom area, falling back to the default tab', () => {
+    expect(analyticsAvailable('COUNTRY')).toBe(true)
+    expect(analyticsAvailable('GLOBAL')).toBe(true)
+    expect(analyticsAvailable('CUSTOM')).toBe(false)
+    expect(effectiveTab('analytics', 'CUSTOM')).toBe('calendar')
+    expect(effectiveTab('analytics', 'COUNTRY')).toBe('analytics')
+    expect(effectiveTab('evidence', 'CUSTOM')).toBe('evidence')
   })
 })
 

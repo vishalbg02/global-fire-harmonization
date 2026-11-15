@@ -63,6 +63,7 @@ export const TAB_LABELS_UI = {
   satellites: 'Satellites',
   evidence: 'Evidence in detail',
   anomalies: 'All anomalies',
+  analytics: 'Analytics',
 } as const
 export const TABS_LABEL = 'Details for the selected area'
 
