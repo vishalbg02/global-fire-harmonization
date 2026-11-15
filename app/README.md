@@ -85,6 +85,10 @@ A custom rectangle is sent to `POST /api/series/custom`; the API returns the ser
 
 `public/geo/ne_admin_0_countries_india_pov.geojson` is Natural Earth admin-0 countries, India point of view (1:10m source `ne_10m_admin_0_countries_ind.geojson`, public domain), simplified to 837,805 bytes and 243 features so India's official boundary (Jammu and Kashmir, Ladakh, Aksai Chin) is drawn inside India (T-085). Source, SHA-256 and processing are in `docs/DATA_SOURCES.md`. The app takes each country's ISO 3166-1 alpha-3 code from `ISO_A3_EH`, because `ISO_A3` is `-99` for Norway and France. Six polygons (Dhekelia, Akrotiri, Guantanamo Bay, Bir Tawil, Spratly Islands, Scarborough Reef) have no ISO code; they are drawn but cannot be selected, and no code is invented for them. In this view Western Sahara, Kosovo, Northern Cyprus and Somaliland are part of Morocco, Serbia, Cyprus and Somalia.
 
+## Map imagery (T-084)
+
+The map shows NASA GIBS Blue Marble under the cells. A "Map view" panel (top left) turns on Satellite view (Aqua MODIS true colour, one day of the selected month, with a day picker) and chooses Flat or Globe. The tiles are fetched by the browser from `gibs.earthdata.nasa.gov`; nothing is stored in the repo or proxied. With `VITE_STATIC_ONLY` (the offline copy) no GIBS request is made and the plain background shows with a note; if GIBS cannot be reached the same fallback applies. Links keep the choices as `sat=1`, `satday=DD` and `globe=1`. Sources and privacy: `docs/DATA_SOURCES.md`.
+
 ## Stack (approved, D-008)
 
 React 19, Vite 8, TypeScript (strict), MapLibre GL JS 6, deck.gl 9 (installed as the individual modules `@deck.gl/core`, `@deck.gl/layers`, `@deck.gl/react` and `@deck.gl/maplibre`, not the `deck.gl` meta-package, which pulls in unused ArcGIS and Vaadin packages), terra-draw, Apache ECharts 6, TanStack Query, Vitest. The map, drawing and chart libraries are installed but not used yet. Exact versions are pinned in `package-lock.json`.
