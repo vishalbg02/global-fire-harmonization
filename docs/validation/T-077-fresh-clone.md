@@ -31,6 +31,6 @@ Re-run in the same clean clone on the T-077 branch (the README fix and the test 
 
 ## 3. What this does and does not show
 
-- **Verified:** the README steps above work from a clean clone on this machine (Windows, Git Bash) after the two corrections; the products downloaded through LFS are the committed ones.
+- **Verified:** the README steps above work from a clean clone on this machine (Windows, Git Bash) after the corrections, **except the full-table contract check, which needs more free memory than this machine had** (see section 2); the products downloaded through LFS are the committed ones.
 - **Not verified:** macOS or Linux, PowerShell variants, a machine without Git LFS configured beforehand (the README says to run `git lfs install`), the offline copy, and Node 24.
 - The test count of the app (451) and the Lead's count of 744 Python tests are as run on the dates above; they are not fixed numbers.
