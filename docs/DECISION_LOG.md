@@ -33,6 +33,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-025 | 2026-11-14 | Persistent night sources join the static mask; no local calibration for one-month bursts | **APPROVED** (2026-11-14) |
 | D-024 | 2026-11-14 | Add `terra-draw-maplibre-gl-adapter` 1.5.0 to the frontend stack (drawing the custom rectangle on the MapLibre map, T-035) | **APPROVED** (2026-11-14) |
 | D-031 | 2026-11-15 | Keep the D-028 minimum-baseline rule for cells with unprecedented activity; no new caveat code; explained in the app and the demo | **APPROVED** (2026-11-15) |
+| D-032 | 2026-11-15 | Map: NASA GIBS imagery basemap and an optional 3D globe view (amends the plain-background basemap of TECH_STACK; CesiumJS stays rejected) | **APPROVED** (2026-11-15) |
 | D-030 | 2026-11-15 | v0.2 activity-dependent conversion (post-hoc, prompted by A1 and T-020b): adopted only by a pre-registered rule; v0.1 stays visible | **NOT ADOPTED** (2026-11-15; rule not met, v0.1 stays) |
 | D-029 | 2026-11-15 | Test A1: both paths use the shared Aqua-measured 2003-2022 baseline (amends D-028 for A1 only; adopted after seeing C1, whose official result stays INCONCLUSIVE) | **APPROVED** (2026-11-15) |
 
@@ -291,3 +292,16 @@ The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the 
 - **Decision (Lead, 2026-11-15):** **keep the D-028 rule as it is.** No new caveat code and no change to the verdict order or the thresholds. The app explains it with the existing reason text ("There is too little historical fire activity here to define what is normal"); entity-level verdicts and custom areas carry these events, and the demo uses them rather than single cells.
 - **Why:** D-028 step 4: below 5 Aqua-equivalent cell-days there is too little normal activity to judge; the Lead kept that rule.
 - **Status:** **APPROVED** by the Lead, 2026-11-15.
+
+
+### D-032: NASA GIBS imagery basemap and an optional globe view **[APPROVED 2026-11-15]**
+- **Context:** the Lead asked for a realistic Earth view ("like Google Earth") so the map reads as the real planet, not a flat grid on a blank background. `TECH_STACK.md` allowed an optional free basemap only with the Lead's approval and rejected CesiumJS as heavy.
+- **Decision (Lead, 2026-11-15):**
+  1. **Base imagery:** NASA GIBS `BlueMarble_ShadedRelief_Bathymetry` (WMTS, EPSG:3857, no key; tile URL checked HTTP 200 on 2026-11-15).
+  2. **Optional "satellite view" layer:** NASA GIBS `MODIS_Aqua_CorrectedReflectance_TrueColor` for a chosen day of the selected month (Aqua is the reference witness; tile checked HTTP 200 for 2015-09-20). Off by default, with the date shown on the map.
+  3. **Globe:** a Globe / Flat switch using MapLibre's globe projection, only if the deck.gl cell layer renders correctly on it; otherwise flat only.
+  4. The verdict cells stay the analysis layer, drawn semi-transparent over the imagery. **No change to products, the method or the API contract.**
+  5. **The offline copy** falls back to today's plain background, with a note, because GIBS needs a network.
+  6. GIBS is credited on the map with its link, and listed in `docs/DATA_SOURCES.md` with its verification label.
+- **Why:** the imagery is NASA's own, free and citable, and fits a NASA challenge. MapLibre already supports a globe, so no new dependency is needed.
+- **Status:** **APPROVED** by the Lead, 2026-11-15. Implementation: T-084 (Member 3).
