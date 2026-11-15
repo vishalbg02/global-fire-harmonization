@@ -183,14 +183,14 @@ export function MapView({
     const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
     map.addControl(overlay)
     // The cells canvas of the overlay is only a picture: the map canvas above is the one keyboard stop.
-    // (deck.gl makes its canvas focusable, which gave a second, unnamed Tab stop.)
+    // (deck.gl makes its canvas focusable and puts the tabindex back, which gave a second, unnamed Tab stop;
+    // `inert` removes it from focus and from the accessibility tree, and the canvas takes no pointer events.)
     const hideOverlayCanvas = () =>
       map
         .getContainer()
         .querySelectorAll<HTMLCanvasElement>('canvas:not(.maplibregl-canvas)')
         .forEach((c) => {
-          c.tabIndex = -1
-          c.setAttribute('aria-hidden', 'true')
+          c.inert = true
         })
     hideOverlayCanvas()
     map.on('load', hideOverlayCanvas)
