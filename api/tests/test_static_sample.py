@@ -57,12 +57,12 @@ def test_the_committed_sample_is_what_the_exporter_writes(
     names = sorted(p.relative_to(fresh).as_posix() for p in fresh.rglob("*.json"))
     assert names == sorted(p.relative_to(SAMPLE).as_posix() for p in SAMPLE.rglob("*.json"))
     for name in names:
-        assert json.loads((fresh / name).read_text()) == json.loads((SAMPLE / name).read_text()), (
-            name
-        )
+        assert json.loads((fresh / name).read_text("utf-8")) == json.loads(
+            (SAMPLE / name).read_text("utf-8")
+        ), name
 
 
 def test_the_sample_is_labelled_synthetic() -> None:
-    text = " ".join((SAMPLE / "README.md").read_text(encoding="utf-8").split())
+    text = " ".join((SAMPLE / "README.md").read_text("utf-8").split())
     assert text.startswith("# SYNTHETIC test sample")
     assert "not NASA observations" in text
