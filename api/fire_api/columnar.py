@@ -7,7 +7,6 @@ in a shared cell list; a month names its cells by position in that list (``cell_
 is computed or rounded here: ``decode_columns`` gives back exactly the records that were encoded.
 """
 
-import json
 from typing import Any
 
 # Fields that belong to the shared cell list, not to a month.
@@ -16,6 +15,16 @@ CELL_FIELDS = ("cell_id", "lat_min", "lat_max", "lon_min", "lon_max")
 
 class ExportError(Exception):
     """The export cannot be made as asked."""
+
+
+def _token(value: Any) -> Any:
+    """A hashable key that tells apart values that print differently (1 and 1.0, a list and its
+    items): the same grouping as comparing their JSON text, without printing every value."""
+    if isinstance(value, list):
+        return ("list", tuple(_token(v) for v in value))
+    if isinstance(value, dict):
+        return ("dict", tuple(sorted((k, _token(v)) for k, v in value.items())))
+    return (type(value).__name__, value)
 
 
 def encode_columns(records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -32,11 +41,11 @@ def encode_columns(records: list[dict[str, Any]]) -> dict[str, Any]:
         if all(v == first for v in values):
             columns[key] = {"const": first}
             continue
-        unique: dict[str, int] = {}
+        unique: dict[Any, int] = {}
         table: list[Any] = []
         index: list[int] = []
         for v in values:
-            token = json.dumps(v, sort_keys=True)
+            token = _token(v)
             if token not in unique:
                 unique[token] = len(table)
                 table.append(v)
