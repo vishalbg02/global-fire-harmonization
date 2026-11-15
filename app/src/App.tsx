@@ -21,7 +21,9 @@ import { shiftMonth, shiftYear } from './components/map/monthPicker.ts'
 import { applyMapViewParams, mapViewFromSearch, mapViewReducer } from './state/mapView.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
 import { NO_OFFLINE_MAP, offlineMapNote } from './content/offline.ts'
-import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
+import { EmptyState, ErrorState, LoadingState, Skeleton } from './components/common/States.tsx'
+import { ToastHost } from './components/common/Toast.tsx'
+import { ANALYTICS_LOADING } from './content/answer.ts'
 import { PAGE_PARAM, METHODS_PAGE, pageFromSearch } from './content/methodsLink.ts'
 import { RAW_ONLY_AREA_UNAVAILABLE, RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { ExportButton } from './components/export/ExportButton.tsx'
@@ -61,6 +63,8 @@ import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
 const AnalyticsPanel = lazy(() => import('./components/analytics/index.ts').then((m) => ({ default: m.AnalyticsPanel })))
 const MethodsPage = lazy(() => import('./components/methods/MethodsPage.tsx').then((m) => ({ default: m.MethodsPage })))
+// The Analytics view's shape while its code loads: a heading, a line, the 260 px chart and a note.
+const ANALYTICS_SKELETON = [{ h: 18, w: '32%' }, { h: 14, w: '70%', gap: 10 }, { h: 260, gap: 10 }, { h: 12, w: '90%', gap: 10 }]
 // The map (MapLibre, deck.gl and the draw tool) is loaded when first needed, so the first load is small (T-042).
 const MapView = lazy(() => import('./components/map/MapView.tsx').then((m) => ({ default: m.MapView })))
 
@@ -580,7 +584,7 @@ export default function App() {
                         selection.month === null || area.entity_type === 'CUSTOM' ? (
                           <EmptyState message={UI.SUMMARY_NO_MONTH} />
                         ) : (
-                          <Suspense fallback={<LoadingState what="the analytics" />}>
+                          <Suspense fallback={<Skeleton what={ANALYTICS_LOADING} blocks={ANALYTICS_SKELETON} />}>
                             <AnalyticsPanel
                               area={{ entityType: area.entity_type, entityId: area.entity_id, name: area.entity_name }}
                               compareArea={compare === null ? null : { entityType: compare.entityType, entityId: compare.entityId, name: compare.entityId }}
@@ -601,6 +605,7 @@ export default function App() {
       </main>
       )}
       {page === 'map' && <HelpLayer mode={help} onMode={setHelp} actions={helpActions} shape={view.shape} />}
+      <ToastHost />
     </div>
     </RawOnlyContext.Provider>
   )

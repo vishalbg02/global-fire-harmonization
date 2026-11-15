@@ -1,0 +1,50 @@
+/* The one toast host (T-093): a short confirmation over the map, centred on the Earth's stage, below the header and
+   clear of the dock and the answer panel. It never takes clicks, so the map under it stays usable. */
+.toast-host {
+  position: fixed;
+  z-index: 40;
+  top: calc(var(--header-h) + var(--s-12));
+  left: calc((100vw - var(--answer-w)) / 2);
+  transform: translateX(-50%);
+  max-width: min(24rem, calc(100vw - var(--answer-w) - 2 * var(--s-16)));
+  pointer-events: none;
+}
+
+.toast {
+  margin: 0;
+  padding: var(--s-8) var(--s-12);
+  font-size: var(--t-14);
+  line-height: 1.4;
+  color: var(--surface);
+  background: var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--elev);
+  animation: toast-in 200ms ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Narrow screens stack the zones (the answer first): the toast sits at the foot of the screen. */
+@media (max-width: 900px) {
+  .toast-host {
+    top: auto;
+    bottom: var(--s-16);
+    left: 50%;
+    max-width: calc(100vw - 2 * var(--s-16));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
