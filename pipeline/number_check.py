@@ -99,11 +99,18 @@ def fmt_anomaly_probability(verdict: str, p_above, p_below) -> str | None:
     return f"{fmt_probability(p)} likely {'above' if verdict == 'ABOVE_NORMAL' else 'below'} normal"
 
 
+def display_score(p: float) -> int:
+    """The probability at the precision the app shows (PR #62, api/README.md): every value of 0.995 or more reads "more than 99%" and counts as
+    equal (1000); below that the whole percentage counts (0.991 and 0.986 are both 99)."""
+    return 1000 if p >= P_HIGH else js_round(p * 100)
+
+
 def anomaly_order(rows: list[dict]) -> list[dict]:
-    """The documented API order: larger of p_above and p_below first, then the distance from normal abs(ln(pct / 100)) (missing or
-    non-positive last), then entity_id, then entity_type (api/README.md; recomputed here independently from the stored rows)."""
+    """The documented API order: the larger of p_above and p_below at the displayed precision first, then the distance from normal
+    abs(ln(pct / 100)) (missing or non-positive last), then entity_id, then entity_type (api/README.md; recomputed here independently
+    from the stored rows)."""
     def key(r: dict):
-        score = max(r["p_above"] or 0.0, r["p_below"] or 0.0)
+        score = display_score(max(r["p_above"] or 0.0, r["p_below"] or 0.0))
         pct = r["pct_of_normal"]
         dist = abs(math.log(pct / 100.0)) if pct is not None and pct > 0 else None
         return (-score, 1 if dist is None else 0, -(dist or 0.0), r["entity_id"], r["entity_type"])

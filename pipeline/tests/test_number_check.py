@@ -79,14 +79,19 @@ def test_texts_of_the_inventory_by_hand():
     assert nc.fmt_anomaly_probability("BELOW_NORMAL", 0.0, 0.9) == "90% likely below normal"
 
 
-def test_anomaly_order_by_score_then_distance_from_normal_then_id():
+def test_anomaly_order_by_displayed_score_then_distance_from_normal_then_id():
     def r(i, pa, pb, pct):
         return {"entity_type": "COUNTRY", "entity_id": i, "p_above": pa, "p_below": pb, "pct_of_normal": pct}
-    rows = [r("B", 1.0, 0.0, 200.0), r("A", 1.0, 0.0, 200.0), r("C", 1.0, 0.0, 800.0), r("D", 0.0, 1.0, 10.0), r("E", 1.0, 0.0, None),
+    rows = [r("B", 1.0, 0.0, 200.0), r("A", 0.9999, 0.0, 200.0), r("C", 0.996, 0.0, 800.0), r("D", 0.0, 1.0, 10.0), r("E", 1.0, 0.0, None),
             r("F", 1.0, 0.0, 0.0), r("G", 0.9, 0.0, 5000.0), r("H", 1.0, 0.0, -5.0)]
     got = [x["entity_id"] for x in nc.anomaly_order(rows)]
-    # score 1.0 first; distance: D |ln 0.1| = 2.30 and C |ln 8| = 2.08 and A, B |ln 2| = 0.69; missing, zero and negative last by id; then G
+    # 0.996, 0.9999 and 1.0 all read "more than 99%": distance decides (D |ln 0.1| 2.30, C |ln 8| 2.08, A and B |ln 2| 0.69 by id);
+    # a missing, zero or negative % of normal goes last by id (E, F, H); G reads 90%
     assert got == ["D", "C", "A", "B", "E", "F", "H", "G"]
+    # below 0.995 the whole percentage counts: 0.991 and 0.986 are both 99% and tie, 0.984 reads 98%
+    tie = [r("Z", 0.991, 0.0, 300.0), r("Y", 0.986, 0.0, 150.0), r("X", 0.984, 0.0, 900.0)]
+    assert [x["entity_id"] for x in nc.anomaly_order(tie)] == ["Z", "Y", "X"]
+    assert nc.display_score(0.995) == 1000 and nc.display_score(0.9949999) == 99 and nc.display_score(0.0) == 0
 
 
 def test_a_planted_wrong_number_and_a_null_shown_as_zero_are_defects():
