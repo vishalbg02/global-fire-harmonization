@@ -1,5 +1,6 @@
 import type { HarmonizedFields, Witness } from '../../api/contract.ts'
 import { ACTIVITY_UNITS } from '../../content/calendar.ts'
+import { NO_CAVEATS_TEXT, disagreementNote } from '../../content/evidenceText.ts'
 import { NOT_AVAILABLE_YET, isRawOnlyRecord, useRawOnly } from '../../content/rawOnly.ts'
 import { methodsHref } from '../../content/methodsLink.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
@@ -8,7 +9,6 @@ import { WITNESS_NAMES } from '../../content/witnesses.ts'
 import { NO_DATA, formatEstimate, formatPctOfNormal, verdictProbability } from '../map/format.ts'
 
 export const PROVISIONAL_NOTICE = 'Provisional: may change when science-quality data arrive'
-export const DISAGREEMENT_NOTE = 'Satellites disagree; uncertainty widened'
 
 interface Props {
   record: HarmonizedFields
@@ -83,7 +83,7 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
         )}
         {record.disagreement_scale !== null && record.disagreement_scale > 1 && (
           <p className="evidence-note">
-            {`${DISAGREEMENT_NOTE} (disagreement scale ${record.disagreement_scale.toFixed(2)}).`}
+            {disagreementNote(record.disagreement_scale)}
           </p>
         )}
       </section>
@@ -111,7 +111,7 @@ export function EvidenceBody({ record, rawByWitness, contractVersion }: Props) {
       <section aria-labelledby="ev-reasons">
         <h3 id="ev-reasons">Why</h3>
         {record.reason_codes.length === 0 ? (
-          <p>No caveats are recorded for this month.</p>
+          <p>{NO_CAVEATS_TEXT}</p>
         ) : (
           <ul className="evidence-reasons">
             {record.reason_codes.map((code) => (
