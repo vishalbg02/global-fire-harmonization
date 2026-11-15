@@ -10,6 +10,7 @@ import { CustomAreaPanel } from './components/area/CustomAreaPanel.tsx'
 import { areaFitBbox, resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { useStaticManifest } from './api/staticData.ts'
+import { applyImageryParams, parseImageryParams } from './components/map/gibs.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
 import { NO_OFFLINE_MAP, offlineMapNote } from './content/offline.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
@@ -88,6 +89,7 @@ export default function App() {
     if (page === 'methods') params.set(PAGE_PARAM, METHODS_PAGE)
     setTabParam(params, shownTab)
     setCompareParam(params, shownTab === 'analytics' ? compare : null)
+    applyImageryParams(params, parseImageryParams(window.location.search)) // the map's own link choices (T-084)
     const query = params.toString()
     const url = `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`
     window.history.replaceState(null, '', url)
@@ -418,6 +420,7 @@ export default function App() {
                 onDrawnPolygon={choosePolygon}
                 anomalyOutlines={anomalyOutlines}
                 loading={cells.isFetching}
+                month={selection.month}
                 onHoverCountry={setHoverCountry}
               />
               </Suspense>
