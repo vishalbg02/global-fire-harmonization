@@ -40,7 +40,7 @@ import { Card } from './components/ui/Card.tsx'
 import { Tabs } from './components/ui/Tabs.tsx'
 import { compareFromSearch, setCompareParam } from './state/compare.ts'
 import type { CompareRef } from './state/compare.ts'
-import { analyticsAvailable, effectiveTab, setTabParam, tabFromSearch } from './state/tabs.ts'
+import { analyticsAvailable, effectiveTab, initialTab, rememberTab, setTabParam } from './state/tabs.ts'
 import type { TabId } from './state/tabs.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
@@ -86,7 +86,9 @@ export default function App() {
   const [polygonDraft, setPolygonDraft] = useState<{ ring: Ring; error: string | null; seq: number } | null>(null)
   const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
-  const [tab, setTab] = useState<TabId>(() => tabFromSearch(window.location.search))
+  // The Details tab: the link's `tab=` wins; without one, the tab last opened in this browser.
+  const [tab, setTab] = useState<TabId>(() => initialTab(window.location.search))
+  useEffect(() => rememberTab(tab), [tab])
   // The area compared with in the Analytics tab, kept in the link as `compare=` (T-090).
   const [compare, setCompare] = useState<CompareRef | null>(() => compareFromSearch(window.location.search))
   // The guided tour opens once on a first visit without link parameters; Help in the header opens the help again.
