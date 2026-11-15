@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchCellAreas, fetchEntities, fetchMapCells, fetchMeta, fetchSeries } from '../../api/client.ts'
+import { fetchEntities, fetchMapCells, fetchMeta, fetchSeries } from '../../api/client.ts'
 import type { SeriesEntityType } from '../../api/client.ts'
 import type { EntityItem, EntityMonth, MapCell, Metadata } from '../../api/contract.ts'
-import type { CellAreas } from '../../api/mapColumns.ts'
 import type { SourceMetadata, TextSegment } from '../../content/sources.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import './analytics.css'
 import { AnalyticsChart } from './AnalyticsChart.tsx'
 import { annualOption, compareOption, seasonOption, wholeNumber } from './chartOptions.ts'
-import { MONTH_NAMES, annualSeries, compareSeries, coverage, coverageInArea, rankInMonth, rankText, seasonProfile } from './compute.ts'
+import { MONTH_NAMES, annualSeries, compareSeries, rankInMonth, rankText, seasonProfile } from './compute.ts'
+import { loadCoverage } from './coverageLoad.ts'
+import type { CoverageResult } from './coverageLoad.ts'
 import type { Box } from './compute.ts'
 import { CompareSearch } from './CompareSearch.tsx'
 import type { CompareChoice } from './CompareSearch.tsx'
@@ -110,8 +111,6 @@ export function AnalyticsPanel({ area, compareArea = null, onCompareChange, year
   )
   // Coverage: the world counts every cell; a country or a continent counts the cells stored for it (T-090), which needs the
   // country and continent of each cell from the API. Without them the panel says so and shows no figure.
-  const isWorld = area.entityType === 'GLOBAL'
-  const areas = useLoad<CellAreas | null>(() => (isWorld ? Promise.resolve(null) : fetchCellAreas()), [isWorld])
   const metadata = useLoad<Metadata | SourceMetadata>(() => (meta === undefined ? fetchMeta() : Promise.resolve(meta)), [meta])
   const mapCells = useLoad<readonly MapCell[]>(
     () => (cells === undefined ? fetchMapCells(year, month, 'verdict') : Promise.resolve(cells)),
@@ -122,13 +121,12 @@ export function AnalyticsPanel({ area, compareArea = null, onCompareChange, year
   const annual = useMemo(() => (records === null ? null : annualSeries(records)), [records])
   const season = useMemo(() => (records === null ? null : seasonProfile(records, year)), [records, year])
   const rank = useMemo(() => (records === null ? null : rankInMonth(records, year, month)), [records, year, month])
-  const cover = useMemo(() => {
-    if (mapCells.status !== 'ready') return null
-    if (isWorld) return coverage(mapCells.value, null)
-    if (areas.status !== 'ready' || areas.value === null || area.entityType === 'GLOBAL') return null
-    return coverageInArea(mapCells.value, areas.value, area.entityType, area.entityId)
-  }, [mapCells, areas, isWorld, area.entityType, area.entityId])
-  const areasMissing = !isWorld && areas.status === 'ready' && areas.value === null
+  const coverageState = useLoad<CoverageResult | null>(
+    () => (mapCells.status === 'ready' ? loadCoverage(area, mapCells.value) : Promise.resolve(null)),
+    [mapCells, area.entityType, area.entityId],
+  )
+  const cover = coverageState.status === 'ready' && coverageState.value?.status === 'ready' ? coverageState.value.coverage : null
+  const areasMissing = coverageState.status === 'ready' && coverageState.value?.status === 'areas-missing'
   const compare = useMemo(
     () => (records !== null && other.status === 'ready' && other.value !== null ? compareSeries(records, other.value) : null),
     [records, other],
@@ -207,9 +205,9 @@ export function AnalyticsPanel({ area, compareArea = null, onCompareChange, year
       <section aria-labelledby="an-coverage">
         <h3 id="an-coverage">Coverage, {monthName} {year}</h3>
         <Status state={mapCells} what="the cells" />
-        {!isWorld && <Status state={areas} what="the cell areas" />}
+        {mapCells.status === 'ready' && <Status state={coverageState} what="the coverage" />}
         {areasMissing && <p className="analytics-lede">{COVERAGE_AREAS_MISSING}</p>}
-        {!areasMissing && mapCells.status === 'ready' && (isWorld || areas.status === 'ready') && cover === null && (
+        {!areasMissing && coverageState.status === 'ready' && cover === null && (
           <p className="analytics-lede">{COVERAGE_NO_CELLS}</p>
         )}
         {cover !== null && (

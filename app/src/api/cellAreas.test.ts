@@ -69,6 +69,30 @@ describe('fetchCellAreas (T-090)', () => {
     expect(await fetchCellAreas('http://api.test')).toBeNull()
   })
 
+  it('asks the server once, bypassing a kept copy, when the list it has lacks the area columns (a stale HTTP cache), and keeps the fresh list', async () => {
+    const inits: (RequestInit | undefined)[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+        inits.push(init)
+        const body = init?.cache === 'no-cache' ? { n: 4, columns: WITH_AREAS } : { n: 4, columns: BASE }
+        return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      }),
+    )
+    const areas = await fetchCellAreas('http://api.test')
+    expect(areas?.country_iso3).toEqual(['IDN', 'IDN', 'BRA', null])
+    expect(inits).toHaveLength(2)
+    expect(inits[1]).toEqual({ cache: 'no-cache' })
+    await fetchCellAreas('http://api.test') // the fresh list is the kept one: no third request
+    expect(inits).toHaveLength(2)
+  })
+
+  it('still gives null, after one extra request, for an API that really does not send the columns', async () => {
+    const calls = stub({ n: 4, columns: BASE })
+    expect(await fetchCellAreas('http://api.test')).toBeNull()
+    expect(calls).toHaveLength(2)
+  })
+
   it('does not hide an answer that is an error (503)', async () => {
     stub({ detail: 'Data are not available right now.' }, 503)
     await expect(fetchCellAreas('http://api.test')).rejects.toMatchObject({ status: 503 })
