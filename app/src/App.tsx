@@ -16,7 +16,8 @@ import { EmptyState, ErrorState, LoadingState } from './components/common/States
 import { PAGE_PARAM, METHODS_PAGE, pageFromSearch } from './content/methodsLink.ts'
 import { RAW_ONLY_AREA_UNAVAILABLE, RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { ExportButton } from './components/export/ExportButton.tsx'
-import { Header } from './components/layout/Header.tsx'
+import { Header, HOW_TO_TOGGLE_ID } from './components/layout/Header.tsx'
+import { DRAW_MENU_BUTTON_ID, focusLater } from './components/common/focus.ts'
 import { CopyLinkButton } from './components/layout/CopyLinkButton.tsx'
 import { StoryChips } from './components/layout/StoryChips.tsx'
 import { StoryCaption } from './components/layout/StoryCaption.tsx'
@@ -294,6 +295,11 @@ export default function App() {
           onClose={() => {
             setHowToOpen(false)
             rememberHowToDismissed()
+            focusLater(HOW_TO_TOGGLE_ID)
+          }}
+          onEscape={() => {
+            setHowToOpen(false)
+            focusLater(HOW_TO_TOGGLE_ID)
           }}
         />
       )}
@@ -340,6 +346,7 @@ export default function App() {
           />
           <div className="draw-menu">
             <Button
+              id={DRAW_MENU_BUTTON_ID}
               aria-expanded={drawMenuOpen}
               aria-controls="draw-panel"
               onClick={() => setDrawMenuOpen((o) => !o)}
@@ -354,7 +361,10 @@ export default function App() {
               className="draw-panel"
               aria-label={UI.DRAW_MENU_TITLE}
               onKeyDown={(e) => {
-                if (e.key === 'Escape') setDrawMenuOpen(false)
+                if (e.key === 'Escape') {
+                  setDrawMenuOpen(false)
+                  focusLater(DRAW_MENU_BUTTON_ID)
+                }
               }}
             >
               <CustomAreaPanel

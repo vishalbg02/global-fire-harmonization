@@ -74,7 +74,15 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
+summary:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* MapLibre's zoom buttons draw their own faint ring; give them the same one (T-074). */
+.maplibregl-ctrl button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  box-shadow: none;
 }
