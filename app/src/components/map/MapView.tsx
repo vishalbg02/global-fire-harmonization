@@ -31,7 +31,7 @@ import {
 } from './mapOverlays.tsx'
 import { ImageryControls, ImageryCredit } from './ImageryControls.tsx'
 import type { MapShape } from './ImageryControls.tsx'
-import { applyImageryParams, cellOpacity, imageryNote, parseImageryParams, satDate, todayIso } from './gibs.ts'
+import { CELL_CASING_IMAGERY, applyImageryParams, cellOpacity, imageryNote, parseImageryParams, satDate, todayIso } from './gibs.ts'
 import {
   GLOBE_OFFERED,
   TileCounter,
@@ -272,7 +272,7 @@ export function MapView({
         type: 'line',
         source: 'countries',
         layout: { visibility: 'none' },
-        paint: { 'line-color': '#14181f', 'line-opacity': 0.45, 'line-width': 2 },
+        paint: { 'line-color': '#14181f', 'line-opacity': 0.2, 'line-width': 1.5 },
       })
       map.addLayer({ id: 'countries-line', type: 'line', source: 'countries', paint: { 'line-color': '#8a8f98', 'line-width': 0.6 } })
       map.addLayer({
@@ -280,7 +280,7 @@ export function MapView({
         type: 'line',
         source: 'countries',
         layout: { visibility: 'none' },
-        paint: { 'line-color': '#ffffff', 'line-opacity': 0.9, 'line-width': 4.5 },
+        paint: { 'line-color': '#ffffff', 'line-opacity': 0.6, 'line-width': 3.5 },
         filter: ['in', ['get', 'ISO_A3_EH'], ['literal', []]],
       })
       // Countries in the anomaly rankings (T-040): vermillion solid for above, dashed blue for
@@ -313,7 +313,7 @@ export function MapView({
         type: 'line',
         source: 'countries',
         layout: { visibility: 'none' },
-        paint: { 'line-color': '#ffffff', 'line-width': 5 },
+        paint: { 'line-color': '#ffffff', 'line-opacity': 0.7, 'line-width': 4 },
         filter: ['==', ['get', 'ISO_A3_EH'], ''],
       })
       map.addLayer({
@@ -563,8 +563,8 @@ export function MapView({
                     pickable: false,
                     stroked: true,
                     filled: false,
-                    getLineColor: [255, 255, 255, 230],
-                    getLineWidth: 6,
+                    getLineColor: [255, 255, 255, 170],
+                    getLineWidth: 5,
                     lineWidthUnits: 'pixels',
                   }),
                 ]
@@ -608,7 +608,7 @@ export function MapView({
           : needsOutline(c, layer)
             ? [27, 27, 31, 255]
             : imageryVisible
-              ? [255, 255, 255, 90]
+              ? [...CELL_CASING_IMAGERY]
               : [60, 60, 60, CELL_STROKE_ALPHA],
       getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : strokeWidth),
       lineWidthUnits: 'pixels',
