@@ -26,7 +26,7 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-0B | **Approve data contract v0.1.0 (D-016)** | M1 | P0 | T-000 | — | — | DONE (approved 2026-11-14) | — | Contract status APPROVED |
 | T-0C | Add collaborators (Lead only) | M1 | P0 | T-000 | — | — | DONE (2026-11-14; Member 2 and Member 3 have access) | — | Both teammates have access |
 | T-0D | Decide API owner (D-015) and repo directory layout | M1 | P0 | T-0A | — | — | DONE (approved 2026-11-14: pipeline/, api/, app/; API owner M3) | — | Logged |
-| T-0F | Decide technical protection of `main` (D-019) | M1 | P1 | — | — | — | TODO | — | Logged; any settings change made by the Lead |
+| T-0F | Decide technical protection of `main` (D-019) | M1 | P1 | — | — | — | TODO (recommendation in HANDOFF: require PRs and block force-pushes after the last merge; the Lead's click) | — | Logged; any settings change made by the Lead |
 | T-0G | Teammate workstream prompts (Member 2, Member 3) + stale-status fixes | M1 | P0 | T-0E | `docs/T-0G-teammate-prompts` | [#3](https://github.com/vishalbg02/global-fire-harmonization/pull/3) | MERGED (2026-11-14, PR #3) | — (Lead-authored PR) | Lead approves both prompts; prompts consistent with DATA_CONTRACT v0.1.0 |
 | T-0H | Record D-008 and D-016 approvals across docs and prompts | M1 | P0 | T-0G | `docs/T-0H-record-approvals` | [#4](https://github.com/vishalbg02/global-fire-harmonization/pull/4) | MERGED (2026-11-14) | APPROVED | Approvals reflected consistently on `main` |
 
@@ -114,8 +114,11 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 
 | ID | Task | Owner | Pri | Depends | Branch | PR | Status | Review | Acceptance criteria |
 |---|---|---|---|---|---|---|---|---|---|
-| T-060 | Demo storyline (30 s cut + ~3 min) | M1 | P0 | — | `docs/T-060-demo-script` | — | TODO | — | Script in the repo |
+| T-060 | Demo storyline (30 s cut + ~3 min) | M1 | P0 | — | `docs/T-060-demo-script` | [#75](https://github.com/vishalbg02/global-fire-harmonization/pull/75) | DONE (2026-11-15; `docs/demo/DEMO_SCRIPT.md`) | APPROVED | Script in the repo |
 | T-061 | Record the demo; English subtitles | M1 | P0 | T-039 | — (outside the repo) | — | TODO | — | Uses real data only |
-| T-062 | Space Apps project page with references | M1 | P0 | — | — (outside the repo) | — | TODO | — | All sources cited |
+| T-062 | Space Apps project page with references | M1 | P0 | — | — (outside the repo) | — | IN PROGRESS (2026-11-15; text ready in `docs/demo/PROJECT_PAGE_DRAFT.md`; posting on the site is the Lead's step) | — | All sources cited |
 | T-063 | Submit by H34 | M1 | P0 | T-061, T-062 | — | — | TODO | — | Confirmed on the site |
-| T-064 | Decide repo visibility for judges (D-014) | M1 | P0 | — | — | — | TODO | — | Logged |
+| T-064 | Decide repo visibility for judges (D-014) | M1 | P0 | — | — | — | TODO (recommendation in HANDOFF: make public before submitting; the Lead's click) | — | Logged |
+| T-080 | Approve the UI design direction (the mock in the T-070 PR) | M1 | P0 | T-070 | — | [#78](https://github.com/vishalbg02/global-fire-harmonization/pull/78) | DONE (2026-11-15; layout approved with 4 required changes, decision on #78) | — | Decision posted on the T-070 PR |
+| T-081 | Final browser acceptance test: Chrome, Safari, Firefox; 1440x900, 1280x720 (projector), 375 phone; every featured story; the offline copy | M1 | P0 | T-074, T-078 | — | [#75](https://github.com/vishalbg02/global-fire-harmonization/pull/75) | DONE (2026-11-15; `docs/validation/T-081-acceptance.md`: accepted on Chromium; Safari/Firefox not run) | APPROVED | Matrix with results recorded in the repo |
+| T-082 | Update `docs/HANDOFF.md` and `docs/PROGRESS_LOG.md` to the current state | M1 | P1 | — | `docs/T-082-handoff` | [#75](https://github.com/vishalbg02/global-fire-harmonization/pull/75) | DONE (2026-11-15; HANDOFF and PROGRESS_LOG updated) | APPROVED | Both files describe the state after T-081 |

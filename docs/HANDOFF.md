@@ -1,104 +1,75 @@
 # Handoff: Current Project State
 
-**Last updated:** 2026-11-14 (teammate-prompts session, T-0G)
+**Last updated:** 2026-11-15, about 14:00 IST (Lead, T-082). Read this first, then `docs/TASK_TRACKER.md`.
 
 ## Exact current state
 
-- **Phase:** planning complete. **Stack (D-008) and data contract v0.1.0 (D-016) approved on 2026-11-14 at 12:26 IST (= H0 of the 36-hour schedule; submission target H34 ≈ 2026-11-15 22:26 IST, deadline 23:59 local).**
-- **Layout approved (D-023):** `pipeline/` (Member 2), `api/` and `app/` (Member 3). **Member 3 owns the API (D-015).** Nothing blocks code; tasks need only Lead assignment.
-- **No application code, no installed dependencies, no data downloaded into the repo.**
-- **Repository:** private GitHub repo `global-fire-harmonization` (URL and verification below).
+- **Phase:** built, validated and accepted for presentation (T-081). `main` @ `076847e` plus the Lead's documentation PR (#75).
+- **Product:** a global, harmonized fire-activity record for July 2002 to November 2026 (NASA FIRMS: Aqua MODIS, S-NPP VIIRS, NOAA-20 VIIRS on the Aqua scale; 0.5° grid), with verdicts, evidence, validation and an interactive web app.
+- **Data:**
+  - **Real** products in `data/products/` (Git LFS, D-027), `synthetic: false`, method 0.1.0, contract 0.1.1.
+  - Kashmir cells are counted by India's official boundary (D-033, T-086).
+  - The whole Earth is named "World" (T-092).
+- **Validation:** 38 pre-registered results: 18 PASS, 18 FAIL, 2 INCONCLUSIVE (`data/products/validation_results.json`, `docs/VALIDATION_PLAN.md`). v0.2 was not adopted (D-030).
+- **Checks on `main`:**
+  - contract check conforms
+  - `number_check.py` 0 mismatches in 6,492,028 values (T-078, Lead re-run)
+  - about 1,500 automated tests pass (app 693; pipeline and API about 820)
 
 ## Completed
 
-- Discovery research, critique and the final direction (Many Witnesses + Witness Stand, global scope). See `RESEARCH_SUMMARY.md`.
-- Verified data access: FIRMS global yearly zips, ≈9.1 GB zipped, no login. Column schemas and satellite codes verified (`DATA_SOURCES.md`).
-- Full documentation set, `CONTRIBUTING.md`, `.gitignore`, `.env.example`, `data/README.md`.
-- **T-0E team workflow**: merged into `main` as PR #2 (merge commit `cc940ba`). D-017 and D-020 are in effect.
-- **D-021**: bootstrap history on `main` rewritten without AI trailers.
+- Pipeline, calibration, combination, verdicts, entity aggregation (T-001 to T-016, T-085, T-086).
+- Validation suite and integration (T-020 to T-027).
+- App and API:
+  - map, calendar, evidence, satellites, anomalies, CSV, custom rectangle and polygon, methods page, offline copy (T-030 to T-044)
+  - the UI round: design system, map UX, stories and How to read, faster map, responsive and accessibility, NASA GIBS imagery and globe, India's official boundary, month picker, methods redesign, analytics with compare and coverage (T-070 to T-074, T-083 to T-092)
+- Docs: README for judges, architecture as built (T-075), fresh-clone check (T-077), number checks (T-026, T-078).
+- Lead:
+  - mock approval (T-080)
+  - **browser acceptance (T-081, `docs/validation/T-081-acceptance.md`)**
+  - **demo script (T-060, `docs/demo/DEMO_SCRIPT.md`)**
+  - **project page text (T-062 draft, `docs/demo/PROJECT_PAGE_DRAFT.md`)**
+  - this handoff (T-082)
 
-## In progress
+## In progress (optional)
 
-- **T-0G, teammate workstream prompts.** Branch `docs/T-0G-teammate-prompts`, PR awaiting the Lead's review. It adds `docs/prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md` and `docs/prompts/MEMBER_3_APPLICATION_PROMPT.md`, marks stack- and contract-dependent tasks `BLOCKED` in the tracker, and fixes statuses left stale after PR #2 merged.
+- **T-093, UI and UX excellence pass** (Member 2, PR #99, prompt `docs/prompts/T-093-UI-EXCELLENCE-PROMPT.md`). **Optional:** the app is complete and presentable without it. Merge only after the Lead's browser test against section 8 of the prompt.
 
-## Pending: needs the Project Lead
+## Pending: needs the Project Lead (actions only the Lead can take)
 
-1. **Review the T-0G teammate-prompts PR**, and decide D-018 (Lead bookkeeping commits).
-2. ~~Approve the tech stack (D-008)~~: approved 2026-11-14.
-3. ~~Approve data contract v0.1.0 (D-016)~~: approved 2026-11-14. **Decide D-022** (the [PROPOSED ADDITION] items in the prompts' shared section).
-4. ~~Directory layout and API owner~~: approved 2026-11-14 (D-023, D-015). Confirm product direction D-003.
-5. Add the two collaborators (Lead only).
-6. Decide on technical protection of `main` (D-019) and repo visibility for judges (D-014).
-7. ~~Rewrite the bootstrap commits on `main` (D-021)~~: done 2026-11-14. Anyone who cloned before this must re-clone or run `git fetch && git reset --hard origin/main` on `main`.
+1. **T-061, record the demo video** (outside the repo), following `docs/demo/DEMO_SCRIPT.md`. Real data only.
+2. **T-062, post the project page** text from `docs/demo/PROJECT_PAGE_DRAFT.md` on the Space Apps site, and add the video link.
+3. **T-064, repo visibility (D-014).** Today: `PRIVATE` (checked 2026-11-15). Judges usually need to open the code. **Recommendation:** make it public before submitting (GitHub → Settings → General → Danger Zone). Run a last secret scan first; the rules forbid keys and `.env` files, and none are known to be committed. Only the Lead changes this.
+4. **T-0F, protect `main` (D-019).** Today: not protected (checked 2026-11-15). **Recommendation:** after the last merge, add a rule requiring a PR (no direct pushes) and blocking force-pushes. Only the Lead changes settings.
+5. **T-063, submit** on the Space Apps site before the deadline.
+6. **Before an offline demo:** generate the full offline copy on the demo laptop (about 17 min; `api/README.md`). A 24-month copy was tested in T-081.
 
-## Recommended for the Lead to assign first (stack-independent)
+## Known limitations (say them, don't hide them)
 
-These are recommendations only; nothing is assigned until the Lead updates `TASK_TRACKER.md`.
-- **T-001 / T-002** (Member 2): global zip downloads and 2026 API pulls. Critical path; needs a MAP_KEY.
-- **T-050** (Lead): define the validation case windows.
-
-## Teammate prompts (start here as Member 2 or 3)
-
-| Member | Prompt | What they can do first |
-|---|---|---|
-| Member 2 | [`docs/prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md`](prompts/MEMBER_2_DATA_SCIENCE_PROMPT.md) | Once the Lead assigns them: **T-001** (global zip downloads), **T-002** (2026 API pull; needs a MAP_KEY), **T-008**. Then **T-010** fixtures (generator in `pipeline/`) and T-003 onward |
-| Member 3 | [`docs/prompts/MEMBER_3_APPLICATION_PROMPT.md`](prompts/MEMBER_3_APPLICATION_PROMPT.md) | Fully unblocked once assigned: **T-030** setup first (`app/`), then T-031–T-033 on fixtures; T-034 API in `api/` |
-
-Paste the whole file (below its separator line) into a fresh Claude Code session at the repository root. Both prompts contain an identical "Shared integration handoff" section. If the two copies ever differ, stop and tell the Lead.
+- Extreme fire months are under-converted (VIIRS 20–40% low; A1 and A2 FAIL; S19).
+- Night and per-region intervals are too narrow (D1 sub-readings FAIL; S16).
+- The disagreement flag is not a jump detector (B2 FAIL; S20). Verdicts near satellite-change dates can differ from Aqua-only (CTRL FAIL; S21).
+- Quiet cells with a big fire read "cannot determine" (D-031; S22).
+- Safari and Firefox were not tested in T-081; a real screen reader was not tested.
 
 ## How to resume work
 
-### As a teammate (Member 2 or 3) in your own Claude session
-1. `git switch main && git pull`.
-2. Enable the local guards once per clone: `git config core.hooksPath .githooks` (blocks pushes to `main` and AI attribution in commit messages).
-3. Start Claude Code in the repository and tell it: *"I am Member <n>. My assigned task is T-XXX."*
-4. Claude runs the startup checklist (`CLAUDE.md`), confirms the task and its boundaries, and generates the task prompt into `docs/task-prompts/`.
-5. Follow `docs/TEAM_WORKFLOW.md`: task branch, draft PR, implement, tests, docs, ready for review. Then wait for the Lead.
-6. If your task isn't in `TASK_TRACKER.md` as `ASSIGNED` to you, stop and ask the Lead.
-
-### As a new Claude session (any account)
-- Assume no prior knowledge. Run the `CLAUDE.md` startup checklist, summarize the state from this file and the tracker, and ask the user which task to work on if none is explicitly assigned.
-
-### As the Project Lead
-- Check open PRs (`gh pr list`), the tracker, and `git log origin/main` (to spot any unreviewed direct pushes).
-- Assign the next tasks in the tracker. Review with the `CONTRIBUTING.md` checklist. Merge personally.
-
-## Known issues / open questions
-
-- MODIS `version` field varies across years (T-007).
-- Aqua's drift onset date and the end of the MODIS mission are unconfirmed (T-008).
-- GFED region-mask access is unverified (T-004; fallback exists).
-- Local machine has Node 20.20.2 (EOL); Node 22/24 LTS needed.
-- **Lead-authored PRs cannot get a GitHub "Approve" review** (GitHub blocks self-approval). `TEAM_WORKFLOW.md` §8 requires an approved review, so Lead-authored PRs need a documented alternative (Lead decision; not yet written into the workflow).
-- **GitHub's Copilot reviewer bot is auto-requested on PRs** (it posted on #1 and #2). This is a GitHub setting; it was not changed. The Lead decides whether to keep it.
-- **The pre-rewrite history is still reachable** via closed PR #1 (`refs/pull/1/head`, read-only, GitHub-managed). Only GitHub Support can purge it.
-- The merged branch `docs/team-workflow` has not been deleted (Lead action).
-
-## Last successful tests
-
-- None. There is no code yet.
-
-## Next recommended actions
-
-All of these are the Lead's actions. Teammates start work only on tasks assigned in the tracker.
-1. Review and merge the T-0G teammate-prompts PR.
-2. ~~Decide T-0D and D-015~~: approved.
-3. Assign T-001, T-002 and T-008 to Member 2 now (critical path; no code directory needed).
-4. Assign T-030 (app setup, Member 3) and T-010 (fixtures, Member 2) now.
+1. Read `CLAUDE.md`, `README.md`, this file, `docs/TASK_TRACKER.md`.
+2. `git lfs install && git lfs pull` (products, about 600 MB).
+3. Run the API (`README.md`; start from the repo root with `--app-dir api`) and the app (`cd app && npm ci && npm run dev`).
+4. Checks:
+   - `python pipeline/contract_check.py data/products --real`
+   - `python pipeline/number_check.py` (Node 22.6+)
+   - `pytest`
+   - `npm test`
 
 ## Important files
 
-- `docs/TEAM_WORKFLOW.md`: the process from assignment to merge
-- `docs/prompts/`: the Member 2 and Member 3 workstream prompts
-- `CLAUDE.md`: rules for AI assistants
-- `docs/PROJECT_PLAN.md`: scope, features, 36-hour schedule
-- `docs/TASK_TRACKER.md`: tasks and status
-- `docs/DECISION_LOG.md`: approvals
+- `README.md` (judges), `docs/ARCHITECTURE.md`, `docs/DATA_CONTRACT.md`, `docs/SCIENTIFIC_METHODOLOGY.md`, `docs/VALIDATION_PLAN.md`, `docs/RISKS_AND_LIMITATIONS.md`, `docs/DECISION_LOG.md` (D-001 to D-033), `docs/NUMBER_INVENTORY.md`
+- `docs/demo/` (script, project page), `docs/validation/` (every report)
+- `CLAUDE.md` (rules for AI assistants), `docs/TEAM_WORKFLOW.md`
 
-## Repository verification (2026-11-14, via GitHub CLI)
+## Repository facts (2026-11-15, via GitHub CLI)
 
-- URL: https://github.com/vishalbg02/global-fire-harmonization
-- `visibility: PRIVATE`, `isPrivate: true`, default branch `main`
-- Collaborators: owner only (`vishalbg02`). **None added by automation.**
-- The initial setup commits were pushed directly to `main` as a one-time bootstrap. **From now on, all changes go through PRs reviewed by the Lead** (`CONTRIBUTING.md`). The only exception is the Lead's bookkeeping commits (D-018).
-- Branch protection: **not configured** on `main`, and there are no rulesets (verified via the API, 2026-11-14). The PR rule is policy, not a technical lock. See `TEAM_WORKFLOW.md` §10 and D-019.
+- URL: https://github.com/vishalbg02/global-fire-harmonization; visibility **PRIVATE**; default branch `main`.
+- Branch protection on `main`: **none** (the PR rule is policy). All work since the bootstrap went through PRs reviewed by the Lead.
