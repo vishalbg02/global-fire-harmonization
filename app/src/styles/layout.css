@@ -722,6 +722,10 @@ aside .legend {
 }
 
 .spark {
+  /* The screen-reader table inside is absolutely placed and as wide as its text; clipping it here keeps it from
+     widening the page on a phone (T-074). */
+  position: relative;
+  overflow: hidden;
   margin: var(--s-12) 0 0;
   padding-top: var(--s-12);
   border-top: var(--rule);
