@@ -50,7 +50,7 @@ describe('plain-language reason texts (T-036 acceptance)', () => {
     expect(REASON_TEXTS.WITNESS_DISAGREEMENT).toBe('The satellites disagree more than expected, so the uncertainty was widened.')
     expect(REASON_TEXTS.WIDE_INTERVAL).toBe('The uncertainty range is too wide for a confident verdict.')
     expect(REASON_TEXTS.PROVISIONAL_NRT).toBe('Based on near-real-time data; values may change when science-quality data arrive.')
-    expect(REASON_TEXTS.AQUA_DRIFT_ERA).toBe("Aqua MODIS's orbit has drifted, so it is not used as a witness for this period.")
+    expect(REASON_TEXTS.AQUA_DRIFT_ERA).toBe("Aqua MODIS's orbit has drifted, so its night observations are not combined for this period (its day observations still are).")
     expect(REASON_TEXTS.SINGLE_WITNESS).toBe('Only one satellite contributed this month.')
     expect(REASON_TEXTS.POOLED_CALIBRATION).toBe('Local data were sparse, so calibration borrows from the wider region.')
   })

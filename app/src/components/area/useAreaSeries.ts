@@ -10,13 +10,15 @@ import type { Area } from '../../state/selection.ts'
 export function useAreaSeries(area: Area, options: { enabled?: boolean } = {}) {
   const key =
     area.entity_type === 'CUSTOM'
-      ? ['series-custom', ...area.bbox]
+      ? area.polygon === undefined
+        ? ['series-custom', ...area.bbox]
+        : ['series-custom-polygon', area.entity_id]
       : ['series', area.entity_type, area.entity_id]
   return useQuery({
     queryKey: key,
     queryFn: () =>
       area.entity_type === 'CUSTOM'
-        ? fetchCustomSeries(area.bbox)
+        ? fetchCustomSeries(area.polygon === undefined ? area.bbox : { polygon: area.polygon })
         : fetchSeries(area.entity_type, area.entity_id),
     enabled: options.enabled ?? true,
     retry: false,

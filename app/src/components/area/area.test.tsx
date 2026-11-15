@@ -10,6 +10,7 @@ import { CalendarPanel } from '../calendar/CalendarPanel.tsx'
 import { ErrorState } from '../common/States.tsx'
 import { EvidencePanel } from '../evidence/EvidencePanel.tsx'
 import { AreaPicker } from './AreaPicker.tsx'
+import { areaFitBbox } from './resolveArea.ts'
 import { CustomAreaForm, GRID_NOTE } from './CustomAreaForm.tsx'
 import { filterEntities, matchEntity } from './countryFilter.ts'
 import { resolveArea } from './resolveArea.ts'
@@ -225,5 +226,27 @@ describe('ErrorState retry', () => {
     const html = renderToString(<ErrorState message="No analysis cells have their centre inside this area." />)
     expect(html).not.toContain('Retry')
     expect(html).toContain('role="alert"')
+  })
+})
+
+describe('the box the map shows for the selected area (T-039 review)', () => {
+  const countries: EntityItem[] = [
+    { entity_type: 'COUNTRY', entity_id: 'AUS', entity_name: 'Australia', bbox: [112, -44, 154, -10] },
+  ]
+  const continents: EntityItem[] = [
+    { entity_type: 'CONTINENT', entity_id: 'OC', entity_name: 'Oceania', bbox: [110, -50, 180, 0] },
+  ]
+  it('is the entity box for a country or a continent, however it was chosen (also from a link)', () => {
+    const aus: Area = { entity_type: 'COUNTRY', entity_id: 'AUS', entity_name: 'AUS' }
+    const oc: Area = { entity_type: 'CONTINENT', entity_id: 'OC', entity_name: 'OC' }
+    expect(areaFitBbox(aus, countries, continents)).toEqual([112, -44, 154, -10])
+    expect(areaFitBbox(oc, countries, continents)).toEqual([110, -50, 180, 0])
+  })
+
+  it('is the box of a custom area, and null for the world, a cell or a list that is not loaded yet', () => {
+    expect(areaFitBbox(customArea([10, 20, 30, 40]), countries, continents)).toEqual([10, 20, 30, 40])
+    expect(areaFitBbox(WORLD, countries, continents)).toBeNull()
+    expect(areaFitBbox({ entity_type: 'COUNTRY', entity_id: 'AUS', entity_name: 'AUS' }, undefined, undefined)).toBeNull()
+    expect(areaFitBbox({ entity_type: 'COUNTRY', entity_id: 'ZZZ', entity_name: 'ZZZ' }, countries, continents)).toBeNull()
   })
 })

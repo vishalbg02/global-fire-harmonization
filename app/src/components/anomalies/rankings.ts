@@ -1,4 +1,5 @@
 import type { Anomaly } from '../../api/contract.ts'
+import { formatProbability } from '../map/format.ts'
 
 /** The world is a single entity, so it is left out of the ranking; there are two tabs. */
 export type RankingTab = 'COUNTRY' | 'CONTINENT'
@@ -21,26 +22,18 @@ export function entryProbability(a: Anomaly): number | null {
   return a.verdict === 'ABOVE_NORMAL' ? a.p_above : a.p_below
 }
 
-function byProbabilityDesc(a: Anomaly, b: Anomaly): number {
-  const pa = entryProbability(a)
-  const pb = entryProbability(b)
-  if (pa === null && pb === null) return a.entity_id.localeCompare(b.entity_id)
-  if (pa === null) return 1 // an entry with no probability goes last
-  if (pb === null) return -1
-  return pb - pa || a.entity_id.localeCompare(b.entity_id)
-}
-
 /**
  * Splits the API's anomalies of one entity type into the two rankings the Lead asked for:
- * "most likely above normal" (sorted by `p_above`) and "most likely below normal" (sorted by
- * `p_below`). Only stored values are used for ordering; nothing is computed or filtered by a
- * threshold. The API already leaves out every verdict other than above and below.
+ * "most likely above normal" and "most likely below normal". The API's order is kept: the
+ * API alone orders (probability, then distance from normal, then entity id; api/README.md), so
+ * nothing is sorted, computed or filtered by a threshold here. The API already leaves out
+ * every verdict other than above and below.
  */
 export function rankAnomalies(anomalies: readonly Anomaly[], tab: RankingTab): Rankings {
   const ofType = anomalies.filter((a) => a.entity_type === tab)
   return {
-    above: ofType.filter((a) => a.verdict === 'ABOVE_NORMAL').sort(byProbabilityDesc),
-    below: ofType.filter((a) => a.verdict === 'BELOW_NORMAL').sort(byProbabilityDesc),
+    above: ofType.filter((a) => a.verdict === 'ABOVE_NORMAL'),
+    below: ofType.filter((a) => a.verdict === 'BELOW_NORMAL'),
   }
 }
 
@@ -48,11 +41,11 @@ export function topN<T>(list: readonly T[], n: number): T[] {
   return list.slice(0, n)
 }
 
-/** "82% likely above normal" in whole percentages, or null when the probability is missing. */
+/** "82% likely above normal", "more than 99% likely ..." for >= 0.995; null when missing. */
 export function probabilityText(a: Anomaly): string | null {
   const p = entryProbability(a)
   if (p === null) return null
-  return `${Math.round(p * 100)}% likely ${a.verdict === 'ABOVE_NORMAL' ? 'above' : 'below'} normal`
+  return `${formatProbability(p)} likely ${a.verdict === 'ABOVE_NORMAL' ? 'above' : 'below'} normal`
 }
 
 export function pctText(a: Anomaly): string {

@@ -115,3 +115,10 @@ describe('bboxFromRing (a drawn rectangle)', () => {
     expect(none.ok).toBe(false)
   })
 })
+
+describe('rounding of the custom-area label (T-039 review)', () => {
+  it('rounds half away from zero, so a negative coordinate ending in 5 rounds like a positive one', () => {
+    expect(bboxLabel([-6.125, -6.125, 6.125, 6.125])).toBe('W -6.13, S -6.13, E 6.13, N 6.13')
+    expect(bboxLabel([-0.004, 0, 1, 1])).toBe('W 0.00, S 0.00, E 1.00, N 1.00')
+  })
+})

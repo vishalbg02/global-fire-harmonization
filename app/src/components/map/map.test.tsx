@@ -8,7 +8,7 @@ import { MapModeSelector } from './MapModeSelector.tsx'
 import { Legend } from './Legend.tsx'
 import { MonthSelector } from './MonthSelector.tsx'
 import { countryIso3 } from './countries.ts'
-import { formatEstimate, verdictProbability } from './format.ts'
+import { formatEstimate, formatProbability, verdictProbability } from './format.ts'
 import { NO_DATA_COLOR, cellFillColor, layerValue, sequentialColor, sharedMax } from './scale.ts'
 
 // SYNTHETIC test data. Not NASA observations.
@@ -81,6 +81,19 @@ describe('colour scale', () => {
 describe('formatting', () => {
   it('writes probabilities as whole percentages', () => {
     expect(verdictProbability(cell())).toBe('82% likely above normal')
+  })
+
+  it('never writes 100% or 0%: more than 99% from 0.995, less than 1% up to 0.005', () => {
+    const text = (verdict: 'ABOVE_NORMAL' | 'BELOW_NORMAL' | 'WITHIN_NORMAL', p: number) =>
+      verdictProbability(cell({ verdict, p_above: p, p_below: p, p_within: p }))
+    expect(text('ABOVE_NORMAL', 0.9999999)).toBe('more than 99% likely above normal')
+    expect(text('ABOVE_NORMAL', 1)).toBe('more than 99% likely above normal')
+    expect(text('BELOW_NORMAL', 0.995)).toBe('more than 99% likely below normal')
+    expect(text('WITHIN_NORMAL', 0.9949)).toBe('99% likely within normal')
+    expect(text('ABOVE_NORMAL', 0.005)).toBe('less than 1% likely above normal')
+    expect(text('ABOVE_NORMAL', 0)).toBe('less than 1% likely above normal')
+    expect(text('ABOVE_NORMAL', 0.0051)).toBe('1% likely above normal')
+    expect(formatProbability(0.8)).toBe('80%')
   })
 
   it('gives no probability wording for CANNOT_DETERMINE or NO_DETECTED_ACTIVITY', () => {
