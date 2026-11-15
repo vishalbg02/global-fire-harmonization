@@ -94,13 +94,14 @@ describe('story caption', () => {
       expect(html).toContain(`href="${s.reportHref}"`)
     }
   })
-  it('has a Read more toggle (collapsed by default, used on a phone) that controls the body', () => {
+  it('is a "Story" card whose header (label and headline) opens and closes the body, open by default (T-093)', () => {
     const aus = FEATURED_STORIES.find((s) => s.entityId === 'AUS')!
     const html = renderToString(<StoryCaption story={aus} />)
-    expect(html).toContain('Read more')
-    expect(html).toContain('aria-expanded="false"')
+    expect(plain(html)).toContain(`Story ${aus.label}`)
+    expect(html).toContain('aria-expanded="true"')
     expect(html).toContain('aria-controls="story-caption-body"')
     expect(html).toContain('id="story-caption-body"')
+    expect(html).not.toMatch(/id="story-caption-body"[^>]*hidden/)
   })
   it('the Australia story carries the cannot-determine explanation', () => {
     const aus = FEATURED_STORIES.find((s) => s.entityId === 'AUS')!
