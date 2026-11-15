@@ -58,6 +58,8 @@ Fixed views: Indonesia 2015-09 and 2015-10, Brazil 2019-08, Canada 2023-07, the 
 | E methods text | 17 | 17 | 0 |
 | **Total** | **6,492,023** | **6,492,023** | **0** |
 
+**Re-run on `main` after #70 merged, with no extra flag (2026-11-15, Node 22.18, `main` @ 18715dc merged into this branch): 6,492,021 values checked, 0 mismatches, 1 note.** The two values fewer than above are the checks that compared the separate T-027 file passed with `--validation-extra`; the file is now the one in `data/products/`, so the "validation file" checks read it directly (the API accepts it, 38 tests, FAIL 18, INCONCLUSIVE 2, PASS 18, NOT RUN 0). The note is the one already listed (hand-written methods text that the inventory does not name). Log: `numcheck_main.log` (not committed).
+
 ## 3. What the numbers show (VERIFIED)
 
 - **Stored values are served unchanged.** All 2,137,044 map values, 38,090 series values, 125 evidence values and the validation and metadata files are the stored doubles, nulls included.
