@@ -55,6 +55,12 @@ A "Methods and validation" link in the header opens a page (`?page=methods`, kep
 - **Contrast:** `src/content/contrast.test.ts` reads the tokens in `src/index.css` and checks WCAG 2.1 AA text contrast. The app has one (light) theme.
 - **Loading:** a custom area shows "Computing this area… A new area can take several seconds." while it computes.
 
+## Responsive and keyboard behaviour (T-074)
+
+- **Phone:** at 640 px and below the main controls (buttons, chips, tabs, the area box, the month slider, the map mode switch, the map's zoom buttons) are at least 44 px high; below 400 px the toolbar is one column. No view scrolls sideways at 320, 375, 640, 720, 768, 1024, 1280 or 1440 px (the methods page wraps long values and addresses; the Analytics table scrolls inside its own box). Checkboxes and radio buttons that are not segments are 24 px. Links inside a sentence keep their text size (WCAG 2.5.8 exempts them).
+- **Keyboard:** Esc closes "How to read this" (without remembering it as dismissed; the button still does) and the "Draw or type an area" panel, and focus returns to the button that opened it; closing the pinned cell card hands focus back to the map. The map has one keyboard stop (its canvas); deck.gl's cell canvas is `inert`. Focus rings are 2 px `--focus` on every control, including summaries and the map's zoom buttons.
+- **Checked with** axe-core 4.10.2 (A, AA, WCAG 2.2 AA and best-practice rules) injected in the browser from a copy kept outside the repository; the result is in `docs/validation/T-074-a11y-offline.md`.
+
 ## Offline copy of the preset views (T-043)
 
 The app can run from static files written by `api/fire_api/static_export.py` (see `api/README.md`), with no API:

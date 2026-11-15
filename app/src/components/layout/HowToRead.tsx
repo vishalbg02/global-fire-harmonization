@@ -6,9 +6,17 @@ import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { Button } from '../ui/Button.tsx'
 
 /** The dismissible "How to read this": the steps and glossary of plainLanguage.ts and the verdict descriptions. */
-export function HowToRead({ onClose }: { onClose: () => void }) {
+export function HowToRead({ onClose, onEscape }: { onClose: () => void; onEscape?: () => void }) {
   return (
-    <section id="how-to-read" className="how-to-read" aria-label={HOW_TO_READ_TITLE}>
+    <section
+      id="how-to-read"
+      className="how-to-read"
+      aria-label={HOW_TO_READ_TITLE}
+      onKeyDown={(e) => {
+        // Esc closes the panel for now; only the button remembers it as dismissed.
+        if (e.key === 'Escape' && onEscape !== undefined) onEscape()
+      }}
+    >
       <div className="how-head">
         <h2>{HOW_TO_READ_TITLE}</h2>
         <Button onClick={onClose}>{UI.HOW_TO_READ_CLOSE}</Button>

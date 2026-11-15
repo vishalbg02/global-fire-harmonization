@@ -722,6 +722,10 @@ aside .legend {
 }
 
 .spark {
+  /* The screen-reader table inside is absolutely placed and as wide as its text; clipping it here keeps it from
+     widening the page on a phone (T-074). */
+  position: relative;
+  overflow: hidden;
   margin: var(--s-12) 0 0;
   padding-top: var(--s-12);
   border-top: var(--rule);
@@ -879,6 +883,11 @@ aside .legend {
   cursor: pointer;
 }
 
+/* The tab bar scrolls sideways, which clips an outside ring: draw it inside the tab (T-074). */
+.tabbar [role='tab']:focus-visible {
+  outline-offset: -3px;
+}
+
 .tabbar [role='tab'][aria-selected='true'] {
   color: var(--ink);
   font-weight: 600;
@@ -980,7 +989,8 @@ aside .legend {
     order: 1;
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: var(--s-8) var(--s-16) 0;
+    /* A little room below, so the scrolling row does not clip the focus ring of a chip (T-074). */
+    padding: var(--s-8) var(--s-16) var(--s-4);
   }
 
   .stories-label {
@@ -1068,5 +1078,125 @@ aside .legend {
 
   .map-mode .seg-option span {
     padding: 6px 8px;
+  }
+}
+
+/* ---- Checkboxes and radio buttons that are not segments: a 24 px target (WCAG 2.2, 2.5.8) ---- */
+.table-toggle input[type='checkbox'],
+
+label > input[type='checkbox'],
+label > input[type='radio']:not(.seg-option input) {
+  width: 24px;
+  height: 24px;
+  margin: 0 var(--s-4) 0 0;
+  accent-color: var(--brand);
+  vertical-align: middle;
+}
+
+/* ---- Phone touch targets (T-074): the main controls are at least 44 px high ---- */
+@media (max-width: 640px) {
+  .skip-link {
+    padding: 0.8rem 0.75rem;
+  }
+
+  .top-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: 0;
+  }
+
+  .btn,
+  .chip,
+  .map-legend-toggle,
+  .tabbar [role='tab'],
+  .anomaly-tabs [role='tab'],
+  .top-anomalies li button,
+  .story-more,
+  main button:not(.cal-cell):not(.link-button):not(.maplibregl-ctrl button) {
+    min-height: 44px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .month-selector .btn-icon,
+  .btn.btn-icon {
+    min-width: 44px;
+  }
+
+  .link-button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  input[type='text'],
+  input[type='search'],
+  select {
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .month-selector input[type='range'] {
+    height: 44px;
+  }
+
+  .seg-option span {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .map-mode .seg-option span {
+    min-height: 44px;
+  }
+
+  summary {
+    padding-block: 13px;
+  }
+
+  .how-to-read p > a,
+  a.learn-more {
+    display: inline-block;
+    padding-block: 12px;
+  }
+
+  .maplibregl-ctrl-group button.maplibregl-ctrl-zoom-in,
+  .maplibregl-ctrl-group button.maplibregl-ctrl-zoom-out {
+    width: 44px;
+    height: 44px;
+  }
+
+  .map-pinned-head button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .table-toggle,
+  .layer-selector label:not(.seg-option),
+  .source-details label {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* A very narrow phone (320 px, or a 375 px page at 200 % text size): one column of controls, nothing wider than the page. */
+@media (max-width: 400px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seg-row {
+    max-width: 100%;
+  }
+
+  .seg-option span {
+    padding-inline: 8px;
   }
 }

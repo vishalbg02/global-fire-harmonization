@@ -200,6 +200,7 @@ aside section {
 
 /* ---- Area picker ---- */
 .area-picker h2,
+.custom-area h2,
 .custom-area h3 {
   margin: 0 0 0.3rem;
   font-size: 1rem;
@@ -634,6 +635,8 @@ table.visually-hidden {
 /* Methods and validation page (T-041) */
 .methods-link { display: inline-block; margin-top: 0.25rem; }
 .methods-page { font-size: var(--t-16); max-width: 60rem; padding: 0 1rem 2rem; }
+/* Long web addresses and file names wrap instead of widening the page on a phone (T-074). */
+.methods-page a, .methods-page li, .methods-page dd, .methods-page p { overflow-wrap: anywhere; }
 .methods-page h2 { font-size: 1.6rem; margin: 1rem 0 0.5rem; }
 .methods-page h3 { font-size: 1.3rem; margin: 2rem 0 0.5rem; border-bottom: 1px solid currentColor; }
 .methods-page h4 { font-size: 1.05rem; margin: 1rem 0 0.25rem; }
@@ -646,12 +649,17 @@ table.visually-hidden {
 .reason-entry:target { outline: 2px solid currentColor; outline-offset: 4px; }
 .learn-more { font-size: 0.85rem; }
 .validation-synthetic { border: 2px solid currentColor; padding: 0.5rem; font-weight: 700; }
-.validation-file { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
-.validation-file dd, .validation-test dd { margin: 0; }
+.validation-file { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.25rem 1rem; }
+.validation-file dd, .validation-test dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+/* A phone shows each term above its value, so a long value never widens the page (T-074). */
+@media (max-width: 640px) {
+  .validation-file, .validation-test dl { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .validation-file dd, .validation-test dd { margin-bottom: 0.4rem; }
+}
 .validation-counts { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 0; list-style: none; font-weight: 600; }
 .validation-tests { padding: 0; list-style: none; }
 .validation-test { border: 2px solid currentColor; border-radius: var(--radius); padding: 0.5rem 0.75rem; margin: 0.75rem 0; }
-.validation-test dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
+.validation-test dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.25rem 1rem; }
 .validation-test .test-id { font-size: 0.85rem; opacity: 0.85; margin: 0; }
 .validation-test.status-fail, .validation-test.status-inconclusive { border-width: 4px; }
 .status-badge { font-weight: 800; border: 2px solid currentColor; border-radius: var(--radius); padding: 0 0.4rem; }
