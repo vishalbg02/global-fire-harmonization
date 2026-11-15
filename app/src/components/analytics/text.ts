@@ -16,7 +16,19 @@ export const ANNUAL_NOTE =
 export const SEASON_NOTE =
   'The normal range is the 25th to 75th percentile of the same calendar month in 2003 to 2022, as stored in the products.'
 export const COVERAGE_NOTE =
-  'Determinable means any verdict except "cannot determine". All analysis cells of the world are counted. This counts analysis cells, not land area.'
-/** Shown instead of a figure for a country or a continent (Lead's decision on PR #85): a bounding box would count neighbouring areas' cells. */
-export const COVERAGE_WORLD_ONLY = 'Coverage for this area needs the cell-to-country link; shown for the world only.'
+  'Determinable means any verdict except "cannot determine". A country or a continent counts the cells stored for it (the country of a cell is the one FIRMS lists it under); the world counts every cell. This counts analysis cells, not land area.'
+/** Shown instead of a figure when the API does not send each cell's country and continent (an older API or the offline copy; T-090). */
+export const COVERAGE_AREAS_MISSING =
+  "Coverage for this area needs the country and continent of each cell, which this data service or offline copy does not send. It is shown for the world only."
+export const COVERAGE_NO_CELLS = 'No analysis cell is stored for this area in this month.'
+
+// The "Compare with" search (T-090).
+export const COMPARE_LABEL = 'Compare with'
+export const COMPARE_PLACEHOLDER = 'Search a country or continent'
+export const COMPARE_HELP = 'Optional. Type to search; arrow keys and Enter choose, Escape closes.'
+export const COMPARE_NONE = 'No comparison'
+export const COMPARE_CLEAR = 'Remove the comparison'
+export const COMPARE_NO_MATCH = (query: string) => `No country or continent matches "${query}".`
+export const COMPARE_RESULTS = (n: number) => `${n} ${n === 1 ? 'area' : 'areas'} found`
+export const COMPARE_LISTS_FAILED = 'The list of countries and continents could not be loaded, so the comparison cannot be chosen.'
 export const COMPARE_NOTE = 'Monthly harmonized estimate as a percentage of the median of the same calendar month in 2003 to 2022. A gap is a month with no estimate.'

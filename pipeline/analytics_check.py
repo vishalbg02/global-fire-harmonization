@@ -20,7 +20,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCTS = ROOT / "data" / "products"
 NODE_SCRIPT = ROOT / "pipeline" / "analytics_check_app.mjs"
-AREAS = [("COUNTRY", "IDN"), ("GLOBAL", "GLOBAL")]
+# The first two keep the T-083 comparison (Indonesia against the world); India and Asia are added for the exact coverage of T-090.
+AREAS = [("COUNTRY", "IDN"), ("GLOBAL", "GLOBAL"), ("COUNTRY", "IND"), ("CONTINENT", "AS")]
 SELECTED = (2015, 9)
 COVERAGE_MONTH = (2019, 12)
 
@@ -60,20 +61,18 @@ def expected(rows: list[dict], year: int, month: int) -> dict:
 
 
 def expected_coverage(con: duckdb.DuckDBPyConnection, products: Path, etype: str, eid: str, year: int, month: int) -> dict:
+    """The cells stored for the area (country_iso3 or continent of cells.parquet; every cell for the world) counted by verdict in the month."""
     p = products.as_posix()
-    if etype == "GLOBAL":
-        box = (-180.0, -90.0, 180.0, 90.0)
-    else:
-        w, s, e, n = con.execute(f"select min(lon_min), min(lat_min), max(lon_max), max(lat_max) from read_parquet('{p}/cells.parquet') where country_iso3 = ?", [eid]).fetchone()
-        box = (w, s, e, n)
+    where = {"GLOBAL": "true", "COUNTRY": "c.country_iso3 = ?", "CONTINENT": "c.continent = ?"}[etype]
+    params = [year, month] + ([] if etype == "GLOBAL" else [eid])
     rows = con.execute(
         f"select h.verdict, count(*) from read_parquet('{p}/cell_month_harmonized.parquet') h join read_parquet('{p}/cells.parquet') c using (cell_id) "
-        "where h.year = ? and h.month = ? and (c.lon_min + c.lon_max) / 2 between ? and ? and (c.lat_min + c.lat_max) / 2 between ? and ? group by h.verdict",
-        [year, month, box[0], box[2], box[1], box[3]],
+        f"where h.year = ? and h.month = ? and {where} group by h.verdict",
+        params,
     ).fetchall()
     by = {v: int(n) for v, n in rows}
     total = sum(by.values())
-    return {"box": list(box), "cells": total, "determinable": total - by.get("CANNOT_DETERMINE", 0), "byVerdict": by}
+    return {"cells": total, "determinable": total - by.get("CANNOT_DETERMINE", 0), "byVerdict": by}
 
 
 # --------------------------------------------------------------------------------------------------------------- the panel's own side
@@ -96,13 +95,15 @@ def compare(products: Path = PRODUCTS) -> dict:
     year, month = SELECTED
     report: dict = {"areas": {}, "mismatches": []}
     series = {a: load_series(con, products, *a) for a in AREAS}
-    cover_cells = con.execute(
-        f"select (c.lat_min + c.lat_max)/2 as lat_c, (c.lon_min + c.lon_max)/2 as lon_c, h.verdict from read_parquet('{products.as_posix()}/cell_month_harmonized.parquet') h "
-        f"join read_parquet('{products.as_posix()}/cells.parquet') c using (cell_id) where h.year = ? and h.month = ?", [*COVERAGE_MONTH]).df()
-    cells = [{"lat_min": r.lat_c, "lat_max": r.lat_c, "lon_min": r.lon_c, "lon_max": r.lon_c, "verdict": r.verdict} for r in cover_cells.itertuples()]
+    # What the panel receives: the month's cells (id and verdict) and, from the cell list of GET /api/map/cells, each cell's country and continent.
+    month_cells = con.execute(
+        f"select h.cell_id, h.verdict from read_parquet('{products.as_posix()}/cell_month_harmonized.parquet') h where h.year = ? and h.month = ?", [*COVERAGE_MONTH]).df()
+    cells = [{"cell_id": r.cell_id, "verdict": r.verdict} for r in month_cells.itertuples()]
+    listed = con.execute(f"select cell_id, country_iso3, continent from read_parquet('{products.as_posix()}/cells.parquet') order by cell_id").df()
+    areas = {"cell_id": listed.cell_id.tolist(), "country_iso3": [nan_to_none(v) for v in listed.country_iso3], "continent": [nan_to_none(v) for v in listed.continent]}
     covs = {a: expected_coverage(con, products, *a, *COVERAGE_MONTH) for a in AREAS}
-    payload = {"series": {f"{a[0]}:{a[1]}": rows for a, rows in series.items()}, "year": year, "month": month, "cells": cells,
-               "boxes": {f"{a[0]}:{a[1]}": covs[a]["box"] for a in AREAS},
+    payload = {"series": {f"{a[0]}:{a[1]}": rows for a, rows in series.items()}, "year": year, "month": month, "cells": cells, "areas": areas,
+               "types": {f"{a[0]}:{a[1]}": [a[0], a[1]] for a in AREAS},
                "compare": [f"{AREAS[0][0]}:{AREAS[0][1]}", f"{AREAS[1][0]}:{AREAS[1][1]}"]}
     got = run_panel_functions(payload)
     for a in AREAS:

@@ -52,7 +52,13 @@ APP_FIELDS: tuple[str, ...] = (
 MONTH_FIELDS: tuple[str, ...] = ("year", "month")
 
 COLUMNS_KIND = "columns"
-CELLS_KIND = "cells"
+# The ETag of /api/map/cells carries a field-set token: bump it whenever the columns of the cells
+# answer change. The ETag otherwise follows the product files only, so a browser that kept the
+# answer from before an upgrade (max-age=300, then a conditional request) would be told "not
+# modified" for the old field set (T-090: the answer gained country_iso3 and continent).
+# "v2" = the five geometry columns plus country_iso3 and continent.
+CELLS_SCHEMA = "v2"
+CELLS_KIND = f"cells-{CELLS_SCHEMA}"
 
 
 def field_set(layer: MapLayer) -> tuple[str, ...]:
@@ -66,9 +72,15 @@ def cell_list() -> list[dict[str, Any]]:
     return products.cell_bounds()
 
 
+# Added after the five cell fields (T-090, approved by the Lead on PR #74): the country and the
+# continent of each cell as stored in cells.parquet, so a client can count an area's own cells.
+# Additive: the five fields and every other endpoint are unchanged.
+AREA_FIELDS: tuple[str, ...] = ("country_iso3", "continent")
+
+
 def build_cells() -> bytes:
-    rows = cell_list()
-    columns = {k: [r[k] for r in rows] for k in CELL_FIELDS}
+    rows = products.cell_list_with_areas()
+    columns = {k: [r[k] for r in rows] for k in (*CELL_FIELDS, *AREA_FIELDS)}
     return to_json({"n": len(rows), "columns": columns})
 
 

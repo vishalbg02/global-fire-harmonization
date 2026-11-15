@@ -18,7 +18,7 @@ from fire_api import map_cache, map_columns, products
 from fire_api.columnar import CELL_FIELDS, decode_columns
 from fire_api.main import app
 from fire_api.models import MapLayer
-from tests.conftest import HARMONIZED_ROWS, _harmonized, build_products
+from tests.conftest import CELLS, HARMONIZED_ROWS, _harmonized, build_products
 
 LAYERS = [layer.value for layer in MapLayer]
 PLAIN = {"Accept-Encoding": "identity"}
@@ -322,3 +322,77 @@ def test_real_products_identical_to_map(monkeypatch: pytest.MonkeyPatch, layer: 
     for record, decoded in zip(expected, got, strict=True):
         for name in fields:
             assert _text(decoded[name]) == _text(record[name])
+
+
+# ------------------------------------------------------ the area columns of the cell list (T-090)
+class TestCellAreaColumns:
+    """`GET /api/map/cells` also carries each cell's country and continent, as stored (additive).
+
+    SYNTHETIC cells."""
+
+    def test_the_two_area_columns_are_the_stored_values_cell_by_cell(
+        self, client: TestClient
+    ) -> None:
+        columns = _json(client, "/api/map/cells")["columns"]
+        stored = {c[0]: (c[5], c[6]) for c in CELLS}
+        assert columns["cell_id"] == sorted(stored)
+        assert columns["country_iso3"] == [stored[i][0] for i in columns["cell_id"]]
+        assert columns["continent"] == [stored[i][1] for i in columns["cell_id"]]
+        assert (
+            None in columns["country_iso3"] and None in columns["continent"]
+        )  # a cell with no country stays null
+
+    def test_the_five_old_columns_are_unchanged_and_come_first(self, client: TestClient) -> None:
+        body = _json(client, "/api/map/cells")
+        assert list(body["columns"])[:5] == list(CELL_FIELDS)
+        rows = products.cell_bounds()
+        for name in CELL_FIELDS:
+            assert _text(body["columns"][name]) == _text([r[name] for r in rows])
+        assert body["n"] == len(rows)
+
+    def test_the_month_columns_and_the_map_are_unchanged(self, client: TestClient) -> None:
+        month = _json(client, "/api/map/columns?year=2020&month=1&layer=verdict")
+        assert "country_iso3" not in month["columns"] and "continent" not in month["columns"]
+        record = _json(client, "/api/map?year=2020&month=1&layer=verdict")[0]
+        assert "country_iso3" not in record and "continent" not in record
+
+    def test_the_area_columns_have_one_value_per_cell(self, client: TestClient) -> None:
+        body = _json(client, "/api/map/cells")
+        assert (
+            len(body["columns"]["country_iso3"]) == len(body["columns"]["continent"]) == body["n"]
+        )
+
+
+@pytest.mark.skipif(
+    not _real_ready(),
+    reason="the real products are LFS pointers or missing: fetch them or set PRODUCTS_DIR",
+)
+def test_real_cell_list_area_columns_equal_cells_parquet(monkeypatch: pytest.MonkeyPatch) -> None:
+    import duckdb
+
+    monkeypatch.setenv("PRODUCTS_DIR", str(_real_dir()))
+    body = _json(TestClient(app), "/api/map/cells")
+    stored = (
+        duckdb.connect()
+        .execute(
+            "SELECT cell_id, country_iso3, continent FROM read_parquet(?) ORDER BY cell_id",
+            [str(_real_dir() / "cells.parquet")],
+        )
+        .fetchall()
+    )
+    assert body["n"] == len(stored) > 50000
+    assert body["columns"]["cell_id"] == [r[0] for r in stored]
+    assert body["columns"]["country_iso3"] == [r[1] for r in stored]
+    assert body["columns"]["continent"] == [r[2] for r in stored]
+
+
+class TestCellsFieldSetToken:
+    def test_the_cells_etag_carries_the_field_set_token(self, client: TestClient) -> None:
+        # A browser holding the answer from before country_iso3 and continent existed
+        # must not be told "not modified" (T-090).
+        etag = client.get("/api/map/cells", headers=PLAIN).headers["etag"]
+        assert etag.startswith(f'W/"cells-{map_columns.CELLS_SCHEMA}-')
+        assert map_columns.CELLS_SCHEMA != "v1"
+        old = 'W/"cells-0123456789abcdef01234567"'
+        stale = client.get("/api/map/cells", headers={**PLAIN, "If-None-Match": old})
+        assert stale.status_code == 200
