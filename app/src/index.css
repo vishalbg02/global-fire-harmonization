@@ -702,3 +702,16 @@ main:focus { outline: none; }
   border-bottom: 1px solid #8a6d00;
   color: #1b1b1f;
 }
+
+/* Text for screen readers only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
