@@ -2,6 +2,31 @@
 
 Newest entries first. Record completed work, pending work, blockers and decisions.
 
+## 2026-11-15: Build, validation, UI round, acceptance (H0+26)
+
+**Completed (all merged through PRs reviewed by the Lead):**
+- Real products for 2002-07 to 2026-11 (method 0.1.0, contract 0.1.1), with the Jammu and Kashmir cells counted by India's official boundary (D-033) and the world named "World".
+- Validation: 38 results, 18 PASS, 18 FAIL, 2 INCONCLUSIVE; v0.2 was not adopted (D-030); every failure is in the plan, the risks register and the app.
+- App:
+  - new design with the verdict above the fold
+  - map UX and faster month switching
+  - NASA GIBS Blue Marble, satellite view and globe (D-032)
+  - India's official boundary
+  - stories and How to read
+  - Analytics with compare and per-country coverage
+  - month picker
+  - methods redesign
+  - responsive and accessibility work
+  - offline copy
+- Checks: contract check conforms; number check 0 mismatches (6,492,028 values); about 1,500 automated tests pass.
+- Lead: T-080 mock approval; T-081 browser acceptance (Chromium; Safari and Firefox not run); T-060 demo script; T-062 project page draft; T-082 this log and the handoff.
+
+**Decisions:** D-028 Amendment A, D-029, D-030 (not adopted), D-031, D-032, D-033.
+
+**Pending (Lead):** T-061 video, T-062 posting, T-063 submit, T-064 repo visibility (recommend public), T-0F protect `main`, the full offline copy on the demo laptop.
+
+**Optional:** T-093 UI and UX excellence pass (#99).
+
 ## 2026-11-14: Teammate workstream prompts (T-0G)
 
 **Completed**
