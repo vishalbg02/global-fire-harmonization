@@ -38,7 +38,13 @@ COMPRESS_LEVEL = 9
 _ADAPTER: TypeAdapter[list[MapCell]] = TypeAdapter(list[MapCell])
 
 Signature = tuple[tuple[str, int, int], ...]
-Key = tuple[str, int, int, Signature]
+# (directory, year, month, signature) for /api/map; (kind, directory, year, month, signature) for
+# the columnar endpoints, so the two never share an entry or a validator.
+Key = tuple[object, ...]
+
+# The columnar answers are small (a fraction of the map month), so more of them are kept.
+COLUMNS_CACHE_MAX_ENTRIES = 64
+CELLS_FILES = ("cells.parquet",)
 
 
 @dataclass(frozen=True)
@@ -52,12 +58,12 @@ class MapPayload:
         return gzip.decompress(self.gzipped)
 
 
-def product_signature(directory: Path) -> Signature | None:
+def product_signature(directory: Path, files: tuple[str, ...] = PRODUCT_FILES) -> Signature | None:
     """(name, modified time in ns, size) of each product file the map reads, or None when one
     cannot be inspected (the request then goes uncached and fails as it always did)."""
     out = []
     try:
-        for name in PRODUCT_FILES:
+        for name in files:
             stat = (directory / name).stat()
             out.append((name, stat.st_mtime_ns, stat.st_size))
     except OSError:
@@ -77,7 +83,8 @@ def etag_of(key: Key) -> str:
     """A weak validator for the month: it covers the gzip and the identity form of the same
     bytes, and changes when a product file does. Cheap: no data is read to compute it."""
     digest = hashlib.sha256(repr(key).encode("utf-8")).hexdigest()[:24]
-    return f'W/"map-{digest}"'
+    prefix = key[0] if len(key) == 5 else "map"
+    return f'W/"{prefix}-{digest}"'
 
 
 def build(year: int, month: int) -> bytes:
@@ -141,9 +148,13 @@ class MapCache:
 _cache = MapCache()
 
 
+_columns_cache = MapCache(COLUMNS_CACHE_MAX_ENTRIES)
+
+
 def clear_cache() -> None:
-    """Forget every cached month (tests, or after replacing products in a running process)."""
+    """Forget every cached answer (tests, or after replacing products in a running process)."""
     _cache.clear()
+    _columns_cache.clear()
 
 
 def payload(year: int, month: int) -> MapPayload:
@@ -160,4 +171,28 @@ def payload(year: int, month: int) -> MapPayload:
 def validator(year: int, month: int) -> str | None:
     """The ETag the month would have now, without building it (for If-None-Match)."""
     key = cache_key(year, month)
+    return None if key is None else etag_of(key)
+
+
+def _variant_key(kind: str, year: int, month: int, files: tuple[str, ...]) -> Key | None:
+    directory = products.products_dir().resolve()
+    signature = product_signature(directory, files)
+    if signature is None:
+        return None
+    return (kind, str(directory), year, month, signature)
+
+
+def variant_payload(
+    kind: str, year: int, month: int, files: tuple[str, ...], make: Callable[[], bytes]
+) -> MapPayload:
+    """The cached answer of a columnar endpoint (`kind` names it; `files` are the product files
+    it reads). Same rules as `payload`: errors are raised and never cached."""
+    key = _variant_key(kind, year, month, files)
+    if key is None:
+        return MapPayload(gzip.compress(make(), compresslevel=COMPRESS_LEVEL, mtime=0), "")
+    return _columns_cache.get_or_build(key, make)
+
+
+def variant_validator(kind: str, year: int, month: int, files: tuple[str, ...]) -> str | None:
+    key = _variant_key(kind, year, month, files)
     return None if key is None else etag_of(key)
