@@ -40,7 +40,7 @@ export function MethodsPage({ onBack }: { onBack: () => void }) {
           <li><a href="#reason-codes">Reason codes</a></li>
           <li><a href="#grid">Grid evidence</a></li>
           <li><a href="#validation">Validation results</a></li>
-          <li><a href="#planned-tests">Planned tests</a></li>
+          <li><a href="#planned-tests">Test plan</a></li>
           <li><a href="#sources">Sources and references</a></li>
         </ul>
       </nav>
@@ -144,9 +144,8 @@ export function MethodsPage({ onBack }: { onBack: () => void }) {
       </section>
 
       <section aria-labelledby="planned-tests" className="planned-tests">
-        <h3 id="planned-tests">Planned tests (not run yet)</h3>
+        <h3 id="planned-tests">Test plan: the pass rules fixed in advance</h3>
         <p className="planned-note">{PLANNED_TESTS_NOTE}</p>
-        <p className="planned-note">These are plans, not results. They have no status, and none of them is in the results above.</p>
         <ul>
           {PLANNED_TESTS.map((t) => (
             <li key={t.id}>

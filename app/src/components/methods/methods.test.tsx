@@ -104,9 +104,10 @@ describe('methods page', () => {
     const html = page()
     for (const code of REASON_CODES) expect(html).toContain(`id="${reasonAnchor(code)}"`)
     expect(html).toContain('NOT_HARMONIZED')
-    expect(html.indexOf('Validation results')).toBeLessThan(html.indexOf('Planned tests (not run yet)'))
+    expect(html.indexOf('Validation results')).toBeLessThan(html.indexOf('Test plan: the pass rules fixed in advance'))
     expect(html).toContain('No validation test has been run yet')
-    expect(html).toContain('These are plans, not results')
+    expect(html).toContain('This is the test plan, not the results')
+    expect(html).not.toContain('not run yet)')  // the plan is no longer titled "not run yet": results exist (T-027)
   })
 
   it('takes the acknowledgement from the metadata and lists the seven dataset DOIs', () => {
