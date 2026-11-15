@@ -1,4 +1,4 @@
-import type { HarmonizedFields, Witness } from '../../api/contract.ts'
+import type { MapCellUnread, HarmonizedFields, Witness } from '../../api/contract.ts'
 import { ACTIVITY_UNITS } from '../../content/calendar.ts'
 import { NO_CAVEATS_TEXT, disagreementNote } from '../../content/evidenceText.ts'
 import { NOT_AVAILABLE_YET, isRawOnlyRecord, useRawOnly } from '../../content/rawOnly.ts'
@@ -11,7 +11,7 @@ import { NO_DATA, formatEstimate, formatPctOfNormal, verdictProbability } from '
 export const PROVISIONAL_NOTICE = 'Provisional: may change when science-quality data arrive'
 
 interface Props {
-  record: HarmonizedFields
+  record: Omit<HarmonizedFields, MapCellUnread>
   /**
    * The raw contribution of each witness. `undefined` hides the section (a single cell has no
    * per-satellite breakdown); `null` means the record has none and says so.

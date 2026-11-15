@@ -12,6 +12,8 @@ import {
   staticManifest,
 } from './staticData.ts'
 import type { EncodedMonth } from './staticData.ts'
+import { asCellColumns, asEncodedMonth, decodeMapCells } from './mapColumns.ts'
+import type { CellColumns } from './mapColumns.ts'
 import {
   decodeRawByWitness,
   parseAnomalies,
@@ -136,15 +138,64 @@ export async function fetchValidation(base: string = apiBaseUrl()): Promise<Vali
   )
 }
 
+/**
+ * The layer asked of GET /api/map/columns. The endpoint sends the same fields for every layer (the
+ * fields the map, its tooltip and the evidence panel of a selected cell read), so the app always
+ * asks with this one value: a layer change reuses the browser's copy of the month instead of
+ * downloading it again.
+ */
+export const MAP_COLUMNS_LAYER: MapLayer = 'verdict'
+
+/** How long the shared cell list is kept: the grid does not change while the session lasts. */
+export const CELL_LIST_TTL_MS = 30 * 60 * 1000
+
+let cellList: { base: string; at: number; promise: Promise<CellColumns> } | null = null
+const columnsUnavailable = new Set<string>()
+
+/** Only for tests: forget the cell list and the memory of an API without the columnar endpoints. */
+export function resetMapColumns(): void {
+  cellList = null
+  columnsUnavailable.clear()
+}
+
+/** The shared cell list (GET /api/map/cells), fetched once and kept; a failure is not kept. */
+function fetchCellList(base: string): Promise<CellColumns> {
+  const now = Date.now()
+  if (cellList !== null && cellList.base === base && now - cellList.at < CELL_LIST_TTL_MS) return cellList.promise
+  const promise = getJson(`${base}/api/map/cells`).then(asCellColumns)
+  const entry = { base, at: now, promise }
+  cellList = entry
+  promise.catch(() => {
+    if (cellList === entry) cellList = null
+  })
+  return promise
+}
+
+async function fetchMapCellsFromApi(year: number, month: number, layer: MapLayer, base: string): Promise<MapCell[]> {
+  if (!columnsUnavailable.has(base)) {
+    const query = new URLSearchParams({ year: String(year), month: String(month), layer: MAP_COLUMNS_LAYER })
+    try {
+      const [cells, raw] = await Promise.all([fetchCellList(base), getJson(`${base}/api/map/columns?${query.toString()}`)])
+      return decodeMapCells(asEncodedMonth(raw), cells)
+    } catch (error) {
+      // An API without the columnar endpoints answers 404: use /api/map, as before.
+      if (!(error instanceof ApiError) || error.status !== 404) throw error
+      columnsUnavailable.add(base)
+      cellList = null
+    }
+  }
+  const query = new URLSearchParams({ year: String(year), month: String(month), layer })
+  return parseMapCells(await getJson(`${base}/api/map?${query.toString()}`))
+}
+
 export async function fetchMapCells(
   year: number,
   month: number,
   layer: MapLayer,
   base: string = apiBaseUrl(),
 ): Promise<MapCell[]> {
-  const query = new URLSearchParams({ year: String(year), month: String(month), layer })
   return route(
-    async () => parseMapCells(await getJson(`${base}/api/map?${query.toString()}`)),
+    () => fetchMapCellsFromApi(year, month, layer, base),
     async () => {
       // The same stored values in the compact layout: every layer has the same fields.
       const [cells, encoded] = await Promise.all([

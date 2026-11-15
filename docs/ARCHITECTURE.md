@@ -106,12 +106,15 @@ Details, status codes and the anomaly order: `api/README.md`. The API computes n
 | `GET /api/meta` | `metadata.json` (versions, latest month, provisional months, grid, baseline) |
 | `GET /api/entities?type=COUNTRY\|CONTINENT` | Entity list (id, name, bbox) |
 | `GET /api/map?year=&month=&layer=verdict\|raw\|harmonized` | Analysis-grid cells for one month |
+| `GET /api/map/cells`, `GET /api/map/columns?year=&month=&layer=` | The same cells and month in columns with only the fields the app reads (additive, T-073) |
 | `GET /api/series?entity_type=&entity_id=` | Monthly series for a preset entity (country, continent or `GLOBAL`) |
 | `POST /api/series/custom` body `{"bbox": [W,S,E,N]}` or `{"polygon": [[lon,lat], ...]}` | Monthly series for a custom area (via `harmonize_area`) |
 | `GET /api/evidence?entity_type=&entity_id=&year=&month=` | Evidence panel payload |
 | `GET /api/anomalies?year=&month=&limit=` | Entities with an above or below verdict, ordered by probability at the displayed precision, then distance from normal |
 | `GET /api/validation` | `validation_results.json` as stored |
 | `GET /api/export.csv?entity_type=&entity_id=` or `?bbox=`; `POST /api/export.csv` | CSV of the series (preset area, rectangle or polygon) |
+
+**Columnar map endpoints (T-073).** A map month from `GET /api/map` is 56,238 records, 32 MB raw and about 3 MB gzipped, because every record repeats its keys and the fields the map does not read. The Lead approved (PR #81) an additive pair of endpoints: `GET /api/map/cells` (the ids and bounds of the cells, once) and `GET /api/map/columns` (the month, one column per field, only the fields the app reads, values exactly as stored, no rounding). `GET /api/map` is unchanged, so no response shape and no contract changes. The layout is the one the offline copy already uses (`api/fire_api/columnar.py`); the app decodes it into the same `MapCell` objects (`app/src/api/mapColumns.ts`; the fields it never reads are absent, not invented) and falls back to `GET /api/map` when the API has no columnar endpoint (404). A month is about 1.2 MB gzipped instead of 3.0 (2023-07). Field sets, sizes and the tests that compare every value with `GET /api/map`: `api/README.md`, "Columnar map". The displayed numbers do not change.
 
 ## 6. External sources
 
