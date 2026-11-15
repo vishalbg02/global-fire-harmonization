@@ -952,6 +952,28 @@ The pooling parent in calibration is the GFED basis region (14 regions: BONA, TE
 - **Effect on the rows:** `n_cells` IND 1,221 (was 1,189), PAK 294 (320), CHN 3,285 (3,291). Verdicts change in 22 country-months: IND 7, PAK 15, CHN 0 (CANNOT_DETERMINE to ABOVE_NORMAL 6, to BELOW_NORMAL 3, to WITHIN_NORMAL 7; ABOVE_NORMAL, BELOW_NORMAL and WITHIN_NORMAL (4) to CANNOT_DETERMINE 1, 1 and 4). Details in `docs/validation/T-086-kashmir-cells.md`.
 - **LIMITATION, not regenerated:** `cell_month_harmonized.parquet` keeps its values (the Lead's scope). Its cell-level caveat `DIURNAL_CAVEAT` (India, October and November from 2020, D-028) is set from the cell's country when the cell table is built, so the 32 reassigned cells do not carry it in that table until it is regenerated (the IND entity rows carry it). A caveat never changes a verdict or a value.
 
+### Map imagery: NASA GIBS Blue Marble and Aqua true colour (T-084) **[VERIFIED 2026-11-15 unless labelled]**
+
+Display only: the imagery sits under the verdict cells as context. It is not a product value, does not enter any verdict and is not stored in this repository; the visitor's browser fetches the tiles at run time.
+
+| | Basemap (always on) | Satellite view (off by default) |
+|---|---|---|
+| GIBS layer | `BlueMarble_ShadedRelief_Bathymetry` | `MODIS_Aqua_CorrectedReflectance_TrueColor` (served as `..._v6.1_STD`) |
+| Projection and tile matrix | EPSG:3857, `GoogleMapsCompatible_Level8` | EPSG:3857, `GoogleMapsCompatible_Level9` |
+| Date | fixed, `2004-08-01` (a single picture, not a time series) | one day, `YYYY-MM-DD`, chosen in the app: default the 15th of the selected month, clamped to the days that exist and to 2002-07-04 (first Aqua day) up to today |
+| URL pattern | `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2004-08-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg` | `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/{YYYY-MM-DD}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg` |
+| Raster `maxzoom` in the app | 8 (MapLibre overzooms beyond it) | 9 (same) |
+| Answers | HTTP 200 verified 2026-11-15 (`image/jpeg`) | HTTP 200 verified 2026-11-15 for 2015-09-15 (`image/jpeg`; `layer-time-actual: 2015-09-15T00:00:00Z`) |
+| Cache headers | `cache-control: public, max-age=259200` (verified 2026-11-15) | `cache-control: max-age=0, no-store, no-cache, must-revalidate` (verified 2026-11-15): the browser does not keep these tiles, so panning back asks GIBS again |
+| CORS | `access-control-allow-origin: *` (verified in the PR) | same |
+
+- **Not used:** `VIIRS_SNPP_CorrectedReflectance_TrueColor` returned 404 at this path in EPSG:3857 (verified 2026-11-15 in the PR), so Satellite view is Aqua only.
+- **Privacy [Lead decision, PR #89]:** the tiles come from `gibs.earthdata.nasa.gov`, requested by the visitor's browser. NASA GIBS receives the standard tile request, which includes the visitor's IP address and the tile coordinates, and nothing else is sent by the app. The same sentence is in the credit's tooltip on the map. The offline copy (`VITE_STATIC_ONLY`) makes no GIBS request at all and shows a note instead.
+- **Failure:** if the imagery cannot be loaded (no network, host blocked, outage) the map falls back to its plain background colour and shows one note; the verdict cells never wait on imagery. There is no app-side tile cache and no proxy.
+- **Credit wording:** "Imagery: NASA GIBS / EOSDIS" with a link to https://www.earthdata.nasa.gov/data/tools/gibs, and the layer and date on the map. **[UNVERIFIED]** that this is the exact acknowledgement wording NASA prefers; the GIBS and Earthdata pages were not checked for a required phrase.
+- **Licence [UNVERIFIED]:** NASA Earth science data and imagery are generally open for any use with acknowledgement; the exact GIBS terms page was not read in this task.
+- **Reading it:** imagery is context, not data. It has cloud and swath gaps, one day only, and no relation to a hotspot count or a verdict.
+
 ## 7. Update strategy
 
 - Historical zips are downloaded once, and the snapshot date is recorded in `metadata.json`.
