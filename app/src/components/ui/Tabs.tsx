@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { nextTabIndex } from './tabKeys.ts'
 import type { KeyboardEvent, ReactNode } from 'react'
 
 export interface TabDef<T extends string> {
@@ -7,15 +8,6 @@ export interface TabDef<T extends string> {
   panel: ReactNode
 }
 
-/** The index a key moves to in a tab list (wraps); null for other keys. */
-export function nextTabIndex(index: number, count: number, key: string): number | null {
-  if (count === 0) return null
-  if (key === 'ArrowRight') return (index + 1) % count
-  if (key === 'ArrowLeft') return (index - 1 + count) % count
-  if (key === 'Home') return 0
-  if (key === 'End') return count - 1
-  return null
-}
 
 interface Props<T extends string> {
   idBase: string
