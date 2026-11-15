@@ -122,7 +122,7 @@ describe('loading indicator and hint', () => {
   it('the old pattern fails on a non-Mac platform (why the test was rewritten)', () => {
     vi.stubGlobal('navigator', { platform: 'Win32' })
     try {
-      expect(renderToString(<ScrollHint />)).not.toMatch(new RegExp(`${SCROLL_HINT}|⌘ \+ scroll`))
+      expect(renderToString(<ScrollHint />)).not.toMatch(new RegExp(`${SCROLL_HINT}|⌘ \\+ scroll`))
     } finally {
       vi.unstubAllGlobals()
     }
