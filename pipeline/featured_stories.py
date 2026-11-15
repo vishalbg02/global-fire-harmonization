@@ -24,6 +24,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PRODUCTS = ROOT / "data" / "products"
 TS_FILE = ROOT / "app" / "src" / "content" / "featured.ts"
 DOC_FILE = ROOT / "docs" / "validation" / "T-079-featured-stories.md"
+REPORT_PATH = "docs/validation/T-079-featured-stories.md"
+REPORT_HREF = "https://github.com/vishalbg02/global-fire-harmonization/blob/main/" + REPORT_PATH
+SOURCE_LINE = "Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products."
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 RANKED = ("ABOVE_NORMAL", "BELOW_NORMAL")
 
@@ -174,6 +177,12 @@ def caption(case: dict, facts: dict) -> dict:
 
 
 # -------------------------------------------------------------------------------------------------------------------- files
+def query_text(r: dict) -> str:
+    """The product query that reproduces the stored values of one case (documented in the report)."""
+    return (f"entity_month where entity_type = '{r['entity_type']}' and entity_id = '{r['entity_id']}' "
+            f"and year = {int(r['year'])} and month = {int(r['month'])}")
+
+
 def build(facts: dict) -> list[dict]:
     out = []
     for case in facts["cases"]:
@@ -183,6 +192,7 @@ def build(facts: dict) -> list[dict]:
             "id": case["id"], "entityType": r["entity_type"], "entityId": r["entity_id"], "entityName": r["entity_name"],
             "year": int(r["year"]), "month": int(r["month"]), "headline": c["headline"], "caption": c["caption"], "notes": c["notes"],
             "context": case["context"],
+            "label": "[VERIFIED]", "sourceLine": SOURCE_LINE, "query": query_text(r), "reportPath": REPORT_PATH, "reportHref": REPORT_HREF,
             "facts": {"verdict": r["verdict"], "pctOfNormal": r["pct_of_normal"], "estimate": r["estimate"], "ci90Low": r["ci90_low"],
                       "ci90High": r["ci90_high"], "baselineMedian": r["baseline_median"], "baselineP25": r["baseline_p25"],
                       "baselineP75": r["baseline_p75"], "pAbove": r["p_above"], "pBelow": r["p_below"], "pWithin": r["p_within"],
@@ -207,7 +217,11 @@ def ts_source(stories: list[dict]) -> str:
         "  rank: number | null\n  rankedOf: number | null\n}\n\n"
         "export interface FeaturedStory {\n"
         "  id: string\n  entityType: 'COUNTRY' | 'CONTINENT' | 'FIRE_REGION' | 'GLOBAL'\n  entityId: string\n  entityName: string\n"
-        "  year: number\n  month: number\n  headline: string\n  caption: string\n  notes: string[]\n  context: string\n  facts: FeaturedFacts\n}\n\n"
+        "  year: number\n  month: number\n  headline: string\n  caption: string\n  notes: string[]\n  context: string\n"
+        "  /** '[VERIFIED]': every number is a stored value or a count by the query below. */\n  label: string\n  sourceLine: string\n"
+        "  /** The product query that reproduces the numbers, in words (entity_month columns). */\n  query: string\n"
+        "  /** The report with every query and number, in the repository, and its link. */\n  reportPath: string\n  reportHref: string\n"
+        "  facts: FeaturedFacts\n}\n\n"
         f"export const FEATURED_STORIES: readonly FeaturedStory[] = {body}\n"
     )
 
@@ -228,6 +242,9 @@ def doc_source(facts: dict, stories: list[dict]) -> str:
                  f"{cd_text(f['baselineP75'])} ({cd_text(f['baselineMedian'])}) | {prob_text(f['pAbove'])} / {prob_text(f['pWithin'])} / "
                  f"{prob_text(f['pBelow'])} | {rk} | {', '.join(f['reasonCodes']) or 'none'} |")
     L += ["", "Context labels [CONTEXT, not from the products]: " + "; ".join(f"{s['entityName']} {month_label(s['year'], s['month'])}: {s['context']}" for s in stories) + ".", "",
+          ("Query of each case (DuckDB on `data/products/entity_month.parquet`; the rank also uses the other rows of the same type and month, "
+          "section 4):"), ""] + [f"- {s['label']} {s['entityName']} {month_label(s['year'], s['month'])}: `{s['query']}`" for s in stories] + [
+          "", f"Source line shown with every story: {SOURCE_LINE}", "",
           "## 2. Captions (as in `featured.ts`)", ""]
     for s in stories:
         L += [f"### {s['headline']}", "", s["caption"], ""] + [f"- {n}" for n in s["notes"]] + [""]

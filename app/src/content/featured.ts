@@ -32,6 +32,14 @@ export interface FeaturedStory {
   caption: string
   notes: string[]
   context: string
+  /** '[VERIFIED]': every number is a stored value or a count by the query below. */
+  label: string
+  sourceLine: string
+  /** The product query that reproduces the numbers, in words (entity_month columns). */
+  query: string
+  /** The report with every query and number, in the repository, and its link. */
+  reportPath: string
+  reportHref: string
   facts: FeaturedFacts
 }
 
@@ -49,6 +57,11 @@ export const FEATURED_STORIES: readonly FeaturedStory[] = [
       "The rank follows the app's list: probability at the displayed precision, then distance from normal."
     ],
     "context": "the 2015 Indonesian fire season",
+    "label": "[VERIFIED]",
+    "sourceLine": "Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products.",
+    "query": "entity_month where entity_type = 'COUNTRY' and entity_id = 'IDN' and year = 2015 and month = 9",
+    "reportPath": "docs/validation/T-079-featured-stories.md",
+    "reportHref": "https://github.com/vishalbg02/global-fire-harmonization/blob/main/docs/validation/T-079-featured-stories.md",
     "facts": {
       "verdict": "ABOVE_NORMAL",
       "pctOfNormal": 264.8615747270596,
@@ -81,6 +94,11 @@ export const FEATURED_STORIES: readonly FeaturedStory[] = [
       "Australian cells of December 2019 by verdict: above normal 15, below normal 8, cannot determine 1,507, no detected activity 1,445, within normal 15."
     ],
     "context": "the 2019-20 Australian fires (Black Summer)",
+    "label": "[VERIFIED]",
+    "sourceLine": "Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products.",
+    "query": "entity_month where entity_type = 'COUNTRY' and entity_id = 'AUS' and year = 2019 and month = 12",
+    "reportPath": "docs/validation/T-079-featured-stories.md",
+    "reportHref": "https://github.com/vishalbg02/global-fire-harmonization/blob/main/docs/validation/T-079-featured-stories.md",
     "facts": {
       "verdict": "ABOVE_NORMAL",
       "pctOfNormal": 328.2727462446376,
@@ -110,6 +128,11 @@ export const FEATURED_STORIES: readonly FeaturedStory[] = [
     "caption": "1024% of normal. More than 99% likely above normal. The harmonized estimate is 13,661 Aqua-equivalent cell-days (90% interval 12,291 to 15,030); the normal range for the month is 520 to 3,582 (median 1,333). Canada ranks 1 of 22 countries above normal this month.",
     "notes": [],
     "context": "the 2023 Canadian fire season",
+    "label": "[VERIFIED]",
+    "sourceLine": "Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products.",
+    "query": "entity_month where entity_type = 'COUNTRY' and entity_id = 'CAN' and year = 2023 and month = 8",
+    "reportPath": "docs/validation/T-079-featured-stories.md",
+    "reportHref": "https://github.com/vishalbg02/global-fire-harmonization/blob/main/docs/validation/T-079-featured-stories.md",
     "facts": {
       "verdict": "ABOVE_NORMAL",
       "pctOfNormal": 1024.4235676828143,
@@ -141,6 +164,11 @@ export const FEATURED_STORIES: readonly FeaturedStory[] = [
       "This is the data's verdict for this month, not a judgement of the news coverage of that period."
     ],
     "context": "the August 2019 Amazon fire news",
+    "label": "[VERIFIED]",
+    "sourceLine": "Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products.",
+    "query": "entity_month where entity_type = 'COUNTRY' and entity_id = 'BRA' and year = 2019 and month = 8",
+    "reportPath": "docs/validation/T-079-featured-stories.md",
+    "reportHref": "https://github.com/vishalbg02/global-fire-harmonization/blob/main/docs/validation/T-079-featured-stories.md",
     "facts": {
       "verdict": "WITHIN_NORMAL",
       "pctOfNormal": 114.3808763461686,
@@ -173,6 +201,11 @@ export const FEATURED_STORIES: readonly FeaturedStory[] = [
       "Reason codes stored: AQUA_DRIFT_ERA, PROVISIONAL_NRT, WIDE_INTERVAL."
     ],
     "context": "the latest month of the record",
+    "label": "[VERIFIED]",
+    "sourceLine": "Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products.",
+    "query": "entity_month where entity_type = 'GLOBAL' and entity_id = 'GLOBAL' and year = 2026 and month = 10",
+    "reportPath": "docs/validation/T-079-featured-stories.md",
+    "reportHref": "https://github.com/vishalbg02/global-fire-harmonization/blob/main/docs/validation/T-079-featured-stories.md",
     "facts": {
       "verdict": "CANNOT_DETERMINE",
       "pctOfNormal": 91.43607632059864,

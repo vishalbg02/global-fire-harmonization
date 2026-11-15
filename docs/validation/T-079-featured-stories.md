@@ -16,6 +16,16 @@ Labels: **[VERIFIED]** a stored value or a count by the query below; **[CONTEXT,
 
 Context labels [CONTEXT, not from the products]: Indonesia September 2015: the 2015 Indonesian fire season; Australia December 2019: the 2019-20 Australian fires (Black Summer); Canada August 2023: the 2023 Canadian fire season; Brazil August 2019: the August 2019 Amazon fire news; Global October 2026: the latest month of the record.
 
+Query of each case (DuckDB on `data/products/entity_month.parquet`; the rank also uses the other rows of the same type and month, section 4):
+
+- [VERIFIED] Indonesia September 2015: `entity_month where entity_type = 'COUNTRY' and entity_id = 'IDN' and year = 2015 and month = 9`
+- [VERIFIED] Australia December 2019: `entity_month where entity_type = 'COUNTRY' and entity_id = 'AUS' and year = 2019 and month = 12`
+- [VERIFIED] Canada August 2023: `entity_month where entity_type = 'COUNTRY' and entity_id = 'CAN' and year = 2023 and month = 8`
+- [VERIFIED] Brazil August 2019: `entity_month where entity_type = 'COUNTRY' and entity_id = 'BRA' and year = 2019 and month = 8`
+- [VERIFIED] Global October 2026: `entity_month where entity_type = 'GLOBAL' and entity_id = 'GLOBAL' and year = 2026 and month = 10`
+
+Source line shown with every story: Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products.
+
 ## 2. Captions (as in `featured.ts`)
 
 ### Indonesia, September 2015: far above normal

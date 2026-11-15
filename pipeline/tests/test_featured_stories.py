@@ -79,3 +79,15 @@ def test_the_statements_the_lead_asked_for_hold_on_the_real_products():
     assert facts["aus_cells_d031"] == {"ABOVE_NORMAL": 4, "CANNOT_DETERMINE": 105}           # D-031
     assert by["brazil-2019-08"]["row"]["verdict"] == "WITHIN_NORMAL" and by["world-2026-10"]["row"]["verdict"] == "CANNOT_DETERMINE"
     assert by["world-2026-10"]["rank"] is None
+
+
+def test_every_story_carries_its_label_source_line_query_and_report_link():
+    case = {"id": "canada-2023-08", "context": "x", "rank": (1, 2), "entities_of_type": 2, "above": 2, "below": 0,
+            "row": {"entity_type": "COUNTRY", "entity_id": "CAN", "entity_name": "Canada", "year": 2023, "month": 8, "verdict": "ABOVE_NORMAL",
+                    "pct_of_normal": 1000.0, "estimate": 1.0, "ci90_low": 1.0, "ci90_high": 2.0, "baseline_median": 1.0, "baseline_p25": 1.0,
+                    "baseline_p75": 2.0, "p_above": 1.0, "p_below": 0.0, "p_within": 0.0, "reason_codes": [], "data_level": "SP",
+                    "n_witnesses": 3, "disagreement_scale": 1.0, "raw_combined_cell_days": 1}}
+    (story,) = fs.build({"cases": [case], "aus_cells": {}, "aus_cells_d031": {}})
+    assert story["label"] == "[VERIFIED]" and story["sourceLine"].startswith("Source: NASA FIRMS")
+    assert story["query"] == "entity_month where entity_type = 'COUNTRY' and entity_id = 'CAN' and year = 2023 and month = 8"
+    assert story["reportHref"].endswith("/docs/validation/T-079-featured-stories.md") and story["reportPath"] in story["reportHref"]
