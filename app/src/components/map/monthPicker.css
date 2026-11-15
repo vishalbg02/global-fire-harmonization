@@ -222,7 +222,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.month-picker-month {
+.month-picker .month-picker-month {
   position: relative;
   min-height: 32px;
   padding: 0;
@@ -235,27 +235,27 @@
   cursor: pointer;
 }
 
-.month-picker-month:hover:not(:disabled) {
+.month-picker .month-picker-month:hover:not(:disabled) {
   background: var(--v-below-tint);
 }
 
-.month-picker-month[aria-pressed='true'] {
+.month-picker .month-picker-month[aria-pressed='true'] {
   color: var(--on-brand);
   background: var(--brand);
 }
 
-.month-picker-month:focus-visible {
+.month-picker .month-picker-month:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
 
-.month-picker-month:disabled {
+.month-picker .month-picker-month:disabled {
   color: var(--muted);
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-.month-picker-month.is-provisional::after {
+.month-picker .month-picker-month.is-provisional::after {
   content: '';
   position: absolute;
   top: 3px;
@@ -297,7 +297,7 @@
     padding-top: 12px;
   }
 
-  .month-picker-month {
+  .month-picker .month-picker-month {
     min-height: 44px;
   }
 

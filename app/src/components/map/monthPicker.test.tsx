@@ -16,7 +16,7 @@ describe('MonthPicker render (T-087)', () => {
     expect(html).toContain(`aria-label="${T.PICKER_YEAR_LABEL}"`)
     expect(html).toContain(T.PICKER_TYPE_LABEL)
     expect((html.match(/<option /g) ?? []).length).toBe(25)
-    expect((html.match(/class="month-picker-month/g) ?? []).length).toBe(25 * 12)
+    expect((html.match(/class="btn month-picker-month/g) ?? []).length).toBe(25 * 12)
     expect(html).toContain('aria-label="December 2019"')
     expect(html).toContain('aria-label="July 2002"')
   })

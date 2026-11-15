@@ -134,7 +134,7 @@ export function MonthPicker({ months, value, onChoose, onClose }: Props) {
                 <button
                   key={month}
                   type="button"
-                  className={`month-picker-month${status === 'provisional' ? ' is-provisional' : ''}`}
+                  className={`btn month-picker-month${status === 'provisional' ? ' is-provisional' : ''}`}
                   disabled={status === 'outside'}
                   aria-pressed={selected}
                   aria-label={`${monthLabel({ year, month })}${status === 'provisional' ? `, ${T.PROVISIONAL_MARK}` : ''}`}
