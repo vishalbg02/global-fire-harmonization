@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { LineChart } from 'echarts/charts'
-import { AriaComponent, DataZoomComponent, GridComponent, LegendComponent, MarkLineComponent, TooltipComponent } from 'echarts/components'
+import { AriaComponent, DataZoomComponent, GridComponent, LegendComponent, MarkLineComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import type { EChartsCoreOption } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 
-echarts.use([LineChart, AriaComponent, DataZoomComponent, GridComponent, LegendComponent, MarkLineComponent, TooltipComponent, CanvasRenderer])
+echarts.use([LineChart, AriaComponent, DataZoomComponent, GridComponent, LegendComponent, MarkLineComponent, TitleComponent, TooltipComponent, CanvasRenderer])
 
 /** One canvas chart. The table next to it is the keyboard route to the same values. */
 export function AnalyticsChart({ option, label, height = 260 }: { option: EChartsCoreOption; label: string; height?: number }) {
