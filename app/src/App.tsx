@@ -598,7 +598,7 @@ export default function App() {
         </Card>
       </main>
       )}
-      {page === 'map' && <HelpLayer mode={help} onMode={setHelp} actions={helpActions} shape={view.shape} />}
+      {page === 'map' && <HelpLayer mode={help} onMode={setHelp} actions={helpActions} shape={view.shape} onOpenMethods={openMethods} />}
     </div>
     </RawOnlyContext.Provider>
   )
