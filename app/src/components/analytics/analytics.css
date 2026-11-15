@@ -4,7 +4,7 @@
 .analytics .analytics-lede { margin: 0 0 0.4rem; color: var(--text); }
 .analytics .analytics-note, .analytics .analytics-source { margin: 0.35rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .analytics .analytics-chart { width: 100%; }
-.analytics details { margin-top: 0.4rem; font-size: 0.85rem; }
+.analytics details { margin-top: 0.4rem; font-size: 0.85rem; overflow-x: auto; }
 .analytics summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--text-muted); }
 .analytics table { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
 .analytics th, .analytics td { text-align: right; padding: 0.15rem 0.4rem; border-bottom: 1px solid var(--border); }

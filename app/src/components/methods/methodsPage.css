@@ -1,0 +1,4 @@
+/* Methods page additions (T-089). */
+.methods-page .plain-words { max-width: 46rem; margin: var(--s-8) 0; font-size: var(--t-16); }
+.methods-page .anchor-alias { display: block; height: 0; scroll-margin-top: var(--s-16); }
+.methods-page .methods-toc a { display: inline-block; min-height: 44px; line-height: 44px; }

@@ -1,0 +1,321 @@
+/* Month picker (T-087). Existing tokens only; no gradients, no shadows. */
+.month-selector {
+  position: relative;
+}
+
+/* The slider: a wider track, a 24 px thumb (the hit area is the 28 px row), year ticks underneath. */
+.month-selector .month-slider {
+  position: relative;
+  flex: 0 1 240px;
+  min-width: 140px;
+  padding-bottom: 18px;
+}
+
+.month-selector .month-slider input[type='range'] {
+  display: block;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  accent-color: var(--brand);
+}
+
+.month-selector .month-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: var(--radius);
+}
+
+.month-selector .month-slider input[type='range']::-moz-range-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: var(--radius);
+}
+
+.month-selector .month-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -9px;
+  background: var(--brand);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.month-selector .month-slider input[type='range']::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--brand);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.month-selector .month-slider input[type='range']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.month-selector .month-slider input[type='range']:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Ticks: the track runs between the thumb centres, so the tick area is inset by half a thumb. */
+.month-ticks {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 24px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.month-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 4px;
+  background: var(--muted);
+}
+
+.month-tick.is-labelled {
+  height: 7px;
+}
+
+.month-tick-label {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.month-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.month-year-step {
+  min-width: 36px;
+  font-size: var(--t-12);
+}
+
+.month-picker-trigger {
+  white-space: nowrap;
+}
+
+/* The popover, below the month control. */
+.month-picker-anchor {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 30;
+  width: min(560px, calc(100vw - 32px));
+  margin-top: var(--s-4);
+}
+
+.month-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+  padding: var(--s-12);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+}
+
+.month-picker-head,
+.month-picker-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-8);
+}
+
+.month-picker-title {
+  margin: 0;
+  font-size: var(--t-14);
+  font-weight: 600;
+}
+
+.month-picker-field,
+.month-picker-field label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  font-size: var(--t-12);
+  color: var(--muted);
+}
+
+.month-picker-type {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--s-8);
+}
+
+.month-picker select,
+.month-picker input[type='text'] {
+  min-height: 36px;
+  padding: 0 var(--s-8);
+  font: inherit;
+  font-size: var(--t-14);
+  color: var(--ink);
+  background: var(--surface);
+  border: var(--rule);
+  border-radius: var(--radius);
+}
+
+.month-picker input[type='text'] {
+  width: 8em;
+  font-family: var(--font-mono);
+}
+
+.month-picker input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.month-picker-error {
+  margin: 0;
+  font-size: var(--t-12);
+  color: var(--danger);
+}
+
+.month-picker-list {
+  max-height: 260px;
+  overflow-y: auto;
+  border-top: var(--rule);
+  border-bottom: var(--rule);
+}
+
+.month-picker-row {
+  display: grid;
+  grid-template-columns: 3.2em repeat(12, minmax(0, 1fr));
+  align-items: center;
+  gap: 2px;
+  padding: 2px 0;
+  border-bottom: var(--rule);
+}
+
+.month-picker-row:last-child {
+  border-bottom: 0;
+}
+
+.month-picker-year {
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.month-picker .month-picker-month {
+  position: relative;
+  min-height: 32px;
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-12);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.month-picker .month-picker-month:hover:not(:disabled) {
+  background: var(--v-below-tint);
+}
+
+.month-picker .month-picker-month[aria-pressed='true'] {
+  color: var(--on-brand);
+  background: var(--brand);
+}
+
+.month-picker .month-picker-month:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.month-picker .month-picker-month:disabled {
+  color: var(--muted);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.month-picker .month-picker-month.is-provisional::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.month-picker-legend {
+  margin: 0;
+  font-size: var(--t-12);
+  color: var(--muted);
+}
+
+/* Phone: the picker fills the width, each year is two rows of six months, and the touch targets grow. */
+@media (max-width: 640px) {
+  .month-selector .month-slider {
+    flex: 1 1 100%;
+    order: 5;
+  }
+
+  .month-picker-anchor {
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
+
+  .month-picker-row {
+    grid-template-columns: 3.2em repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px 0;
+  }
+
+  .month-picker-year {
+    grid-row: span 2;
+    align-self: start;
+    padding-top: 12px;
+  }
+
+  .month-picker .month-picker-month {
+    min-height: 44px;
+  }
+
+  .month-year-step,
+  .month-selector .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .month-picker select,
+  .month-picker input[type='text'],
+  .month-picker .btn {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .month-picker-list {
+    scroll-behavior: auto;
+  }
+}
