@@ -168,3 +168,14 @@ def test_the_apps_own_functions_run_through_node_and_agree_with_the_port():
     assert out["probability"] == ["more than 99%", "99%", "less than 1%", "1%"]
     assert out["pct"] == ["265% of normal", "no data"] and out["estimate"] == [nc.fmt_estimate(1.25, 1.0, 2.0)]
     assert out["verdictProbability"] == ["82% likely above normal"] and out["statuses"] == {"FAIL": 2, "INCONCLUSIVE": 0, "PASS": 1, "NOT_RUN": 0}
+
+
+def test_the_api_model_check_refuses_nested_measured_values_and_accepts_scalar_ones():
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "api"))
+    pytest.importorskip("fire_api.models")
+    base = {"contract_version": "0.1.1", "method_version": "0.1.0", "generated_at": "2026-11-15T00:00:00Z", "synthetic": False,
+            "tests": [{"test_id": "E1", "family": "E", "title": "t", "case": "c", "criterion": "x", "threshold": "y",
+                       "measured": {"wins": 14, "note": "ok", "flag": True, "none": None}, "status": "PASS", "notes": ""}]}
+    assert nc.api_accepts_validation(base)
+    base["tests"][0]["measured"] = {"control": {"rows": 1}}
+    assert not nc.api_accepts_validation(base)

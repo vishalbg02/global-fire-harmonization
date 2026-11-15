@@ -330,6 +330,17 @@ def check_map(rep: Report, api: Api, products: Path, months: list[tuple[int, int
                 compare_record(rep, "A map cell bounds", f"{view} {r['cell_id']}", r, bounds[r["cell_id"]], ["lat_min", "lat_max", "lon_min", "lon_max"])
 
 
+def api_accepts_validation(doc: dict) -> bool:
+    """Does the API's own model take this validation_results document? If not, GET /api/validation answers 503 and the methods page shows
+    no statuses (the model and the app's parseMeasured accept only scalar `measured` values)."""
+    from fire_api.models import ValidationResults
+    try:
+        ValidationResults.model_validate(doc)
+    except Exception:  # noqa: BLE001 - any validation error means the API would answer 503
+        return False
+    return True
+
+
 def check_computed(rep: Report, api: Api, anomalies: dict, em: pd.DataFrame, validation_files: dict[str, Path]) -> None:
     """C: what the app computes itself."""
     for (year, month), got in anomalies.items():
@@ -348,6 +359,8 @@ def check_computed(rep: Report, api: Api, anomalies: dict, em: pd.DataFrame, val
                          areas=total, with_record=len(with_record), ranked=len(of_type))
     for name, path in validation_files.items():
         doc = json.loads(path.read_text(encoding="utf-8"))
+        rep.add("C validation file accepted by the API", api_accepts_validation(doc), view=name, field="ValidationResults model",
+                stored="every measured value is a number, text, true/false or null (the API and the app refuse more)")
         shown = run_app({"statuses": doc["tests"]})["statuses"]
         tally = {s: sum(1 for t in doc["tests"] if t["status"] == s) for s in ("PASS", "FAIL", "INCONCLUSIVE", "NOT_RUN")}
         rep.add("C test-status counts", shown == tally, view=name, field="counts", stored=tally, shown=shown)
