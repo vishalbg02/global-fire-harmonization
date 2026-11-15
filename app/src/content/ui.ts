@@ -144,3 +144,28 @@ export const IMAGERY_PRIVACY =
   'The imagery is fetched by your browser from NASA GIBS (gibs.earthdata.nasa.gov). NASA GIBS receives the standard tile request, which includes your IP address and the tile coordinates, and nothing else is sent.'
 export const IMAGERY_NOTE_FAILED = 'Imagery could not be loaded, so the plain map is shown. The verdict cells are not affected.'
 export const IMAGERY_NOTE_OFFLINE = 'Imagery needs an internet connection. This offline copy shows the plain map.'
+
+// Three zones (T-093): the Earth with one control dock, the answer panel, the timeline.
+export const NAV_HELP = 'Help'
+export const STAGE_LABEL = 'The Earth: map of satellite-detected fire activity'
+export const ANSWER_LABEL = 'The answer for the selected area and month'
+export const TIMELINE_LABEL = 'Month'
+export const DETAILS_JUMP = 'Details'
+export const COMPARE_WITH = 'Compare with…'
+export const DETAILS_JUMP_HINT = 'Calendar, satellites, evidence, anomalies and analytics'
+export const DOCK_LABEL = 'Map controls'
+export const DOCK_SELECT = 'Select area'
+export const DOCK_LAYERS = 'Layers'
+export const DOCK_SELECT_PANEL = 'How to select an area'
+export const DOCK_LAYERS_PANEL = 'What the map shows'
+export const DOCK_TYPE_AREA = 'Type the corners of an area'
+export const DOCK_SAT_DAY = 'Day'
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** "Aqua MODIS true colour, 15 Sep 2015" from an ISO date (YYYY-MM-DD). */
+export const SAT_CHIP = (isoDate: string) => {
+  const [y, m, d] = isoDate.split('-')
+  return `Aqua MODIS true colour, ${Number(d)} ${SHORT_MONTHS[Number(m) - 1]} ${y}`
+}
+export const MAP_CELLS_ERROR = 'The map cells could not be loaded.'
+export const META_ERROR = 'Data are not available right now. The country layer still works.'
+export const MAP_NO_CELLS = 'No cells for this month.'

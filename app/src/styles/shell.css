@@ -1,0 +1,281 @@
+/* The three zones of the map page (T-093): the Earth (a dark stage with one control dock), the answer panel on the
+   right, the timeline under the map. The first viewport holds all three with no page scroll; the Details tabs follow
+   below at full width. Light instrument panels around a dark stage; one elevation, for panels that float on the map. */
+
+.app-map {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-map .top {
+  flex: 0 0 auto;
+  min-height: var(--header-h);
+  box-sizing: border-box;
+  padding-block: 0;
+  flex-wrap: nowrap;
+}
+
+.app-map .top .brand {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.app-map .top .subtitle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.top-nav {
+  flex: 0 0 auto;
+}
+
+.workspace {
+  display: block;
+}
+
+.first-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--answer-w);
+  height: calc(100dvh - var(--header-h));
+  min-height: 540px;
+  border-bottom: var(--rule);
+}
+
+.stage-col {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  min-width: 0;
+  min-height: 0;
+  background: var(--surface);
+}
+
+/* ---- Zone A: the Earth ---- */
+.stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--stage);
+  color: var(--ink);
+}
+
+.stage .map-wrap {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  min-height: 0;
+  border: 0;
+}
+
+.stage .map-wrap > .map {
+  background: var(--stage);
+}
+
+.stage > .state-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--stage-muted);
+}
+
+/* The hovered country's name and verdict: a quiet readout at the top of the stage. */
+.stage .map-readout {
+  left: 50%;
+  top: var(--s-12);
+  transform: translateX(-50%);
+  max-width: calc(100% - 2 * var(--dock-w) - 2 * var(--s-24));
+  border: 1px solid var(--border);
+  box-shadow: var(--elev);
+  white-space: nowrap;
+}
+
+.stage-status {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: var(--s-12);
+  transform: translateX(-50%);
+  max-width: min(32rem, calc(100% - 2 * var(--s-16)));
+}
+
+.stage-status:empty {
+  display: none;
+}
+
+.stage-status .state {
+  margin: 0;
+  padding: var(--s-8) var(--s-12);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--elev);
+}
+
+.stage-status .state + .state {
+  margin-top: var(--s-4);
+}
+
+/* MapLibre's zoom buttons: the same instrument look as the dock. */
+.stage .maplibregl-ctrl-top-right {
+  top: var(--s-4);
+  right: var(--s-4);
+}
+
+.stage .maplibregl-ctrl-group {
+  border-radius: var(--radius);
+  box-shadow: var(--elev);
+}
+
+/* The legend strip (bottom left) and the credit line (bottom right): the only other things on the map. */
+.stage .map-legend {
+  left: var(--s-12);
+  bottom: var(--s-12);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--elev);
+}
+
+.stage .map-credit {
+  right: var(--s-12);
+  bottom: var(--s-12);
+  max-width: min(30rem, calc(100% - 20rem));
+}
+
+.stage .map-credit-line,
+.stage .map-imagery-note {
+  margin: 0;
+  padding: 2px var(--s-8);
+  background: rgba(7, 11, 20, 0.72);
+  color: var(--stage-ink);
+  border-radius: var(--radius);
+  font-size: var(--t-12);
+  line-height: 1.5;
+}
+
+.stage .map-credit-line a {
+  color: var(--stage-ink);
+}
+
+.stage .map-credit-info {
+  color: var(--stage-ink);
+  border-color: var(--stage-muted);
+  background: transparent;
+}
+
+.stage .map-credit a:focus-visible,
+.stage .map-credit button:focus-visible {
+  outline-color: #ffffff;
+}
+
+/* The scroll hint sits above the credit line, on the stage's own colours. */
+.stage .map-hint {
+  right: var(--s-12);
+  bottom: 2.6rem;
+  background: rgba(7, 11, 20, 0.72);
+  color: var(--stage-ink);
+  border-radius: var(--radius);
+}
+
+/* ---- Zone C: time ---- */
+.timeline-zone {
+  position: relative;
+  padding: var(--s-8) var(--s-16);
+  background: var(--surface);
+  border-top: var(--rule);
+  min-width: 0;
+}
+
+.stage-col > .map-source {
+  margin: 0;
+  padding: var(--s-4) var(--s-16) var(--s-8);
+  background: var(--surface);
+  line-height: 1.4;
+}
+
+/* ---- Zone B: the answer ---- */
+.answer {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border-left: var(--rule);
+}
+
+.answer > .card {
+  border: 0;
+  border-radius: 0;
+  padding: var(--s-16) var(--s-24) var(--s-24);
+}
+
+.summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+  margin-top: var(--s-12);
+}
+
+/* ---- Details: full width below the first viewport ---- */
+.workspace > .details {
+  margin: var(--s-16) var(--s-24) var(--s-24);
+  scroll-margin-top: var(--s-8);
+}
+
+/* ---- Start here (before anything is chosen) ---- */
+.start-here {
+  padding: var(--s-16) var(--s-24) var(--s-24);
+}
+
+/* ---- "?" explainers ---- */
+.help-tip {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: var(--s-4);
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-12);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.help-tip:hover,
+.help-tip[aria-expanded='true'] {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---- Tablet and phone, until the bottom sheet: the zones stack ---- */
+@media (max-width: 900px) {
+  .first-view {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: 0;
+  }
+
+  .stage {
+    height: 62dvh;
+    min-height: 360px;
+  }
+
+  .answer {
+    border-left: 0;
+    border-top: var(--rule);
+    overflow: visible;
+  }
+
+  .app-map .top .subtitle {
+    display: none;
+  }
+}

@@ -147,8 +147,8 @@ describe('How to read this', () => {
     expect(html).toContain(UI.HOW_TO_READ_CLOSE)
     expect(html).toContain('id="how-to-read"')
   })
-  it('the header link says whether the panel is open', () => {
-    expect(renderToString(<Header showMethods onOpenMethods={() => {}} howToOpen />)).toContain('aria-expanded="true"')
+  it('the Help button of the header says whether the help is open', () => {
+    expect(renderToString(<Header showMethods onOpenMethods={() => {}} helpOpen />)).toContain('aria-expanded="true"')
     expect(renderToString(<Header showMethods onOpenMethods={() => {}} />)).toContain('aria-expanded="false"')
   })
 })

@@ -10,31 +10,31 @@ import { CustomAreaPanel } from './components/area/CustomAreaPanel.tsx'
 import { areaFitBbox, resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { useStaticManifest } from './api/staticData.ts'
-import { applyImageryParams, parseImageryParams } from './components/map/gibs.ts'
+import { imageryNote, satDate, todayIso } from './components/map/gibs.ts'
+import { STATIC_ONLY } from './api/staticData.ts'
+import { Dock } from './components/dock/Dock.tsx'
+import { HelpLayer } from './components/help/HelpLayer.tsx'
+import type { HelpActions, HelpMode } from './components/help/HelpLayer.tsx'
+import { StartHere } from './components/help/StartHere.tsx'
+import { shiftMonth, shiftYear } from './components/map/monthPicker.ts'
+import { applyMapViewParams, mapViewFromSearch, mapViewReducer } from './state/mapView.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
 import { NO_OFFLINE_MAP, offlineMapNote } from './content/offline.ts'
 import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
 import { PAGE_PARAM, METHODS_PAGE, pageFromSearch } from './content/methodsLink.ts'
 import { RAW_ONLY_AREA_UNAVAILABLE, RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { ExportButton } from './components/export/ExportButton.tsx'
-import { Header, HOW_TO_TOGGLE_ID } from './components/layout/Header.tsx'
-import { DRAW_MENU_BUTTON_ID, focusLater } from './components/common/focus.ts'
+import { Header } from './components/layout/Header.tsx'
 import { CopyLinkButton } from './components/layout/CopyLinkButton.tsx'
-import { StoryChips } from './components/layout/StoryChips.tsx'
-import { StoryCaption } from './components/layout/StoryCaption.tsx'
-import { HowToRead } from './components/layout/HowToRead.tsx'
 import { activeStory } from './components/layout/stories.ts'
-import { howToOpenAtStart, rememberHowToDismissed } from './state/howto.ts'
+import { howToOpenAtStart } from './state/howto.ts'
 import type { FeaturedStory } from './content/featured.ts'
 import * as UI from './content/ui.ts'
 import { VERDICT_PRESENTATION } from './content/verdicts.ts'
-import { TopAnomalies } from './components/anomalies/TopAnomalies.tsx'
-import { MapModeSwitch } from './components/map/MapModeSwitch.tsx'
 import { selectMode } from './components/map/selectMode.ts'
 import type { SelectMode } from './components/map/MapModeSwitch.tsx'
 import { MapSourceLine } from './components/map/MapSourceLine.tsx'
 import { SummaryCard } from './components/summary/SummaryCard.tsx'
-import { Button } from './components/ui/Button.tsx'
 import { Card } from './components/ui/Card.tsx'
 import { Tabs } from './components/ui/Tabs.tsx'
 import { compareFromSearch, setCompareParam } from './state/compare.ts'
@@ -43,19 +43,19 @@ import { analyticsAvailable, effectiveTab, setTabParam, tabFromSearch } from './
 import type { TabId } from './state/tabs.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
-import { CellInfo } from './components/map/CellInfo.tsx'
 import { MapModeSelector } from './components/map/MapModeSelector.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { useMapCells } from './state/useMapCells.ts'
-import { hasOfflineMap, monthKey, monthRange, offlineMapMonths } from './state/months.ts'
+import { hasOfflineMap, monthKey, monthLabel, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
 import { useStartMonth } from './state/initialMonth.ts'
 import { checkRoundedRing, polygonArea } from './state/polygon.ts'
 import type { Ring } from './state/polygon.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
+import type { SelectionAction } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
 const AnalyticsPanel = lazy(() => import('./components/analytics/index.ts').then((m) => ({ default: m.AnalyticsPanel })))
@@ -65,7 +65,19 @@ const MapView = lazy(() => import('./components/map/MapView.tsx').then((m) => ({
 
 export default function App() {
   // The selection starts from the link (area, month, source, map mode, value mode), if any.
-  const [selection, dispatch] = useReducer(selectionReducer, null, () => selectionFromUrl(window.location.search))
+  const [selection, rawDispatch] = useReducer(selectionReducer, null, () => selectionFromUrl(window.location.search))
+  // The map's view choices (shape, Satellite view, day, show all verdicts): one state, kept in the link (T-093).
+  const [view, viewDispatch] = useReducer(mapViewReducer, null, () => mapViewFromSearch(window.location.search))
+  // Before anything is chosen the answer panel shows "Start here"; a link with an area or a month goes straight to its answer.
+  const [started, setStarted] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.has('area') || params.has('month')
+  })
+  // Every choice of the user goes through here; the automatic start month does not, so it leaves "Start here" in place.
+  const dispatch = (action: SelectionAction) => {
+    setStarted(true)
+    rawDispatch(action)
+  }
   const [page, setPage] = useState<'map' | 'methods'>(() => pageFromSearch(window.location.search))
   const [drawing, setDrawing] = useState(false)
   const [polygonDrawing, setPolygonDrawing] = useState(false)
@@ -76,9 +88,10 @@ export default function App() {
   const [tab, setTab] = useState<TabId>(() => tabFromSearch(window.location.search))
   // The area compared with in the Analytics tab, kept in the link as `compare=` (T-090).
   const [compare, setCompare] = useState<CompareRef | null>(() => compareFromSearch(window.location.search))
-  const [drawMenuOpen, setDrawMenuOpen] = useState(false)
-  // "How to read this" opens once on a first visit without link parameters; the header link opens it again.
-  const [howToOpen, setHowToOpen] = useState(() => howToOpenAtStart(window.location.search))
+  // The guided tour opens once on a first visit without link parameters; Help in the header opens the help again.
+  const [help, setHelp] = useState<HelpMode>(() => (howToOpenAtStart(window.location.search) ? 'tour' : null))
+  const [playing, setPlaying] = useState(false)
+  const [imagery, setImagery] = useState({ basemapFailed: false, trueColourFailed: false })
   const [hoverCountry, setHoverCountry] = useState<{ iso3: string; name: string } | null>(null)
 
   const shownTab = effectiveTab(tab, selection.area.entity_type)
@@ -89,11 +102,11 @@ export default function App() {
     if (page === 'methods') params.set(PAGE_PARAM, METHODS_PAGE)
     setTabParam(params, shownTab)
     setCompareParam(params, shownTab === 'analytics' ? compare : null)
-    applyImageryParams(params, parseImageryParams(window.location.search)) // the map's own link choices (T-084)
+    applyMapViewParams(params, view)
     const query = params.toString()
     const url = `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`
     window.history.replaceState(null, '', url)
-  }, [selection, page, shownTab, compare])
+  }, [selection, page, shownTab, compare, view])
 
   const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
   const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
@@ -200,7 +213,7 @@ export default function App() {
   const mapAvailable = hasOfflineMap(offline?.months ?? null, selection.month)
 
   // Start on the latest determinable month (a month in the link wins), T-071.
-  useStartMonth(months, selection.month, (year, month) => dispatch({ type: 'set-month', year, month }))
+  useStartMonth(months, selection.month, (year, month) => rawDispatch({ type: 'set-month', year, month }))
 
   // The API layer follows the shared Raw / Harmonized control and the map mode.
   // Raw-only products have no harmonized values: the views show raw activity and say so.
@@ -242,7 +255,6 @@ export default function App() {
           ? UI.HOVER_LOADING
           : UI.HOVER_NO_VERDICT
 
-  const countryRankings = useMemo(() => rankAnomalies(anomalies.data ?? [], 'COUNTRY'), [anomalies.data])
   const drawDisabled = offline !== null
   const onSelectMode = (mode: SelectMode) => {
     setDrawing(mode === 'rectangle')
@@ -277,10 +289,40 @@ export default function App() {
     setPage('methods')
     window.scrollTo(0, 0)
   }
+  // Satellite view shows one day of the selected month (the date is the same one the map asks GIBS for).
+  const today = useMemo(() => todayIso(), [])
+  const offlineCopy = STATIC_ONLY || offline !== null
+  const satWished =
+    !offlineCopy && view.satOn && selection.month !== null
+      ? satDate(selection.month.year, selection.month.month, view.satDay, today)
+      : null
+  const satShown = satWished !== null && !imagery.trueColourFailed ? satWished : null
+  const openDetails = (id: TabId) => {
+    setTab(id)
+    document.getElementById('details')?.scrollIntoView({ block: 'start', behavior: 'auto' })
+    document.getElementById(`details-tab-${id}`)?.focus({ preventScroll: true })
+  }
+  const focusSearch = () => document.getElementById('area-search')?.focus()
+  const stepTo = (to: { year: number; month: number } | null) => {
+    if (to !== null) dispatch({ type: 'set-month', year: to.year, month: to.month })
+  }
+  const helpActions: HelpActions = {
+    stepMonth: (delta) => {
+      if (selection.month !== null) stepTo(shiftMonth(mapMonths, selection.month, delta))
+    },
+    stepYear: (delta) => {
+      if (selection.month !== null) stepTo(shiftYear(mapMonths, selection.month, delta))
+    },
+    togglePlay: () => setPlaying((p) => !p),
+    toggleGlobe: () => viewDispatch({ type: 'toggle-shape' }),
+    toggleSatellite: () => viewDispatch({ type: 'toggle-sat' }),
+    focusSearch,
+  }
+  const startMonth = selection.month === null ? null : monthLabel(selection.month)
 
   return (
     <RawOnlyContext.Provider value={rawOnly}>
-    <div className="app">
+    <div className={page === 'map' ? 'app app-map' : 'app'}>
       <a className="skip-link" href="#main-content">
         Skip to the controls and the map
       </a>
@@ -289,22 +331,9 @@ export default function App() {
       <Header
         showMethods={page === 'map'}
         onOpenMethods={openMethods}
-        howToOpen={page === 'map' && howToOpen}
-        onToggleHowTo={() => setHowToOpen((o) => !o)}
+        helpOpen={page === 'map' && help !== null}
+        onHelp={() => setHelp(help === null ? 'sheet' : null)}
       />
-      {page === 'map' && howToOpen && (
-        <HowToRead
-          onClose={() => {
-            setHowToOpen(false)
-            rememberHowToDismissed()
-            focusLater(HOW_TO_TOGGLE_ID)
-          }}
-          onEscape={() => {
-            setHowToOpen(false)
-            focusLater(HOW_TO_TOGGLE_ID)
-          }}
-        />
-      )}
       {page === 'map' && noteShown && (
         <p className="raw-only-note" role="status">
           {RAW_ONLY_NOTE}
@@ -320,85 +349,10 @@ export default function App() {
           />
         </Suspense>
       ) : (
-      <main id="main-content" tabIndex={-1}>
-        <section className="toolbar" aria-label={UI.TOOLBAR_LABEL}>
-          <AreaSearch
-            area={area}
-            countries={countries.data}
-            continents={continents.data}
-            listsFailed={countries.isError || continents.isError}
-            onChooseEntity={chooseEntity}
-            onChooseWorld={() => dispatch({ type: 'clear-entity' })}
-          />
-          <MonthSelector
-            months={mapMonths}
-            value={selection.month}
-            onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
-          />
-          <SourceToggle
-            value={rawOnly ? 'raw' : selection.source}
-            onChange={(source) => dispatch({ type: 'set-source', source })}
-            rawDisabled={!rawOnly && !rawAvailable(selection.valueMode)}
-            harmonizedDisabled={rawOnly}
-          />
-          <MapModeSelector
-            value={rawOnly ? 'activity' : selection.mapMode}
-            onChange={(mapMode) => dispatch({ type: 'set-map-mode', mapMode })}
-            verdictDisabled={rawOnly}
-          />
-          <div className="draw-menu">
-            <Button
-              id={DRAW_MENU_BUTTON_ID}
-              aria-expanded={drawMenuOpen}
-              aria-controls="draw-panel"
-              onClick={() => setDrawMenuOpen((o) => !o)}
-            >
-              {`${UI.DRAW_MENU} ${drawMenuOpen ? '▴' : '▾'}`}
-            </Button>
-          </div>
-          <CopyLinkButton />
-          {drawMenuOpen && (
-            <section
-              id="draw-panel"
-              className="draw-panel"
-              aria-label={UI.DRAW_MENU_TITLE}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setDrawMenuOpen(false)
-                  focusLater(DRAW_MENU_BUTTON_ID)
-                }
-              }}
-            >
-              <CustomAreaPanel
-                area={area}
-                onChooseCustom={chooseCustom}
-                polygon={{
-                  onSubmit: choosePolygon,
-                  drawing: polygonDrawing,
-                  onToggleDrawing: () => {
-                    setDrawing(false)
-                    setPolygonDrawing((d) => !d)
-                  },
-                  cells: area.entity_type === 'CUSTOM' ? (customSeries.data?.[0]?.n_cells ?? null) : null,
-                  draft: polygonDraft,
-                }}
-                drawing={drawing}
-                onToggleDrawing={() => {
-                  setPolygonDrawing(false)
-                  setDrawing((d) => !d)
-                }}
-                customMessage={customMessage}
-                customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
-              />
-            </section>
-          )}
-        </section>
-
-        <StoryChips areaId={area.entity_id} month={selection.month} onChoose={chooseStory} />
-
-        <div className="hero">
-          <div className="map-column">
-            <div className="map-stage">
+      <main id="main-content" tabIndex={-1} className="workspace">
+        <div className="first-view">
+          <div className="stage-col">
+            <section className="stage" aria-label={UI.STAGE_LABEL} data-shape={view.shape}>
               <Suspense fallback={<LoadingState what="the map" />}>
               <MapView
                 cells={cellList}
@@ -422,65 +376,118 @@ export default function App() {
                 loading={cells.isFetching}
                 month={selection.month}
                 onHoverCountry={setHoverCountry}
+                view={view}
+                onView={viewDispatch}
+                onImageryStatus={setImagery}
               />
               </Suspense>
-              <MapModeSwitch mode={selectMode(drawing, polygonDrawing)} onChange={onSelectMode} drawDisabled={drawDisabled} />
+              <Dock
+                search={
+                  <AreaSearch
+                    area={area}
+                    countries={countries.data}
+                    continents={continents.data}
+                    listsFailed={countries.isError || continents.isError}
+                    onChooseEntity={chooseEntity}
+                    onChooseWorld={() => dispatch({ type: 'clear-entity' })}
+                  />
+                }
+                view={view}
+                onView={viewDispatch}
+                month={selection.month}
+                offlineCopy={offlineCopy}
+                satDate={satShown}
+                note={imageryNote(offlineCopy, imagery.basemapFailed, imagery.trueColourFailed)}
+                today={today}
+                selectMode={selectMode(drawing, polygonDrawing)}
+                onSelectMode={onSelectMode}
+                drawDisabled={drawDisabled}
+                customPanel={
+                  <CustomAreaPanel
+                    area={area}
+                    onChooseCustom={chooseCustom}
+                    polygon={{
+                      onSubmit: choosePolygon,
+                      drawing: polygonDrawing,
+                      onToggleDrawing: () => {
+                        setDrawing(false)
+                        setPolygonDrawing((d) => !d)
+                      },
+                      cells: area.entity_type === 'CUSTOM' ? (customSeries.data?.[0]?.n_cells ?? null) : null,
+                      draft: polygonDraft,
+                    }}
+                    drawing={drawing}
+                    onToggleDrawing={() => {
+                      setPolygonDrawing(false)
+                      setDrawing((d) => !d)
+                    }}
+                    customMessage={customMessage}
+                    customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
+                  />
+                }
+                layers={
+                  <>
+                    <MapModeSelector
+                      value={rawOnly ? 'activity' : selection.mapMode}
+                      onChange={(mapMode) => dispatch({ type: 'set-map-mode', mapMode })}
+                      verdictDisabled={rawOnly}
+                    />
+                    <SourceToggle
+                      value={rawOnly ? 'raw' : selection.source}
+                      onChange={(source) => dispatch({ type: 'set-source', source })}
+                      rawDisabled={!rawOnly && !rawAvailable(selection.valueMode)}
+                      harmonizedDisabled={rawOnly}
+                    />
+                  </>
+                }
+              />
               {hoverCountry !== null && !drawing && !polygonDrawing && (
                 <p className="map-readout" aria-hidden="true">
                   <strong>{hoverCountry.name}</strong>
                   <span>{hoverVerdict}</span>
                 </p>
               )}
-            </div>
-            <section aria-label="Data status" className="status">
-              {(meta.isPending || ((cells.isPending || cells.isPlaceholderData) && mapAvailable)) && selection.month !== null && (
-                <LoadingState what="map data" />
-              )}
-              {!mapAvailable && <EmptyState message={NO_OFFLINE_MAP} />}
-              {meta.isPending && <LoadingState what="data information" />}
-              {meta.isError && (
-                <ErrorState message="Data are not available right now. The country layer still works." onRetry={() => void meta.refetch()} />
-              )}
-              {cells.isError && mapAvailable && (
-                <ErrorState message="The map cells could not be loaded." onRetry={() => void cells.refetch()} />
-              )}
-              {cellList !== null && cellList.length === 0 && <EmptyState message="No cells for this month." />}
+              <div className="stage-status">
+                {!mapAvailable && <EmptyState message={NO_OFFLINE_MAP} />}
+                {meta.isError && <ErrorState message={UI.META_ERROR} onRetry={() => void meta.refetch()} />}
+                {cells.isError && mapAvailable && <ErrorState message={UI.MAP_CELLS_ERROR} onRetry={() => void cells.refetch()} />}
+                {cellList !== null && cellList.length === 0 && <EmptyState message={UI.MAP_NO_CELLS} />}
+              </div>
+            </section>
+            <section className="timeline-zone" aria-label={UI.TIMELINE_LABEL} data-tour="month" data-playing={playing}>
+              <MonthSelector
+                months={mapMonths}
+                value={selection.month}
+                onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
+              />
             </section>
             <MapSourceLine methodVersion={meta.data?.method_version ?? null} />
           </div>
-          <aside className="hero-side">
-            <SummaryCard
-              area={area}
-              month={selection.month}
-              status={areaSeries.isError ? 'error' : areaSeries.isPending ? 'loading' : 'ready'}
-              errorMessage={summaryError}
-              onRetry={summaryError === null || area.entity_type !== 'CUSTOM' ? () => void areaSeries.refetch() : undefined}
-              records={areaSeries.data}
-              meta={meta.data ?? null}
-              headingRef={summaryHeading}
-              download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
-            />
-            {story !== null && <StoryCaption story={story} />}
-            <TopAnomalies
-              month={selection.month}
-              status={anomalyStatus}
-              above={countryRankings.above}
-              rawOnly={rawOnly}
-              onSelect={chooseAnomaly}
-              onRetry={() => void anomalies.refetch()}
-              onSeeAll={() => {
-                setTab('anomalies')
-                document.getElementById('details')?.scrollIntoView({ block: 'start' })
-              }}
-            />
-            <section aria-label="Selection" className="selection card">
-              <h2>{UI.SELECTION_TITLE}</h2>
-              {selection.entity === null && <EmptyState message={UI.SELECTION_EMPTY} />}
-              {selection.entity !== null && selection.entity.entity_type !== 'CELL' && (
-                <p>{`Area: ${area.entity_name}${area.entity_type === 'CUSTOM' ? '' : ` (${area.entity_id})`}`}</p>
-              )}
-              {selectedCell !== null && <CellInfo cell={selectedCell} layer={layer} />}
-            </section>
+          <aside className="answer" aria-label={UI.ANSWER_LABEL} data-tour="verdict">
+            {started ? (
+              <SummaryCard
+                area={area}
+                month={selection.month}
+                status={areaSeries.isError ? 'error' : areaSeries.isPending ? 'loading' : 'ready'}
+                errorMessage={summaryError}
+                onRetry={summaryError === null || area.entity_type !== 'CUSTOM' ? () => void areaSeries.refetch() : undefined}
+                records={areaSeries.data}
+                meta={meta.data ?? null}
+                headingRef={summaryHeading}
+                download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
+                copyLink={<CopyLinkButton />}
+                story={story}
+                onCompare={analyticsAvailable(area.entity_type) ? () => openDetails('analytics') : undefined}
+                onDetails={() => openDetails(shownTab)}
+              />
+            ) : (
+              <StartHere
+                onChooseStory={chooseStory}
+                onSearch={focusSearch}
+                onShowWorld={() => dispatch({ type: 'clear-entity' })}
+                worldMonth={startMonth}
+              />
+            )}
           </aside>
         </div>
 
@@ -587,6 +594,7 @@ export default function App() {
         </Card>
       </main>
       )}
+      {page === 'map' && <HelpLayer mode={help} onMode={setHelp} actions={helpActions} shape={view.shape} />}
     </div>
     </RawOnlyContext.Provider>
   )

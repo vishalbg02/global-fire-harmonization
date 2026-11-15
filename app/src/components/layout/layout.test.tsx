@@ -345,12 +345,12 @@ describe('summary card', () => {
 })
 
 describe('header, chips, top anomalies', () => {
-  it('has a text wordmark (no logo tile), the purpose line and the two links', () => {
+  it('has a text wordmark (no logo tile), the purpose line, Methods and validation, and Help', () => {
     const html = renderToString(<Header showMethods onOpenMethods={() => {}} />)
     expect(html).toContain('<h1>Global Fire Harmonization</h1>')
     expect(html).toContain(UI.TAGLINE)
     expect(html).toContain(UI.NAV_METHODS)
-    expect(html).toContain(UI.NAV_HOW_TO_READ)
+    expect(html).toContain(`>${UI.NAV_HELP}</button>`)
     expect(html).toContain('aria-expanded="false"')
     expect(html).not.toContain('logo')
   })

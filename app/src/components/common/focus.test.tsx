@@ -38,8 +38,8 @@ describe('focusLater', () => {
 })
 
 describe('the ids focus returns to', () => {
-  it('the "How to read this" button carries the id the app hands focus back to', () => {
-    const html = renderToString(<Header showMethods onOpenMethods={() => {}} howToOpen onToggleHowTo={() => {}} />)
+  it('the Help button carries the id the app hands focus back to', () => {
+    const html = renderToString(<Header showMethods onOpenMethods={() => {}} helpOpen onHelp={() => {}} />)
     expect(html).toContain(`id="${HOW_TO_TOGGLE_ID}"`)
   })
 

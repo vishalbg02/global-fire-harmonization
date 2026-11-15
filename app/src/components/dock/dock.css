@@ -1,0 +1,246 @@
+/* The control dock on the map (T-093): one floating panel, top left. */
+.dock {
+  position: absolute;
+  z-index: 7;
+  top: var(--s-12);
+  left: var(--s-12);
+  box-sizing: border-box;
+  width: var(--dock-w);
+  max-width: calc(100% - 2 * var(--s-12));
+  max-height: calc(100% - 2 * var(--s-12));
+  overflow-y: auto;
+  padding: var(--s-12);
+  display: grid;
+  gap: var(--s-8);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--elev);
+  font-size: var(--t-14);
+}
+
+.dock [hidden] {
+  display: none;
+}
+
+.dock-search .area-search,
+.dock-search .combo {
+  position: relative;
+  width: 100%;
+  max-width: none;
+}
+
+.dock-search .combo input {
+  min-height: 36px;
+  padding: 0 var(--s-8);
+  font: inherit;
+  font-size: var(--t-14);
+  border: 1px solid #8b95a5;
+  border-radius: var(--radius);
+}
+
+.dock-search .combo input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dock-search .field-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.dock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-8);
+  min-width: 0;
+}
+
+/* The legends of the dock's segmented controls are read out, not drawn: the options say what they are. */
+.dock .dock-shape legend,
+.dock .dock-seg-full legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.dock .layer-selector {
+  display: block;
+  min-width: 0;
+}
+
+.dock .dock-seg-full .seg-row {
+  display: flex;
+}
+
+.dock .dock-seg-full .seg-option {
+  flex: 1 1 0;
+  text-align: center;
+}
+
+.dock-sat {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dock-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-8);
+  min-height: 32px;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.dock-switch:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.dock-switch-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 16px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.dock-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  background: var(--muted);
+  border-radius: 50%;
+  transition: transform 150ms ease-out, background-color 150ms ease-out;
+}
+
+.dock-switch[aria-checked='true'] .dock-switch-track {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.dock-switch[aria-checked='true'] .dock-switch-thumb {
+  background: var(--on-brand);
+  transform: translateX(14px);
+}
+
+.dock-sat-row {
+  padding-top: var(--s-8);
+  border-top: var(--rule);
+  font-size: var(--t-12);
+}
+
+.dock-chip {
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.dock-day {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.dock-day select {
+  font: inherit;
+  font-family: var(--font-mono);
+  padding: 2px var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.dock-note,
+.dock-hint {
+  margin: 0;
+  font-size: var(--t-12);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.dock-menus {
+  padding-top: var(--s-8);
+  border-top: var(--rule);
+}
+
+.dock-menu {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-8);
+  min-height: 32px;
+  padding: 0 var(--s-8);
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.dock-menu:hover {
+  border-color: var(--ink);
+}
+
+.dock-menu[aria-expanded='true'] {
+  background: var(--page);
+  border-color: var(--ink);
+}
+
+.dock-caret {
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 150ms ease-out;
+}
+
+.dock-menu[aria-expanded='true'] .dock-caret {
+  margin-top: 3px;
+  transform: rotate(225deg);
+}
+
+.dock-panel {
+  display: grid;
+  gap: var(--s-8);
+}
+
+.dock-typed summary {
+  font-size: var(--t-12);
+  color: var(--focus);
+  cursor: pointer;
+}
+
+.dock-typed[open] summary {
+  margin-bottom: var(--s-8);
+}
+
+.dock .source-toggle {
+  display: block;
+}
+
+.dock .source-details {
+  margin-top: var(--s-4);
+}

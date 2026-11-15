@@ -5,6 +5,7 @@ import './styles/fonts.css'
 import './styles/tokens.css'
 import './index.css'
 import './styles/layout.css'
+import './styles/shell.css'
 import App from './App.tsx'
 
 const queryClient = new QueryClient()

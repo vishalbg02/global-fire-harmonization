@@ -207,7 +207,8 @@ header.top + .how-to-read {
   gap: var(--s-4);
 }
 
-main button:not(.btn):not(.chip):not([role='tab']):not(.link-button):not(.anomaly-entry):not(.cal-cell),
+/* A button with its own look (the dock, the "?" explainers, the timeline) opts out with the class `bare`. */
+main button:not(.btn):not(.chip):not([role='tab']):not(.link-button):not(.anomaly-entry):not(.cal-cell):not(.bare),
 .draw-panel button {
   font: inherit;
   font-size: var(--t-14);

@@ -1,20 +1,22 @@
 import { methodsHref } from '../../content/methodsLink.ts'
 import * as UI from '../../content/ui.ts'
 
-/** The id of the "How to read this" button: focus goes back to it when the panel closes. */
-export const HOW_TO_TOGGLE_ID = 'how-to-toggle'
+/** The id of the Help button: focus goes back to it when the help closes. */
+export const HELP_BUTTON_ID = 'help-button'
+/** Kept for the callers that still use the earlier name. */
+export const HOW_TO_TOGGLE_ID = HELP_BUTTON_ID
 
 interface Props {
   /** True on the map page; the Methods link is left out on the methods page, as before. */
   showMethods: boolean
   onOpenMethods: () => void
-  /** Whether the "How to read this" panel (rendered by the app under the header) is open. */
-  howToOpen?: boolean
-  onToggleHowTo?: () => void
+  /** Whether the help (the tour, the Help sheet or the shortcuts) is open. */
+  helpOpen?: boolean
+  onHelp?: () => void
 }
 
-/** The slim header: a text wordmark, one line of purpose, and the two links. */
-export function Header({ showMethods, onOpenMethods, howToOpen = false, onToggleHowTo = () => {} }: Props) {
+/** The slim header: a text wordmark, one line of purpose, "Methods and validation" and "Help". */
+export function Header({ showMethods, onOpenMethods, helpOpen = false, onHelp = () => {} }: Props) {
   return (
     <header className="top">
       <div className="brand">
@@ -33,8 +35,8 @@ export function Header({ showMethods, onOpenMethods, howToOpen = false, onToggle
           >
             {UI.NAV_METHODS}
           </a>
-          <button type="button" id={HOW_TO_TOGGLE_ID} className="top-link" aria-expanded={howToOpen} aria-controls="how-to-read" onClick={onToggleHowTo}>
-            {UI.NAV_HOW_TO_READ}
+          <button type="button" id={HELP_BUTTON_ID} className="top-link" aria-haspopup="dialog" aria-expanded={helpOpen} onClick={onHelp}>
+            {UI.NAV_HELP}
           </button>
         </nav>
       )}
