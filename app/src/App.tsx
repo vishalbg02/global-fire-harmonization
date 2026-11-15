@@ -26,6 +26,8 @@ import { MonthSelector } from './components/map/MonthSelector.tsx'
 import { sharedMax } from './components/map/scale.ts'
 import { hasOfflineMap, monthKey, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
+import { checkRoundedRing, polygonArea } from './state/polygon.ts'
+import type { Ring } from './state/polygon.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
@@ -38,6 +40,9 @@ export default function App() {
   const [selection, dispatch] = useReducer(selectionReducer, null, () => selectionFromUrl(window.location.search))
   const [page, setPage] = useState<'map' | 'methods'>(() => pageFromSearch(window.location.search))
   const [drawing, setDrawing] = useState(false)
+  const [polygonDrawing, setPolygonDrawing] = useState(false)
+  // A polygon drawn on the map: shown in the text box with its reason when it was not accepted.
+  const [polygonDraft, setPolygonDraft] = useState<{ ring: Ring; error: string | null; seq: number } | null>(null)
   const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
 
@@ -104,8 +109,27 @@ export default function App() {
     evidenceHeading.current?.focus()
   }
 
+  // Typed or drawn: the same check (the API's rules and messages), then the same selection.
+  const choosePolygon = (points: readonly (readonly number[])[]) => {
+    setDrawing(false)
+    setPolygonDrawing(false)
+    const check = checkRoundedRing(points)
+    if (check.ok) {
+      setPolygonDraft(null)
+      dispatch({ type: 'select-entity', entity: polygonArea(check.ring), fit: polygonArea(check.ring).bbox })
+    } else {
+      setPolygonDraft({
+        ring: points.map((p) => [p[0], p[1]]),
+        error: check.message,
+        seq: (polygonDraft?.seq ?? 0) + 1,
+      })
+    }
+  }
+
   const chooseCustom = (bbox: Bbox) => {
     setDrawing(false)
+    setPolygonDrawing(false)
+    setPolygonDraft(null)
     dispatch({ type: 'select-entity', entity: customArea(bbox) })
   }
 
@@ -234,8 +258,11 @@ export default function App() {
             }
             fit={selection.fit}
             customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
+            customRing={area.entity_type === 'CUSTOM' ? (area.polygon ?? null) : null}
             drawing={drawing}
             onDrawn={chooseCustom}
+            polygonDrawing={polygonDrawing}
+            onDrawnPolygon={choosePolygon}
             anomalyOutlines={anomalyOutlines}
           />
           </Suspense>
@@ -248,8 +275,21 @@ export default function App() {
               onChooseEntity={chooseEntity}
               onChooseWorld={() => dispatch({ type: 'clear-entity' })}
               onChooseCustom={chooseCustom}
+              polygon={{
+                onSubmit: choosePolygon,
+                drawing: polygonDrawing,
+                onToggleDrawing: () => {
+                  setDrawing(false)
+                  setPolygonDrawing((d) => !d)
+                },
+                cells: area.entity_type === 'CUSTOM' ? (customSeries.data?.[0]?.n_cells ?? null) : null,
+                draft: polygonDraft,
+              }}
               drawing={drawing}
-              onToggleDrawing={() => setDrawing((d) => !d)}
+              onToggleDrawing={() => {
+                setPolygonDrawing(false)
+                setDrawing((d) => !d)
+              }}
               customMessage={customMessage}
               customLoading={area.entity_type === 'CUSTOM' && customSeries.isFetching}
               synthetic={meta.data?.synthetic === true}

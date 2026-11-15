@@ -198,3 +198,19 @@ def cells_with_centre_in(west: float, south: float, east: float, north: float) -
         [str(_file("cells.parquet")), west, east, south, north],
     )
     return [r["cell_id"] for r in rows]
+
+
+def cell_centres_in(
+    west: float, south: float, east: float, north: float
+) -> list[tuple[str, float, float]]:
+    """(cell_id, lon_c, lat_c) of the cells whose centre lies inside the box (bounds
+    inclusive), ordered by cell_id. The polygon rule starts from this prefilter."""
+    rows = _query(
+        """
+        SELECT cell_id, lon_c, lat_c FROM read_parquet(?)
+        WHERE lon_c BETWEEN ? AND ? AND lat_c BETWEEN ? AND ?
+        ORDER BY cell_id
+        """,
+        [str(_file("cells.parquet")), west, east, south, north],
+    )
+    return [(r["cell_id"], r["lon_c"], r["lat_c"]) for r in rows]

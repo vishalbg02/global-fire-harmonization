@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OfflineNote } from '../components/common/OfflineNote.tsx'
 import { offlineNoteText } from '../content/offline.ts'
 import { CustomAreaForm } from '../components/area/CustomAreaForm.tsx'
+import { ExportButton } from '../components/export/ExportButton.tsx'
+import { polygonArea } from '../state/polygon.ts'
 import { ApiError, fetchAnomalies, fetchCsv, fetchCustomSeries, fetchEvidence, fetchMapCells, fetchMeta, fetchSeries, fetchValidation } from './client.ts'
 import { parseMapCells } from './contract.ts'
 import { decodeMonth, enterStaticMode, resetStaticMode, STATIC_CUSTOM_MESSAGE } from './staticData.ts'
@@ -168,5 +170,28 @@ describe('the offline copy (T-043)', () => {
     )
     expect(form).toContain(STATIC_CUSTOM_MESSAGE)
     expect(/<button[^>]*type="submit"[^>]*disabled/.test(form) || /<button[^>]*disabled[^>]*type="submit"/.test(form)).toBe(true)
+  })
+
+  it('has no polygons either: same message, polygon controls and its CSV disabled (T-044)', async () => {
+    vi.stubGlobal('fetch', fakeFetch(false))
+    const ring: [number, number][] = [[0, 0], [1, 0], [1, 1]]
+    await expect(fetchCustomSeries({ polygon: ring })).rejects.toMatchObject({ status: 503, detail: STATIC_CUSTOM_MESSAGE })
+    await expect(fetchCsv(polygonArea(ring), true)).rejects.toMatchObject({ status: 503, detail: STATIC_CUSTOM_MESSAGE })
+    await enterStaticMode()
+    const form = renderToString(
+      <CustomAreaForm
+        initial={null}
+        polygon={{ onSubmit: () => {}, drawing: false, onToggleDrawing: () => {}, cells: null }}
+        onSubmit={() => {}}
+        drawing={false}
+        onToggleDrawing={() => {}}
+        serverMessage={null}
+        loading={false}
+      />,
+    )
+    expect(form).toMatch(/<textarea[^>]*disabled/)
+    expect(form).toMatch(/<button[^>]*disabled[^>]*>Show polygon/)
+    expect(form).toMatch(/<button[^>]*disabled[^>]*>Draw a polygon on the map/)
+    expect(renderToString(<ExportButton area={polygonArea(ring)} synthetic />)).toContain(STATIC_CUSTOM_MESSAGE)
   })
 })
