@@ -30,8 +30,8 @@ export interface FitRequest {
   bbox: Bbox
 }
 
-/** The default view when the world is chosen. */
-export const WORLD_BBOX: Bbox = [-180, -60, 180, 75]
+/** The default view when the world is chosen: about 60S to 80N, the latitudes that carry the data and the labels (T-072). */
+export const WORLD_BBOX: Bbox = [-180, -60, 180, 80]
 
 /** What the calendar colours by. */
 export type ValueMode = 'pct' | 'activity'

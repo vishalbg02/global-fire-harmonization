@@ -1,21 +1,33 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import type { MapGeoJSONFeature, MapMouseEvent, StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
-import { PolygonLayer, TextLayer } from '@deck.gl/layers'
+import { GeoJsonLayer, PolygonLayer, TextLayer } from '@deck.gl/layers'
 import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
 import { bboxFromRing } from '../../state/bbox.ts'
+import { pinnedReducer } from '../../state/pinnedCell.ts'
+import { tooltipCellId } from './mapPlacement.ts'
 import { openRing } from '../../state/polygon.ts'
 import type { Ring } from '../../state/polygon.ts'
+import { WORLD_BBOX } from '../../state/selection.ts'
 import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
 import { countryIso3, countryName } from './countries.ts'
-import { cellFillColor, needsOutline, sharedMax } from './scale.ts'
+import { CELL_STROKE_ALPHA, cellFillColor, cellStrokeWidth, needsOutline, sharedMax } from './scale.ts'
+import {
+  MapLegend,
+  MapLoading,
+  PinnedCellCard,
+  SCROLL_HINT,
+  SCROLL_HINT_MAC,
+  ScrollHint,
+  TOUCH_HINT,
+} from './mapOverlays.tsx'
 
 // MapLibre 6 runs in a module worker. Bundlers do not emit it automatically, so register
 // it through Vite (works in both the dev server and the production build).
@@ -28,7 +40,7 @@ const STYLE: StyleSpecification = {
   layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#dbe7f1' } }],
 }
 
-const COUNTRIES_URL = `${import.meta.env.BASE_URL}geo/ne_110m_admin_0_countries.geojson`
+const COUNTRIES_URL = `${import.meta.env.BASE_URL}geo/ne_admin_0_countries_india_pov.geojson`
 
 const INITIAL_ZOOM = 1.2
 /** From this zoom a 0.5 degree cell is about 16 px wide, enough for its 13 px verdict icon. */
@@ -56,6 +68,10 @@ interface Props {
   onDrawnPolygon?: (ring: number[][]) => void
   /** ISO3 codes of the countries listed in the anomaly rankings, to outline (T-040). */
   anomalyOutlines: { above: readonly string[]; below: readonly string[] }
+  /** The country under the pointer (null when none): the app shows its name and verdict (T-070). */
+  onHoverCountry?: (country: { iso3: string; name: string } | null) => void
+  /** True while the month's cells are loading: shows the loading indicator on the map (T-071). */
+  loading?: boolean
 }
 
 const CUSTOM_SOURCE = 'custom-area'
@@ -96,6 +112,8 @@ export function MapView({
   polygonDrawing = false,
   onDrawnPolygon,
   anomalyOutlines,
+  onHoverCountry,
+  loading = false,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -104,14 +122,26 @@ export function MapView({
   const wrap = useRef<HTMLDivElement>(null)
   // Zoom of the map: the verdict icons are drawn only when a cell is big enough to hold one.
   const [zoom, setZoom] = useState(INITIAL_ZOOM)
+  // The outline of the country under the pointer, drawn above the cells (T-070).
+  const [hoverOutline, setHoverOutline] = useState<unknown>(null)
+  const countryShapes = useRef<Map<string, unknown> | null>(null)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
-  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon })
+  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry })
+  // The cell whose card is pinned on the map: until closed, Esc, or another cell is clicked (T-071).
+  const [pinned, pinDispatch] = useReducer(pinnedReducer, null)
+  useEffect(() => pinDispatch({ type: 'selection', selectedCellId }), [selectedCellId])
+  const closePinned = useCallback(() => pinDispatch({ type: 'dismiss' }), [])
+  const pinnedCell = useMemo(
+    () => (pinned === null || cells === null ? null : (cells.find((c) => c.cell_id === pinned) ?? null)),
+    [pinned, cells],
+  )
+  const legendMax = useMemo(() => (cells === null ? 0 : sharedMax(cells)), [cells])
   // Clicks are ignored while drawing, and for a moment after a rectangle is finished, so that
   // the click that ends the drawing does not also select a country or a cell.
   const ignoreClicksUntil = useRef(0)
   const drawingRef = useRef(drawing)
   useEffect(() => {
-    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon }
+    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry }
     drawingRef.current = drawing || polygonDrawing
   })
   const clicksIgnored = () => drawingRef.current || Date.now() < ignoreClicksUntil.current
@@ -121,10 +151,22 @@ export function MapView({
     const map = new maplibregl.Map({
       container: container.current,
       style: STYLE,
-      center: [10, 20],
-      zoom: INITIAL_ZOOM,
+      // Start on the same world view the World button gives: about 60S to 80N.
+      bounds: [
+        [WORLD_BBOX[0], WORLD_BBOX[1]],
+        [WORLD_BBOX[2], WORLD_BBOX[3]],
+      ],
+      fitBoundsOptions: { padding: 30 },
       renderWorldCopies: false,
       attributionControl: false,
+      // The page scrolls over the map; zoom needs Ctrl or Cmd + scroll (or the buttons or keys).
+      // Touch: one finger scrolls the page, two move the map. The messages are MapLibre's own.
+      cooperativeGestures: true,
+      locale: {
+        'CooperativeGesturesHandler.WindowsHelpText': SCROLL_HINT,
+        'CooperativeGesturesHandler.MacHelpText': SCROLL_HINT_MAC,
+        'CooperativeGesturesHandler.MobileHelpText': TOUCH_HINT,
+      },
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     // The focusable map canvas gets a name and its keyboard keys (MapLibre: arrows pan, plus and minus zoom).
@@ -136,7 +178,23 @@ export function MapView({
     map.addControl(overlay)
     mapRef.current = map
     overlayRef.current = overlay
+    setZoom(map.getZoom())
     map.on('zoomend', () => setZoom(map.getZoom()))
+
+    // The same file the map layer reads (cached by the browser): the shapes for the hover outline.
+    void fetch(COUNTRIES_URL)
+      .then((r) => r.json())
+      .then((collection: { features: { properties: Record<string, unknown> }[] }) => {
+        const shapes = new Map<string, unknown>()
+        for (const f of collection.features) {
+          const iso3 = countryIso3(f.properties)
+          if (iso3 !== null) shapes.set(iso3, f)
+        }
+        countryShapes.current = shapes
+      })
+      .catch(() => {
+        countryShapes.current = null
+      })
 
     map.on('load', () => {
       map.addSource('countries', { type: 'geojson', data: COUNTRIES_URL })
@@ -158,6 +216,14 @@ export function MapView({
         source: 'countries',
         paint: { 'line-color': '#0072B2', 'line-width': 2, 'line-dasharray': [2, 1.5] },
         filter: ['in', ['get', 'ISO_A3_EH'], ['literal', []]],
+      })
+      // Hover: the outline of the country under the pointer (T-070).
+      map.addLayer({
+        id: 'countries-hover',
+        type: 'line',
+        source: 'countries',
+        paint: { 'line-color': '#14181f', 'line-width': 2 },
+        filter: ['==', ['get', 'ISO_A3_EH'], ''],
       })
       map.addLayer({
         id: 'countries-selected',
@@ -182,8 +248,25 @@ export function MapView({
       const iso3 = countryIso3(props)
       if (iso3 !== null) callbacks.current.onSelectCountry(iso3, countryName(props))
     })
-    map.on('mouseenter', 'countries-fill', () => (map.getCanvas().style.cursor = 'pointer'))
-    map.on('mouseleave', 'countries-fill', () => (map.getCanvas().style.cursor = ''))
+    map.on('mouseenter', 'countries-fill', () => (map.getCanvas().style.cursor = drawingRef.current ? 'crosshair' : 'pointer'))
+    let hoverIso3: string | null = null
+    const setHover = (iso3: string | null, name = '') => {
+      if (iso3 === hoverIso3) return
+      hoverIso3 = iso3
+      if (loaded.current) map.setFilter('countries-hover', ['==', ['get', 'ISO_A3_EH'], iso3 ?? ''])
+      callbacks.current.onHoverCountry?.(iso3 === null ? null : { iso3, name })
+      setHoverOutline(iso3 === null ? null : (countryShapes.current?.get(iso3) ?? null))
+    }
+    map.on('mousemove', 'countries-fill', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+      if (drawingRef.current) return setHover(null)
+      const props = e.features?.[0]?.properties
+      const iso3 = countryIso3(props)
+      setHover(iso3, countryName(props))
+    })
+    map.on('mouseleave', 'countries-fill', () => {
+      map.getCanvas().style.cursor = ''
+      setHover(null)
+    })
 
     return () => {
       loaded.current = false
@@ -311,11 +394,28 @@ export function MapView({
   useEffect(() => {
     const overlay = overlayRef.current
     if (overlay === null) return
+    const outline =
+      hoverOutline === null
+        ? []
+        : [
+            new GeoJsonLayer({
+              id: 'hover-outline',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- one Natural Earth feature, read from the countries file
+              data: hoverOutline as any,
+              pickable: false,
+              stroked: true,
+              filled: false,
+              getLineColor: [20, 24, 31, 255],
+              getLineWidth: 3,
+              lineWidthUnits: 'pixels',
+            }),
+          ]
     if (cells === null || cells.length === 0) {
-      overlay.setProps({ layers: [] })
+      overlay.setProps({ layers: outline })
       return
     }
     const max = sharedMax(cells)
+    const strokeWidth = cellStrokeWidth(zoom)
     const polygons = new PolygonLayer<MapCell>({
       id: 'cells',
       data: cells as MapCell[],
@@ -329,11 +429,21 @@ export function MapView({
         [c.lon_min, c.lat_max],
       ],
       getFillColor: (c) => [...cellFillColor(c, layer, max)],
+      // A light, thin stroke that grows with the zoom (none at world zoom); the selected cell's blue
+      // outline and the dark "no data" outline stay as they were (T-071).
       getLineColor: (c) =>
-        c.cell_id === selectedCellId ? [0, 80, 200, 255] : needsOutline(c, layer) ? [27, 27, 31, 255] : [60, 60, 60, 90],
-      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : 1),
+        c.cell_id === selectedCellId
+          ? [0, 80, 200, 255]
+          : needsOutline(c, layer)
+            ? [27, 27, 31, 255]
+            : [60, 60, 60, CELL_STROKE_ALPHA],
+      getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : strokeWidth),
       lineWidthUnits: 'pixels',
-      updateTriggers: { getFillColor: [layer, max], getLineColor: [selectedCellId, layer], getLineWidth: [selectedCellId, layer] },
+      updateTriggers: {
+        getFillColor: [layer, max],
+        getLineColor: [selectedCellId, layer],
+        getLineWidth: [selectedCellId, layer, strokeWidth],
+      },
       onHover: (info) => {
         const box = wrap.current?.getBoundingClientRect()
         setHover(
@@ -343,7 +453,11 @@ export function MapView({
         )
       },
       onClick: (info) => {
-        if (info.object && !clicksIgnored()) callbacks.current.onSelectCell(info.object as MapCell)
+        if (info.object && !clicksIgnored()) {
+          const clicked = info.object as MapCell
+          pinDispatch({ type: 'click', cellId: clicked.cell_id })
+          callbacks.current.onSelectCell(clicked)
+        }
       },
     })
     // One icon per cell is a glyph for every one of the 56,238 cells; at world zoom a cell is about 2 px,
@@ -365,13 +479,23 @@ export function MapView({
             }),
           ]
         : []
-    overlay.setProps({ layers: [polygons, ...icons] })
-  }, [cells, layer, selectedCellId, zoom])
+    overlay.setProps({ layers: [polygons, ...icons, ...outline] })
+  }, [cells, layer, selectedCellId, zoom, hoverOutline])
 
   return (
     <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
-      <div ref={container} className="map" role="region" aria-label="Global fire activity map" />
-      {hover !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
+      <div
+        ref={container}
+        className="map"
+        role="region"
+        aria-label="Global fire activity map"
+        aria-busy={loading}
+      />
+      {loading && <MapLoading />}
+      <ScrollHint />
+      <MapLegend layer={layer} max={legendMax} cardPinned={pinnedCell !== null} />
+      {pinnedCell !== null && <PinnedCellCard cell={pinnedCell} layer={layer} onClose={closePinned} onPointerEnter={() => setHover(null)} />}
+      {hover !== null && tooltipCellId(hover.cell.cell_id, pinned, false) !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
         <div
           className="map-tooltip"
           // Flip to the other side of the pointer near the right and bottom edges.

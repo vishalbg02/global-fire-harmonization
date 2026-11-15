@@ -8,7 +8,8 @@ import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import type { Area } from '../../state/selection.ts'
 import { WORLD } from '../../state/selection.ts'
-import { DISAGREEMENT_NOTE, EvidenceBody, PROVISIONAL_NOTICE } from './EvidenceBody.tsx'
+import { NO_CAVEATS_TEXT, disagreementNote } from '../../content/evidenceText.ts'
+import { EvidenceBody, PROVISIONAL_NOTICE } from './EvidenceBody.tsx'
 import { AreaNotFound, CELL_HEADING, EvidencePanel } from './EvidencePanel.tsx'
 
 // SYNTHETIC test data. Not NASA observations.
@@ -92,10 +93,22 @@ describe('EvidenceBody: the seven items', () => {
     expect(html).toContain('NOAA-20 VIIRS')
   })
 
-  it('3. says so only when the satellites disagree (scale above 1)', () => {
-    expect(body(evidence({ disagreement_scale: 1.4 }))).toContain(`${DISAGREEMENT_NOTE} (disagreement scale 1.40).`)
-    expect(body(evidence({ disagreement_scale: 1 }))).not.toContain(DISAGREEMENT_NOTE)
-    expect(body(evidence({ disagreement_scale: null }))).not.toContain(DISAGREEMENT_NOTE)
+  it('3. says so only when the satellites disagree (scale above 1), and says whether it is a caveat', () => {
+    const escaped = (s: string) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll("'", '&#x27;')
+    expect(body(evidence({ disagreement_scale: 1.4 }))).toContain(escaped(disagreementNote(1.4)))
+    expect(disagreementNote(1.4)).toContain('disagreement scale 1.40')
+    expect(disagreementNote(1.78)).toContain('not a caveat')
+    expect(disagreementNote(2)).toContain('not a caveat')
+    expect(disagreementNote(2.01)).toContain('listed as a caveat')
+    expect(body(evidence({ disagreement_scale: 1 }))).not.toContain('differ by more than their own uncertainty')
+    expect(body(evidence({ disagreement_scale: null }))).not.toContain('differ by more than their own uncertainty')
+  })
+
+  it('3. a routine widening and "no caveat flags" do not contradict each other (T-076)', () => {
+    const html = body(evidence({ disagreement_scale: 1.78, reason_codes: [] }))
+    expect(html).toContain('not a caveat')
+    expect(html).toContain(NO_CAVEATS_TEXT)
+    expect(html).not.toContain('Satellites disagree; uncertainty widened')
   })
 
   it('4. shows the raw contribution of each witness, keeps a real zero, and says it is not harmonized', () => {
@@ -121,7 +134,7 @@ describe('EvidenceBody: the seven items', () => {
   })
 
   it('5. says plainly when there are no caveats', () => {
-    expect(body(evidence())).toContain('No caveats are recorded for this month.')
+    expect(body(evidence())).toContain(NO_CAVEATS_TEXT)
   })
 
   it('6. shows the provisional notice for NRT and MIXED, and not for SP', () => {

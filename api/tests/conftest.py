@@ -8,7 +8,7 @@ import duckdb
 import pytest
 from fastapi.testclient import TestClient
 
-from fire_api import custom
+from fire_api import custom, map_cache
 from fire_api.main import app
 
 HARMONIZED_COLUMNS = """
@@ -152,6 +152,12 @@ def build_products(directory: Path, harmonized_rows: list[tuple[Any, ...]] | Non
 def _fresh_custom_cache() -> None:
     """No custom-area result survives from one test to the next."""
     custom.clear_cache()
+
+
+@pytest.fixture(autouse=True)
+def _fresh_map_cache() -> None:
+    """No serialized map month survives from one test to the next."""
+    map_cache.clear_cache()
 
 
 @pytest.fixture
