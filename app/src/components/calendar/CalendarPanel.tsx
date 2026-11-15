@@ -6,6 +6,8 @@ import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
 import { useAreaSeries } from '../area/useAreaSeries.ts'
 import { RAW_ONLY_AREA_UNAVAILABLE, isRawOnlySeries, useRawOnly } from '../../content/rawOnly.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
+import { CaptionLine } from '../common/CaptionLine.tsx'
+import * as UI from '../../content/ui.ts'
 import { CalendarLegend } from './CalendarLegend.tsx'
 import { CalendarTable } from './CalendarTable.tsx'
 import { ValueModeSelector } from './ValueModeSelector.tsx'
@@ -78,6 +80,11 @@ export function CalendarPanel({
           </button>
         )}
       </header>
+
+      <CaptionLine
+        unit={valueMode === 'pct' ? UI.CAPTION_UNIT_PCT : source === 'raw' ? UI.CAPTION_UNIT_RAW : UI.CAPTION_UNIT_HARMONIZED}
+        methodVersion={meta?.method_version ?? null}
+      />
 
       {meta === null && !series.isError && <LoadingState what="data information" />}
       {meta !== null && series.isPending && <LoadingState what="the calendar" />}

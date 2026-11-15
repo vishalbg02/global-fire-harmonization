@@ -107,7 +107,7 @@ def main() -> int:
                 raise RuntimeError("zip integrity test failed")
             print(f"OK   {name}", flush=True)
             return (name, dest.stat().st_size, expected, sha256(dest), "OK")
-        except Exception as e:  # record and continue; never substitute data
+        except Exception as e:  # noqa: BLE001  (record and continue; never substitute data)
             print(f"FAIL {name}: {e}", flush=True)
             size = dest.stat().st_size if dest.exists() else 0
             return (name, size, 0, "", f"FAIL: {e}")
@@ -128,8 +128,7 @@ def main() -> int:
 
     with open(MANIFEST, "w", encoding="utf-8") as f:
         f.write("file\tbytes\texpected_bytes\tsha256\tresult\n")
-        for r in rows:
-            f.write("\t".join(map(str, r)) + "\n")
+        f.writelines("\t".join(map(str, r)) + "\n" for r in rows)
     ok = [r for r in rows if r[4] == "OK"]
     print(f"\n{len(ok)}/{len(rows)} verified, {sum(r[1] for r in ok):,} bytes total")
     for name, why in failed:
