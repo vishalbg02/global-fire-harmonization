@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { MapCell, MapLayer } from '../../api/contract.ts'
 import { Legend } from './Legend.tsx'
 import { CellInfo } from './CellInfo.tsx'
+import { legendForcedCollapsed } from './mapPlacement.ts'
 import './mapOverlays.css'
 
 // Map-folder constants (app/src/content/ui.ts does not exist yet; T-070 may move them there).
@@ -21,8 +22,22 @@ function startsNarrow(): boolean {
 }
 
 /** The legend on the map (bottom left), collapsible; collapsed by default on narrow screens. */
-export function MapLegend({ layer, max, collapsed }: { layer: MapLayer; max: number; collapsed?: boolean }) {
-  const [hidden, setHidden] = useState<boolean>(collapsed ?? startsNarrow())
+export function MapLegend({
+  layer,
+  max,
+  collapsed,
+  cardPinned = false,
+}: {
+  layer: MapLayer
+  max: number
+  collapsed?: boolean
+  cardPinned?: boolean
+}) {
+  const [open, setOpen] = useState<boolean>(!(collapsed ?? startsNarrow()))
+  // While a card is pinned on a small screen the legend stays folded, so neither hides the other.
+  const forced = legendForcedCollapsed(cardPinned, typeof window === 'undefined' ? 1000 : window.innerWidth)
+  const hidden = forced || !open
+  const setHidden = (f: (h: boolean) => boolean) => setOpen(!f(hidden))
   return (
     <div className="map-legend">
       <button
@@ -70,10 +85,12 @@ export function PinnedCellCard({
   cell,
   layer,
   onClose,
+  onPointerEnter,
 }: {
   cell: MapCell
   layer: MapLayer
   onClose: () => void
+  onPointerEnter?: () => void
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -83,7 +100,7 @@ export function PinnedCellCard({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
   return (
-    <section className="map-pinned" aria-label="Selected cell">
+    <section className="map-pinned" aria-label="Selected cell" onPointerEnter={onPointerEnter}>
       <div className="map-pinned-head">
         <h2>Selected cell</h2>
         <button type="button" onClick={onClose} aria-label={PINNED_CLOSE}>

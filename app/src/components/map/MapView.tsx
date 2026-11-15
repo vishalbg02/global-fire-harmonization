@@ -10,6 +10,7 @@ import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
 import { bboxFromRing } from '../../state/bbox.ts'
 import { pinnedReducer } from '../../state/pinnedCell.ts'
+import { tooltipCellId } from './mapPlacement.ts'
 import { openRing } from '../../state/polygon.ts'
 import type { Ring } from '../../state/polygon.ts'
 import type { FitRequest } from '../../state/selection.ts'
@@ -424,9 +425,9 @@ export function MapView({
       />
       {loading && <MapLoading />}
       <ScrollHint />
-      <MapLegend layer={layer} max={legendMax} />
-      {pinnedCell !== null && <PinnedCellCard cell={pinnedCell} layer={layer} onClose={closePinned} />}
-      {hover !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
+      <MapLegend layer={layer} max={legendMax} cardPinned={pinnedCell !== null} />
+      {pinnedCell !== null && <PinnedCellCard cell={pinnedCell} layer={layer} onClose={closePinned} onPointerEnter={() => setHover(null)} />}
+      {hover !== null && tooltipCellId(hover.cell.cell_id, pinned, false) !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
         <div
           className="map-tooltip"
           // Flip to the other side of the pointer near the right and bottom edges.
