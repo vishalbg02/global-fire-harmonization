@@ -19,6 +19,10 @@ import { ExportButton } from './components/export/ExportButton.tsx'
 import { Header } from './components/layout/Header.tsx'
 import { CopyLinkButton } from './components/layout/CopyLinkButton.tsx'
 import { StoryChips } from './components/layout/StoryChips.tsx'
+import { StoryCaption } from './components/layout/StoryCaption.tsx'
+import { HowToRead } from './components/layout/HowToRead.tsx'
+import { activeStory } from './components/layout/stories.ts'
+import { howToOpenAtStart, rememberHowToDismissed } from './state/howto.ts'
 import type { FeaturedStory } from './content/featured.ts'
 import * as UI from './content/ui.ts'
 import { VERDICT_PRESENTATION } from './content/verdicts.ts'
@@ -66,6 +70,8 @@ export default function App() {
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
   const [tab, setTab] = useState<TabId>(() => tabFromSearch(window.location.search))
   const [drawMenuOpen, setDrawMenuOpen] = useState(false)
+  // "How to read this" opens once on a first visit without link parameters; the header link opens it again.
+  const [howToOpen, setHowToOpen] = useState(() => howToOpenAtStart(window.location.search))
   const [hoverCountry, setHoverCountry] = useState<{ iso3: string; name: string } | null>(null)
 
   const shownTab = effectiveTab(tab, selection.area.entity_type)
@@ -252,6 +258,8 @@ export default function App() {
       fit: list?.find((e) => e.entity_id === story.entityId)?.bbox,
     })
   }
+  // A story is on screen only while the area and the month both equal it (the numbers shown are then the story's).
+  const story = activeStory(area, selection.month)
   const seriesError = areaSeries.error instanceof ApiError ? areaSeries.error : null
   const summaryError =
     area.entity_type === 'CUSTOM'
@@ -274,7 +282,20 @@ export default function App() {
       </a>
       <SyntheticBanner synthetic={meta.data?.synthetic === true} />
       <OfflineNote manifest={offline} mapNote={offlineMapNoteText} />
-      <Header showMethods={page === 'map'} onOpenMethods={openMethods} />
+      <Header
+        showMethods={page === 'map'}
+        onOpenMethods={openMethods}
+        howToOpen={page === 'map' && howToOpen}
+        onToggleHowTo={() => setHowToOpen((o) => !o)}
+      />
+      {page === 'map' && howToOpen && (
+        <HowToRead
+          onClose={() => {
+            setHowToOpen(false)
+            rememberHowToDismissed()
+          }}
+        />
+      )}
       {page === 'map' && noteShown && (
         <p className="raw-only-note" role="status">
           {RAW_ONLY_NOTE}
@@ -425,6 +446,7 @@ export default function App() {
               headingRef={summaryHeading}
               download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
             />
+            {story !== null && <StoryCaption story={story} />}
             <TopAnomalies
               month={selection.month}
               status={anomalyStatus}

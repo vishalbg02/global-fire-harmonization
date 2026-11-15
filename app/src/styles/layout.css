@@ -70,9 +70,52 @@
   font-size: var(--t-14);
 }
 
-.how-to-read ul {
+.how-to-read ul,
+.how-to-read ol {
   margin: var(--s-8) 0;
-  padding-left: var(--s-16);
+  padding-left: var(--s-24);
+}
+
+/* Under the header as its own panel (T-072), not inside the dark bar. */
+header.top + .how-to-read {
+  margin: var(--s-12) var(--s-24) 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.how-to-read h2 {
+  margin: 0 0 var(--s-8);
+  font-size: var(--t-16);
+}
+
+.how-to-read li {
+  margin-bottom: var(--s-4);
+}
+
+.glossary dt {
+  font-weight: 600;
+}
+
+.glossary dd {
+  margin: 0 0 var(--s-8);
+}
+
+.story-caption h3 {
+  margin: 0 0 var(--s-8);
+  font-size: var(--t-16);
+}
+
+.story-caption p {
+  margin: 0 0 var(--s-8);
+}
+
+.story-label {
+  font-weight: 700;
+}
+
+.story-note {
+  font-size: var(--t-14);
+  color: var(--muted);
 }
 
 /* ---- Buttons, segmented control, fields ---- */
@@ -901,6 +944,16 @@ aside .legend {
   .chip {
     white-space: nowrap;
     flex: 0 0 auto;
+  }
+
+  header.top + .how-to-read {
+    margin: var(--s-12) var(--s-16) 0;
+  }
+
+  /* The story caption sits directly under the chips (order 1, after them in the page), before the summary. */
+  .hero-side > .story-caption {
+    order: 1;
+    margin: var(--s-12) var(--s-16) 0;
   }
 
   .hero-side > .summary {
