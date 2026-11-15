@@ -200,6 +200,7 @@ aside section {
 
 /* ---- Area picker ---- */
 .area-picker h2,
+.custom-area h2,
 .custom-area h3 {
   margin: 0 0 0.3rem;
   font-size: 1rem;
