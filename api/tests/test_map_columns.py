@@ -384,3 +384,15 @@ def test_real_cell_list_area_columns_equal_cells_parquet(monkeypatch: pytest.Mon
     assert body["columns"]["cell_id"] == [r[0] for r in stored]
     assert body["columns"]["country_iso3"] == [r[1] for r in stored]
     assert body["columns"]["continent"] == [r[2] for r in stored]
+
+
+class TestCellsFieldSetToken:
+    def test_the_cells_etag_carries_the_field_set_token(self, client: TestClient) -> None:
+        # A browser holding the answer from before country_iso3 and continent existed
+        # must not be told "not modified" (T-090).
+        etag = client.get("/api/map/cells", headers=PLAIN).headers["etag"]
+        assert etag.startswith(f'W/"cells-{map_columns.CELLS_SCHEMA}-')
+        assert map_columns.CELLS_SCHEMA != "v1"
+        old = 'W/"cells-0123456789abcdef01234567"'
+        stale = client.get("/api/map/cells", headers={**PLAIN, "If-None-Match": old})
+        assert stale.status_code == 200

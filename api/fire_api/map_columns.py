@@ -52,7 +52,13 @@ APP_FIELDS: tuple[str, ...] = (
 MONTH_FIELDS: tuple[str, ...] = ("year", "month")
 
 COLUMNS_KIND = "columns"
-CELLS_KIND = "cells"
+# The ETag of /api/map/cells carries a field-set token: bump it whenever the columns of the cells
+# answer change. The ETag otherwise follows the product files only, so a browser that kept the
+# answer from before an upgrade (max-age=300, then a conditional request) would be told "not
+# modified" for the old field set (T-090: the answer gained country_iso3 and continent).
+# "v2" = the five geometry columns plus country_iso3 and continent.
+CELLS_SCHEMA = "v2"
+CELLS_KIND = f"cells-{CELLS_SCHEMA}"
 
 
 def field_set(layer: MapLayer) -> tuple[str, ...]:
