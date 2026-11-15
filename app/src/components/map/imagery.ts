@@ -66,8 +66,8 @@ export function hideImagery(map: MapLibreMap, which: 'basemap' | 'true-colour' |
 export function paintForImagery(map: MapLibreMap, over: boolean): void {
   if (map.getLayer('countries-fill') === undefined) return
   map.setPaintProperty('countries-fill', 'fill-opacity', over ? 0 : 1)
-  map.setPaintProperty('countries-line', 'line-color', over ? '#ffffff' : '#8a8f98')
-  map.setPaintProperty('countries-line', 'line-width', over ? 0.8 : 0.6)
+  map.setPaintProperty('countries-line', 'line-color', over ? '#f4f4ee' : '#8a8f98')
+  map.setPaintProperty('countries-line', 'line-width', over ? 0.6 : 0.6)
   for (const id of ['countries-line-casing', 'anomalies-casing', 'countries-selected-casing']) {
     if (map.getLayer(id) !== undefined) map.setLayoutProperty(id, 'visibility', over ? 'visible' : 'none')
   }

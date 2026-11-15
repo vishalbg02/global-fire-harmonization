@@ -29,7 +29,9 @@ export const DEFAULT_SAT_DAY = 15
 export const GIBS_LINK = 'https://www.earthdata.nasa.gov/data/tools/gibs'
 
 /** Verdict fill opacity over imagery and on the plain background (Lead's defaults; colour-vision checks in imageryColorVision.test.tsx). */
-export const CELL_OPACITY_IMAGERY = 0.65
+export const CELL_OPACITY_IMAGERY = 0.78
+/** Thin dark casing on each cell over imagery (RGBA): keeps pale verdict fills readable over bright cloud. */
+export const CELL_CASING_IMAGERY: readonly [number, number, number, number] = [20, 24, 31, 80]
 export const CELL_OPACITY_PLAIN = 0.85
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
