@@ -21,7 +21,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import number_check as nc
 
 NODE = shutil.which("node")
+
+
+def node_version() -> tuple[int, int]:
+    """(major, minor) of the installed node, (0, 0) if there is none or it cannot be read."""
+    if NODE is None:
+        return (0, 0)
+    try:
+        out = subprocess.run([NODE, "--version"], capture_output=True, text=True, check=True).stdout.strip().lstrip("v")
+        major, minor = out.split(".")[:2]
+        return (int(major), int(minor))
+    except (subprocess.CalledProcessError, ValueError, OSError):
+        return (0, 0)
+
+
 needs_node = pytest.mark.skipif(NODE is None, reason="node is not installed")
+# the app's helpers are TypeScript: node imports them directly only with built-in type stripping (22.6 and later; the project requires 22.12+)
+needs_node_ts = pytest.mark.skipif(node_version() < (22, 6), reason="node 22.6 or later is needed to import the app's TypeScript helpers")
 
 
 def test_javascript_rounding_is_half_up_and_exact():
@@ -159,7 +175,7 @@ def test_the_csv_check_catches_a_missing_row_and_a_wrong_column_order():
     assert rep2.checks["D csv columns"]["mismatch"] == 1
 
 
-@needs_node
+@needs_node_ts
 def test_the_apps_own_functions_run_through_node_and_agree_with_the_port():
     out = nc.run_app({"probability": [0.9999999, 0.994, 0.005, 0.0051], "pct": [264.5, None],
                       "estimate": [{"estimate": 1.25, "ci90_low": 1.0, "ci90_high": 2.0}],
@@ -179,3 +195,9 @@ def test_the_api_model_check_refuses_nested_measured_values_and_accepts_scalar_o
     assert nc.api_accepts_validation(base)
     base["tests"][0]["measured"] = {"control": {"rows": 1}}
     assert not nc.api_accepts_validation(base)
+
+
+def test_node_version_is_read_as_a_pair_and_a_missing_node_is_zero():
+    assert isinstance(node_version(), tuple) and len(node_version()) == 2
+    if NODE is None:
+        assert node_version() == (0, 0)
