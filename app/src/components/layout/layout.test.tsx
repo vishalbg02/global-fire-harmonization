@@ -4,22 +4,26 @@ import type { EntityItem, EntityMonth, Metadata } from '../../api/contract.ts'
 import { RawOnlyContext } from '../../content/rawOnly.ts'
 import * as UI from '../../content/ui.ts'
 import { FEATURED_STORIES } from '../../content/featured.ts'
-import { TAB_IDS, setTabParam, tabFromSearch } from '../../state/tabs.ts'
+import { TAB_IDS, analyticsAvailable, effectiveTab, setTabParam, tabFromSearch } from '../../state/tabs.ts'
 import { WORLD } from '../../state/selection.ts'
 import { MAX_SEARCH_RESULTS, parseAreaOption, searchAreas } from '../area/areaSearch.ts'
 import { AreaSearch } from '../area/AreaSearch.tsx'
-import { MapModeSwitch, selectMode } from '../map/MapModeSwitch.tsx'
+import { MapModeSwitch } from '../map/MapModeSwitch.tsx'
+import { selectMode } from '../map/selectMode.ts'
 import { MapSourceLine } from '../map/MapSourceLine.tsx'
 import { DATASET_DOIS } from '../../content/methods.ts'
 import { firmsProducts, productCode } from '../map/mapSource.ts'
 import { PLAY_INTERVAL_MS, nextPlayIndex, playStartIndex } from '../map/playback.ts'
 import { MonthSelector } from '../map/MonthSelector.tsx'
 import { Sparkline } from '../summary/Sparkline.tsx'
-import { SummaryCard, sentence } from '../summary/SummaryCard.tsx'
+import { NO_CAVEATS_TEXT } from '../../content/evidenceText.ts'
+import { SummaryCard } from '../summary/SummaryCard.tsx'
+import { sentence } from '../summary/text.ts'
 import { buildSpark, countGaps, sparkWindow } from '../summary/sparkline.ts'
 import type { SparkPoint } from '../summary/sparkline.ts'
 import { Header } from './Header.tsx'
-import { StoryChips, selectableStories, storyLabel } from './StoryChips.tsx'
+import { StoryChips } from './StoryChips.tsx'
+import { selectableStories, storyLabel } from './stories.ts'
 import { copyText } from './copyLink.ts'
 import { TopAnomalies } from '../anomalies/TopAnomalies.tsx'
 import { CaptionLine } from '../common/CaptionLine.tsx'
@@ -38,7 +42,7 @@ describe('tab in the link', () => {
     for (const t of TAB_IDS) expect(tabFromSearch(`?tab=${t}`)).toBe(t)
     expect(tabFromSearch('?tab=nope')).toBe('calendar')
     expect(tabFromSearch('')).toBe('calendar')
-    expect(TAB_IDS).toEqual(['calendar', 'satellites', 'evidence', 'anomalies'])
+    expect(TAB_IDS).toEqual(['calendar', 'satellites', 'evidence', 'anomalies', 'analytics'])
   })
   it('writes the tab, leaving the default out', () => {
     const p = new URLSearchParams('area=GLOBAL')
@@ -46,6 +50,14 @@ describe('tab in the link', () => {
     expect(p.get('tab')).toBe('evidence')
     setTabParam(p, 'calendar')
     expect(p.has('tab')).toBe(false)
+  })
+  it('offers Analytics for presets and hides it for a custom area, falling back to the default tab', () => {
+    expect(analyticsAvailable('COUNTRY')).toBe(true)
+    expect(analyticsAvailable('GLOBAL')).toBe(true)
+    expect(analyticsAvailable('CUSTOM')).toBe(false)
+    expect(effectiveTab('analytics', 'CUSTOM')).toBe('calendar')
+    expect(effectiveTab('analytics', 'COUNTRY')).toBe('analytics')
+    expect(effectiveTab('evidence', 'CUSTOM')).toBe('evidence')
   })
 })
 
@@ -295,7 +307,7 @@ describe('summary card', () => {
     expect(html).toContain('103.0')
     expect(html).toContain('90.0 to 120.0')
     expect(html).toContain('Aqua MODIS, S-NPP VIIRS')
-    expect(html).toContain(UI.SUMMARY_NO_CAVEATS)
+    expect(html).toContain(NO_CAVEATS_TEXT)
     expect(html).toContain('csv')
   })
   it('has a source line with the satellites, the data level, the method and the link to how the verdict is made', () => {

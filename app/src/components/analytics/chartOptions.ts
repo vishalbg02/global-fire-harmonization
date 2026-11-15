@@ -28,7 +28,7 @@ export function annualOption(points: readonly AnnualPoint[]): EChartsCoreOption 
   const hollow = (color: string, partial: boolean) => (partial ? { itemStyle: { color: '#ffffff', borderColor: color, borderWidth: 2 } } : {})
   const marks = SATELLITE_JOINS.filter((j) => years.includes(String(j.year))).map((j) => ({
     xAxis: String(j.year),
-    label: { formatter: j.label, position: 'insideEndTop', color: AXIS_TEXT, fontSize: 11 },
+    label: { formatter: j.label, position: 'end', align: 'left', color: AXIS_TEXT, fontSize: 11 },
     lineStyle: { color: AXIS_TEXT, type: 'dotted', width: 1 },
   }))
   return {

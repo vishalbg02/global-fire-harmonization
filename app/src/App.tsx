@@ -19,18 +19,23 @@ import { ExportButton } from './components/export/ExportButton.tsx'
 import { Header } from './components/layout/Header.tsx'
 import { CopyLinkButton } from './components/layout/CopyLinkButton.tsx'
 import { StoryChips } from './components/layout/StoryChips.tsx'
+import { StoryCaption } from './components/layout/StoryCaption.tsx'
+import { HowToRead } from './components/layout/HowToRead.tsx'
+import { activeStory } from './components/layout/stories.ts'
+import { howToOpenAtStart, rememberHowToDismissed } from './state/howto.ts'
 import type { FeaturedStory } from './content/featured.ts'
 import * as UI from './content/ui.ts'
 import { VERDICT_PRESENTATION } from './content/verdicts.ts'
 import { TopAnomalies } from './components/anomalies/TopAnomalies.tsx'
-import { MapModeSwitch, selectMode } from './components/map/MapModeSwitch.tsx'
+import { MapModeSwitch } from './components/map/MapModeSwitch.tsx'
+import { selectMode } from './components/map/selectMode.ts'
 import type { SelectMode } from './components/map/MapModeSwitch.tsx'
 import { MapSourceLine } from './components/map/MapSourceLine.tsx'
 import { SummaryCard } from './components/summary/SummaryCard.tsx'
 import { Button } from './components/ui/Button.tsx'
 import { Card } from './components/ui/Card.tsx'
 import { Tabs } from './components/ui/Tabs.tsx'
-import { setTabParam, tabFromSearch } from './state/tabs.ts'
+import { analyticsAvailable, effectiveTab, setTabParam, tabFromSearch } from './state/tabs.ts'
 import type { TabId } from './state/tabs.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
@@ -49,6 +54,7 @@ import type { Ring } from './state/polygon.ts'
 import { effectiveLayer, rawAvailable, selectionReducer } from './state/selection.ts'
 import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
+const AnalyticsPanel = lazy(() => import('./components/analytics/index.ts').then((m) => ({ default: m.AnalyticsPanel })))
 const MethodsPage = lazy(() => import('./components/methods/MethodsPage.tsx').then((m) => ({ default: m.MethodsPage })))
 // The map (MapLibre, deck.gl and the draw tool) is loaded when first needed, so the first load is small (T-042).
 const MapView = lazy(() => import('./components/map/MapView.tsx').then((m) => ({ default: m.MapView })))
@@ -65,17 +71,21 @@ export default function App() {
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
   const [tab, setTab] = useState<TabId>(() => tabFromSearch(window.location.search))
   const [drawMenuOpen, setDrawMenuOpen] = useState(false)
+  // "How to read this" opens once on a first visit without link parameters; the header link opens it again.
+  const [howToOpen, setHowToOpen] = useState(() => howToOpenAtStart(window.location.search))
   const [hoverCountry, setHoverCountry] = useState<{ iso3: string; name: string } | null>(null)
+
+  const shownTab = effectiveTab(tab, selection.area.entity_type)
 
   // Keep the link in step with the selection, so the address bar can be shared.
   useEffect(() => {
     const params = new URLSearchParams(encodeSelection(selection))
     if (page === 'methods') params.set(PAGE_PARAM, METHODS_PAGE)
-    setTabParam(params, tab)
+    setTabParam(params, shownTab)
     const query = params.toString()
     const url = `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`
     window.history.replaceState(null, '', url)
-  }, [selection, page, tab])
+  }, [selection, page, shownTab])
 
   const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
   const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
@@ -244,6 +254,8 @@ export default function App() {
       fit: list?.find((e) => e.entity_id === story.entityId)?.bbox,
     })
   }
+  // A story is on screen only while the area and the month both equal it (the numbers shown are then the story's).
+  const story = activeStory(area, selection.month)
   const seriesError = areaSeries.error instanceof ApiError ? areaSeries.error : null
   const summaryError =
     area.entity_type === 'CUSTOM'
@@ -266,7 +278,20 @@ export default function App() {
       </a>
       <SyntheticBanner synthetic={meta.data?.synthetic === true} />
       <OfflineNote manifest={offline} mapNote={offlineMapNoteText} />
-      <Header showMethods={page === 'map'} onOpenMethods={openMethods} />
+      <Header
+        showMethods={page === 'map'}
+        onOpenMethods={openMethods}
+        howToOpen={page === 'map' && howToOpen}
+        onToggleHowTo={() => setHowToOpen((o) => !o)}
+      />
+      {page === 'map' && howToOpen && (
+        <HowToRead
+          onClose={() => {
+            setHowToOpen(false)
+            rememberHowToDismissed()
+          }}
+        />
+      )}
       {page === 'map' && noteShown && (
         <p className="raw-only-note" role="status">
           {RAW_ONLY_NOTE}
@@ -417,6 +442,7 @@ export default function App() {
               headingRef={summaryHeading}
               download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
             />
+            {story !== null && <StoryCaption story={story} />}
             <TopAnomalies
               month={selection.month}
               status={anomalyStatus}
@@ -444,7 +470,7 @@ export default function App() {
           <Tabs<TabId>
             idBase="details"
             label={UI.TABS_LABEL}
-            value={tab}
+            value={shownTab}
             onChange={setTab}
             tabs={[
               {
@@ -514,6 +540,28 @@ export default function App() {
                   />
                 ),
               },
+              ...(analyticsAvailable(area.entity_type)
+                ? [
+                    {
+                      id: 'analytics' as const,
+                      label: UI.TAB_LABELS_UI.analytics,
+                      panel:
+                        selection.month === null || area.entity_type === 'CUSTOM' ? (
+                          <EmptyState message={UI.SUMMARY_NO_MONTH} />
+                        ) : (
+                          <Suspense fallback={<LoadingState what="the analytics" />}>
+                            <AnalyticsPanel
+                              area={{ entityType: area.entity_type, entityId: area.entity_id, name: area.entity_name }}
+                              year={selection.month.year}
+                              month={selection.month.month}
+                              cells={layer === 'verdict' && cellList !== null ? cellList : undefined}
+                              meta={meta.data}
+                            />
+                          </Suspense>
+                        ),
+                    },
+                  ]
+                : []),
             ]}
           />
         </Card>

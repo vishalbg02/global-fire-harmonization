@@ -13,6 +13,7 @@ import { pinnedReducer } from '../../state/pinnedCell.ts'
 import { tooltipCellId } from './mapPlacement.ts'
 import { openRing } from '../../state/polygon.ts'
 import type { Ring } from '../../state/polygon.ts'
+import { WORLD_BBOX } from '../../state/selection.ts'
 import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
@@ -150,8 +151,12 @@ export function MapView({
     const map = new maplibregl.Map({
       container: container.current,
       style: STYLE,
-      center: [10, 20],
-      zoom: INITIAL_ZOOM,
+      // Start on the same world view the World button gives: about 60S to 80N.
+      bounds: [
+        [WORLD_BBOX[0], WORLD_BBOX[1]],
+        [WORLD_BBOX[2], WORLD_BBOX[3]],
+      ],
+      fitBoundsOptions: { padding: 30 },
       renderWorldCopies: false,
       attributionControl: false,
       // The page scrolls over the map; zoom needs Ctrl or Cmd + scroll (or the buttons or keys).
@@ -173,6 +178,7 @@ export function MapView({
     map.addControl(overlay)
     mapRef.current = map
     overlayRef.current = overlay
+    setZoom(map.getZoom())
     map.on('zoomend', () => setZoom(map.getZoom()))
 
     // The same file the map layer reads (cached by the browser): the shapes for the hover outline.
