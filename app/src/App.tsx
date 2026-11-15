@@ -16,6 +16,7 @@ import { Dock } from './components/dock/Dock.tsx'
 import { HelpLayer } from './components/help/HelpLayer.tsx'
 import type { HelpActions, HelpMode } from './components/help/HelpLayer.tsx'
 import { StartHere } from './components/help/StartHere.tsx'
+import { StoryChips } from './components/layout/StoryChips.tsx'
 import { shiftMonth, shiftYear } from './components/map/monthPicker.ts'
 import { applyMapViewParams, mapViewFromSearch, mapViewReducer } from './state/mapView.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
@@ -465,6 +466,8 @@ export default function App() {
           </div>
           <aside className="answer" aria-label={UI.ANSWER_LABEL} data-tour="verdict">
             {started ? (
+              <>
+              <StoryChips areaId={area.entity_id} month={selection.month} onChoose={chooseStory} />
               <SummaryCard
                 area={area}
                 month={selection.month}
@@ -480,6 +483,7 @@ export default function App() {
                 onCompare={analyticsAvailable(area.entity_type) ? () => openDetails('analytics') : undefined}
                 onDetails={() => openDetails(shownTab)}
               />
+              </>
             ) : (
               <StartHere
                 onChooseStory={chooseStory}

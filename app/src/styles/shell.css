@@ -227,7 +227,55 @@
 
 /* ---- Start here (before anything is chosen) ---- */
 .start-here {
+  display: grid;
+  gap: var(--s-12);
   padding: var(--s-16) var(--s-24) var(--s-24);
+}
+
+.start-here h2 {
+  margin: 0;
+}
+
+.start-here ul {
+  display: grid;
+  gap: var(--s-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.start-here button {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  padding: var(--s-8) var(--s-12);
+  font: inherit;
+  line-height: 1.4;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.start-here ul button {
+  border-left: 3px solid var(--accent);
+}
+
+.start-here button:hover {
+  border-color: var(--ink);
+}
+
+/* Story chips stay one click away in the answer panel after a story or area is chosen. */
+.answer > .stories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+  align-items: center;
+  margin: 0;
+  padding: var(--s-12) var(--s-16) 0;
+  border: 0;
+  background: transparent;
 }
 
 /* ---- "?" explainers ---- */
@@ -277,5 +325,43 @@
 
   .app-map .top .subtitle {
     display: none;
+  }
+
+  /* The answer first on narrow screens: the verdict is on the first screen, the map follows. */
+  .answer {
+    order: -1;
+  }
+
+  .stage .map-credit {
+    max-width: calc(100% - 10rem);
+  }
+}
+
+/* Phone: a header that fits, and a credit line that does not cover the map. */
+@media (max-width: 600px) {
+  .app-map .top {
+    flex-wrap: wrap;
+    gap: var(--s-4) var(--s-12);
+    padding-block: var(--s-8);
+    min-height: 0;
+  }
+
+  .app-map .top h1 {
+    font-size: var(--t-16);
+    white-space: nowrap;
+  }
+
+  .top-nav {
+    display: flex;
+    gap: var(--s-12);
+  }
+
+  .stage .map-credit {
+    left: auto;
+    max-width: calc(100% - 9rem);
+  }
+
+  .stage .map-credit-line {
+    font-size: 11px;
   }
 }
