@@ -1,13 +1,14 @@
 import { useId } from 'react'
 import type { EntityMonth } from '../../api/contract.ts'
-import { SPARK_CAPTION, SPARK_NAME, SPARK_NO_DATA, SPARK_NO_RANGE, SPARK_TEXT, SPARK_UNIT } from '../../content/ui.ts'
+import { SPARK_CAPTION_SHORT } from '../../content/answer.ts'
+import { SPARK_NAME, SPARK_NO_DATA, SPARK_NO_RANGE, SPARK_TEXT, SPARK_UNIT } from '../../content/ui.ts'
 import { monthKey, monthLabel } from '../../state/months.ts'
 import { oneDecimal } from '../map/format.ts'
 import { buildSpark, countGaps, sparkWindow } from './sparkline.ts'
 import type { SparkPoint, YearMonth } from './sparkline.ts'
 
 const W = 320
-const H = 76
+const H = 60
 
 interface Props {
   records: readonly EntityMonth[]
@@ -67,9 +68,9 @@ export function Sparkline({ records, selected, first, latest, areaName }: Props)
         ))}
         {geo.marker !== null && <circle cx={geo.marker.x} cy={geo.marker.y} r={4.5} className="spark-marker" />}
       </svg>
+      {/* The unit is written once, under the interval bar above; the hidden table below repeats it. */}
       <figcaption>
-        <span className="spark-unit">{`Unit: ${SPARK_UNIT}`}</span>
-        <span className="spark-note">{SPARK_CAPTION(firstLabel, lastLabel, monthLabel(selected))}</span>
+        <span className="spark-note">{SPARK_CAPTION_SHORT(firstLabel, lastLabel, monthLabel(selected))}</span>
       </figcaption>
       <table className="visually-hidden">
         <caption>{`${SPARK_NAME(areaName)} (${SPARK_UNIT})`}</caption>
