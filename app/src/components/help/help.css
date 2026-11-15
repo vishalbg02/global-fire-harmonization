@@ -1,0 +1,589 @@
+/* Help (T-093): "Start here", the guided tour, the Help and shortcuts dialogs, the "?" explainers and the globe hint.
+   The instrument look of the rest of the app: flat panels, 1 px rules, radius at most 4 px, the one elevation for what
+   floats over the map, the accent only for the highlight ring. No motion under prefers-reduced-motion. */
+
+/* ---- Start here (the answer panel before anything is chosen) ---- */
+.start-here {
+  padding: var(--s-16) var(--s-24) var(--s-24);
+}
+
+.start-here-title {
+  margin: 0 0 var(--s-4);
+  font-size: var(--t-20);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.start-here-lede {
+  margin: 0;
+  max-width: 34em;
+  color: var(--muted);
+  font-size: var(--t-14);
+  line-height: 1.5;
+}
+
+.start-here-label {
+  margin: var(--s-24) 0 var(--s-4);
+  color: var(--muted);
+  font-size: var(--t-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.start-here-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--rule);
+}
+
+.start-here-list > li {
+  border-bottom: var(--rule);
+}
+
+.start-here-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-12);
+  box-sizing: border-box;
+  width: calc(100% + 2 * var(--s-8));
+  min-height: 44px;
+  margin: 0 calc(-1 * var(--s-8));
+  padding: var(--s-8);
+  font: inherit;
+  font-size: var(--t-14);
+  line-height: 1.45;
+  text-align: left;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.start-here-row:hover {
+  background: var(--page);
+}
+
+.start-here-row:hover .start-here-q {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.start-here-row:focus-visible {
+  outline-offset: -2px;
+}
+
+/* A thin chevron, drawn: the row leads somewhere. */
+.start-here-go {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--s-4);
+  border-top: 1.5px solid var(--muted);
+  border-right: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+}
+
+.start-here-row:hover .start-here-go {
+  border-color: var(--ink);
+}
+
+/* ---- Keys ---- */
+.start-here-kbd,
+.help-keys kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  box-sizing: border-box;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink);
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: var(--radius);
+}
+
+.start-here-kbd {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+/* ---- The highlight ring of a tour step: an outline only, the page around it is not dimmed ---- */
+.help-ring {
+  position: fixed;
+  z-index: 1000;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  /* A white hairline keeps the ring visible on the dark stage and on the light panels. */
+  box-shadow: 0 0 0 1px #ffffff, inset 0 0 0 1px #ffffff;
+  pointer-events: none;
+}
+
+/* ---- Coach mark (tour) and popover ("?"): one floating panel with an arrow ---- */
+.help-coach,
+.help-pop {
+  position: fixed;
+  z-index: 1001;
+  box-sizing: border-box;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--elev);
+  font-size: var(--t-14);
+  line-height: 1.5;
+}
+
+.help-coach {
+  width: min(320px, calc(100vw - 2 * var(--s-8)));
+  padding: var(--s-12) var(--s-16) var(--s-12);
+}
+
+.help-coach:focus {
+  outline: none;
+}
+
+.help-coach:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.help-coach-count {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+}
+
+.help-coach-title {
+  margin: var(--s-4) 0 var(--s-4);
+  font-size: var(--t-16);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.help-coach-text {
+  margin: 0;
+}
+
+.help-coach-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-8);
+  margin-top: var(--s-12);
+  padding-top: var(--s-12);
+  border-top: var(--rule);
+}
+
+.help-coach-nav {
+  display: inline-flex;
+  gap: var(--s-8);
+}
+
+.help-coach .btn {
+  min-height: 32px;
+}
+
+.help-primary {
+  min-width: 72px;
+}
+
+/* A quiet text button or link (Skip tour, More help, Keyboard shortcuts). */
+.help-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-14);
+  color: var(--ink);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.help-link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* The arrow: a small square turned 45 degrees, on the edge that faces the element. */
+.help-arrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--surface);
+  border: 0 solid var(--border);
+  transform: rotate(45deg);
+}
+
+[data-side='right'] > .help-arrow {
+  left: -6px;
+  top: calc(var(--arrow) - 5px);
+  border-left-width: 1px;
+  border-bottom-width: 1px;
+}
+
+[data-side='left'] > .help-arrow {
+  right: -6px;
+  top: calc(var(--arrow) - 5px);
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+[data-side='bottom'] > .help-arrow {
+  top: -6px;
+  left: calc(var(--arrow) - 5px);
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+[data-side='top'] > .help-arrow {
+  bottom: -6px;
+  left: calc(var(--arrow) - 5px);
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+
+/* ---- "?" explainers ---- */
+.help-tip {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px 0 -4px 2px;
+  padding: 0;
+  vertical-align: middle;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.help-tip-glyph {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 15px;
+  height: 15px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.help-tip:hover,
+.help-tip[aria-expanded='true'] {
+  color: var(--ink);
+}
+
+.help-tip[aria-expanded='true'] .help-tip-glyph {
+  color: var(--surface);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.help-pop {
+  width: min(288px, calc(100vw - 2 * var(--s-8)));
+  padding: var(--s-12);
+}
+
+.help-pop:focus {
+  outline: none;
+}
+
+.help-pop:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.help-pop p {
+  margin: 0;
+}
+
+.help-pop-term {
+  margin-bottom: var(--s-4);
+}
+
+.help-pop-more {
+  display: inline-block;
+  margin-top: var(--s-8);
+  color: var(--ink);
+  text-underline-offset: 3px;
+}
+
+/* ---- The Help sheet and the shortcuts dialog ---- */
+.help-dialog {
+  position: fixed;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: var(--t-14);
+  line-height: 1.5;
+}
+
+.help-dialog:focus {
+  outline: none;
+}
+
+.help-dialog-sheet {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100vw);
+  border-left: var(--rule);
+  box-shadow: var(--elev);
+}
+
+.help-dialog-small {
+  top: 50%;
+  left: 50%;
+  width: min(440px, calc(100vw - 2 * var(--s-16)));
+  max-height: calc(100dvh - 2 * var(--s-16));
+  transform: translate(-50%, -50%);
+  border: var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--elev);
+}
+
+.help-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-12);
+  padding: var(--s-12) var(--s-16) var(--s-12) var(--s-24);
+  border-bottom: var(--rule);
+}
+
+.help-dialog-head h2 {
+  margin: 0;
+  font-size: var(--t-16);
+  font-weight: 600;
+}
+
+.help-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-16) var(--s-24) var(--s-24);
+}
+
+.help-tour-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-8) var(--s-12);
+  padding-bottom: var(--s-16);
+  border-bottom: var(--rule);
+}
+
+.help-quiet {
+  color: var(--muted);
+  font-size: var(--t-14);
+}
+
+.help-dialog-small .help-quiet {
+  margin: var(--s-16) 0 0;
+}
+
+/* "How to read this", word for word, in one column. */
+.help-howto {
+  padding: var(--s-16) 0;
+  border-bottom: var(--rule);
+}
+
+.help-howto .how-head {
+  margin-bottom: var(--s-8);
+}
+
+.help-howto h3 {
+  margin: 0;
+  font-size: var(--t-16);
+  font-weight: 600;
+}
+
+.help-howto ol,
+.help-howto ul {
+  margin: var(--s-8) 0;
+  padding-left: var(--s-24);
+}
+
+.help-howto li {
+  margin-bottom: var(--s-8);
+}
+
+.help-howto p {
+  margin: var(--s-12) 0 0;
+}
+
+.help-howto details {
+  margin-top: var(--s-12);
+}
+
+.help-howto summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.help-howto .glossary div {
+  margin-top: var(--s-8);
+}
+
+.help-howto .glossary dd {
+  margin: 0;
+}
+
+.help-links {
+  display: grid;
+  gap: var(--s-4);
+  margin: var(--s-12) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-keys {
+  display: grid;
+  margin: 0;
+}
+
+.help-keys-row {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: var(--s-12);
+  align-items: baseline;
+  padding: var(--s-8) 0;
+  border-bottom: var(--rule);
+}
+
+.help-keys-row:first-child {
+  padding-top: 0;
+}
+
+.help-keys dt {
+  white-space: nowrap;
+}
+
+.help-keys dd {
+  margin: 0;
+}
+
+.help-keys-sep {
+  color: var(--muted);
+}
+
+/* ---- The one-line hint on the map ---- */
+.help-hint {
+  position: absolute;
+  z-index: 6;
+  top: var(--s-12);
+  left: 50%;
+  max-width: calc(100% - 2 * var(--s-16));
+  margin: 0;
+  padding: var(--s-4) var(--s-12);
+  color: var(--stage-ink);
+  background: rgba(7, 11, 20, 0.8);
+  border: 1px solid rgba(232, 237, 245, 0.24);
+  border-radius: var(--radius);
+  font-size: var(--t-14);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.help-hint[data-shown='false'] {
+  opacity: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* ---- Motion: short, purposeful, and none under reduced motion ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .help-coach-body,
+  .help-ring {
+    animation: help-in 180ms ease-out;
+  }
+
+  .help-pop {
+    animation: help-in 150ms ease-out;
+  }
+
+  .help-dialog-sheet {
+    animation: help-slide 200ms ease-out;
+  }
+
+  .help-hint[data-shown='true'] {
+    animation: help-hint 5s ease-out forwards;
+  }
+}
+
+@keyframes help-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes help-slide {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+}
+
+@keyframes help-hint {
+  0% {
+    opacity: 0;
+  }
+  4%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- Phone ---- */
+@media (max-width: 640px) {
+  /* The touch-target rule of the app makes the "?" 44 px high there; it keeps the line height of its text. */
+  .help-tip {
+    margin-block: -14px;
+  }
+
+  .start-here {
+    padding: var(--s-16);
+  }
+
+  .help-dialog-head {
+    padding-left: var(--s-16);
+  }
+
+  .help-dialog-body {
+    padding: var(--s-16);
+  }
+
+  .help-keys-row {
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+  }
+
+  .help-hint {
+    white-space: normal;
+    text-align: center;
+  }
+}

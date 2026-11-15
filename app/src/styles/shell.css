@@ -226,46 +226,7 @@
   scroll-margin-top: var(--s-8);
 }
 
-/* ---- Start here (before anything is chosen) ---- */
-.start-here {
-  display: grid;
-  gap: var(--s-12);
-  padding: var(--s-16) var(--s-24) var(--s-24);
-}
-
-.start-here h2 {
-  margin: 0;
-}
-
-.start-here ul {
-  display: grid;
-  gap: var(--s-8);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.start-here button {
-  width: 100%;
-  text-align: left;
-  justify-content: flex-start;
-  padding: var(--s-8) var(--s-12);
-  font: inherit;
-  line-height: 1.4;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.start-here ul button {
-  border-left: 3px solid var(--accent);
-}
-
-.start-here button:hover {
-  border-color: var(--ink);
-}
+/* "Start here", the tour, the Help sheet and the "?" explainers: components/help/help.css (T-093). */
 
 /* Story chips stay one click away in the answer panel after a story or area is chosen. */
 .answer > .stories {
@@ -277,32 +238,6 @@
   padding: var(--s-12) var(--s-16) 0;
   border: 0;
   background: transparent;
-}
-
-/* ---- "?" explainers ---- */
-.help-tip {
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  margin-left: var(--s-4);
-  padding: 0;
-  font: inherit;
-  font-size: var(--t-12);
-  font-weight: 600;
-  line-height: 1;
-  color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  cursor: help;
-  vertical-align: middle;
-}
-
-.help-tip:hover,
-.help-tip[aria-expanded='true'] {
-  color: var(--ink);
-  border-color: var(--ink);
 }
 
 /* ---- Tablet and phone, until the bottom sheet: the zones stack ---- */
