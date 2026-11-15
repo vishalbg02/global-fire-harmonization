@@ -37,6 +37,8 @@ Responses are bare payloads (no envelope). Errors use FastAPI's default body, `{
 | `GET /api/meta` | `metadata.json` | 503 |
 | `GET /api/entities?type=COUNTRY\|CONTINENT` | `[{entity_type, entity_id, entity_name, bbox: [W,S,E,N]}]` | 400, 503 |
 | `GET /api/map?year=&month=&layer=verdict\|raw\|harmonized` | One record per analysis cell: bounds plus the cell's `cell_month_harmonized` fields | 400, 503 |
+| `GET /api/map/cells` | The ids and bounds of every analysis cell, once, in columns (see "Columnar map" below) | 503 |
+| `GET /api/map/columns?year=&month=&layer=verdict\|raw\|harmonized` | The same month as `GET /api/map`, in columns, with only the fields the app reads (see below); the values are the stored values | 400, 503 |
 | `GET /api/series?entity_type=COUNTRY\|CONTINENT\|GLOBAL&entity_id=` | `entity_month` records ordered by year, month | 400, 404, 503 |
 | `POST /api/series/custom` with `{"bbox": [W,S,E,N]}` or `{"polygon": [[lon,lat], ...]}` (exactly one) | `entity_month`-shaped records from `harmonize_area()` | 422, 503 |
 | `POST /api/export.csv` with the same body | The monthly series of a custom rectangle or polygon as a CSV download (same file layout as the `GET`; the `#` header names the area `CUSTOM polygon (N points)` or `CUSTOM bbox W,S,E,N`; the file name is safe and prefixed `SYNTHETIC_` while the data are) | 422, 503 |
@@ -63,6 +65,26 @@ Notes on the choices the contract leaves open (all confirmed by the Lead on PR #
 - Map cache (T-073): the serialized, gzip level 9 answer of `GET /api/map` is kept in memory per month (16 months, about 3 MB each; the three layers share one entry because they return the same bytes), keyed by the products directory, the month and the modified time and size of `cell_month_harmonized.parquet` and `cells.parquet`, so touching either file rebuilds it. The payload is byte for byte the previous one. Headers: `ETag` (weak, no data read to compute it), `If-None-Match` gives `304`, `Cache-Control: public, max-age=300`, `Vary: Accept-Encoding`. Real products, month 2023-07: first request 1.06 s (0.8 s before: level 9 costs 0.15 s once), repeat 0.002 s, `304` 0.001 s, 2.95 MB gzipped (3.07 MB before). Only successful builds are cached.
 - `null` is returned as `null` and a real zero as `0`. A stored value that violates the contract (for example an unknown verdict) is reported as `503`, never coerced.
 - There is no CORS configuration. In development, the web app proxies `/api` to this server (Vite dev proxy).
+
+## Columnar map (T-073)
+
+`GET /api/map/cells` and `GET /api/map/columns` are additive: `GET /api/map` is unchanged (same fields, same bytes, same errors) and stays for every other client. The Lead approved the columnar layout and the lean field set (decision on PR #81); rounding was rejected, so **every value is the stored value** (no rounding; floats are printed in the shortest form that reads back as the same number, as `GET /api/map` does; `null` stays `null`; lists stay lists). Tests compare every decoded field with `GET /api/map` for the same month, digit for digit (`tests/test_map_columns.py`, also on the real products when present).
+
+- `GET /api/map/cells`: `{"n": N, "columns": {cell_id, lat_min, lat_max, lon_min, lon_max}}`, every cell of `cells.parquet` once, ordered by `cell_id` (the order of a map month). Fetched once per session.
+- `GET /api/map/columns`: `{"n": n, "columns": {...}, "cell_index": [...]}`. Each field is one column: `{"const": v}` when every cell has the same value (`year`, `month`, usually `method_version`), `{"dict": [...], "idx": [...]}` when few distinct values repeat (`verdict`, `data_level`, `reason_codes`, `witnesses_used`), else `{"values": [...]}`. `cell_index` gives the position of each of the month's cells in the cell list, in `cell_id` order; it is left out when the month has exactly the first `n` cells. The decoder is the same one the offline copy uses (`fire_api/columnar.py`, `app/src/api/mapColumns.ts`).
+- Same validation as `GET /api/map` (the records are validated against the contract before they are encoded; `400` for a bad `year`, `month` or `layer`, `503` for a missing product or a value outside the contract). A month with no cells is `{"n": 0, "columns": {}}`.
+- Fields sent (every layer, because the colour, the tooltip, the cell card and the evidence panel of a selected cell read the same set on every layer, so `layer` is validated but does not change the answer): `year`, `month` (constant), `estimate`, `ci90_low`, `ci90_high`, `raw_combined_cell_days`, `witnesses_used`, `disagreement_scale`, `pct_of_normal`, `p_above`, `p_below`, `p_within`, `verdict`, `reason_codes`, `data_level`, `method_version`, plus the cell fields from `/api/map/cells`. Not sent, because the map never reads them: `sd`, `n_witnesses`, `baseline_median`, `baseline_p25`, `baseline_p75`. By use: the verdict colour reads `verdict`; the raw and harmonized colours read `raw_combined_cell_days` and `estimate` (the shared scale takes the larger of the two over every cell); the tooltip and card read `verdict`, `p_*`, `pct_of_normal`, `estimate` with `ci90_*`, `raw_combined_cell_days`, `reason_codes`, `data_level`; the evidence panel adds `witnesses_used`, `disagreement_scale`, `method_version`.
+- Cache and headers: the same serialized, gzip level 9 cache as the map month (`map_cache.py`, up to 64 columnar answers, keyed by directory, month and the modified time and size of the files read; the cell list depends on `cells.parquet` only), `ETag` (prefix `columns-` and `cells-`), `If-None-Match` gives `304`, `Cache-Control: public, max-age=300`, `Vary: Accept-Encoding`, identity for clients that do not accept gzip. Only successful builds are cached.
+- Sizes and times on the real products (this machine, 56,238 cells; first request builds, repeat is served from memory; `GET /api/map` for comparison; the app uses `layer=verdict` for all layers, and the answer is identical for the others):
+
+| month | `/api/map` gzip | `/api/map` raw | columns gzip | columns raw | gzip ratio |
+|---|---|---|---|---|---|
+| 2015-09 | 3.08 MB | 32.5 MB | 1.27 MB | 4.43 MB | 2.4x |
+| 2020-01 | 2.48 MB | 32.7 MB | 1.00 MB | 3.90 MB | 2.5x |
+| 2023-07 | 2.95 MB | 32.4 MB | 1.20 MB | 4.19 MB | 2.5x |
+| 2026-11 (raw-only) | 0.59 MB | 28.7 MB | 0.02 MB | 0.23 MB | 27x |
+
+  The cell list is 0.17 MB gzipped (2.28 MB raw), fetched once. A repeat request takes about 0.002 s; the first request of a month builds the answer (about 1.5 to 2.5 s on a busy machine, against 1 to 1.5 s for `/api/map`). Most of the remaining bytes are the stored floating-point fields, which are not rounded.
 
 ## Static export (offline copy, T-043)
 
@@ -107,6 +129,9 @@ api/
 │   ├── main.py       FastAPI app, routes and error handlers
 │   ├── models.py     Pydantic models mirroring the contract
 │   ├── products.py   DuckDB and JSON readers (no science)
+│   ├── map_cache.py  cached, pre-compressed map answers (ETag, 304)
+│   ├── map_columns.py  GET /api/map/cells and /api/map/columns
+│   ├── columnar.py   the columnar layout (also used by the offline export)
 │   └── custom.py     imports Member 2's harmonize_area() and binds it to PRODUCTS_DIR
 ├── tests/            pytest tests (SYNTHETIC data)
 ├── pyproject.toml    direct dependencies, pytest and ruff settings
