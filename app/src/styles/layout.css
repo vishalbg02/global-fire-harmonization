@@ -883,6 +883,11 @@ aside .legend {
   cursor: pointer;
 }
 
+/* The tab bar scrolls sideways, which clips an outside ring: draw it inside the tab (T-074). */
+.tabbar [role='tab']:focus-visible {
+  outline-offset: -3px;
+}
+
 .tabbar [role='tab'][aria-selected='true'] {
   color: var(--ink);
   font-weight: 600;
@@ -984,7 +989,8 @@ aside .legend {
     order: 1;
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: var(--s-8) var(--s-16) 0;
+    /* A little room below, so the scrolling row does not clip the focus ring of a chip (T-074). */
+    padding: var(--s-8) var(--s-16) var(--s-4);
   }
 
   .stories-label {
