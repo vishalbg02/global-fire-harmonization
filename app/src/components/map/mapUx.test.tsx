@@ -1,11 +1,11 @@
 import { renderToString } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parseMapCell } from '../../api/contract.ts'
 import type { MapCell } from '../../api/contract.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { Legend } from './Legend.tsx'
-import { LOADING_TEXT, MapLegend, MapLoading, PINNED_CLOSE, PinnedCellCard, SCROLL_HINT, ScrollHint } from './mapOverlays.tsx'
+import { LOADING_TEXT, MapLegend, MapLoading, PINNED_CLOSE, PinnedCellCard, SCROLL_HINT, SCROLL_HINT_MAC, ScrollHint, TOUCH_HINT } from './mapOverlays.tsx'
 import { CELL_STROKE_ALPHA, OUTLINE_MIN_ZOOM, cellStrokeWidth } from './scale.ts'
 
 // SYNTHETIC test data. Not NASA observations.
@@ -99,8 +99,33 @@ describe('loading indicator and hint', () => {
     expect(html).toContain(LOADING_TEXT)
   })
 
-  it('the scroll hint is on the map', () => {
-    expect(renderToString(<ScrollHint />)).toMatch(new RegExp(`${SCROLL_HINT}|⌘ \\+ scroll`))
+  // T-091: the old test built a regular expression from SCROLL_HINT, where "+" is an operator (it needed two spaces), so it failed
+  // wherever navigator.platform is not a Mac. Plain string checks, on every platform.
+  describe.each([
+    ['Win32', SCROLL_HINT],
+    ['Linux x86_64', SCROLL_HINT],
+    ['MacIntel', SCROLL_HINT_MAC],
+  ])('the scroll hint on %s', (platform, expected) => {
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('is on the map, with the touch hint', () => {
+      vi.stubGlobal('navigator', { platform })
+      const html = renderToString(<ScrollHint />)
+      expect(html).toContain(expected)
+      expect(html).toContain(expected === SCROLL_HINT ? 'Ctrl' : '⌘')
+      expect(html).toContain(TOUCH_HINT)
+    })
+  })
+
+  it('the old pattern fails on a non-Mac platform (why the test was rewritten)', () => {
+    vi.stubGlobal('navigator', { platform: 'Win32' })
+    try {
+      expect(renderToString(<ScrollHint />)).not.toMatch(new RegExp(`${SCROLL_HINT}|⌘ \+ scroll`))
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 
