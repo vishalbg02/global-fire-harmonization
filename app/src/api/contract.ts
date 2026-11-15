@@ -66,8 +66,19 @@ export interface HarmonizedFields {
   method_version: string
 }
 
+/**
+ * The cell_month_harmonized fields the map never reads. GET /api/map/columns does not send them
+ * (T-073), so on a map cell they may be absent; they are never filled in with a made-up value.
+ */
+export type MapCellUnread =
+  | 'sd'
+  | 'n_witnesses'
+  | 'baseline_median'
+  | 'baseline_p25'
+  | 'baseline_p75'
+
 /** One analysis cell for one month: cell bounds plus cell_month_harmonized fields. */
-export interface MapCell extends HarmonizedFields {
+export interface MapCell extends Omit<HarmonizedFields, MapCellUnread>, Partial<Pick<HarmonizedFields, MapCellUnread>> {
   cell_id: string
   lat_min: number
   lat_max: number
@@ -244,6 +255,39 @@ export function parseMapCell(raw: unknown): MapCell {
     year: num(o, 'year', what),
     month: num(o, 'month', what),
     ...parseHarmonizedFields(o, what),
+  }
+}
+
+/**
+ * A map cell as GET /api/map/columns sends it: the fields the map reads (api/README.md), checked
+ * the same way as in `parseMapCell`. The fields the map never reads (`MapCellUnread`) are not
+ * expected and not set.
+ */
+export function parseMapCellColumns(raw: unknown): MapCell {
+  const what = 'map cell'
+  const o = asRecord(raw, what)
+  return {
+    cell_id: str(o, 'cell_id', what),
+    lat_min: num(o, 'lat_min', what),
+    lat_max: num(o, 'lat_max', what),
+    lon_min: num(o, 'lon_min', what),
+    lon_max: num(o, 'lon_max', what),
+    year: num(o, 'year', what),
+    month: num(o, 'month', what),
+    estimate: numOrNull(o, 'estimate', what),
+    ci90_low: numOrNull(o, 'ci90_low', what),
+    ci90_high: numOrNull(o, 'ci90_high', what),
+    raw_combined_cell_days: num(o, 'raw_combined_cell_days', what),
+    witnesses_used: enumList(o, 'witnesses_used', WITNESSES, what),
+    disagreement_scale: numOrNull(o, 'disagreement_scale', what),
+    pct_of_normal: numOrNull(o, 'pct_of_normal', what),
+    p_above: numOrNull(o, 'p_above', what),
+    p_below: numOrNull(o, 'p_below', what),
+    p_within: numOrNull(o, 'p_within', what),
+    verdict: oneOf(field(o, 'verdict', what), VERDICTS, 'verdict', what),
+    reason_codes: enumList(o, 'reason_codes', REASON_CODES, what),
+    data_level: oneOf(field(o, 'data_level', what), DATA_LEVELS, 'data_level', what),
+    method_version: str(o, 'method_version', what),
   }
 }
 

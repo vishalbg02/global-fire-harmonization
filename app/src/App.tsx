@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ApiError, fetchAnomalies, fetchEntities, fetchEvidence, fetchMapCells, fetchMeta } from './api/client.ts'
+import { ApiError, fetchAnomalies, fetchEntities, fetchEvidence, fetchMeta } from './api/client.ts'
 import type { Anomaly, Bbox, EntityItem, MapCell } from './api/contract.ts'
 import { AnomalyPanel } from './components/anomalies/AnomalyPanel.tsx'
 import { EXPANDED_SIZE, PAGE_SIZE, outlinedCountries, rankAnomalies, topN } from './components/anomalies/rankings.ts'
@@ -45,6 +45,7 @@ import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
 import { MonthSelector } from './components/map/MonthSelector.tsx'
+import { useMapCells } from './state/useMapCells.ts'
 import { hasOfflineMap, monthKey, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
 import { useStartMonth } from './state/initialMonth.ts'
@@ -202,12 +203,7 @@ export default function App() {
   const noteShown =
     rawOnly && (area.entity_type === 'CUSTOM' ? false : isRawOnlySeries(areaSeries.data, rawOnly))
   const layer = effectiveLayer(rawOnly ? { ...selection, source: 'raw', mapMode: 'activity' } : selection)
-  const cells = useQuery({
-    queryKey: ['map', selection.month?.year, selection.month?.month, layer],
-    queryFn: () => fetchMapCells(selection.month!.year, selection.month!.month, layer),
-    enabled: selection.month !== null && page === 'map' && mapAvailable,
-    retry: false,
-  })
+  const cells = useMapCells({ month: selection.month, layer, enabled: page === 'map' && mapAvailable, months: mapMonths, prefetch: offline === null })
 
   // Clicking a calendar cell sets the month and moves focus to the evidence panel's heading.
   const evidenceHeading = useRef<HTMLHeadingElement>(null)
@@ -419,7 +415,7 @@ export default function App() {
               )}
             </div>
             <section aria-label="Data status" className="status">
-              {(meta.isPending || (cells.isPending && mapAvailable)) && selection.month !== null && (
+              {(meta.isPending || ((cells.isPending || cells.isPlaceholderData) && mapAvailable)) && selection.month !== null && (
                 <LoadingState what="map data" />
               )}
               {!mapAvailable && <EmptyState message={NO_OFFLINE_MAP} />}
