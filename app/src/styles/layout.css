@@ -1179,3 +1179,18 @@ label > input[type='radio']:not(.seg-option input) {
     align-items: center;
   }
 }
+
+/* A very narrow phone (320 px, or a 375 px page at 200 % text size): one column of controls, nothing wider than the page. */
+@media (max-width: 400px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seg-row {
+    max-width: 100%;
+  }
+
+  .seg-option span {
+    padding-inline: 8px;
+  }
+}
