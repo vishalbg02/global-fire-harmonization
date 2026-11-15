@@ -172,17 +172,20 @@ def evidence(entity_type: EntityType, entity_id: str, year: int, month: int) -> 
 def anomalies(year: int, month: int, limit: int) -> list[Anomaly]:
     """Entities with a confident verdict in a month, in the documented order.
 
-    Order (api/README.md): the larger of p_above and p_below, descending; then the distance from
-    normal, abs(ln(pct_of_normal / 100)), descending, with a missing or non-positive
-    pct_of_normal last; then entity_id ascending (entity_type last, only for determinism).
-    Selection and ordering only: the probabilities and verdicts are read as stored.
+    Order (api/README.md): the larger of p_above and p_below at the precision the app shows, which
+    is "more than 99%" (every value of 0.995 or more counts as equal) and otherwise the whole
+    percentage, descending; then the distance from normal, abs(ln(pct_of_normal / 100)),
+    descending, with a missing or non-positive pct_of_normal last; then entity_id ascending
+    (entity_type last, only for determinism). Selection and ordering only: the probabilities and
+    verdicts are read as stored.
     """
     rows = _query(
         """
         SELECT entity_type, entity_id, entity_name, verdict, p_above, p_below, pct_of_normal
         FROM read_parquet(?)
         WHERE year = ? AND month = ? AND verdict IN ('ABOVE_NORMAL', 'BELOW_NORMAL')
-        ORDER BY greatest(p_above, p_below) DESC NULLS LAST,
+        ORDER BY CASE WHEN greatest(p_above, p_below) >= 0.995 THEN 1000.0
+                      ELSE round(greatest(p_above, p_below) * 100.0) END DESC NULLS LAST,
                  CASE WHEN pct_of_normal > 0
                       THEN abs(ln(pct_of_normal / 100.0)) END DESC NULLS LAST,
                  entity_id, entity_type
