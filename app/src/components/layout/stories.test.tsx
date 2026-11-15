@@ -94,6 +94,14 @@ describe('story caption', () => {
       expect(html).toContain(`href="${s.reportHref}"`)
     }
   })
+  it('has a Read more toggle (collapsed by default, used on a phone) that controls the body', () => {
+    const aus = FEATURED_STORIES.find((s) => s.entityId === 'AUS')!
+    const html = renderToString(<StoryCaption story={aus} />)
+    expect(html).toContain('Read more')
+    expect(html).toContain('aria-expanded="false"')
+    expect(html).toContain('aria-controls="story-caption-body"')
+    expect(html).toContain('id="story-caption-body"')
+  })
   it('the Australia story carries the cannot-determine explanation', () => {
     const aus = FEATURED_STORIES.find((s) => s.entityId === 'AUS')!
     const html = renderToString(<StoryCaption story={aus} />)

@@ -43,6 +43,8 @@ export const STORY_CAPTION_LABEL = 'About the selected story'
 export const STORY_EYEBROW = 'Featured story'
 export const STORY_CONTEXT_PREFIX = 'Context (outside knowledge, not from the products):'
 export const STORY_QUERY_PREFIX = 'Query:'
+export const STORY_READ_MORE = 'Read more'
+export const STORY_READ_LESS = 'Show less'
 export const STORY_REPORT_LINK = 'Read the report with every query and number'
 
 export const MAP_MODE_LABEL = 'Selection mode'

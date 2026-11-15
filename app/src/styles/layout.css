@@ -133,6 +133,28 @@ header.top + .how-to-read {
   margin: 0 0 var(--s-8);
 }
 
+.story-more {
+  display: none;
+  margin: 0;
+  padding: var(--s-4) 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .story-more {
+    display: inline-block;
+  }
+
+  .story-body-collapsed {
+    display: none;
+  }
+}
+
 .story-label {
   font-weight: 700;
 }
