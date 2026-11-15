@@ -99,3 +99,6 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-062 | Space Apps project page with references | M1 | P0 | — | — (outside the repo) | — | TODO | — | All sources cited |
 | T-063 | Submit by H34 | M1 | P0 | T-061, T-062 | — | — | TODO | — | Confirmed on the site |
 | T-064 | Decide repo visibility for judges (D-014) | M1 | P0 | — | — | — | TODO | — | Logged |
+| T-080 | Approve the UI design direction (the mock in the T-070 PR) | M1 | P0 | T-070 | — | — | TODO | — | Decision posted on the T-070 PR |
+| T-081 | Final browser acceptance test: Chrome, Safari, Firefox; 1440x900, 1280x720 (projector), 375 phone; every featured story; the offline copy | M1 | P0 | T-074, T-078 | — | — | TODO | — | Matrix with results recorded in the repo |
+| T-082 | Update `docs/HANDOFF.md` and `docs/PROGRESS_LOG.md` to the current state | M1 | P1 | — | `docs/T-082-handoff` | — | TODO | — | Both files describe the state after T-081 |
