@@ -12,9 +12,9 @@ Labels: **[VERIFIED]** a stored value or a count by the query below; **[CONTEXT,
 | Australia December 2019 [VERIFIED] | ABOVE_NORMAL | 328% | 11,762 (10,175 to 13,349) | 2,508 to 6,031 (3,583) | more than 99% / less than 1% / less than 1% | 4 of 16 (above) | none |
 | Canada August 2023 [VERIFIED] | ABOVE_NORMAL | 1024% | 13,661 (12,291 to 15,030) | 520 to 3,582 (1,333) | more than 99% / less than 1% / less than 1% | 1 of 22 (above) | none |
 | Brazil August 2019 [VERIFIED] | WITHIN_NORMAL | 114% | 29,763 (27,391 to 32,135) | 23,432 to 35,165 (26,021) | less than 1% / more than 99% / less than 1% | none | none |
-| Global October 2026 [VERIFIED] | CANNOT_DETERMINE | 91% | 122,019 (112,067 to 131,971) | 125,281 to 150,606 (133,447) | less than 1% / 29% / 71% | none | AQUA_DRIFT_ERA, PROVISIONAL_NRT, WIDE_INTERVAL |
+| World October 2026 [VERIFIED] | CANNOT_DETERMINE | 91% | 122,019 (112,067 to 131,971) | 125,281 to 150,606 (133,447) | less than 1% / 29% / 71% | none | AQUA_DRIFT_ERA, PROVISIONAL_NRT, WIDE_INTERVAL |
 
-Context labels [CONTEXT, not from the products]: Indonesia September 2015: the 2015 Indonesian fire season; Australia December 2019: the 2019-20 Australian fires (Black Summer); Canada August 2023: the 2023 Canadian fire season; Brazil August 2019: the August 2019 Amazon fire news; Global October 2026: the latest month of the record.
+Context labels [CONTEXT, not from the products]: Indonesia September 2015: the 2015 Indonesian fire season; Australia December 2019: the 2019-20 Australian fires (Black Summer); Canada August 2023: the 2023 Canadian fire season; Brazil August 2019: the August 2019 Amazon fire news; World October 2026: the latest month of the record.
 
 Query of each case (DuckDB on `data/products/entity_month.parquet`; the rank also uses the other rows of the same type and month, section 4):
 
@@ -22,7 +22,7 @@ Query of each case (DuckDB on `data/products/entity_month.parquet`; the rank als
 - [VERIFIED] Australia December 2019: `entity_month where entity_type = 'COUNTRY' and entity_id = 'AUS' and year = 2019 and month = 12`
 - [VERIFIED] Canada August 2023: `entity_month where entity_type = 'COUNTRY' and entity_id = 'CAN' and year = 2023 and month = 8`
 - [VERIFIED] Brazil August 2019: `entity_month where entity_type = 'COUNTRY' and entity_id = 'BRA' and year = 2019 and month = 8`
-- [VERIFIED] Global October 2026: `entity_month where entity_type = 'GLOBAL' and entity_id = 'GLOBAL' and year = 2026 and month = 10`
+- [VERIFIED] World October 2026: `entity_month where entity_type = 'GLOBAL' and entity_id = 'GLOBAL' and year = 2026 and month = 10`
 
 Source line shown with every story: Source: NASA FIRMS, harmonized by this project, method 0.1.0; values as stored in the products.
 
@@ -52,7 +52,7 @@ Source line shown with every story: Source: NASA FIRMS, harmonized by this proje
 
 - This is the data's verdict for this month, not a judgement of the news coverage of that period.
 
-### Global, October 2026: cannot determine
+### World, October 2026: cannot determine
 
 91% of the normal median, but the verdict is cannot determine: the interval is too wide to say above, below or within normal (probabilities: below 71%, within 29%, above less than 1%). The harmonized estimate is 122,019 Aqua-equivalent cell-days (90% interval 112,067 to 131,971); the normal range for the month is 125,281 to 150,606 (median 133,447). Cannot determine is a result, not an error.
 

@@ -55,12 +55,12 @@ const text = (html: string) => html.replaceAll('<!-- -->', '')
 
 describe('AnalyticsPanel', () => {
   it('renders its five sections as a self-contained component, loading its own data', () => {
-    const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} compareArea={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'Global' }} year={2015} month={9} />))
+    const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} compareArea={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'World' }} year={2015} month={9} />))
     expect(html).toContain('Raw against harmonized, by year')
     expect(html).toContain('Season profile, 2015')
     expect(html).toContain('Rank in the record')
     expect(html).toContain('Coverage, September 2015')
-    expect(html).toContain('Indonesia compared with Global')
+    expect(html).toContain('Indonesia compared with World')
     expect(html).toContain('Loading the series')
   })
   it('shows the Compare with search in every state, with the compared area in the heading when there is one', () => {
@@ -71,16 +71,16 @@ describe('AnalyticsPanel', () => {
     expect(withOther).toContain('Indonesia compared with Asia')
     expect(withOther).toContain('Remove the comparison')
   })
-  it('names the world "Global" when the link carries only its id', () => {
+  it('names the world "World" when the link carries only its id', () => {
     const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'CONTINENT', entityId: 'AS', name: 'Asia' }} compareArea={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'GLOBAL' }} year={2019} month={12} />))
-    expect(html).toContain('Asia compared with Global')
+    expect(html).toContain('Asia compared with World')
   })
   it('ignores a comparison with the area itself', () => {
     const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} compareArea={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} year={2015} month={9} />))
     expect(html).not.toContain('compared with')
   })
   it('has no compare section without a second area', () => {
-    const html = renderToString(<AnalyticsPanel area={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'Global' }} year={2020} month={1} />)
+    const html = renderToString(<AnalyticsPanel area={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'World' }} year={2020} month={1} />)
     expect(html).not.toContain('compared with')
   })
 })

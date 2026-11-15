@@ -191,10 +191,10 @@ export const FEATURED_STORIES: readonly FeaturedStory[] = [
     "id": "world-2026-10",
     "entityType": "GLOBAL",
     "entityId": "GLOBAL",
-    "entityName": "Global",
+    "entityName": "World",
     "year": 2026,
     "month": 10,
-    "headline": "Global, October 2026: cannot determine",
+    "headline": "World, October 2026: cannot determine",
     "caption": "91% of the normal median, but the verdict is cannot determine: the interval is too wide to say above, below or within normal (probabilities: below 71%, within 29%, above less than 1%). The harmonized estimate is 122,019 Aqua-equivalent cell-days (90% interval 112,067 to 131,971); the normal range for the month is 125,281 to 150,606 (median 133,447). Cannot determine is a result, not an error.",
     "notes": [
       "The verdict rule needs a probability of at least 80% for above, below or within normal; here the highest is 71%. The month is also provisional (near-real-time data) and in the period where Aqua night data are excluded; both are stored caveats of this month.",

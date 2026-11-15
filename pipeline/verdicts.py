@@ -391,7 +391,7 @@ def entity_month(con, paths: Paths, years, months, writer_path: Path) -> dict:
         SELECT 'COUNTRY' AS entity_type, c.country_iso3 AS entity_id, any_value(n.firms_name) AS entity_name, c.cell_id
           FROM {cells} c JOIN {names} n ON n.iso3 = c.country_iso3 WHERE c.country_iso3 IS NOT NULL GROUP BY c.country_iso3, c.cell_id
         UNION ALL SELECT 'CONTINENT', c.continent, k.name, c.cell_id FROM {cells} c JOIN continents k ON k.code = c.continent
-        UNION ALL SELECT 'GLOBAL', 'GLOBAL', 'Global', c.cell_id FROM {cells} c""")
+        UNION ALL SELECT 'GLOBAL', 'GLOBAL', 'World', c.cell_id FROM {cells} c""")
     ents = con.execute("""SELECT entity_type, entity_id, any_value(entity_name), count(*) FROM members GROUP BY 1, 2
                           ORDER BY CASE entity_type WHEN 'COUNTRY' THEN 0 WHEN 'CONTINENT' THEN 1 ELSE 2 END, 2""").fetchall()
     key_of = {(t, i): k for k, (t, i, _, _) in enumerate(ents)}
