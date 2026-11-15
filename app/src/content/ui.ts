@@ -73,7 +73,6 @@ export const SUMMARY_SATELLITES = 'Satellites used'
 export const SUMMARY_NO_SATELLITES = 'none contributed usable data'
 export const SUMMARY_ESTIMATE = 'Estimate'
 export const SUMMARY_INTERVAL = '90% interval'
-export const SUMMARY_NO_CAVEATS = 'No caveats are recorded for this month.'
 export const SUMMARY_LEARN_MORE = 'Learn more'
 export const DATA_LEVEL_TEXT: Record<string, string> = {
   SP: 'standard (SP)',

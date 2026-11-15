@@ -8,6 +8,7 @@ import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { WITNESS_NAMES } from '../../content/witnesses.ts'
 import { monthLabel } from '../../state/months.ts'
 import type { Area } from '../../state/selection.ts'
+import { NO_CAVEATS_TEXT } from '../../content/evidenceText.ts'
 import { PROVISIONAL_NOTICE } from '../evidence/EvidenceBody.tsx'
 import { NO_DATA, oneDecimal, verdictProbability } from '../map/format.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
@@ -128,7 +129,7 @@ export function SummaryCard({ area, month, status, errorMessage, onRetry, record
           {!rawOnly && (
             <div className="reason">
               {record.reason_codes.length === 0 ? (
-                <p>{UI.SUMMARY_NO_CAVEATS}</p>
+                <p>{NO_CAVEATS_TEXT}</p>
               ) : (
                 <ul>
                   {record.reason_codes.map((code) => (
