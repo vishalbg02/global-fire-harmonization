@@ -9,7 +9,10 @@ import { Button } from '../ui/Button.tsx'
 export function HowToRead({ onClose }: { onClose: () => void }) {
   return (
     <section id="how-to-read" className="how-to-read" aria-label={HOW_TO_READ_TITLE}>
-      <h2>{HOW_TO_READ_TITLE}</h2>
+      <div className="how-head">
+        <h2>{HOW_TO_READ_TITLE}</h2>
+        <Button onClick={onClose}>{UI.HOW_TO_READ_CLOSE}</Button>
+      </div>
       <ol className="how-steps">
         {HOW_TO_READ.map((s) => (
           <li key={s.id}>
@@ -39,7 +42,6 @@ export function HowToRead({ onClose }: { onClose: () => void }) {
       <p>
         <a href={methodsHref('baseline-verdicts')}>{UI.HOW_TO_READ_MORE}</a>
       </p>
-      <Button onClick={onClose}>{UI.HOW_TO_READ_CLOSE}</Button>
     </section>
   )
 }

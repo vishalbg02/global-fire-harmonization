@@ -79,17 +79,41 @@
 /* Under the header as its own panel (T-072), not inside the dark bar. */
 header.top + .how-to-read {
   margin: var(--s-12) var(--s-24) 0;
-  max-height: 60vh;
-  overflow-y: auto;
+}
+
+.how-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-12);
+  margin-bottom: var(--s-8);
 }
 
 .how-to-read h2 {
-  margin: 0 0 var(--s-8);
+  margin: 0;
   font-size: var(--t-16);
 }
 
 .how-to-read li {
   margin-bottom: var(--s-4);
+}
+
+/* On a wide screen the steps and the verdicts run in columns, so the panel stays short and the summary stays near the fold. */
+@media (min-width: 1000px) {
+  .how-to-read .how-steps {
+    columns: 3;
+    column-gap: var(--s-24);
+    padding-left: var(--s-16);
+  }
+
+  .how-to-read li {
+    break-inside: avoid;
+  }
+
+  .how-to-read ul {
+    columns: 2;
+    column-gap: var(--s-24);
+  }
 }
 
 .glossary dt {
