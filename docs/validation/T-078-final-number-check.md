@@ -1,6 +1,46 @@
 # T-078: final number check on the finished UI, browser pass
 
-> Member 2 · 2026-11-15 · `main` @ 701c3a7 (T-070 to T-074, T-083 to T-085, T-087 to T-089 merged), products T-014 plus T-086 (`cells.parquet` SHA-256 `decd81e6...`, `entity_month.parquet` `1d8bf0bf...`), method 0.1.0. Real API on the real products, real app (Vite dev server of this branch), built-in browser (Chromium engine) at 1440x900. **This is the browser pass and the inventory update; the function and API checker (`python pipeline/number_check.py`) is run and reported separately by the owner of T-078.** Nothing in the app, the products or the checker was changed.
+> Member 2 · 2026-11-15 · `main` @ 701c3a7 (T-070 to T-074, T-083 to T-085, T-087 to T-089 merged), products T-014 plus T-086 (`cells.parquet` SHA-256 `decd81e6...`, `entity_month.parquet` `1d8bf0bf...`), method 0.1.0. Real API on the real products, real app (Vite dev server of this branch), built-in browser (Chromium engine) at 1440x900. **This report holds the function and API checker (next section) and the browser pass and inventory update.** Nothing in the app, the products or the checker was changed.
+
+## Function and API checker (`python pipeline/number_check.py`, no flags)
+
+Run by the owner of T-078 on `main` @ 701c3a7 (after #89) with the real products: **6,492,028 values checked, 0 mismatches, 1 note** (the hand-written methods text that the inventory does not name). Per check:
+
+| Check | Checked | Match | Mismatch |
+|---|---|---|---|
+| A anomaly order | 3 | 3 | 0 |
+| A anomaly set | 3 | 3 | 0 |
+| A anomaly values | 470 | 470 | 0 |
+| A evidence raw_by_witness | 5 | 5 | 0 |
+| A evidence record | 125 | 125 | 0 |
+| A map cell bounds | 449,904 | 449,904 | 0 |
+| A map cell count | 6 | 6 | 0 |
+| A map cell present | 112,476 | 112,476 | 0 |
+| A map cell values | 2,137,044 | 2,137,044 | 0 |
+| A metadata | 1 | 1 | 0 |
+| A series length | 5 | 5 | 0 |
+| A series order | 5 | 5 | 0 |
+| A series records | 38,090 | 38,090 | 0 |
+| A validation file | 1 | 1 | 0 |
+| B % of normal text | 650,918 | 650,918 | 0 |
+| B anomaly row text | 23,409 | 23,409 | 0 |
+| B estimate and interval text | 650,918 | 650,918 | 0 |
+| B probability wording | 1,768,875 | 1,768,875 | 0 |
+| B verdict probability text | 650,918 | 650,918 | 0 |
+| C custom-area label | 16 | 16 | 0 |
+| C legend maximum | 7 | 7 | 0 |
+| C not-ranked count | 6 | 6 | 0 |
+| C ranking split | 6 | 6 | 0 |
+| C test-status counts | 1 | 1 | 0 |
+| C validation file accepted by the API | 1 | 1 | 0 |
+| D csv columns | 1 | 1 | 0 |
+| D csv header lines | 6 | 6 | 0 |
+| D csv rows | 1 | 1 | 0 |
+| D csv values | 8,790 | 8,790 | 0 |
+| E methods text | 17 | 17 | 0 |
+| **Total** | **6,492,028** | **6,492,028** | **0** |
+
+It covers what a checker of functions and the API can reach: the API against the products, the app's own formatting helpers against the inventory rules, the numbers the app computes itself, the CSV and the hand-written methods figures. The browser pass below covers the new displays of the finished UI.
 
 ## 1. Method
 
