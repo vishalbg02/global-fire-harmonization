@@ -39,7 +39,7 @@ Open the address Vite prints (use `localhost`). While `metadata.synthetic` is `t
 
 ## Links
 
-The address bar always holds the selection, so a link reproduces the view. Query parameters (all optional, defaults left out): `area` (`COUNTRY:IDN`, `CONTINENT:AS`, `GLOBAL`, or `CUSTOM:west,south,east,north`), `month` (`2015-09`), `source` (`raw` or `harmonized`), `map` (`verdict` or `activity`) and `value` (`pct` or `activity`). Unknown or malformed values are ignored. Raw with % of normal, or raw with the verdict map, cannot be selected together.
+The address bar always holds the selection, so a link reproduces the view. Query parameters (all optional, defaults left out): `area` (`COUNTRY:IDN`, `CONTINENT:AS`, `GLOBAL`, `CUSTOM:west,south,east,north`, or `POLY:lon,lat;lon,lat;...`), `month` (`2015-09`), `source` (`raw` or `harmonized`), `map` (`verdict` or `activity`) and `value` (`pct` or `activity`). Unknown or malformed values are ignored. Raw with % of normal, or raw with the verdict map, cannot be selected together.
 
 ## Methods and validation page (T-041)
 
@@ -71,6 +71,8 @@ When `metadata.method_version` ends in `-raw-only` (real raw counts, no harmoniz
 ## Custom areas
 
 A custom rectangle is sent to `POST /api/series/custom`; the API returns the series, and the calendar and evidence panel show it. The API computes it with Member 2's `harmonize_area()` (verdict and baseline fields are empty until T-014); a country-sized box takes about 3 s on a local machine, the whole world about 13 s. If the function or the products are unavailable, the API answers `503` and the app shows that message. Boxes must have west less than east (boxes that cross the antimeridian are not supported) and south less than north. A rectangle can also be drawn on the map with two clicks (terra-draw with `terra-draw-maplibre-gl-adapter`, D-024); drawing needs a pointer, so the typed fields are the keyboard route.
+
+**Free polygon (T-044).** Under the rectangle fields, "Custom polygon" offers two routes. *Typed (keyboard and screen reader):* a text box with one `longitude, latitude` per line (comma and/or spaces; blank lines ignored; rounded to 4 decimals) and "Show polygon". *Drawn:* "Draw a polygon on the map" (terra-draw `TerraDrawPolygonMode`): one click per corner, finish with a double-click or Enter, Escape drops the polygon in progress, the button again leaves drawing. A drawn polygon fills the text box. Both routes go through the same check as the API (3 to 100 different points, inside the world box, first point not repeated, non-zero area, no side spanning more than 180 degrees of longitude, no self-intersection) with the API's messages, and the server's own message is shown too. The polygon is outlined on the map and announced as "Custom polygon, N corner points, M grid cells" (`role="status"`; M is `n_cells` of its series). Next to the polygon the app states the rule: a grid cell belongs when its centre lies inside the polygon; a cell covered 60% whose centre is outside is left out; a tiny polygon may contain no cell centre ("No analysis cells have their centre inside this area."). The CSV button uses `POST /api/export.csv` for a polygon. In the offline copy the polygon controls and its CSV are disabled with the rectangle's message. Link format: `area=POLY:lon,lat;lon,lat;...` (4 decimals, first point not repeated); a malformed, over-limit or invalid polygon in a link is ignored and the world is shown.
 
 ## Configuration
 

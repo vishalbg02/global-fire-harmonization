@@ -9,12 +9,15 @@ export interface PresetArea {
   entity_name: string
 }
 
-/** A rectangle chosen by the user; its series comes from `POST /api/series/custom`. */
+/** A rectangle or polygon chosen by the user; its series comes from `POST /api/series/custom`. */
 export interface CustomArea {
   entity_type: 'CUSTOM'
   entity_id: string
   entity_name: string
+  /** The rectangle, or the bounding box of the polygon. */
   bbox: Bbox
+  /** Set for a free polygon: one outer ring of [longitude, latitude], the first point not repeated. */
+  polygon?: [number, number][]
 }
 
 /** An area the calendar and the evidence panel can show. */

@@ -2,16 +2,24 @@ import type { HarmonizedFields } from '../../api/contract.ts'
 
 export const NO_DATA = 'no data'
 
-/** Whole-number percentage of a 0-1 probability, or null. */
-export function wholePercent(p: number | null): number | null {
-  return p === null ? null : Math.round(p * 100)
+export const PROBABILITY_HIGH = 'more than 99%'
+export const PROBABILITY_LOW = 'less than 1%'
+
+/**
+ * A 0-1 probability as text, display only (the stored value is unchanged): a whole percentage,
+ * but never "100%" or "0%": 0.995 or more reads "more than 99%", 0.005 or less "less than 1%".
+ */
+export function formatProbability(p: number): string {
+  if (p >= 0.995) return PROBABILITY_HIGH
+  if (p <= 0.005) return PROBABILITY_LOW
+  return `${Math.round(p * 100)}%`
 }
 
 export function formatPctOfNormal(v: number | null): string {
   return v === null ? NO_DATA : `${Math.round(v)}% of normal`
 }
 
-function oneDecimal(v: number): string {
+export function oneDecimal(v: number): string {
   return v.toFixed(1)
 }
 
@@ -37,6 +45,5 @@ export function verdictProbability(
   }
   const entry = wording[cell.verdict]
   if (entry === undefined) return null
-  const pct = wholePercent(entry[0])
-  return pct === null ? null : `${pct}% likely ${entry[1]}`
+  return entry[0] === null ? null : `${formatProbability(entry[0])} likely ${entry[1]}`
 }
