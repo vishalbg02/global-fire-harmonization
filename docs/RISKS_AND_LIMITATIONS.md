@@ -72,6 +72,7 @@ Likelihood and impact: L (low) · M (medium) · H (high).
 - The country archives exclude detections outside country boundaries (open ocean, possibly some disputed areas).
 - No per-cell overpass or cloud counts in the MVP.
 - MODIS ends 2026–27; S-NPP ended 2026-11-02.
+- Map boundaries follow India's official line (Natural Earth India point of view, T-085). This is display only: other countries' outlines near disputed areas follow the same file, and the country a grid cell is attributed to is not changed by it (cell attribution is T-086).
 
 ## 5. Fallback summary
 

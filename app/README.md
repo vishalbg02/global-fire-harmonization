@@ -83,7 +83,7 @@ A custom rectangle is sent to `POST /api/series/custom`; the API returns the ser
 
 ## Country boundaries
 
-`public/geo/ne_110m_admin_0_countries.geojson` is Natural Earth admin-0 countries at 1:110m (public domain), file `geojson/ne_110m_admin_0_countries.geojson` from the `nvkelso/natural-earth-vector` repository at tag `v5.1.2`, 838,726 bytes, 177 features, unmodified. The app takes each country's ISO 3166-1 alpha-3 code from `ISO_A3_EH`, because `ISO_A3` is `-99` for Norway and France. Three features (Northern Cyprus, Somaliland, Kosovo) have no ISO code in this file; they are drawn but cannot be selected, and no code is invented for them.
+`public/geo/ne_admin_0_countries_india_pov.geojson` is Natural Earth admin-0 countries, India point of view (1:10m source `ne_10m_admin_0_countries_ind.geojson`, public domain), simplified to 837,805 bytes and 243 features so India's official boundary (Jammu and Kashmir, Ladakh, Aksai Chin) is drawn inside India (T-085). Source, SHA-256 and processing are in `docs/DATA_SOURCES.md`. The app takes each country's ISO 3166-1 alpha-3 code from `ISO_A3_EH`, because `ISO_A3` is `-99` for Norway and France. Six polygons (Dhekelia, Akrotiri, Guantanamo Bay, Bir Tawil, Spratly Islands, Scarborough Reef) have no ISO code; they are drawn but cannot be selected, and no code is invented for them. In this view Western Sahara, Kosovo, Northern Cyprus and Somaliland are part of Morocco, Serbia, Cyprus and Somalia.
 
 ## Stack (approved, D-008)
 
