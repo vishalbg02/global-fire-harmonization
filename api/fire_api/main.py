@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from starlette.middleware.gzip import GZipMiddleware
 
-from . import custom, export, polygon, products
+from . import custom, export, map_cache, polygon, products
 from .custom import HarmonizeUnavailable
 from .models import (
     Anomaly,
@@ -93,10 +93,37 @@ def get_entities(type: Annotated[Literal["COUNTRY", "CONTINENT"], Query()]) -> l
     return products.entities(EntityType(type))
 
 
+MAP_CACHE_CONTROL = "public, max-age=300"
+
+
+def _accepts_gzip(header: str) -> bool:
+    for part in header.split(","):
+        coding, _, params = part.partition(";")
+        if coding.strip().lower() in ("gzip", "x-gzip", "*"):
+            return params.replace(" ", "").lower() not in ("q=0", "q=0.0", "q=0.00", "q=0.000")
+    return False
+
+
 @app.get("/api/map", response_model=list[MapCell])
-def get_map(year: Year, month: MonthParam, layer: MapLayer) -> list[MapCell]:
-    # `layer` is validated, but every layer returns the same fields (the app colours them).
-    return products.map_cells(year, month)
+def get_map(request: Request, year: Year, month: MonthParam, layer: MapLayer) -> Response:
+    # `layer` is validated, but every layer returns the same fields (the app colours them), so
+    # all layers share one cached, pre-compressed answer per month (api/fire_api/map_cache.py).
+    etag = map_cache.validator(year, month)
+    headers = {"Cache-Control": MAP_CACHE_CONTROL, "Vary": "Accept-Encoding"}
+    if etag is not None:
+        headers["ETag"] = etag
+        tags = [t.strip() for t in request.headers.get("if-none-match", "").split(",")]
+        if etag in tags or "*" in tags:
+            return Response(status_code=304, headers=headers)
+    cached = map_cache.payload(year, month)
+    if cached.etag:
+        headers["ETag"] = cached.etag
+    if _accepts_gzip(request.headers.get("accept-encoding", "")):
+        headers["Content-Encoding"] = "gzip"
+        body = cached.gzipped
+    else:
+        body = cached.identity()
+    return Response(content=body, media_type="application/json", headers=headers)
 
 
 @app.get("/api/series", response_model=list[EntityMonth])
