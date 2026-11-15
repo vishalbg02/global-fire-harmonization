@@ -63,6 +63,7 @@
 | Check | Result |
 |---|---|
 | `contract_check` on `entity_month`, `cells`, `calibration` (`real=True`) | 0 errors |
+| Full `contract_check` of all tables | **Not completed: memory error** on this machine (the known limit of T-077; `cell_month_harmonized.parquet`, which this PR does not change, is the large table) |
 | `python pipeline/number_check.py` | 0 mismatches, 1 note (as before) |
 | `python pipeline/featured_stories.py --check` | up to date (the five featured cases are not among the changed entities) |
 | `python pipeline/analytics_check.py` | 0 mismatches |
