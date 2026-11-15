@@ -28,44 +28,50 @@ def export_dir(products_dir: Path, tmp_path: Path) -> Path:
 
 
 def test_every_file_is_the_apis_own_answer(client: TestClient, export_dir: Path) -> None:
-    manifest = json.loads((export_dir / "manifest.json").read_text())
+    manifest = json.loads((export_dir / "manifest.json").read_text("utf-8"))
     assert manifest["synthetic"] is True
-    assert json.loads((export_dir / "meta.json").read_text()) == client.get("/api/meta").json()
     assert (
-        json.loads((export_dir / "validation.json").read_text())
+        json.loads((export_dir / "meta.json").read_text("utf-8")) == client.get("/api/meta").json()
+    )
+    assert (
+        json.loads((export_dir / "validation.json").read_text("utf-8"))
         == client.get("/api/validation").json()
     )
     for kind in ("COUNTRY", "CONTINENT"):
         items = client.get(f"/api/entities?type={kind}").json()
-        assert json.loads((export_dir / f"entities-{kind}.json").read_text()) == items
+        assert json.loads((export_dir / f"entities-{kind}.json").read_text("utf-8")) == items
         for item in items:
             key = f"{kind}-{item['entity_id']}"
             expected = client.get(
                 f"/api/series?entity_type={kind}&entity_id={item['entity_id']}"
             ).json()
-            assert json.loads((export_dir / "series" / f"{key}.json").read_text()) == expected
+            assert (
+                json.loads((export_dir / "series" / f"{key}.json").read_text("utf-8")) == expected
+            )
             csv = client.get(f"/api/export.csv?entity_type={kind}&entity_id={item['entity_id']}")
             assert (export_dir / "export" / f"{key}.csv").read_bytes() == csv.content
     # Every month of the data has an anomaly list, also the months without a map (latest_months=3).
-    meta = json.loads((export_dir / "meta.json").read_text())
+    meta = json.loads((export_dir / "meta.json").read_text("utf-8"))
     labels = {meta["first_month"], meta["latest_month"], *manifest["months"]}
     assert len(manifest["months"]) == 3 and meta["first_month"] not in manifest["months"]
     for label in labels:
         year, month = label.split("-")
         expected = client.get(f"/api/anomalies?year={year}&month={month}&limit=500").json()
-        assert json.loads((export_dir / "anomalies" / f"{label}.json").read_text()) == expected
+        assert (
+            json.loads((export_dir / "anomalies" / f"{label}.json").read_text("utf-8")) == expected
+        )
 
 
 def test_the_compact_map_decodes_to_exactly_the_apis_response(
     client: TestClient, export_dir: Path
 ) -> None:
-    cells = json.loads((export_dir / "cells.json").read_text())
-    manifest = json.loads((export_dir / "manifest.json").read_text())
+    cells = json.loads((export_dir / "cells.json").read_text("utf-8"))
+    manifest = json.loads((export_dir / "manifest.json").read_text("utf-8"))
     assert manifest["months"]
     for label in manifest["months"]:
         year, month = label.split("-")
         api = client.get(f"/api/map?year={year}&month={month}&layer=raw").json()
-        encoded = json.loads((export_dir / "map" / f"{label}.json").read_text())
+        encoded = json.loads((export_dir / "map" / f"{label}.json").read_text("utf-8"))
         assert decode_columns(encoded, cells) == api
 
 
@@ -123,12 +129,12 @@ def test_a_non_empty_directory_is_refused_unless_overwrite_and_only_our_own(
         export_static(other, latest_months=1)
     with pytest.raises(ExportError, match="not an earlier export"):
         export_static(other, overwrite=True, latest_months=1)
-    assert (other / "mine.txt").read_text() == "keep"
+    assert (other / "mine.txt").read_text("utf-8") == "keep"
 
 
 def test_the_synthetic_flag_and_versions_are_passed_through(export_dir: Path) -> None:
-    meta = json.loads((export_dir / "meta.json").read_text())
-    manifest = json.loads((export_dir / "manifest.json").read_text())
+    meta = json.loads((export_dir / "meta.json").read_text("utf-8"))
+    manifest = json.loads((export_dir / "manifest.json").read_text("utf-8"))
     assert manifest["synthetic"] == meta["synthetic"]
     assert manifest["contract_version"] == meta["contract_version"]
     assert manifest["method_version"] == meta["method_version"]

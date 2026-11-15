@@ -53,13 +53,12 @@ git lfs install
 git lfs pull                                   # downloads data/products/*.parquet (about 600 MB)
 ```
 
-**1. The API** (reads `data/products/`):
+**1. The API** (reads `data/products/`; start it from the repository root, because the default products folder is relative to the folder you start from):
 
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r api/requirements.txt            # Windows PowerShell: .venv\Scripts\pip install -r api\requirements.txt
-cd api
-../.venv/bin/uvicorn fire_api.main:app --port 8000       # Windows: ..\.venv\Scripts\uvicorn fire_api.main:app --port 8000
+.venv/bin/uvicorn fire_api.main:app --app-dir api --port 8000      # Windows: .venv\Scripts\uvicorn fire_api.main:app --app-dir api --port 8000
 ```
 
 Check it: `http://127.0.0.1:8000/api/meta` (versions, latest month) and the interactive docs at `http://127.0.0.1:8000/docs`.
