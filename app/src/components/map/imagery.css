@@ -143,6 +143,16 @@
   vertical-align: baseline;
 }
 
+/* Narrow screens: keep the credit clear of the legend button (bottom left) and the touch hint. */
+@media (max-width: 700px) {
+  .map-credit {
+    left: 6.75rem;
+    bottom: 2.4rem;
+    max-width: none;
+    align-items: stretch;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .map-imagery *,
   .map-credit * {
