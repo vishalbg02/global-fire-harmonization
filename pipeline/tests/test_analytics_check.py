@@ -34,8 +34,12 @@ def test_nan_becomes_none():
 
 
 @needs_all
-def test_the_panels_functions_agree_with_the_products_for_two_areas():
+def test_the_panels_functions_agree_with_the_products_for_four_areas():
     report = ac.compare()
     assert report["mismatches"] == []
-    assert set(report["areas"]) == {"COUNTRY:IDN", "GLOBAL:GLOBAL"}
+    assert set(report["areas"]) == {"COUNTRY:IDN", "GLOBAL:GLOBAL", "COUNTRY:IND", "CONTINENT:AS"}
+    # exact coverage (T-090): a country is counted by its own cells, the world by all of them
+    cov = {k: v["coverage"]["cells"] for k, v in report["areas"].items()}
+    assert cov["COUNTRY:IDN"] < cov["CONTINENT:AS"] < cov["GLOBAL:GLOBAL"]
+    assert cov["COUNTRY:IND"] > 0
     assert report["areas"]["COUNTRY:IDN"]["rank"]["rank"] >= 1

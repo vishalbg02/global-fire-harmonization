@@ -12,7 +12,9 @@ for (const [key, rows] of Object.entries(input.series)) {
     annual: compute.annualSeries(rows),
     season: compute.seasonProfile(rows, input.year),
     rank: compute.rankInMonth(rows, input.year, input.month),
-    coverage: compute.coverage(input.cells, input.boxes[key]),
+    // The world counts every cell; a country or a continent counts the cells stored for it (the cell list's country and continent).
+    coverage: input.types[key][0] === 'GLOBAL' ? compute.coverage(input.cells.map((c) => ({ ...c, lat_min: 0, lat_max: 0, lon_min: 0, lon_max: 0 })), null)
+      : compute.coverageInArea(input.cells, input.areas, input.types[key][0], input.types[key][1]),
   }
 }
 const [a, b] = input.compare
