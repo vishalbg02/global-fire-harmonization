@@ -12,8 +12,8 @@ import {
   staticManifest,
 } from './staticData.ts'
 import type { EncodedMonth } from './staticData.ts'
-import { asCellColumns, asEncodedMonth, decodeMapCells } from './mapColumns.ts'
-import type { CellColumns } from './mapColumns.ts'
+import { asCellAreas, asCellColumns, asEncodedMonth, decodeMapCells } from './mapColumns.ts'
+import type { CellAreas, CellColumns } from './mapColumns.ts'
 import {
   decodeRawByWitness,
   parseAnomalies,
@@ -204,6 +204,25 @@ export async function fetchMapCells(
       ])
       return parseMapCells(decodeMonth(encoded as EncodedMonth, cells))
     },
+  )
+}
+
+/**
+ * The country and continent of every analysis cell (T-090), from the shared cell list that the map already fetches (one request per
+ * session). `null` when the API does not send them (an older API, a 404) and in the offline copy, which has no cell list with areas:
+ * the caller says so instead of guessing.
+ */
+export async function fetchCellAreas(base: string = apiBaseUrl()): Promise<CellAreas | null> {
+  return route(
+    async () => {
+      try {
+        return asCellAreas(await fetchCellList(base))
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null
+        throw error
+      }
+    },
+    async () => null,
   )
 }
 

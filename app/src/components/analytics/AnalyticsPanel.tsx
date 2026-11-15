@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchMapCells, fetchMeta, fetchSeries } from '../../api/client.ts'
+import { fetchCellAreas, fetchEntities, fetchMapCells, fetchMeta, fetchSeries } from '../../api/client.ts'
 import type { SeriesEntityType } from '../../api/client.ts'
-import type { EntityMonth, MapCell, Metadata } from '../../api/contract.ts'
+import type { EntityItem, EntityMonth, MapCell, Metadata } from '../../api/contract.ts'
+import type { CellAreas } from '../../api/mapColumns.ts'
 import type { SourceMetadata, TextSegment } from '../../content/sources.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import './analytics.css'
 import { AnalyticsChart } from './AnalyticsChart.tsx'
 import { annualOption, compareOption, seasonOption, wholeNumber } from './chartOptions.ts'
-import { MONTH_NAMES, annualSeries, compareSeries, coverage, rankInMonth, rankText, seasonProfile } from './compute.ts'
+import { MONTH_NAMES, annualSeries, compareSeries, coverage, coverageInArea, rankInMonth, rankText, seasonProfile } from './compute.ts'
 import type { Box } from './compute.ts'
-import { ANNUAL_NOTE, COMPARE_NOTE, COVERAGE_NOTE, COVERAGE_WORLD_ONLY, SEASON_NOTE, chartSourceSegments } from './text.ts'
+import { CompareSearch } from './CompareSearch.tsx'
+import type { CompareChoice } from './CompareSearch.tsx'
+import { ANNUAL_NOTE, COMPARE_CLEAR, COMPARE_NOTE, COVERAGE_AREAS_MISSING, COVERAGE_NOTE, COVERAGE_NO_CELLS, SEASON_NOTE, chartSourceSegments } from './text.ts'
 
-/** A preset area (the series endpoint serves countries, continents and the world). `bbox` is accepted for compatibility and is not used: coverage is shown for the world only (Lead's decision on PR #85). */
+/** A preset area (the series endpoint serves countries, continents and the world). `bbox` is accepted for compatibility and is not used: coverage counts the cells stored for the area (T-090). */
 export interface AnalyticsArea {
   entityType: SeriesEntityType
   entityId: string
@@ -26,6 +29,8 @@ export interface AnalyticsArea {
 export interface AnalyticsPanelProps {
   area: AnalyticsArea
   compareArea?: AnalyticsArea | null
+  /** Called when the user chooses or removes the comparison in the panel's own search (the app keeps it in the link as `compare=`). */
+  onCompareChange?: (area: AnalyticsArea | null) => void
   year: number
   month: number
   cells?: readonly MapCell[]
@@ -76,25 +81,53 @@ function Status({ state, what }: { state: Load<unknown>; what: string }) {
 }
 
 /** The analytics of one area and month: five views from the stored values (T-083). */
-export function AnalyticsPanel({ area, compareArea = null, year, month, cells, meta }: AnalyticsPanelProps) {
+export function AnalyticsPanel({ area, compareArea = null, onCompareChange, year, month, cells, meta }: AnalyticsPanelProps) {
+  // The comparison is the app's (the link) when it controls it, and the panel's own otherwise.
+  const [chosen, setChosen] = useState<AnalyticsArea | null>(compareArea)
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setChosen(compareArea), [compareArea?.entityType, compareArea?.entityId, compareArea?.name])
+  const lists = useLoad<{ countries: EntityItem[]; continents: EntityItem[] }>(
+    async () => ({ countries: await fetchEntities('COUNTRY'), continents: await fetchEntities('CONTINENT') }),
+    [],
+  )
+  const listed = lists.status === 'ready' ? lists.value : null
+  const nameOf = (a: AnalyticsArea): string => {
+    const list = a.entityType === 'COUNTRY' ? listed?.countries : a.entityType === 'CONTINENT' ? listed?.continents : undefined
+    return list?.find((e) => e.entity_id === a.entityId)?.entity_name ?? a.name
+  }
+  const same = chosen !== null && chosen.entityType === area.entityType && chosen.entityId === area.entityId
+  const shownCompare = chosen === null || same ? null : { ...chosen, name: nameOf(chosen) }
+  const choose = (next: CompareChoice | null) => {
+    const picked = next === null ? null : { entityType: next.entityType, entityId: next.entityId, name: next.name }
+    setChosen(picked)
+    onCompareChange?.(picked)
+  }
   const series = useLoad<EntityMonth[]>(() => fetchSeries(area.entityType, area.entityId), [area.entityType, area.entityId])
   const other = useLoad<EntityMonth[] | null>(
-    () => (compareArea === null ? Promise.resolve(null) : fetchSeries(compareArea.entityType, compareArea.entityId)),
-    [compareArea?.entityType, compareArea?.entityId],
+    () => (shownCompare === null ? Promise.resolve(null) : fetchSeries(shownCompare.entityType, shownCompare.entityId)),
+    [shownCompare?.entityType, shownCompare?.entityId],
   )
-  // Coverage is exact only for the world; for a country or a continent the panel says so (Lead's decision on PR #85).
-  const worldOnly = area.entityType === 'GLOBAL'
+  // Coverage: the world counts every cell; a country or a continent counts the cells stored for it (T-090), which needs the
+  // country and continent of each cell from the API. Without them the panel says so and shows no figure.
+  const isWorld = area.entityType === 'GLOBAL'
+  const areas = useLoad<CellAreas | null>(() => (isWorld ? Promise.resolve(null) : fetchCellAreas()), [isWorld])
   const metadata = useLoad<Metadata | SourceMetadata>(() => (meta === undefined ? fetchMeta() : Promise.resolve(meta)), [meta])
   const mapCells = useLoad<readonly MapCell[]>(
-    () => (!worldOnly ? Promise.resolve([]) : cells === undefined ? fetchMapCells(year, month, 'verdict') : Promise.resolve(cells)),
-    [cells, year, month, worldOnly],
+    () => (cells === undefined ? fetchMapCells(year, month, 'verdict') : Promise.resolve(cells)),
+    [cells, year, month],
   )
 
   const records = series.status === 'ready' ? series.value : null
   const annual = useMemo(() => (records === null ? null : annualSeries(records)), [records])
   const season = useMemo(() => (records === null ? null : seasonProfile(records, year)), [records, year])
   const rank = useMemo(() => (records === null ? null : rankInMonth(records, year, month)), [records, year, month])
-  const cover = useMemo(() => (worldOnly && mapCells.status === 'ready' ? coverage(mapCells.value, null) : null), [mapCells, worldOnly])
+  const cover = useMemo(() => {
+    if (mapCells.status !== 'ready') return null
+    if (isWorld) return coverage(mapCells.value, null)
+    if (areas.status !== 'ready' || areas.value === null || area.entityType === 'GLOBAL') return null
+    return coverageInArea(mapCells.value, areas.value, area.entityType, area.entityId)
+  }, [mapCells, areas, isWorld, area.entityType, area.entityId])
+  const areasMissing = !isWorld && areas.status === 'ready' && areas.value === null
   const compare = useMemo(
     () => (records !== null && other.status === 'ready' && other.value !== null ? compareSeries(records, other.value) : null),
     [records, other],
@@ -172,9 +205,12 @@ export function AnalyticsPanel({ area, compareArea = null, year, month, cells, m
 
       <section aria-labelledby="an-coverage">
         <h3 id="an-coverage">Coverage, {monthName} {year}</h3>
-        {!worldOnly && <p className="analytics-lede">{COVERAGE_WORLD_ONLY}</p>}
-        {worldOnly && <Status state={mapCells} what="the cells" />}
-        {worldOnly && mapCells.status === 'ready' && cover === null && <p className="analytics-lede">No analysis cell is available for this month.</p>}
+        <Status state={mapCells} what="the cells" />
+        {!isWorld && <Status state={areas} what="the cell areas" />}
+        {areasMissing && <p className="analytics-lede">{COVERAGE_AREAS_MISSING}</p>}
+        {!areasMissing && mapCells.status === 'ready' && (isWorld || areas.status === 'ready') && cover === null && (
+          <p className="analytics-lede">{COVERAGE_NO_CELLS}</p>
+        )}
         {cover !== null && (
           <>
             <p className="analytics-coverage">{Math.round(cover.share * 100)}% of {wholeNumber(cover.cells)} cells have a determinable verdict</p>
@@ -190,19 +226,36 @@ export function AnalyticsPanel({ area, compareArea = null, year, month, cells, m
         )}
       </section>
 
-      {compareArea !== null && (
-        <section aria-labelledby="an-compare">
-          <h3 id="an-compare">{area.name} compared with {compareArea.name}</h3>
-          <Status state={other} what="the second series" />
-          {compare !== null && (
-            <>
-              <AnalyticsChart option={compareOption(compare, area.name, compareArea.name)} label={`Monthly % of normal of ${area.name} and ${compareArea.name}.`} />
-              <p className="analytics-note">{COMPARE_NOTE}</p>
-              {source}
-            </>
-          )}
-        </section>
-      )}
+      <section aria-labelledby="an-compare">
+        <h3 id="an-compare">{shownCompare === null ? 'Compare with another area' : `${area.name} compared with ${shownCompare.name}`}</h3>
+        <CompareSearch
+          countries={listed?.countries}
+          continents={listed?.continents}
+          listsFailed={lists.status === 'error'}
+          value={shownCompare === null ? '' : shownCompare.name}
+          onChoose={choose}
+        />
+        {shownCompare !== null && (
+          <button type="button" className="btn analytics-compare-clear" onClick={() => choose(null)}>
+            {COMPARE_CLEAR}
+          </button>
+        )}
+        {shownCompare !== null && (
+          <>
+            <Status state={other} what="the second series" />
+            {compare !== null && (
+              <>
+                <AnalyticsChart
+                  option={compareOption(compare, area.name, shownCompare.name)}
+                  label={`Monthly % of normal of ${area.name} and ${shownCompare.name}.`}
+                />
+                <p className="analytics-note">{COMPARE_NOTE}</p>
+                {source}
+              </>
+            )}
+          </>
+        )}
+      </section>
     </div>
   )
 }

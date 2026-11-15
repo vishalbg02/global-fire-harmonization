@@ -2,7 +2,7 @@ import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { AnalyticsPanel } from './AnalyticsPanel.tsx'
 import { annualOption, compareOption, seasonOption } from './chartOptions.ts'
-import { chartSourceSegments, ANNUAL_NOTE, COVERAGE_NOTE, COVERAGE_WORLD_ONLY } from './text.ts'
+import { chartSourceSegments, ANNUAL_NOTE, COVERAGE_AREAS_MISSING, COVERAGE_NOTE, COMPARE_LABEL } from './text.ts'
 import { segmentsText } from '../../content/sources.ts'
 
 // SYNTHETIC values: they exercise the structure of the options, not results.
@@ -45,8 +45,8 @@ describe('analytics texts', () => {
   })
   it('states the limits the Lead asked for', () => {
     expect(ANNUAL_NOTE).toContain('Sum of monthly estimates; intervals not combined')
-    expect(COVERAGE_NOTE).toContain('All analysis cells of the world')
-    expect(COVERAGE_WORLD_ONLY).toBe('Coverage for this area needs the cell-to-country link; shown for the world only.')
+    expect(COVERAGE_NOTE).toContain('the world counts every cell')
+    expect(COVERAGE_AREAS_MISSING).toContain('country and continent of each cell')
     for (const t of [ANNUAL_NOTE, COVERAGE_NOTE]) expect(t).not.toContain('!')
   })
 })
@@ -63,15 +63,17 @@ describe('AnalyticsPanel', () => {
     expect(html).toContain('Indonesia compared with Global')
     expect(html).toContain('Loading the series')
   })
-  it('shows no coverage figure for a country or a continent, only the world-only message (Lead, PR #85)', () => {
-    for (const area of [{ entityType: 'COUNTRY' as const, entityId: 'IDN', name: 'Indonesia' }, { entityType: 'CONTINENT' as const, entityId: 'AS', name: 'Asia' }]) {
-      const html = text(renderToString(<AnalyticsPanel area={area} year={2015} month={9} />))
-      expect(html).toContain(COVERAGE_WORLD_ONLY)
-      expect(html).not.toContain('cells have a determinable verdict')
-      expect(html).not.toContain('Loading the cells')
-    }
-    const world = text(renderToString(<AnalyticsPanel area={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'Global' }} year={2015} month={9} />))
-    expect(world).not.toContain(COVERAGE_WORLD_ONLY)
+  it('shows the Compare with search in every state, with the compared area in the heading when there is one', () => {
+    const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} year={2015} month={9} />))
+    expect(html).toContain(COMPARE_LABEL)
+    expect(html).toContain('Compare with another area')
+    const withOther = text(renderToString(<AnalyticsPanel area={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} compareArea={{ entityType: 'CONTINENT', entityId: 'AS', name: 'Asia' }} year={2015} month={9} />))
+    expect(withOther).toContain('Indonesia compared with Asia')
+    expect(withOther).toContain('Remove the comparison')
+  })
+  it('ignores a comparison with the area itself', () => {
+    const html = text(renderToString(<AnalyticsPanel area={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} compareArea={{ entityType: 'COUNTRY', entityId: 'IDN', name: 'Indonesia' }} year={2015} month={9} />))
+    expect(html).not.toContain('compared with')
   })
   it('has no compare section without a second area', () => {
     const html = renderToString(<AnalyticsPanel area={{ entityType: 'GLOBAL', entityId: 'GLOBAL', name: 'Global' }} year={2020} month={1} />)

@@ -4,6 +4,7 @@
  * (pipeline/tests/test_analytics_check.py compares it with an independent recomputation from the products).
  */
 import type { EntityMonth, MapCell } from '../../api/contract.ts'
+import type { CellAreas } from '../../api/mapColumns.ts'
 
 export const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
@@ -175,4 +176,30 @@ const label = (r: Pick<EntityMonth, 'year' | 'month'>) => `${r.year}-${String(r.
 export function compareSeries(a: readonly EntityMonth[], b: readonly EntityMonth[]): ComparePoint[] {
   const bByLabel = new Map(b.map((r) => [label(r), r.pct_of_normal]))
   return a.map((r) => ({ label: label(r), a: r.pct_of_normal, b: bByLabel.get(label(r)) ?? null }))
+}
+
+// ------------------------------------------------------------------------------------------ 4b. exact coverage of a country or a continent
+/**
+ * The coverage of a country or a continent: the cells whose stored country (or continent) is the area, counted by verdict. The areas come
+ * from the cell list (cells.parquet), so a neighbour's cells are never counted. Null when the area has no cell in the month.
+ */
+export function coverageInArea(
+  cells: readonly Pick<MapCell, 'cell_id' | 'verdict'>[],
+  areas: CellAreas,
+  entityType: 'COUNTRY' | 'CONTINENT',
+  entityId: string,
+): Coverage | null {
+  const column = entityType === 'COUNTRY' ? areas.country_iso3 : areas.continent
+  const inArea = new Set<string>()
+  for (let i = 0; i < areas.cell_id.length; i++) if (column[i] === entityId) inArea.add(areas.cell_id[i] as string)
+  const byVerdict: Record<string, number> = {}
+  let total = 0
+  for (const c of cells) {
+    if (!inArea.has(c.cell_id)) continue
+    total += 1
+    byVerdict[c.verdict] = (byVerdict[c.verdict] ?? 0) + 1
+  }
+  if (total === 0) return null
+  const determinable = total - (byVerdict.CANNOT_DETERMINE ?? 0)
+  return { cells: total, determinable, share: determinable / total, byVerdict }
 }

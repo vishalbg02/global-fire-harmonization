@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MONTH_NAMES, annualSeries, compareSeries, coverage, ordinal, rankInMonth, rankText, seasonProfile } from './compute.ts'
+import { MONTH_NAMES, annualSeries, compareSeries, coverage, coverageInArea, ordinal, rankInMonth, rankText, seasonProfile } from './compute.ts'
 import type { EntityMonth } from '../../api/contract.ts'
 
 // SYNTHETIC test values: they only exercise the arithmetic and are not results.
@@ -64,6 +64,33 @@ describe('coverage (SYNTHETIC cells)', () => {
   it('uses the whole world without a box and returns null for an empty box', () => {
     expect(coverage(cells, null)).toMatchObject({ cells: 4, determinable: 3 })
     expect(coverage(cells, [50, 50, 60, 60])).toBeNull()
+  })
+})
+
+describe('coverageInArea (SYNTHETIC cells and areas, T-090)', () => {
+  const areas = {
+    cell_id: ['a', 'b', 'c', 'd', 'e', 'f'],
+    country_iso3: ['IDN', 'IDN', 'MYS', 'IND', null, 'IDN'],
+    continent: ['AS', 'AS', 'AS', 'AS', null, 'AS'],
+  }
+  const month = [
+    { cell_id: 'a', verdict: 'ABOVE_NORMAL' },
+    { cell_id: 'b', verdict: 'CANNOT_DETERMINE' },
+    { cell_id: 'c', verdict: 'WITHIN_NORMAL' },
+    { cell_id: 'd', verdict: 'CANNOT_DETERMINE' },
+    { cell_id: 'e', verdict: 'WITHIN_NORMAL' },
+    // cell f is not in this month: only the cells of the month are counted
+  ] as never[]
+  it('counts only the cells stored for the country, never a neighbour (the bounding-box figure counted them)', () => {
+    expect(coverageInArea(month, areas, 'COUNTRY', 'IDN')).toEqual({ cells: 2, determinable: 1, share: 0.5, byVerdict: { ABOVE_NORMAL: 1, CANNOT_DETERMINE: 1 } })
+    expect(coverageInArea(month, areas, 'COUNTRY', 'MYS')).toMatchObject({ cells: 1, determinable: 1, share: 1 })
+  })
+  it('counts a continent by the continent stored for each cell, and leaves out cells with none', () => {
+    expect(coverageInArea(month, areas, 'CONTINENT', 'AS')).toMatchObject({ cells: 4, determinable: 2 })
+  })
+  it('is null for an area with no cell in the month', () => {
+    expect(coverageInArea(month, areas, 'COUNTRY', 'BRA')).toBeNull()
+    expect(coverageInArea([], areas, 'COUNTRY', 'IDN')).toBeNull()
   })
 })
 

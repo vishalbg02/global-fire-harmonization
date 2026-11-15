@@ -108,3 +108,25 @@ export function decodeMapCells(encoded: EncodedMonth, cells: CellColumns): MapCe
   if (encoded.cell_index === undefined && encoded.n > size) throw new ContractError('map columns: more cells than the cell list')
   return records.map(parseMapCellColumns)
 }
+
+/**
+ * The country and the continent of every cell, as GET /api/map/cells sends them since T-090 (stored in cells.parquet; `null` for a cell
+ * with none). An API that does not send the two columns (an older one) gives `null` here, never an invented value.
+ */
+export interface CellAreas {
+  cell_id: readonly string[]
+  country_iso3: readonly (string | null)[]
+  continent: readonly (string | null)[]
+}
+
+export function asCellAreas(columns: CellColumns): CellAreas | null {
+  const ids = columns.cell_id
+  const country = columns.country_iso3
+  const continent = columns.continent
+  if (country === undefined || continent === undefined) return null
+  const text = (column: unknown[]) => column.every((v) => v === null || typeof v === 'string')
+  if (country.length !== ids.length || continent.length !== ids.length || !text(country) || !text(continent)) {
+    throw new ContractError('map cells: the country and continent columns are malformed')
+  }
+  return { cell_id: ids as string[], country_iso3: country as (string | null)[], continent: continent as (string | null)[] }
+}

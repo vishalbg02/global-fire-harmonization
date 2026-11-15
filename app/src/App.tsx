@@ -35,6 +35,8 @@ import { SummaryCard } from './components/summary/SummaryCard.tsx'
 import { Button } from './components/ui/Button.tsx'
 import { Card } from './components/ui/Card.tsx'
 import { Tabs } from './components/ui/Tabs.tsx'
+import { compareFromSearch, setCompareParam } from './state/compare.ts'
+import type { CompareRef } from './state/compare.ts'
 import { analyticsAvailable, effectiveTab, setTabParam, tabFromSearch } from './state/tabs.ts'
 import type { TabId } from './state/tabs.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
@@ -70,6 +72,8 @@ export default function App() {
   const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
   const [tab, setTab] = useState<TabId>(() => tabFromSearch(window.location.search))
+  // The area compared with in the Analytics tab, kept in the link as `compare=` (T-090).
+  const [compare, setCompare] = useState<CompareRef | null>(() => compareFromSearch(window.location.search))
   const [drawMenuOpen, setDrawMenuOpen] = useState(false)
   // "How to read this" opens once on a first visit without link parameters; the header link opens it again.
   const [howToOpen, setHowToOpen] = useState(() => howToOpenAtStart(window.location.search))
@@ -82,10 +86,11 @@ export default function App() {
     const params = new URLSearchParams(encodeSelection(selection))
     if (page === 'methods') params.set(PAGE_PARAM, METHODS_PAGE)
     setTabParam(params, shownTab)
+    setCompareParam(params, shownTab === 'analytics' ? compare : null)
     const query = params.toString()
     const url = `${window.location.pathname}${query === '' ? '' : `?${query}`}${window.location.hash}`
     window.history.replaceState(null, '', url)
-  }, [selection, page, shownTab])
+  }, [selection, page, shownTab, compare])
 
   const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
   const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
@@ -552,6 +557,8 @@ export default function App() {
                           <Suspense fallback={<LoadingState what="the analytics" />}>
                             <AnalyticsPanel
                               area={{ entityType: area.entity_type, entityId: area.entity_id, name: area.entity_name }}
+                              compareArea={compare === null ? null : { entityType: compare.entityType, entityId: compare.entityId, name: compare.entityId }}
+                              onCompareChange={(next) => setCompare(next === null ? null : { entityType: next.entityType, entityId: next.entityId })}
                               year={selection.month.year}
                               month={selection.month.month}
                               cells={layer === 'verdict' && cellList !== null ? cellList : undefined}
