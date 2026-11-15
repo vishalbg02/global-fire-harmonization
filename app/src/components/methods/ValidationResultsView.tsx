@@ -10,6 +10,7 @@ import {
   groupFamilies,
   measuredLabel,
   measuredText,
+  officialSummary,
   startsOpen,
   testAnchor,
 } from './validationModel.ts'
@@ -26,6 +27,13 @@ function StatusBadge({ status }: { status: TestStatus }) {
       {p.label}
     </span>
   )
+}
+
+function statusNote(family: Family): string {
+  const counts = entryCountsText(family)
+  if (family.statusFrom === 'entry') return `${counts}.`
+  if (family.statusFrom === 'official') return `${counts}. Status: the official entry ${family.official?.test_id ?? ''} (${family.officialInfo?.source ?? ''}).`
+  return `${counts}. Status: the worst of its entries (the file has no family-level entry).`
 }
 
 function entryCountsText(family: Family): string {
@@ -121,9 +129,33 @@ export function ValidationResultsView({ results }: { results: ValidationResults 
                 </a>
                 <StatusBadge status={f.status} />
                 <span className="family-meaning">{f.meaning}</span>
-                <span className="family-counts">
-                  {f.statusFrom === 'entry' ? `${entryCountsText(f)}.` : `${entryCountsText(f)}. Status: the worst of its entries (the file has no family-level entry).`}
-                </span>
+                {officialSummary(f) !== null && (
+                  <span className="family-official">{`${f.status} ${officialSummary(f)}`}</span>
+                )}
+                <span className="family-counts">{statusNote(f)}</span>
+                {f.official !== null && f.officialInfo !== null && (
+                  <span className="family-reading">
+                    {`${f.officialInfo.readingNote} Official entry ${f.official.test_id}: `}
+                    {f.officialInfo.measuredKeys
+                      .filter((k) => k in f.official!.measured)
+                      .map((k) => `${measuredLabel(k).toLowerCase()} ${measuredText(f.official!.measured[k]!, NOT_MEASURED)}`)
+                      .join('; ')}
+                    .
+                  </span>
+                )}
+                {f.separate.length > 0 && (
+                  <ul className="family-separate" aria-label={`${f.key}: entries reported separately`}>
+                    {f.separate.map((s) => (
+                      <li key={s.test_id} className={`separate-row status-${s.status.toLowerCase()}`}>
+                        <a className="family-key" href={`#${testAnchor(s.test_id)}`} onClick={() => reveal(s.test_id)}>
+                          {s.test_id}
+                        </a>
+                        <StatusBadge status={s.status} />
+                        <span className="family-meaning">{s.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ol>

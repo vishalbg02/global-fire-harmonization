@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parseValidationResults } from '../../api/contract.ts'
 import type { ValidationTest } from '../../api/contract.ts'
-import { countByStatus, familyKey, filterTests, groupFamilies, measuredLabel, measuredText, meaningOf, startsOpen, testAnchor } from './validationModel.ts'
+import { OFFICIAL_ENTRY_WITHOUT_FAMILY_ENTRY, countByStatus, familyKey, officialSummary, filterTests, groupFamilies, measuredLabel, measuredText, meaningOf, startsOpen, testAnchor } from './validationModel.ts'
 
 // SYNTHETIC entries (labelled): the rules of the model on small known cases.
 const entry = (test_id: string, status: ValidationTest['status'], title = `Title ${test_id}`): ValidationTest => ({
@@ -24,9 +24,23 @@ describe('family key and status rule', () => {
     expect(d).toMatchObject({ key: 'B1', status: 'FAIL', statusFrom: 'entry' })
   })
 
-  it('takes the worst status of the entries when there is no family-level entry', () => {
-    const [f] = groupFamilies([entry('D1-REGIONS', 'PASS', 'Pooled coverage'), entry('D1-NIGHT', 'FAIL'), entry('D1-COUNTRIES', 'PASS')])
-    expect(f).toMatchObject({ key: 'D1', status: 'FAIL', statusFrom: 'worst', headline: null, meaning: 'Pooled coverage', anchorTestId: 'D1-REGIONS' })
+  it('uses the official entry of the table (D1: the pooled share) when there is no family-level entry, and lists the other failures apart', () => {
+    const [f] = groupFamilies([entry('D1-REGIONS', 'PASS', 'Pooled coverage'), entry('D1-NIGHT', 'FAIL'), entry('D1-REGIONS-EACH', 'FAIL'), entry('D1-COUNTRIES', 'PASS')])
+    expect(f).toMatchObject({ key: 'D1', status: 'PASS', statusFrom: 'official', headline: null, meaning: 'Pooled coverage', anchorTestId: 'D1-REGIONS' })
+    expect(f?.official?.test_id).toBe('D1-REGIONS')
+    expect(f?.separate.map((s) => s.test_id)).toEqual(['D1-NIGHT', 'D1-REGIONS-EACH'])
+    expect(f?.counts).toEqual({ PASS: 2, FAIL: 2, INCONCLUSIVE: 0, NOT_RUN: 0 })
+    expect(Object.keys(OFFICIAL_ENTRY_WITHOUT_FAMILY_ENTRY)).toEqual(['D1'])
+    expect(OFFICIAL_ENTRY_WITHOUT_FAMILY_ENTRY.D1?.source).toContain('PR #56')
+  })
+
+  it('a family-level entry wins over the table, and a family in neither takes the worst status of its entries', () => {
+    expect(groupFamilies([entry('D1', 'FAIL'), entry('D1-REGIONS', 'PASS')])[0]).toMatchObject({ status: 'FAIL', statusFrom: 'entry', separate: [] })
+    const [f] = groupFamilies([entry('D1-NIGHT', 'FAIL'), entry('D1-COUNTRIES', 'PASS')])  // the official entry is missing from the file
+    expect(f).toMatchObject({ status: 'FAIL', statusFrom: 'worst', official: null })
+  })
+
+  it('takes the worst status of the entries when there is neither', () => {
     expect(groupFamilies([entry('X-1', 'PASS'), entry('X-2', 'INCONCLUSIVE')])[0]?.status).toBe('INCONCLUSIVE')
     expect(groupFamilies([entry('X-1', 'PASS'), entry('X-2', 'NOT_RUN')])[0]?.status).toBe('NOT_RUN')
     expect(groupFamilies([entry('X-1', 'PASS'), entry('X-2', 'PASS')])[0]?.status).toBe('PASS')
@@ -95,7 +109,72 @@ describe('the real validation_results.json', () => {
     expect(families.reduce((n, f) => n + f.tests.length, 0)).toBe(results.tests.length)
     expect(filterTests(results.tests, 'FAIL')).toHaveLength(counts.FAIL)
     // D1 has no family-level entry: its status is the worst of its entries and says so
-    expect(families.find((f) => f.key === 'D1')).toMatchObject({ statusFrom: 'worst', status: 'FAIL' })
+    // the only family without a family-level entry is D1, and the table names its official entry
+    expect(families.filter((f) => f.headline === null).map((f) => f.key)).toEqual(['D1'])
+    expect(families.filter((f) => f.statusFrom === 'entry')).toHaveLength(10)
+    const d1 = families.find((f) => f.key === 'D1')!
+    expect(d1).toMatchObject({ statusFrom: 'official', status: 'PASS' })
+    expect(d1.official?.test_id).toBe('D1-REGIONS')
+    expect(d1.official?.measured.units).toBe(1466)
+    expect(d1.separate.map((s) => [s.test_id, s.status])).toEqual([['D1-NIGHT', 'FAIL'], ['D1-REGIONS-EACH', 'FAIL']])
+    expect(d1.separate).toHaveLength(2)
     expect(families.find((f) => f.key === 'A1')).toMatchObject({ statusFrom: 'entry', status: 'FAIL' })
+    // the overall counts are those of the file, whatever the family statuses say
+    expect(counts).toMatchObject({ PASS: results.tests.filter((t) => t.status === 'PASS').length, FAIL: results.tests.filter((t) => t.status === 'FAIL').length })
+  })
+})
+
+// The family lines against docs/VALIDATION_PLAN.md section 4 (the Lead's reference, PR #93 review). If the stored file disagreed with
+// section 4 for a family, this test would fail and the disagreement would be reported, not papered over.
+describe('family lines equal VALIDATION_PLAN.md section 4', () => {
+  const LEAD_REFERENCE: Record<string, string> = {
+    A1: 'FAIL', A2: 'FAIL', B1: 'PASS', B2: 'FAIL', B3: 'PASS', C1: 'PASS', CTRL: 'FAIL', D1: 'PASS', D2: 'PASS', E1: 'PASS', S1: 'FAIL',
+  }
+  const read = (relative: string): string | null => {
+    try {
+      return readFileSync(new URL(relative, import.meta.url), 'utf8')
+    } catch {
+      return null
+    }
+  }
+  const raw = read('../../../../data/products/validation_results.json')
+  const plan = read('../../../../docs/VALIDATION_PLAN.md')
+
+  /** The Status column of the section 4 table: rows "| A1 | expected | actual | **FAIL** | date | notes |". */
+  function planStatuses(markdown: string): Record<string, string> {
+    const start = markdown.indexOf('## 4. Expected vs actual results')
+    const end = markdown.indexOf('\n## 5.', start)
+    const out: Record<string, string> = {}
+    for (const line of markdown.slice(start, end).split('\n')) {
+      const cells = line.split('|').map((c) => c.trim())
+      if (cells.length > 5 && /^[A-Z]+[0-9]?$/.test(cells[1] ?? '') && /^\**(PASS|FAIL|INCONCLUSIVE|NOT_RUN)\**$/.test(cells[4] ?? '')) {
+        out[cells[1]!] = cells[4]!.replaceAll('*', '')
+      }
+    }
+    return out
+  }
+
+  it.skipIf(raw === null)('every family status shown equals the Lead reference, from the stored family-level or official entry', () => {
+    const families = groupFamilies(parseValidationResults(JSON.parse(raw!)).tests)
+    expect(Object.fromEntries(families.map((f) => [f.key, f.status]))).toEqual(LEAD_REFERENCE)
+    for (const f of families) {
+      // the status comes from a stored entry (family-level or official), never from the worst-of rule, in this file
+      expect(f.statusFrom, f.key).not.toBe('worst')
+      expect(f.status, f.key).toBe((f.headline ?? f.official)!.status)
+    }
+  })
+
+  it.skipIf(raw === null || plan === null)('equals the status column of section 4 for each family', () => {
+    const fromPlan = planStatuses(plan!)
+    expect(Object.keys(fromPlan).sort()).toEqual(Object.keys(LEAD_REFERENCE).sort())
+    const families = groupFamilies(parseValidationResults(JSON.parse(raw!)).tests)
+    for (const f of families) expect(f.status, `${f.key} against section 4`).toBe(fromPlan[f.key])
+  })
+
+  it('shows D1 as "PASS (pooled); 2 sub-readings FAIL" and nothing for a family without an official entry', () => {
+    const [d1] = groupFamilies([entry('D1-REGIONS', 'PASS'), entry('D1-NIGHT', 'FAIL'), entry('D1-REGIONS-EACH', 'FAIL')])
+    expect(officialSummary(d1!)).toBe('(pooled); 2 sub-readings FAIL')
+    expect(officialSummary(groupFamilies([entry('D1-REGIONS', 'PASS')])[0]!)).toBe('(pooled)')
+    expect(officialSummary(groupFamilies([entry('B1', 'PASS')])[0]!)).toBeNull()
   })
 })

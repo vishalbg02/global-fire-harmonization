@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -139,6 +140,46 @@ describe('validation overview (T-089)', () => {
     const d1 = renderToString(<ValidationResultsView results={file([test('D1-A', 'PASS'), test('D1-B', 'FAIL')])} />)
     expect(d1).toContain('the file has no family-level entry')
     expect(d1).toContain('2 entries: 1 FAIL, 1 PASS')
+  })
+
+  it('shows D1 as its official pooled entry with the Lead reading, and the night and per-region entries as their own FAIL lines (PR #56)', () => {
+    const d1 = renderToString(
+      <ValidationResultsView
+        results={file([
+          test('D1-REGIONS', 'PASS', { measured: { units: 1466, coverage_90: 0.8178717598908595 } }),
+          test('D1-NIGHT', 'FAIL', { title: 'Coverage, night units alone' }),
+          test('D1-REGIONS-EACH', 'FAIL', { title: 'Coverage in each fire region' }),
+        ])}
+      />,
+    )
+    expect(d1).toContain('D1 read as the pooled share as defined; per-region and night shares reported separately (both below 80%).')
+    expect(d1).toContain('units 1466; coverage 90 0.8178717598908595')
+    expect(d1).toMatch(/family-row status-pass/)
+    expect(d1.match(/class="separate-row status-fail"/g)).toHaveLength(2)
+    expect(d1).toContain('href="#test-D1-NIGHT"')
+    expect(d1).toContain('href="#test-D1-REGIONS-EACH"')
+    expect(d1).not.toContain('the file has no family-level entry')
+    expect(d1).toContain('FAIL: 2')
+    expect(d1).toContain('PASS: 1')
+  })
+
+  it('on the real results file: D1 official PASS with exactly 2 FAIL lines under it, counts 18/18/2, and every FAIL entry reachable', () => {
+    let raw: unknown = null
+    try {
+      raw = JSON.parse(readFileSync(new URL('../../../../data/products/validation_results.json', import.meta.url), 'utf8'))
+    } catch {
+      return // the file is not available in this checkout
+    }
+    const results = parseValidationResults(raw)
+    const fails = results.tests.filter((t) => t.status === 'FAIL')
+    const out = renderToString(<ValidationResultsView results={results} />)
+    expect(out).toContain(`FAIL: ${fails.length}`)
+    for (const f of fails) expect(out).toContain(`id="test-${f.test_id}"`)  // every FAIL entry has its (open) detail
+    expect(out.match(/class="separate-row status-fail"/g)).toHaveLength(2)
+    const d1Row = out.slice(out.indexOf('href="#test-D1-REGIONS"'), out.indexOf('<li class="family-row', out.indexOf('href="#test-D1-REGIONS"') + 10))
+    expect(d1Row).toContain('PASS')
+    expect(d1Row).toContain('href="#test-D1-NIGHT"')
+    expect(d1Row).toContain('href="#test-D1-REGIONS-EACH"')
   })
 
   it('collapses a long measured list into its own detail', () => {

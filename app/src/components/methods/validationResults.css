@@ -19,8 +19,15 @@
 }
 .validation-results .family-row.status-fail { border-left-color: var(--danger); background: var(--surface); }
 .validation-results .family-row.status-inconclusive { border-left-color: var(--warn-border); background: var(--surface); }
+.validation-results .family-official { grid-column: 2 / -1; font-weight: 700; font-size: var(--t-14); }
 .validation-results .family-key { font-family: var(--font-mono); font-weight: 700; font-size: var(--t-16); }
 .validation-results .family-meaning { font-size: var(--t-16); }
+.validation-results .family-reading { grid-column: 2 / -1; font-size: var(--t-14); }
+.validation-results .family-separate { grid-column: 1 / -1; list-style: none; margin: var(--s-4) 0 0; padding: 0; }
+.validation-results .separate-row { display: grid; grid-template-columns: max-content max-content 1fr; gap: var(--s-4) var(--s-12); align-items: baseline; padding: var(--s-8) 0 var(--s-8) var(--s-12); margin-top: var(--s-4); border-left: 4px solid var(--border); background: var(--surface); border-top: var(--rule); }
+.validation-results .separate-row.status-fail { border-left-color: var(--danger); }
+.validation-results .separate-row.status-inconclusive { border-left-color: var(--warn-border); }
+.validation-results .separate-row.status-fail .status-badge { color: var(--danger); border-width: 2px; }
 .validation-results .family-counts { grid-column: 2 / -1; color: var(--text-muted); font-size: var(--t-14); }
 
 .validation-results .status-badge { font-weight: 700; border: 1px solid currentColor; border-radius: var(--radius); padding: 0 var(--s-8); white-space: nowrap; font-size: var(--t-14); }
@@ -63,7 +70,8 @@
 
 @media (max-width: 40rem) {
   .validation-results .family-row { grid-template-columns: 1fr; }
-  .validation-results .family-counts { grid-column: 1; }
+  .validation-results .family-counts, .validation-results .family-reading, .validation-results .family-official { grid-column: 1; }
+  .validation-results .separate-row { grid-template-columns: 1fr; }
   .validation-results .validation-test dl { grid-template-columns: 1fr; }
   .validation-results .validation-test dt { margin-top: var(--s-8); }
 }
