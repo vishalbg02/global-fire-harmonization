@@ -1,48 +1,21 @@
-:root {
-  --text: #1b1b1f;
-  --text-muted: #4a4a55;
-  --bg: #ffffff;
-  --panel: #f6f7f9;
-  --border: #c9ccd3;
-  --focus: #0050c8;
-
-  font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
-  color: var(--text);
-  background: var(--bg);
-  color-scheme: light;
-}
-
 body {
   margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-size: var(--t-14);
+  line-height: 1.5;
 }
 
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-[tabindex]:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.app header {
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.app h1 {
-  margin: 0;
-  font-size: 1.4rem;
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
 }
 
 .app h2 {
-  margin: 0 0 0.4rem;
-  font-size: 1rem;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--text-muted);
+  margin: 0 0 var(--s-8);
+  font-size: var(--t-16);
 }
 
 .synthetic-banner {
@@ -50,9 +23,9 @@ select:focus-visible,
   top: 0;
   z-index: 10;
   padding: 0.5rem 1rem;
-  background: #1b1b1f;
-  color: #fff;
-  font-weight: 700;
+  background: var(--ink);
+  color: var(--on-brand);
+  font-weight: 600;
   text-align: center;
   letter-spacing: 0.02em;
 }
@@ -81,9 +54,9 @@ select:focus-visible,
 }
 
 .badge {
-  background: #fff3cd;
-  border: 1px solid #8a6d00;
-  border-radius: 4px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--radius);
   padding: 0 0.35rem;
   font-size: 0.85rem;
 }
@@ -117,7 +90,7 @@ select:focus-visible,
 
 .source-unavailable {
   color: var(--text);
-  border-left: 3px solid #8a6d00;
+  border-left: 3px solid var(--warn-border);
   padding-left: 0.5rem;
 }
 
@@ -153,9 +126,8 @@ select:focus-visible,
   max-width: 22rem;
   overflow: hidden;
   padding: 0.5rem 0.75rem;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   pointer-events: none;
   font-size: 0.875rem;
 }
@@ -222,7 +194,7 @@ aside section {
 }
 
 .state-error {
-  border-left: 4px solid #b00020;
+  border-left: 4px solid var(--danger);
   padding-left: 0.5rem;
 }
 
@@ -246,7 +218,7 @@ aside section {
   font: inherit;
   padding: 0.3rem 0.4rem;
   border: 1px solid #5f6672;
-  border-radius: 4px;
+  border-radius: var(--radius);
 }
 
 .custom-area {
@@ -292,7 +264,7 @@ aside section {
 .form-error {
   margin: 0.4rem 0;
   padding-left: 0.5rem;
-  border-left: 4px solid #b00020;
+  border-left: 4px solid var(--danger);
   font-size: 0.9rem;
 }
 
@@ -333,9 +305,9 @@ aside section {
   padding: 0.25rem 0.4rem;
   margin: 0.15rem 0;
   font: inherit;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
@@ -476,16 +448,16 @@ aside section {
 
 .evidence-provisional {
   display: inline-block;
-  background: #fff3cd;
-  border: 1px solid #8a6d00;
-  border-radius: 4px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--radius);
   padding: 0.1rem 0.4rem;
   font-size: 0.9rem;
 }
 
 .reason-code {
   color: var(--text-muted);
-  font-family: ui-monospace, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.72rem;
 }
 
@@ -555,7 +527,7 @@ aside section {
 .calendar-table td.cal-outside,
 .calendar-table td.cal-nodata {
   color: var(--text-muted);
-  background: #fff;
+  background: var(--surface);
 }
 
 /* "Outside the record" is hatched, so it is never told from the 100% colour by colour alone (T-042). */
@@ -566,12 +538,12 @@ aside section {
 
 /* "No data" and "no detected activity" on the map carry a dark outline (T-042). */
 .swatch-marked {
-  border: 2px solid #1b1b1f;
+  border: 2px solid var(--ink);
 }
 
 .calendar-table td.cal-nodata {
   background: #e0e0e0;
-  color: #1b1b1f;
+  color: var(--ink);
 }
 
 .cal-cell {
@@ -589,17 +561,17 @@ aside section {
 }
 
 .cal-selected {
-  border: 3px solid #0050c8;
+  border: 3px solid var(--focus);
 }
 
 .swatch-provisional {
   border: 2px dashed #000;
-  background: #fff;
+  background: var(--surface);
 }
 
 .swatch-selected {
-  border: 3px solid #0050c8;
-  background: #fff;
+  border: 3px solid var(--focus);
+  background: var(--surface);
 }
 
 .visually-hidden {
@@ -645,14 +617,14 @@ aside section {
 .raw-only-note {
   margin: 0;
   padding: 0.4rem 1rem;
-  background: #fff3cd;
-  border-bottom: 1px solid #8a6d00;
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-border);
   font-weight: 600;
 }
 
 /* Methods and validation page (T-041) */
 .methods-link { display: inline-block; margin-top: 0.25rem; }
-.methods-page { max-width: 60rem; padding: 0 1rem 2rem; }
+.methods-page { font-size: var(--t-16); max-width: 60rem; padding: 0 1rem 2rem; }
 .methods-page h2 { font-size: 1.6rem; margin: 1rem 0 0.5rem; }
 .methods-page h3 { font-size: 1.3rem; margin: 2rem 0 0.5rem; border-bottom: 1px solid currentColor; }
 .methods-page h4 { font-size: 1.05rem; margin: 1rem 0 0.25rem; }
@@ -669,12 +641,12 @@ aside section {
 .validation-file dd, .validation-test dd { margin: 0; }
 .validation-counts { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 0; list-style: none; font-weight: 600; }
 .validation-tests { padding: 0; list-style: none; }
-.validation-test { border: 2px solid currentColor; border-radius: 4px; padding: 0.5rem 0.75rem; margin: 0.75rem 0; }
+.validation-test { border: 2px solid currentColor; border-radius: var(--radius); padding: 0.5rem 0.75rem; margin: 0.75rem 0; }
 .validation-test dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
 .validation-test .test-id { font-size: 0.85rem; opacity: 0.85; margin: 0; }
 .validation-test.status-fail, .validation-test.status-inconclusive { border-width: 4px; }
-.status-badge { font-weight: 800; border: 2px solid currentColor; border-radius: 3px; padding: 0 0.4rem; }
-.planned-tests { border: 2px dashed currentColor; padding: 0.5rem 0.75rem; border-radius: 4px; }
+.status-badge { font-weight: 800; border: 2px solid currentColor; border-radius: var(--radius); padding: 0 0.4rem; }
+.planned-tests { border: 2px dashed currentColor; padding: 0.5rem 0.75rem; border-radius: var(--radius); }
 .planned-tests li { margin: 0.75rem 0; }
 .planned-tests p { margin: 0.15rem 0; }
 .acknowledgement { font-style: italic; }
@@ -698,9 +670,9 @@ main:focus { outline: none; }
 .offline-note {
   margin: 0;
   padding: 0.5rem 1rem;
-  background: #fff3cd;
-  border-bottom: 1px solid #8a6d00;
-  color: #1b1b1f;
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-border);
+  color: var(--ink);
 }
 
 /* Text for screen readers only. */

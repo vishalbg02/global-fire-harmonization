@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOCK: Global Fire Harmonization layout (T-070)</title>
+<style>
+:root{
+  --ink:#14181f; --muted:#566070; --bg:#f3f5f9; --surface:#fff; --border:#d5dbe5; --brand:#12233f; --accent:#d55e00; --focus:#0050c8;
+  --above:#d55e00; --below:#0072b2; --within:#999; --cannot:#ccc; --none:#bcd7eb;
+  --r:10px; --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+  --t-xs:12px; --t-sm:14px; --t-md:16px; --t-lg:20px; --t-xl:28px; --t-2xl:40px;
+  font:16px/1.5 system-ui,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg);
+}
+*{box-sizing:border-box} body{margin:0}
+.mock-banner{background:#fff3cd;border-bottom:1px solid #8a6d00;color:#1b1b1f;font-size:var(--t-xs);padding:4px var(--s4);text-align:center}
+header.top{background:var(--brand);color:#fff;padding:var(--s2) var(--s5);display:flex;align-items:center;gap:var(--s5);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:var(--s3)} .logo{width:36px;height:36px;border-radius:9px;background:var(--accent);display:grid;place-items:center;font-weight:800}
+.brand h1{margin:0;font-size:var(--t-lg);line-height:1.2} .brand p{margin:0;font-size:var(--t-sm);color:#c9d4e6}
+header nav{margin-left:auto;display:flex;gap:var(--s2)}
+.btn{font:inherit;font-size:var(--t-sm);padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.ghost{background:transparent;color:#fff;border-color:#4a5c7d}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:var(--s2) var(--s5);display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:2px;font-size:var(--t-xs);color:var(--muted)}
+.field input[type=search],.field select{font:inherit;font-size:var(--t-sm);padding:7px 10px;border:1px solid var(--border);border-radius:8px;min-width:190px;color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg span{padding:7px 12px;font-size:var(--t-sm);background:#fff;border-right:1px solid var(--border)} .seg span:last-child{border:0}
+.seg .on{background:var(--brand);color:#fff;font-weight:600}
+.month{display:flex;align-items:center;gap:var(--s2)} .month .bar{width:150px;height:6px;background:#dfe5ee;border-radius:3px;position:relative}
+.month .bar i{position:absolute;left:0;top:0;height:6px;width:62%;background:var(--brand);border-radius:3px} .month b{font-size:var(--t-md)}
+.pill{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:var(--t-xs);background:#fff}
+.stories{padding:var(--s2) var(--s5) 0;display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;font-size:var(--t-sm);color:var(--muted)}
+.chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:5px 12px;font-size:var(--t-sm);color:var(--ink)} .chip.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:600}
+main{padding:var(--s3) var(--s5) var(--s6);display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:var(--s4)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 1px 2px rgba(18,35,63,.06)}
+.map{position:relative;overflow:hidden;min-height:540px;background:#dbe7f3}
+.map img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.96}
+.legend{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:var(--t-xs);display:grid;gap:3px}
+.legend div{display:flex;align-items:center;gap:6px} .sw{width:14px;height:14px;border-radius:3px;display:inline-grid;place-items:center;font-size:10px;color:#fff}
+.hint{position:absolute;right:12px;bottom:12px;background:rgba(20,24,31,.82);color:#fff;font-size:var(--t-xs);padding:5px 10px;border-radius:6px}
+.zoom{position:absolute;right:12px;top:12px;display:grid;gap:4px} .zoom span{width:30px;height:30px;background:#fff;border:1px solid var(--border);border-radius:6px;display:grid;place-items:center}
+.maptag{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:var(--t-sm);font-weight:600}
+aside{display:grid;gap:var(--s4);align-content:start}
+.summary{padding:var(--s4) var(--s5)} .summary .eyebrow{font-size:var(--t-xs);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.summary h2{margin:2px 0 var(--s3);font-size:var(--t-xl);line-height:1.15}
+.verdict{display:inline-flex;align-items:center;gap:8px;background:#fbe9dc;color:#8a3b00;border:1px solid #f0b88f;border-radius:8px;padding:6px 12px;font-weight:700;font-size:var(--t-lg)}
+.prob{color:var(--muted);font-size:var(--t-sm);margin:6px 0 var(--s3)}
+.big{font-size:var(--t-2xl);font-weight:800;line-height:1;letter-spacing:-.02em} .big small{font-size:var(--t-md);font-weight:600;color:var(--muted);letter-spacing:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:var(--s3) 0;font-size:var(--t-sm)} .kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:600}
+.spark{margin-top:var(--s3)} .spark svg{width:100%;height:64px} .spark p{margin:2px 0 0;font-size:var(--t-xs);color:var(--muted)}
+.reason{margin-top:var(--s3);font-size:var(--t-sm);background:#eef2f8;border-radius:8px;padding:8px 12px}
+.reason small{display:block;color:var(--muted);font-size:var(--t-xs)}
+.anoms{padding:var(--s3) var(--s4)} .anoms h3{margin:0 0 var(--s2);font-size:var(--t-md)} .anoms ol{margin:0;padding:0;list-style:none;font-size:var(--t-sm)}
+.anoms li{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #edf0f5} .anoms li span:last-child{font-weight:700;color:var(--above)}
+.tabs{grid-column:1/-1;padding:0}
+.tabbar{display:flex;gap:2px;border-bottom:1px solid var(--border);padding:0 var(--s4);overflow:auto}
+.tabbar span{padding:12px 16px;font-size:var(--t-sm);white-space:nowrap;color:var(--muted)} .tabbar .on{color:var(--ink);font-weight:700;border-bottom:3px solid var(--accent)}
+.tabbody{padding:var(--s4) var(--s5);display:grid;gap:var(--s4)}
+.cal{display:grid;grid-template-columns:48px repeat(12,1fr);gap:2px;font-size:10px;color:var(--muted)}
+.cal i{height:12px;border-radius:2px;display:block}
+.how{background:#eef5ff;border:1px solid #bcd3f3;border-radius:var(--r);padding:var(--s3) var(--s4);font-size:var(--t-sm);display:flex;gap:var(--s4);justify-content:space-between;align-items:center}
+@media (max-width:1100px){ main{grid-template-columns:1fr} }
+@media (max-width:640px){
+  body{display:flex;flex-direction:column;overflow-x:hidden}
+  .mock-banner{order:-2;font-size:11px}
+  header.top{order:0;padding:var(--s2) var(--s4);gap:var(--s2)} header nav{margin-left:0;width:100%} .brand p{display:none} .brand h1{font-size:var(--t-md)} .logo{width:30px;height:30px}
+  header nav .btn{flex:1;padding:6px 8px;font-size:var(--t-xs)}
+  .stories{order:1;padding:var(--s2) var(--s4) 0;overflow-x:auto;flex-wrap:nowrap} .stories>span:first-child{display:none} .chip{white-space:nowrap;flex:0 0 auto}
+  main,aside{display:contents}
+  .summary{order:2;margin:var(--s3) var(--s4) 0} .summary h2{font-size:var(--t-lg)} .big{font-size:34px} .verdict{font-size:var(--t-md)}
+  .toolbar{order:3;padding:var(--s3) var(--s4);display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+  .toolbar .field:nth-child(1),.toolbar .field:nth-child(2),.toolbar .field:nth-child(5){grid-column:1/-1}
+  .field input[type=search],.field select{min-width:0;width:100%} .month .bar{flex:1}
+  .map{order:4;margin:0 var(--s4);min-height:280px;grid-column:auto} .anoms{order:5;margin:var(--s3) var(--s4) 0}
+  .tabs{order:6;margin:var(--s3) var(--s4) var(--s5)}
+}
+</style></head>
+<body>
+<div class="mock-banner"><b>MOCK, not the built app.</b> Layout and design-system proposal (T-070) for the Lead's approval (T-080). Map image and numbers: real products, Indonesia, September 2015.</div>
+<header class="top">
+  <div class="brand"><div class="logo">GF</div><div><h1>Global Fire Harmonization</h1><p>Satellite-detected fire activity, compared fairly across MODIS and VIIRS, 2002 to 2026</p></div></div>
+  <nav><button class="btn ghost">Methods and validation</button><button class="btn ghost">How to read this</button></nav>
+</header>
+<section class="toolbar" aria-label="Controls">
+  <div class="field">Area<input type="search" value="Indonesia"></div>
+  <div class="field">Month<div class="month"><button class="btn">◀</button><div class="bar"><i></i></div><button class="btn">▶</button><b>September 2015</b></div></div>
+  <div class="field">Data shown<div class="seg"><span>Raw</span><span class="on">Harmonized</span></div></div>
+  <div class="field">Map shows<div class="seg"><span class="on">Verdict</span><span>Activity</span></div></div>
+  <div class="field" style="margin-left:auto">Your own area<button class="btn">Draw or type an area ▾</button></div>
+</section>
+<div class="stories"><span>Start with a story:</span><span class="chip on">Indonesia, Sep 2015</span><span class="chip">Australia, Dec 2019</span><span class="chip">Canada, Aug 2023</span><span class="chip">Brazil, Aug 2019</span><span class="chip">World, Oct 2026</span></div>
+<main>
+  <section class="card map" aria-label="Map"><img src="map-crop.jpg" alt="">
+    <div class="maptag">Verdict for September 2015</div>
+    <div class="zoom"><span>+</span><span>−</span></div>
+    <div class="legend"><b>Verdict</b>
+      <div><span class="sw" style="background:var(--above)">▲</span>Above normal</div>
+      <div><span class="sw" style="background:var(--below)">▼</span>Below normal</div>
+      <div><span class="sw" style="background:var(--within)">●</span>Within normal</div>
+      <div><span class="sw" style="background:var(--cannot);color:#333">?</span>Cannot determine</div>
+      <div><span class="sw" style="background:var(--none);color:#333;border:1px dashed #5b7f9c">○</span>No detected activity</div></div>
+    <div class="hint">Ctrl + scroll to zoom</div>
+  </section>
+  <aside>
+    <section class="card summary" aria-label="Summary">
+      <div class="eyebrow" style="display:flex;justify-content:space-between">Selected area and month <a style="color:#0050c8;text-transform:none;letter-spacing:0">Download CSV</a></div>
+      <h2>Indonesia, September 2015</h2>
+      <div class="verdict"><span>▲</span> Above normal</div>
+      <p class="prob">More than 99% likely above the normal range for this month.</p>
+      <div class="big">265%<small> of normal</small></div>
+      <dl class="kv"><dt>Estimate</dt><dd>19,068.7 fire-active cell-days</dd><dt>90% interval</dt><dd>17,320.2 to 20,817.2</dd><dt>Satellites used</dt><dd>Aqua MODIS, S-NPP VIIRS</dd></dl>
+      <div class="spark"><svg viewBox="0 0 300 64" preserveAspectRatio="none" aria-label="Estimate over the last 12 months"><polyline fill="none" stroke="#12233f" stroke-width="2" points="0,60 25,60 50,59 75,58 100,56 125,54 150,48 175,40 200,6 225,10 250,55 275,60 300,62"/><circle cx="200" cy="6" r="4" fill="#d55e00"/></svg><p>Estimate, Jan to Dec 2015 (September marked)</p></div>
+      <div class="reason">No caveats are recorded for this month.<small>Reason text, from the approved wording</small></div>
+    </section>
+    <section class="card anoms" aria-label="Anomalies"><h3>Biggest anomalies in September 2015</h3>
+      <ol><li><span>South Sudan ▲</span><span>784%</span></li><li><span>Belize ▲</span><span>417%</span></li><li><span>Uganda ▲</span><span>415%</span></li><li><span>Papua New Guinea ▲</span><span>413%</span></li><li><span>Ethiopia ▲</span><span>401%</span></li></ol></section>
+  </aside>
+  <section class="card tabs">
+    <div class="tabbar"><span class="on">Calendar</span><span>Satellites</span><span>Evidence in detail</span><span>All anomalies</span></div>
+    <div class="tabbody">
+      <div class="how"><span><b>How to read this.</b> Each cell is a half-degree square. Colours show whether the month is above, below or within what is normal for that calendar month in 2003 to 2022. “Cannot determine” means the data cannot support a verdict.</span><button class="btn">Got it</button></div>
+      <div class="cal"><span></span><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+        <span>2014</span><i style="background:#9fc5e0"></i><i style="background:#9fc5e0"></i><i style="background:#cde0ee"></i><i style="background:#cde0ee"></i><i style="background:#e6e6e6"></i><i style="background:#f4cfa9"></i><i style="background:#f0b78b"></i><i style="background:#e9a066"></i><i style="background:#f4cfa9"></i><i style="background:#e6e6e6"></i><i style="background:#cde0ee"></i><i style="background:#cde0ee"></i>
+        <span>2015</span><i style="background:#cde0ee"></i><i style="background:#cde0ee"></i><i style="background:#e6e6e6"></i><i style="background:#e6e6e6"></i><i style="background:#f4cfa9"></i><i style="background:#f0b78b"></i><i style="background:#e08a4a"></i><i style="background:#d55e00"></i><i style="background:#b34a00;outline:2px solid #0050c8"></i><i style="background:#d55e00"></i><i style="background:#e9a066"></i><i style="background:#f4cfa9"></i>
+        <span>2016</span><i style="background:#e9a066"></i><i style="background:#f4cfa9"></i><i style="background:#e6e6e6"></i><i style="background:#cde0ee"></i><i style="background:#cde0ee"></i><i style="background:#9fc5e0"></i><i style="background:#9fc5e0"></i><i style="background:#cde0ee"></i><i style="background:#e6e6e6"></i><i style="background:#e6e6e6"></i><i style="background:#cde0ee"></i><i style="background:#cde0ee"></i></div>
+    </div>
+  </section>
+</main>
+</body></html>

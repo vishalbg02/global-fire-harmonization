@@ -38,7 +38,7 @@ def main() -> None:
     last_pulled = max(max(d) for d in days.values())
     span = [(START + dt.timedelta(i)).isoformat() for i in range((dt.date.fromisoformat(last_pulled) - START).days + 1)]
 
-    miss_file = sorted((RAW / "availability").glob("missing_data_*.json"))[-1]
+    miss_file = max((RAW / "availability").glob("missing_data_*.json"))
     cells = re.findall(r"<td>([^<]*)</td>", json.loads(miss_file.read_text(encoding="utf-8"))["html"])
     listed = collections.defaultdict(set)  # satellite name -> dates FIRMS lists as missing
     for date, name in zip(cells[0::2], cells[1::2]):

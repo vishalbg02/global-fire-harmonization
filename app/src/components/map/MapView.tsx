@@ -4,7 +4,7 @@ import type { MapGeoJSONFeature, MapMouseEvent, StyleSpecification } from 'mapli
 import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { MapLibreOverlay } from '@deck.gl/maplibre'
-import { PolygonLayer, TextLayer } from '@deck.gl/layers'
+import { GeoJsonLayer, PolygonLayer, TextLayer } from '@deck.gl/layers'
 import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
@@ -67,6 +67,8 @@ interface Props {
   onDrawnPolygon?: (ring: number[][]) => void
   /** ISO3 codes of the countries listed in the anomaly rankings, to outline (T-040). */
   anomalyOutlines: { above: readonly string[]; below: readonly string[] }
+  /** The country under the pointer (null when none): the app shows its name and verdict (T-070). */
+  onHoverCountry?: (country: { iso3: string; name: string } | null) => void
   /** True while the month's cells are loading: shows the loading indicator on the map (T-071). */
   loading?: boolean
 }
@@ -109,6 +111,7 @@ export function MapView({
   polygonDrawing = false,
   onDrawnPolygon,
   anomalyOutlines,
+  onHoverCountry,
   loading = false,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
@@ -118,7 +121,11 @@ export function MapView({
   const wrap = useRef<HTMLDivElement>(null)
   // Zoom of the map: the verdict icons are drawn only when a cell is big enough to hold one.
   const [zoom, setZoom] = useState(INITIAL_ZOOM)
+  // The outline of the country under the pointer, drawn above the cells (T-070).
+  const [hoverOutline, setHoverOutline] = useState<unknown>(null)
+  const countryShapes = useRef<Map<string, unknown> | null>(null)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
+  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry })
   // The cell whose card is pinned on the map: until closed, Esc, or another cell is clicked (T-071).
   const [pinned, pinDispatch] = useReducer(pinnedReducer, null)
   useEffect(() => pinDispatch({ type: 'selection', selectedCellId }), [selectedCellId])
@@ -128,13 +135,12 @@ export function MapView({
     [pinned, cells],
   )
   const legendMax = useMemo(() => (cells === null ? 0 : sharedMax(cells)), [cells])
-  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon })
   // Clicks are ignored while drawing, and for a moment after a rectangle is finished, so that
   // the click that ends the drawing does not also select a country or a cell.
   const ignoreClicksUntil = useRef(0)
   const drawingRef = useRef(drawing)
   useEffect(() => {
-    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon }
+    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry }
     drawingRef.current = drawing || polygonDrawing
   })
   const clicksIgnored = () => drawingRef.current || Date.now() < ignoreClicksUntil.current
@@ -169,6 +175,21 @@ export function MapView({
     overlayRef.current = overlay
     map.on('zoomend', () => setZoom(map.getZoom()))
 
+    // The same file the map layer reads (cached by the browser): the shapes for the hover outline.
+    void fetch(COUNTRIES_URL)
+      .then((r) => r.json())
+      .then((collection: { features: { properties: Record<string, unknown> }[] }) => {
+        const shapes = new Map<string, unknown>()
+        for (const f of collection.features) {
+          const iso3 = countryIso3(f.properties)
+          if (iso3 !== null) shapes.set(iso3, f)
+        }
+        countryShapes.current = shapes
+      })
+      .catch(() => {
+        countryShapes.current = null
+      })
+
     map.on('load', () => {
       map.addSource('countries', { type: 'geojson', data: COUNTRIES_URL })
       map.addLayer({ id: 'countries-fill', type: 'fill', source: 'countries', paint: { 'fill-color': '#f7f7f2', 'fill-opacity': 1 } })
@@ -189,6 +210,14 @@ export function MapView({
         source: 'countries',
         paint: { 'line-color': '#0072B2', 'line-width': 2, 'line-dasharray': [2, 1.5] },
         filter: ['in', ['get', 'ISO_A3_EH'], ['literal', []]],
+      })
+      // Hover: the outline of the country under the pointer (T-070).
+      map.addLayer({
+        id: 'countries-hover',
+        type: 'line',
+        source: 'countries',
+        paint: { 'line-color': '#14181f', 'line-width': 2 },
+        filter: ['==', ['get', 'ISO_A3_EH'], ''],
       })
       map.addLayer({
         id: 'countries-selected',
@@ -213,8 +242,25 @@ export function MapView({
       const iso3 = countryIso3(props)
       if (iso3 !== null) callbacks.current.onSelectCountry(iso3, countryName(props))
     })
-    map.on('mouseenter', 'countries-fill', () => (map.getCanvas().style.cursor = 'pointer'))
-    map.on('mouseleave', 'countries-fill', () => (map.getCanvas().style.cursor = ''))
+    map.on('mouseenter', 'countries-fill', () => (map.getCanvas().style.cursor = drawingRef.current ? 'crosshair' : 'pointer'))
+    let hoverIso3: string | null = null
+    const setHover = (iso3: string | null, name = '') => {
+      if (iso3 === hoverIso3) return
+      hoverIso3 = iso3
+      if (loaded.current) map.setFilter('countries-hover', ['==', ['get', 'ISO_A3_EH'], iso3 ?? ''])
+      callbacks.current.onHoverCountry?.(iso3 === null ? null : { iso3, name })
+      setHoverOutline(iso3 === null ? null : (countryShapes.current?.get(iso3) ?? null))
+    }
+    map.on('mousemove', 'countries-fill', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+      if (drawingRef.current) return setHover(null)
+      const props = e.features?.[0]?.properties
+      const iso3 = countryIso3(props)
+      setHover(iso3, countryName(props))
+    })
+    map.on('mouseleave', 'countries-fill', () => {
+      map.getCanvas().style.cursor = ''
+      setHover(null)
+    })
 
     return () => {
       loaded.current = false
@@ -342,8 +388,24 @@ export function MapView({
   useEffect(() => {
     const overlay = overlayRef.current
     if (overlay === null) return
+    const outline =
+      hoverOutline === null
+        ? []
+        : [
+            new GeoJsonLayer({
+              id: 'hover-outline',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- one Natural Earth feature, read from the countries file
+              data: hoverOutline as any,
+              pickable: false,
+              stroked: true,
+              filled: false,
+              getLineColor: [20, 24, 31, 255],
+              getLineWidth: 3,
+              lineWidthUnits: 'pixels',
+            }),
+          ]
     if (cells === null || cells.length === 0) {
-      overlay.setProps({ layers: [] })
+      overlay.setProps({ layers: outline })
       return
     }
     const max = sharedMax(cells)
@@ -411,8 +473,8 @@ export function MapView({
             }),
           ]
         : []
-    overlay.setProps({ layers: [polygons, ...icons] })
-  }, [cells, layer, selectedCellId, zoom])
+    overlay.setProps({ layers: [polygons, ...icons, ...outline] })
+  }, [cells, layer, selectedCellId, zoom, hoverOutline])
 
   return (
     <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
