@@ -46,6 +46,17 @@ describe('plain-language texts (T-076)', () => {
     expect(joined).toContain('25th to the 75th percentile')
   })
 
+  it('describes only what the app offers and does not call a verdict "unusual" (Lead review of #77)', () => {
+    const pick = HOW_TO_READ.find((s) => s.id === 'pick')?.text ?? ''
+    expect(pick).not.toContain('world region')
+    expect(pick).toContain('the whole world')
+    expect(pick).toContain('draw on the map')
+    const verdict = HOW_TO_READ.find((s) => s.id === 'verdict')?.text ?? ''
+    expect(verdict).not.toContain('unusual')
+    expect(verdict).toContain('why activity was high or low')
+    expect(verdict).toContain('how many fires')
+  })
+
   it('uses no unexplained method jargon', () => {
     const joined = ALL.join(' ').toLowerCase()
     for (const word of ['witness', 'stratum', 'strata', 'kappa', 'overdispersion', 'pooling']) expect(joined).not.toContain(word)

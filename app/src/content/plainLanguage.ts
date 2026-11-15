@@ -18,12 +18,12 @@ export const HOW_TO_READ: readonly HowToReadStep[] = [
   {
     id: 'pick',
     title: 'Pick a place and a month',
-    text: 'Choose a country, a continent or a world region, and a month from 2002 to the latest data, on the map or in the calendar.',
+    text: 'Choose a country, a continent, the whole world, or an area you draw on the map, and a month from 2002 to the latest data.',
   },
   {
     id: 'verdict',
     title: 'Read the verdict',
-    text: 'The verdict says whether satellite-detected fire activity in that month was above, within or below the normal range for the same calendar month in 2003 to 2022. It does not say that something unusual happened.',
+    text: 'The verdict says whether satellite-detected fire activity in that month was above, within or below the normal range for the same calendar month in 2003 to 2022. It describes detected activity compared with normal; it does not say why activity was high or low, or how many fires there were.',
   },
   {
     id: 'percent',
