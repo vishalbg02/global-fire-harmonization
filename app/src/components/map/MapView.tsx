@@ -18,6 +18,7 @@ import type { FitRequest } from '../../state/selection.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { CellInfo } from './CellInfo.tsx'
 import { countryIso3, countryName } from './countries.ts'
+import { polygonBounds } from './countryBounds.ts'
 import { STATIC_ONLY, staticManifest, useStaticManifest } from '../../api/staticData.ts'
 import { CELL_STROKE_ALPHA, cellFillColor, cellStrokeWidth, needsOutline, sharedMax } from './scale.ts'
 import {
@@ -157,6 +158,8 @@ export function MapView({
   // The outline of the country under the pointer, drawn above the cells (T-070).
   const [hoverOutline, setHoverOutline] = useState<unknown>(null)
   const countryShapes = useRef<Map<string, unknown> | null>(null)
+  // True once the country shapes are read: the selected country's outline and fit use them.
+  const [shapesReady, setShapesReady] = useState(false)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
   const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry })
   // The cell whose card is pinned on the map: until closed, Esc, or another cell is clicked (T-071).
@@ -258,6 +261,7 @@ export function MapView({
           if (iso3 !== null) shapes.set(iso3, f)
         }
         countryShapes.current = shapes
+        setShapesReady(true)
       })
       .catch(() => {
         countryShapes.current = null
@@ -467,7 +471,9 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current
     if (map === null || fit === null) return
-    const [w, s, e, n] = fit.bbox
+    // A selected country: its boundary's box (the cells stop short of the far north); else the box asked for.
+    const shape = selectedCountryIso3 === null ? null : countryShapes.current?.get(selectedCountryIso3)
+    const [w, s, e, n] = (shape === undefined || shape === null ? null : polygonBounds(shape)) ?? fit.bbox
     map.fitBounds(
       [
         [w, s],
@@ -475,7 +481,8 @@ export function MapView({
       ],
       { padding: 30, maxZoom: 6, animate: !prefersReducedMotion() },
     )
-  }, [fit])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new fit, or the shapes arriving, refits; the country is read at that moment
+  }, [fit, shapesReady])
 
   // Draw a rectangle with two clicks (terra-draw and its MapLibre adapter, D-024).
   useEffect(() => {
@@ -549,7 +556,7 @@ export function MapView({
     const overlay = overlayRef.current
     if (overlay === null) return
     const opacity = cellOpacity(imageryVisible)
-    const outline =
+    const outline: GeoJsonLayer[] =
       hoverOutline === null
         ? []
         : [
@@ -581,6 +588,23 @@ export function MapView({
               lineWidthUnits: 'pixels',
             }),
           ]
+    // The selected country's outline, above the cells like the hover outline (T-070 follow-up).
+    const selectedShape = selectedCountryIso3 === null ? null : (countryShapes.current?.get(selectedCountryIso3) ?? null)
+    if (selectedShape !== null) {
+      outline.push(
+        new GeoJsonLayer({
+          id: 'selected-country-outline',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- one Natural Earth feature, read from the countries file
+          data: selectedShape as any,
+          pickable: false,
+          stroked: true,
+          filled: false,
+          getLineColor: [0, 80, 200, 255],
+          getLineWidth: 3,
+          lineWidthUnits: 'pixels',
+        }),
+      )
+    }
     if (cells === null || cells.length === 0) {
       overlay.setProps({ layers: outline })
       return
@@ -682,7 +706,7 @@ export function MapView({
             }),
           ]
     overlay.setProps({ layers: [polygons, ...selectedOutline, ...icons, ...outline] })
-  }, [cells, layer, selectedCellId, zoom, hoverOutline, imageryVisible, overlayGen])
+  }, [cells, layer, selectedCellId, zoom, hoverOutline, selectedCountryIso3, shapesReady, imageryVisible, overlayGen])
 
   return (
     <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
