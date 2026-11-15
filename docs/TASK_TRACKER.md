@@ -24,11 +24,11 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-0E | Team workflow docs (TEAM_WORKFLOW, PR template, push guard) | M1 | P0 | T-000 | `docs/team-workflow` | [#2](https://github.com/vishalbg02/global-fire-harmonization/pull/2) (supersedes #1) | MERGED (2026-11-14, merge commit cc940ba) | — (Lead-authored PR; GitHub does not allow self-approval) | Lead approves the workflow (D-017) |
 | T-0A | **Approve tech stack (D-008)** | M1 | P0 | T-000 | — | — | DONE (approved 2026-11-14 12:26 IST) | — | `TECH_STACK.md` marked APPROVED; D-008 logged |
 | T-0B | **Approve data contract v0.1.0 (D-016)** | M1 | P0 | T-000 | — | — | DONE (approved 2026-11-14) | — | Contract status APPROVED |
-| T-0C | Add collaborators (Lead only) | M1 | P0 | T-000 | — | — | TODO | — | Both teammates have access |
+| T-0C | Add collaborators (Lead only) | M1 | P0 | T-000 | — | — | DONE (2026-11-14; Member 2 and Member 3 have access) | — | Both teammates have access |
 | T-0D | Decide API owner (D-015) and repo directory layout | M1 | P0 | T-0A | — | — | DONE (approved 2026-11-14: pipeline/, api/, app/; API owner M3) | — | Logged |
 | T-0F | Decide technical protection of `main` (D-019) | M1 | P1 | — | — | — | TODO | — | Logged; any settings change made by the Lead |
 | T-0G | Teammate workstream prompts (Member 2, Member 3) + stale-status fixes | M1 | P0 | T-0E | `docs/T-0G-teammate-prompts` | [#3](https://github.com/vishalbg02/global-fire-harmonization/pull/3) | MERGED (2026-11-14, PR #3) | — (Lead-authored PR) | Lead approves both prompts; prompts consistent with DATA_CONTRACT v0.1.0 |
-| T-0H | Record D-008 and D-016 approvals across docs and prompts | M1 | P0 | T-0G | `docs/T-0H-record-approvals` | *(see PR list)* | IN_REVIEW | PENDING | Approvals reflected consistently on `main` |
+| T-0H | Record D-008 and D-016 approvals across docs and prompts | M1 | P0 | T-0G | `docs/T-0H-record-approvals` | [#4](https://github.com/vishalbg02/global-fire-harmonization/pull/4) | MERGED (2026-11-14) | APPROVED | Approvals reflected consistently on `main` |
 
 ## Data and science (Member 2)
 
@@ -47,10 +47,10 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 | T-011 | Calibration ratios with partial pooling + block bootstrap | M2 | P0 | T-006, T-004 | `science/T-011-calibration` | [#36](https://github.com/vishalbg02/global-fire-harmonization/pull/36) | MERGED (2026-11-14) | APPROVED | `calibration` product; pooling levels reported |
 | T-012 | Holdout evaluation 2017–2021; Aqua drift diagnostic | M2 | P0 | T-011 | `science/T-012-holdout-drift` | [#45](https://github.com/vishalbg02/global-fire-harmonization/pull/45) | MERGED (2026-11-14) | APPROVED | Scores and drift plot presented at R2 |
 | T-013 | Witness combination + disagreement inflation; `harmonize_area()` | M2 | P0 | T-011 | `science/T-013-combination` | [#43](https://github.com/vishalbg02/global-fire-harmonization/pull/43) | MERGED (2026-11-14) | APPROVED | Unit tests on synthetic data with known answers |
-| T-014 | Baseline, probabilities, verdicts, reason codes; entity aggregation | M2 | P0 | T-013, D-010 | `science/T-014-verdicts` | — | IN_REVIEW | PENDING | `cell_month_harmonized`, `entity_month`, `metadata.json` validate |
+| T-014 | Baseline, probabilities, verdicts, reason codes; entity aggregation | M2 | P0 | T-013, D-010 | `science/T-014-verdicts` | [#52](https://github.com/vishalbg02/global-fire-harmonization/pull/52) | MERGED (2026-11-15) | APPROVED | `cell_month_harmonized`, `entity_month`, `metadata.json` validate |
 | T-014a | Raw-only `cell_month_harmonized`, `entity_month` and `metadata.json` for the app (D-026) | M2 | P0 | T-006, T-009 | `science/T-014a-raw-only-products` | [#40](https://github.com/vishalbg02/global-fire-harmonization/pull/40) | MERGED (2026-11-14) | APPROVED | Contract 0.1.1 raw-only shape; every harmonized field null; `NOT_HARMONIZED`; totals reconcile |
-| T-015 | Large-fire consistency check | M2 | P1 | T-006 | `science/T-015-large-fire` | — | TODO | — | Diagnostic series per entity |
-| T-016 | "MODIS blindness" indicator | M2 | P1 | T-011 | `science/T-016-blindness` | — | TODO | — | Per-region value with caveat text |
+| T-015 | Large-fire consistency check | M2 | P1 | T-006 | `science/T-015-large-fire` | [#66](https://github.com/vishalbg02/global-fire-harmonization/pull/66) | MERGED (2026-11-15; #66) | APPROVED | Diagnostic series per entity |
+| T-016 | "MODIS blindness" indicator | M2 | P1 | T-011 | `science/T-016-blindness` | [#65](https://github.com/vishalbg02/global-fire-harmonization/pull/65) | MERGED (2026-11-15; #65) | APPROVED | Per-region value with caveat text |
 
 ## Validation (Member 2 implements; Member 1 defines and reviews)
 
@@ -58,13 +58,17 @@ The process is defined in [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md).
 |---|---|---|---|---|---|---|---|---|---|
 | T-050 | Define case windows, bounding boxes, quiet months | M1 | P0 | — | `docs/T-050-validation-cases` | [#51](https://github.com/vishalbg02/global-fire-harmonization/pull/51) | MERGED (2026-11-14) | APPROVED | Table in `VALIDATION_PLAN.md` |
 | T-051 | **G1 lock**: grid, baseline, verdict and validation thresholds | M1 | P0 | T-006 | `docs/T-051-g1-lock` | [#51](https://github.com/vishalbg02/global-fire-harmonization/pull/51) | MERGED (2026-11-14) | APPROVED | Logged as approved before any results |
-| T-020 | Test A1 (two independent paths) | M2 | P0 | T-014, T-050 | `science/T-020-test-a1` | [#55](https://github.com/vishalbg02/global-fire-harmonization/pull/55) | IN_REVIEW | PENDING | Results recorded, pass or fail |
-| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | [#54](https://github.com/vishalbg02/global-fire-harmonization/pull/54) | IN_REVIEW | PENDING | Recorded |
-| T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | [#56](https://github.com/vishalbg02/global-fire-harmonization/pull/56) | IN_REVIEW | PENDING | Recorded |
-| T-023 | Test A2 (same fire, two eras) | M2 | P1 | T-014, T-050 | `science/T-023-test-a2` | — | TODO | — | Recorded |
-| T-024 | Tests B2, C1, CTRL | M2 | P1 | T-014 | `science/T-024-test-b2-c1-ctrl` | — | TODO | — | Recorded |
-| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | [#57](https://github.com/vishalbg02/global-fire-harmonization/pull/57) | IN_REVIEW | PENDING | Recorded |
-| T-026 | Verify every number displayed in the app/demo against products | M2 + M1 | P0 | T-039 | `science/T-026-number-check` | — | TODO | — | Checklist signed off |
+| T-020 | Test A1 (two independent paths) | M2 | P0 | T-014, T-050 | `science/T-020-test-a1` | [#55](https://github.com/vishalbg02/global-fire-harmonization/pull/55) | MERGED (2026-11-15) | APPROVED | Results recorded, pass or fail |
+| T-020b | Extreme-month diagnostic after A1 FAIL (cell-day saturation) | M2 | P0 | T-020, T-011 | `science/T-020b-extreme-months` | [#58](https://github.com/vishalbg02/global-fire-harmonization/pull/58) | MERGED (2026-11-15) | APPROVED | Fit periods only; ratio by activity bin with intervals; decision by a pre-set rule |
+| T-020c | v0.2 activity-dependent conversion (D-030, post-hoc after A1): build, compare with v0.1, adopt only by the pre-registered rule | M2 | P0 | T-020b | `science/T-020c-v02-conversion` | [#64](https://github.com/vishalbg02/global-fire-harmonization/pull/64) | MERGED (2026-11-15; rule not met, D-030 NOT ADOPTED, v0.1 stays) | APPROVED | Holdout error no worse (regions and countries); D1 pooled 80–97%; A1 gap smaller in ≥3 of 4 failed cases; v0.1 kept visible |
+| T-021 | Tests B1 (satellite-change steps) + B3 (known artifacts) | M2 | P0 | T-014 | `science/T-021-test-b` | [#54](https://github.com/vishalbg02/global-fire-harmonization/pull/54) | MERGED (2026-11-15) | APPROVED | Recorded |
+| T-022 | Tests D1 (coverage) + D2 (gaps) | M2 | P0 | T-012, T-014 | `science/T-022-test-d` | [#56](https://github.com/vishalbg02/global-fire-harmonization/pull/56) | MERGED (2026-11-15) | APPROVED | Recorded |
+| T-023 | Test A2 (same fire, two eras) | M2 | P1 | T-014, T-050 | `science/T-023-test-a2` | [#68](https://github.com/vishalbg02/global-fire-harmonization/pull/68) | MERGED (2026-11-15; #68) | APPROVED | Recorded |
+| T-024 | Tests B2, C1, CTRL | M2 | P1 | T-014 | `science/T-024-test-b2-c1-ctrl` | [#69](https://github.com/vishalbg02/global-fire-harmonization/pull/69) | MERGED (2026-11-15; #69) | APPROVED | Recorded |
+| T-025 | Tests E1 (leave one region out) + S1 (sensitivity) | M2 | P1 | T-011 | `science/T-025-test-e1-s1` | [#57](https://github.com/vishalbg02/global-fire-harmonization/pull/57) | MERGED (2026-11-15) | APPROVED | Recorded |
+| T-025b | Test S1, confidence-filter half: regrid without the T-005 confidence filter, re-run A1 and B1, record the outcome | M2 | P1 | T-025, T-006 | `science/T-025b-s1-confidence` | [#67](https://github.com/vishalbg02/global-fire-harmonization/pull/67) | MERGED (2026-11-15; #67) | APPROVED | S1-CONFIDENCE-FILTER recorded (PASS, FAIL or INCONCLUSIVE); S1 overall updated |
+| T-027 | Validation integration: write every real test status into `validation_results.json` and `VALIDATION_PLAN.md` §4 | M2 | P0 | T-020, T-021, T-022, T-025 | `science/T-027-validation-integration` | [#70](https://github.com/vishalbg02/global-fire-harmonization/pull/70) | MERGED (2026-11-15; #70) | APPROVED | Every test entry with its real status (PASS, FAIL, INCONCLUSIVE, NOT_RUN), D1 per-region and night entries, A1 family FAIL; contract check passes; methods page shows them |
+| T-026 | Verify every number displayed in the app/demo against products | M2 + M1 | P0 | T-039 | `science/T-026-number-check` | [#71](https://github.com/vishalbg02/global-fire-harmonization/pull/71) | MERGED (2026-11-15; #71, signed off by the Lead) | APPROVED | Checklist signed off |
 
 ## Application and API (Member 3)
 

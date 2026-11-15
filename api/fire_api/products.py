@@ -170,16 +170,25 @@ def evidence(entity_type: EntityType, entity_id: str, year: int, month: int) -> 
 
 
 def anomalies(year: int, month: int, limit: int) -> list[Anomaly]:
-    """Entities with a confident verdict in a month, ordered by max(p_above, p_below) descending.
+    """Entities with a confident verdict in a month, in the documented order.
 
-    Selection and ordering only: the probabilities and verdicts are read as stored.
+    Order (api/README.md): the larger of p_above and p_below at the precision the app shows, which
+    is "more than 99%" (every value of 0.995 or more counts as equal) and otherwise the whole
+    percentage, descending; then the distance from normal, abs(ln(pct_of_normal / 100)),
+    descending, with a missing or non-positive pct_of_normal last; then entity_id ascending
+    (entity_type last, only for determinism). Selection and ordering only: the probabilities and
+    verdicts are read as stored.
     """
     rows = _query(
         """
         SELECT entity_type, entity_id, entity_name, verdict, p_above, p_below, pct_of_normal
         FROM read_parquet(?)
         WHERE year = ? AND month = ? AND verdict IN ('ABOVE_NORMAL', 'BELOW_NORMAL')
-        ORDER BY greatest(p_above, p_below) DESC NULLS LAST, entity_type, entity_id
+        ORDER BY CASE WHEN greatest(p_above, p_below) >= 0.995 THEN 1000.0
+                      ELSE round(greatest(p_above, p_below) * 100.0) END DESC NULLS LAST,
+                 CASE WHEN pct_of_normal > 0
+                      THEN abs(ln(pct_of_normal / 100.0)) END DESC NULLS LAST,
+                 entity_id, entity_type
         LIMIT ?
         """,
         [str(_file("entity_month.parquet")), year, month, limit],
@@ -198,3 +207,19 @@ def cells_with_centre_in(west: float, south: float, east: float, north: float) -
         [str(_file("cells.parquet")), west, east, south, north],
     )
     return [r["cell_id"] for r in rows]
+
+
+def cell_centres_in(
+    west: float, south: float, east: float, north: float
+) -> list[tuple[str, float, float]]:
+    """(cell_id, lon_c, lat_c) of the cells whose centre lies inside the box (bounds
+    inclusive), ordered by cell_id. The polygon rule starts from this prefilter."""
+    rows = _query(
+        """
+        SELECT cell_id, lon_c, lat_c FROM read_parquet(?)
+        WHERE lon_c BETWEEN ? AND ? AND lat_c BETWEEN ? AND ?
+        ORDER BY cell_id
+        """,
+        [str(_file("cells.parquet")), west, east, south, north],
+    )
+    return [(r["cell_id"], r["lon_c"], r["lat_c"]) for r in rows]

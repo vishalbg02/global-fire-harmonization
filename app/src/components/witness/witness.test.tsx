@@ -6,6 +6,7 @@ import { ContractError, decodeRawByWitness, parseEntityMonth, parseRawByWitness 
 import { JUMP_CAPTION } from '../../content/source.ts'
 import { SATELLITE_TIMELINE, SATELLITE_TIMELINE_SOURCE } from '../../content/witnessTimeline.ts'
 import { WITNESS_NAMES } from '../../content/witnesses.ts'
+import { RAW_COMBINED_NAME, rawWitnessName } from './chartOption.ts'
 import { WORLD } from '../../state/selection.ts'
 import { SatelliteTimeline } from './SatelliteTimeline.tsx'
 import { WitnessPanel } from './WitnessPanel.tsx'
@@ -145,14 +146,15 @@ describe('buildWitnessChartOption', () => {
 
   it('has one line per witness present in the series, named per the contract', () => {
     const names = series.map((s) => s.name)
-    expect(names).toContain(WITNESS_NAMES.AQUA_MODIS)
-    expect(names).toContain(WITNESS_NAMES.TERRA_MODIS)
-    expect(names).toContain(WITNESS_NAMES.SNPP_VIIRS)
-    expect(names).not.toContain(WITNESS_NAMES.NOAA20_VIIRS)
+    expect(names).toContain(rawWitnessName('AQUA_MODIS'))
+    expect(names).toContain(rawWitnessName('TERRA_MODIS'))
+    expect(names).toContain(rawWitnessName('SNPP_VIIRS'))
+    expect(names).not.toContain(rawWitnessName('NOAA20_VIIRS'))
   })
 
   it('gives every witness line its own colour and its own dash pattern (not colour alone)', () => {
-    const lines = series.filter((s) => Object.values(WITNESS_NAMES).includes(s.name as string))
+    const witnessNames = (Object.keys(WITNESS_NAMES) as (keyof typeof WITNESS_NAMES)[]).map(rawWitnessName)
+    const lines = series.filter((s) => witnessNames.includes(s.name as string))
     const styles = lines.map((s) => JSON.stringify((s.lineStyle as Record<string, unknown>).type))
     expect(new Set(styles).size).toBe(lines.length) // every witness has a distinct dash pattern
     const colors = lines.map((s) => (s.lineStyle as Record<string, unknown>).color)
@@ -162,9 +164,9 @@ describe('buildWitnessChartOption', () => {
   it('has the harmonized line, the raw combined dashed line, and both bands', () => {
     const names = series.map((s) => s.name)
     expect(names).toContain('Harmonized estimate')
-    expect(names).toContain('Raw combined (all satellites)')
-    expect(names).toContain('Baseline (median)')
-    const rawCombined = findSeries('Raw combined (all satellites)')
+    expect(names).toContain(RAW_COMBINED_NAME)
+    expect(names).toContain('Baseline median')
+    const rawCombined = findSeries(RAW_COMBINED_NAME)
     expect((rawCombined.lineStyle as Record<string, unknown>).type).toBe('dashed')
   })
 
@@ -173,23 +175,38 @@ describe('buildWitnessChartOption', () => {
   })
 
   it('computes the band height as high minus low, with a gap propagated from either side', () => {
-    expect(findSeries('Harmonized (90% interval)').data).toEqual([10, 10, 10, 10, null]) // 20-10 for the 4 populated months
+    expect(findSeries('Harmonized 90% interval').data).toEqual([10, 10, 10, 10, null]) // 20-10 for the 4 populated months
   })
 
   it('places outage months on the harmonized line\'s markLine and drift months on the raw line\'s', () => {
     expect((findSeries('Harmonized estimate').markLine as { data: { xAxis: string }[] }).data).toEqual([
       { xAxis: '2015-09' },
     ])
-    expect((findSeries('Raw combined (all satellites)').markLine as { data: { xAxis: string }[] }).data).toEqual([
+    expect((findSeries(RAW_COMBINED_NAME).markLine as { data: { xAxis: string }[] }).data).toEqual([
       { xAxis: '2022-01' },
     ])
   })
 
   it('places provisional months on the last witness line\'s markLine', () => {
-    const lastWitnessName = WITNESS_NAMES.SNPP_VIIRS // last witness present in SERIES, in contract order
+    const lastWitnessName = rawWitnessName('SNPP_VIIRS') // last witness present in SERIES, in contract order
     expect((findSeries(lastWitnessName).markLine as { data: { xAxis: string }[] }).data).toEqual([
       { xAxis: '2026-10' },
     ])
+  })
+
+  it('names every series in a legend that wraps (no paging), marks the satellites as raw and leaves the band helpers out', () => {
+    const legend = option.legend as { type: string; data: string[] }
+    expect(legend.type).toBe('plain')
+    expect(legend.data.some((n) => n.endsWith('(lower bound)'))).toBe(false)
+    expect(legend.data).toContain(RAW_COMBINED_NAME)
+    expect(legend.data).toContain(rawWitnessName('AQUA_MODIS'))
+    expect(legend.data.filter((n) => n.startsWith('Raw: ')).length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('formats the hover values with one decimal, as every other panel does', () => {
+    const tooltip = option.tooltip as { valueFormatter: (v: unknown) => string }
+    expect(tooltip.valueFormatter(19068.709072474652)).toBe('19068.7')
+    expect(tooltip.valueFormatter(0)).toBe('0.0')
   })
 
   it('has a dataZoom for both scroll and the slider', () => {

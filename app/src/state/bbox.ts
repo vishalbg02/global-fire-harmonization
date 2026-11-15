@@ -12,7 +12,8 @@ export interface BboxFields {
 
 const LIMITS = { west: 180, east: 180, south: 90, north: 90 } as const
 
-const round2 = (v: number) => (Math.round(v * 100) / 100).toFixed(2)
+// Half away from zero, so -6.125 and 6.125 round alike (Math.round alone rounds -6.125 to -6.12).
+const round2 = (v: number) => (Math.sign(v) * Math.round(Math.abs(v) * 100) / 100).toFixed(2)
 
 /**
  * Checks a box before it is sent. These checks only stop obviously invalid boxes with a clear

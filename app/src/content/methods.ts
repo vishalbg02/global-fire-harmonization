@@ -130,7 +130,7 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
       'For any area, raw cell-days are summed per witness and stratum first, then converted. Per-cell intervals are never added, because the ratio error is shared. One function, harmonize_area(), does this for both the batch products and the custom-area API.',
       'No estimate is made for 2002-07 to 2002-09 (Aqua outage days) or for a partial month.',
       'LIMITATION: strata that share no ratio source are treated as independent. The region estimates share the global one, so the interval of a very large area can still be too narrow. The witnesses see the same fires, so intervals may be optimistic. The phi and kappa fit is not perfect in every size band.',
-      'Whether the interval width is right is test D1 (coverage on the 2017 to 2021 holdout). It has not been run.',
+      'Whether the interval width is right is test D1 (coverage on the 2017 to 2021 holdout). Its recorded results, with their failures, are in the validation results below, shown as stored.',
     ],
     labels: ['APPROVED', 'VERIFIED', 'LIMITATION'],
     source:
@@ -145,7 +145,7 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
       'VERIFIED (T-012): the registered test used the global day series of S-NPP only. It found no drift (onset 2025-06 at the edge of the range, slope -5.4% per year, the flat model better by 6.1 BIC). It missed a drift visible only at night. Night drift was detected in S-NPP with onset 2024-05 (interval 2022-10 to 2025-04, -12.0% per year, delta BIC +28.9) and in NOAA-20 with onset 2024-09 (interval 2024-03 to 2025-02, -19.0% per year, delta BIC +50.7). The earlier onset, 2024-05, is used as the conservative choice. Values are expressed on the Aqua-equivalent scale as a display scale, not as truth.',
       'LIMITATION: the cutoff date was chosen after seeing the results, because the registered primary series did not give it. It is therefore not a registered result. The choice of 2024-05 rests on the earlier of two overlapping onset intervals.',
       'OPEN: the cause of the drift (a change in Aqua, in its processing, or in VIIRS) is not known. The diagnostic cannot separate them.',
-      'LIMITATION: the drift era (2022 onward) cannot be validated against a stable reference. Test B3 shows the drift as a ratio trend and reports its onset estimate. It has not been run.',
+      'LIMITATION: the drift era (2022 onward) cannot be validated against a stable reference. Test B3 shows the drift as a ratio trend and reports its onset estimate; its recorded result is in the validation results below.',
     ],
     labels: ['APPROVED', 'VERIFIED', 'LIMITATION', 'OPEN'],
     source:
@@ -155,16 +155,16 @@ export const METHOD_SECTIONS: readonly MethodSection[] = [
     id: 'holdout-evaluation',
     title: 'Holdout evaluation (T-012), measured',
     paragraphs: [
-      'This is the holdout evaluation (T-012). It is not the recorded validation test D1, which stays "not run". The two are different checks and this one does not replace D1.',
+      'This is the holdout evaluation (T-012). It is not the recorded validation test D1, whose results are in the validation results below. The two are different checks and this one does not replace D1.',
       'VERIFIED: the question is how well the converted S-NPP estimate predicts what Aqua counted in 2017 to 2021, months not used to fit the ratios. Units are fire-region-months and country-months, day and night separately, and the day+night total. A unit needs at least 20 Aqua cell-days. The actual value is the Aqua cell-day count, which is itself an estimate and not ground truth.',
       'Median absolute log error (ours / naive raw merge / one global ratio), regions: day 0.090 / 1.347 / 0.265; night 0.209 / 2.979 / 0.447; day+night 0.086 / 1.526 / 0.224. Countries: day 0.149 / 1.434 / 0.316; night 0.224 / 2.949 / 0.569; day+night 0.100 / 1.439 / 0.213. Ours has a lower pooled error than both in every one of these rows.',
       'VERIFIED: where ours does not win (groups with at least 30 units). Regions: EURO day (ours 0.146, global ratio 0.134) and EURO night (0.281 against 0.223). Countries, all against the global ratio: ESP day (0.177 vs 0.153), KAZ night (0.490 vs 0.383), PRY day (0.104 vs 0.103), SDN day (0.173 vs 0.142), SDN night (0.168 vs 0.136), URY day (0.208 vs 0.184), MLI day+night (0.080 vs 0.076), SDN day+night (0.108 vs 0.088). The raw merge never beats ours.',
       'VERIFIED: coverage of the 90% interval (target 80% to 97%). Units, day and night together: 0.818 for regions (1,466 units) and 0.811 for countries (6,409 units). Day+night totals: 0.847 for regions and 0.826 for countries.',
       'LIMITATION: night units are below 80%: 0.750 for regions (636 units) and 0.794 for countries (1,611 units). Roughly half of the individual regions and countries also fall below 80%: 7 of 14 region groups and 45 of 87 countries for day and night units. The 50% interval covers 0.471 (regions) and 0.439 (countries), so the intervals are slightly too narrow in the middle as well.',
       'LIMITATION: Aqua and S-NPP see many of the same fires, so the two sides are not independent, and the interval ignores their covariance. The variance model was partly fitted on months that overlap this holdout (Aqua against NOAA-20), so the coverage is not a clean out-of-sample test. Aqua is the reference here but has errors and drift too. Agreement with Aqua is not agreement with the truth.',
-      'OPEN: test D1, the independent coverage check, has not been run.',
+      'The independent coverage check is the recorded test D1: see the validation results below, with its failures, as stored.',
     ],
-    labels: ['VERIFIED', 'LIMITATION', 'OPEN'],
+    labels: ['VERIFIED', 'LIMITATION'],
     source:
       'docs/DATA_SOURCES.md, "Holdout evaluation 2017 to 2021 (T-012)" (tables "Main result", "Where ours does not beat a baseline", "Coverage of the 90% interval", "Coverage check asked by the Lead on PR #43" and "Reading it correctly")',
   },
@@ -359,7 +359,7 @@ export const PLANNED_TESTS: readonly PlannedTest[] = [
 ]
 
 export const PLANNED_TESTS_NOTE =
-  'These are plans, not results. The validation plan fixes the pass rules before any result exists (pre-registration): they were locked by the Project Lead at Gate G1 (D-028, 2026-11-14), and any later change must be logged with a reason, with the original threshold kept visible. Results, including failures, are published where they exist. Passing these tests would show the method behaves correctly where tested. It would not establish global accuracy. Test IDs C1 (cross-satellite agreement) and case IDs C1 to C8 (validation cases) are different things that share a label in the plan.'
+  'This is the test plan, not the results: the results are in the validation results above, each with its own status as stored. The validation plan fixed the pass rules before any result existed (pre-registration): they were locked by the Project Lead at Gate G1 (D-028, 2026-11-14), and any later change must be logged with a reason, with the original threshold kept visible. Results, including failures, are published where they exist. Passing these tests would show the method behaves correctly where tested. It would not establish global accuracy. Test IDs C1 (cross-satellite agreement) and case IDs C1 to C8 (validation cases) are different things that share a label in the plan.'
 
 /** Validation cases of docs/VALIDATION_PLAN.md section 2 (proposed; their anomaly magnitudes are unknown until computed). */
 export const VALIDATION_CASES: readonly { id: string; case: string; role: string }[] = [
