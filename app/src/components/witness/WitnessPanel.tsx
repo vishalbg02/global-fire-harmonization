@@ -1,6 +1,9 @@
 import { Suspense, lazy, useState } from 'react'
 import { ApiError } from '../../api/client.ts'
+import type { Metadata } from '../../api/contract.ts'
 import type { Area } from '../../state/selection.ts'
+import { CaptionLine } from '../common/CaptionLine.tsx'
+import * as UI from '../../content/ui.ts'
 import { JUMP_CAPTION } from '../../content/source.ts'
 import { useAreaSeries } from '../area/useAreaSeries.ts'
 import { ErrorBoundary } from '../common/ErrorBoundary.tsx'
@@ -15,6 +18,8 @@ const WitnessChart = lazy(() => import('./WitnessChart.tsx').then((m) => ({ defa
 interface Props {
   area: Area
   onShowWorld: () => void
+  /** For the method version in the caption. */
+  meta?: Metadata | null
 }
 
 /**
@@ -22,7 +27,7 @@ interface Props {
  * timeline, and the one-sentence explanation of why raw counts jump. Shares the same series
  * query as the calendar (useAreaSeries), so selecting an area triggers no extra request.
  */
-export function WitnessPanel({ area, onShowWorld }: Props) {
+export function WitnessPanel({ area, onShowWorld, meta = null }: Props) {
   const [tableView, setTableView] = useState(false)
   const series = useAreaSeries(area)
   const records = series.data
@@ -50,6 +55,7 @@ export function WitnessPanel({ area, onShowWorld }: Props) {
         )}
       </header>
 
+      <CaptionLine unit={UI.CAPTION_UNIT_WITNESS} methodVersion={meta?.method_version ?? null} />
       <p className="legend-note">{JUMP_CAPTION}</p>
       <p className="legend-note">
         Marks on the chart (and the Notes column of the table): a red vertical line marks an
