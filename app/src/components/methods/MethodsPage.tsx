@@ -146,7 +146,6 @@ export function MethodsPage({ onBack }: { onBack: () => void }) {
       <section aria-labelledby="planned-tests" className="planned-tests">
         <h3 id="planned-tests">Test plan: the pass rules fixed in advance</h3>
         <p className="planned-note">{PLANNED_TESTS_NOTE}</p>
-        <p className="planned-note">This is the plan, not results. It has no status of its own: the status of each test is in the validation results above.</p>
         <ul>
           {PLANNED_TESTS.map((t) => (
             <li key={t.id}>

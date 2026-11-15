@@ -106,7 +106,7 @@ describe('methods page', () => {
     expect(html).toContain('NOT_HARMONIZED')
     expect(html.indexOf('Validation results')).toBeLessThan(html.indexOf('Test plan: the pass rules fixed in advance'))
     expect(html).toContain('No validation test has been run yet')
-    expect(html).toContain('This is the plan, not results')
+    expect(html).toContain('This is the test plan, not the results')
     expect(html).not.toContain('not run yet)')  // the plan is no longer titled "not run yet": results exist (T-027)
   })
 
