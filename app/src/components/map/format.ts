@@ -19,7 +19,7 @@ export function formatPctOfNormal(v: number | null): string {
   return v === null ? NO_DATA : `${Math.round(v)}% of normal`
 }
 
-function oneDecimal(v: number): string {
+export function oneDecimal(v: number): string {
   return v.toFixed(1)
 }
 

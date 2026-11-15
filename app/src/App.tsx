@@ -6,7 +6,7 @@ import { AnomalyPanel } from './components/anomalies/AnomalyPanel.tsx'
 import { EXPANDED_SIZE, PAGE_SIZE, outlinedCountries, rankAnomalies, topN } from './components/anomalies/rankings.ts'
 import type { RankingTab } from './components/anomalies/rankings.ts'
 import { AreaPicker } from './components/area/AreaPicker.tsx'
-import { resolveArea } from './components/area/resolveArea.ts'
+import { areaFitBbox, resolveArea } from './components/area/resolveArea.ts'
 import { useAreaSeries } from './components/area/useAreaSeries.ts'
 import { useStaticManifest } from './api/staticData.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
@@ -58,6 +58,15 @@ export default function App() {
   const countries = useQuery({ queryKey: ['entities', 'COUNTRY'], queryFn: () => fetchEntities('COUNTRY'), retry: false })
   const continents = useQuery({ queryKey: ['entities', 'CONTINENT'], queryFn: () => fetchEntities('CONTINENT'), retry: false })
   const area = resolveArea(selection.area, countries.data, continents.data)
+  // The map shows the selected area, however it was chosen (picker, click on the map, link, typed or
+  // drawn): a new request when the area's box changes, or when the same area is asked for again.
+  const areaBox = areaFitBbox(area, countries.data, continents.data)
+  const areaBoxKey = areaBox === null ? '' : areaBox.join(',')
+  const mapFit = useMemo(
+    () => (areaBox === null ? selection.fit : { bbox: areaBox }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- areaBoxKey stands for areaBox
+    [areaBoxKey, selection.fit],
+  )
   const customSeries = useAreaSeries(area, { enabled: area.entity_type === 'CUSTOM' })
   const customError = customSeries.error instanceof ApiError ? customSeries.error : null
   const customMessage =
@@ -256,7 +265,7 @@ export default function App() {
             onSelectCountry={(iso3, name) =>
               dispatch({ type: 'select-entity', entity: { entity_type: 'COUNTRY', entity_id: iso3, entity_name: name } })
             }
-            fit={selection.fit}
+            fit={mapFit}
             customBbox={area.entity_type === 'CUSTOM' ? area.bbox : null}
             customRing={area.entity_type === 'CUSTOM' ? (area.polygon ?? null) : null}
             drawing={drawing}

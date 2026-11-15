@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { HARMONIZED_DESCRIPTION, JUMP_CAPTION, RAW_DESCRIPTION, RAW_UNAVAILABLE, SOURCE_LABELS } from '../../content/source.ts'
 import { RAW_ONLY_HARMONIZED_UNAVAILABLE } from '../../content/rawOnly.ts'
 import type { Source } from '../../state/selection.ts'
@@ -20,6 +20,9 @@ interface Props {
  */
 export function SourceToggle({ value, onChange, rawDisabled, harmonizedDisabled = false }: Props) {
   const helpId = useId()
+  // The reason Raw is unavailable is read out to screen readers at all times, and shown to everyone
+  // when the user tries to choose Raw: it is not a standing notice above the map (T-039 review).
+  const [triedRaw, setTriedRaw] = useState(false)
   const describedBy = rawDisabled ? `${helpId}-unavailable` : undefined
   return (
     <fieldset className="layer-selector source-toggle">
@@ -36,7 +39,11 @@ export function SourceToggle({ value, onChange, rawDisabled, harmonizedDisabled 
               aria-disabled={disabled || undefined}
               aria-describedby={disabled ? describedBy : undefined}
               onChange={() => {
-                if (!disabled) onChange(source)
+                if (disabled) setTriedRaw(source === 'raw')
+                else {
+                  setTriedRaw(false)
+                  onChange(source)
+                }
               }}
             />
             {SOURCE_LABELS[source]}
@@ -50,7 +57,11 @@ export function SourceToggle({ value, onChange, rawDisabled, harmonizedDisabled 
         <p className="source-note source-unavailable">{RAW_ONLY_HARMONIZED_UNAVAILABLE}</p>
       )}
       {rawDisabled && (
-        <p className="source-note source-unavailable" id={`${helpId}-unavailable`}>
+        <p
+          className={triedRaw ? 'source-note source-unavailable' : 'visually-hidden'}
+          id={`${helpId}-unavailable`}
+          role={triedRaw ? 'status' : undefined}
+        >
           {RAW_UNAVAILABLE}
         </p>
       )}
