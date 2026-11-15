@@ -14,8 +14,8 @@ const annual = [
 
 describe('analytics chart options', () => {
   it('marks the satellite joins that fall inside the record and shows a partial year as a hollow marker', () => {
-    const o = annualOption(annual) as { series: { data: { value: number; itemStyle?: { color: string } }[]; markLine?: { data: { xAxis: string }[] } }[]; yAxis: { name: string } }
-    expect(o.yAxis.name).toContain('cell-days')
+    const o = annualOption(annual) as { series: { data: { value: number; itemStyle?: { color: string } }[]; markLine?: { data: { xAxis: string }[] } }[] }
+    expect((annualOption(annual) as unknown as { title: { text: string } }).title.text).toContain('cell-days')
     expect(o.series[0].markLine?.data.map((d) => d.xAxis)).toEqual(['2012'])
     expect(o.series[1].data.map((d) => d.value)).toEqual([100, 105, 90])
     expect(o.series[1].data[2].itemStyle?.color).toBe('#ffffff')
