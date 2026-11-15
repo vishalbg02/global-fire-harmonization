@@ -4,9 +4,11 @@ import { Badge } from './Badge.tsx'
 import { Button } from './Button.tsx'
 import { Card } from './Card.tsx'
 import { Chip } from './Chip.tsx'
-import { Combobox, moveActive } from './Combobox.tsx'
+import { Combobox } from './Combobox.tsx'
+import { moveActive } from './comboKeys.ts'
 import { SegmentedControl } from './SegmentedControl.tsx'
-import { Tabs, nextTabIndex } from './Tabs.tsx'
+import { Tabs } from './Tabs.tsx'
+import { nextTabIndex } from './tabKeys.ts'
 
 describe('Button, Chip, Card, Badge', () => {
   it('Button defaults to a secondary type=button and takes a variant', () => {

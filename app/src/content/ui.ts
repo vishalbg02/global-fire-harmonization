@@ -6,10 +6,9 @@ export const WORDMARK = 'Global Fire Harmonization'
 export const TAGLINE = 'Satellite-detected fire activity, harmonized across MODIS and VIIRS'
 export const NAV_METHODS = 'Methods and validation'
 export const NAV_HOW_TO_READ = 'How to read this'
-export const HOW_TO_READ_TITLE = 'How to read this'
-export const HOW_TO_READ_INTRO =
-  'Each verdict compares the month with what is normal for that calendar month. The five verdicts:'
-export const HOW_TO_READ_CLOSE = 'Close'
+export const HOW_TO_READ_VERDICTS = 'The five verdicts:'
+export const HOW_TO_READ_GLOSSARY = 'Glossary: the terms in plain words'
+export const HOW_TO_READ_CLOSE = 'Close and do not show again'
 export const HOW_TO_READ_MORE = 'Read how a verdict is made'
 
 export const TOOLBAR_LABEL = 'Controls'
@@ -40,6 +39,13 @@ export const LINK_COPIED = 'Link copied'
 export const LINK_COPY_FAILED = 'The link could not be copied. It is selected below: press Ctrl+C (Command+C on a Mac).'
 export const STORIES_LABEL = 'Start with a story:'
 export const STORIES_NAV = 'Featured stories'
+export const STORY_CAPTION_LABEL = 'About the selected story'
+export const STORY_EYEBROW = 'Featured story'
+export const STORY_CONTEXT_PREFIX = 'Context (outside knowledge, not from the products):'
+export const STORY_QUERY_PREFIX = 'Query:'
+export const STORY_READ_MORE = 'Read more'
+export const STORY_READ_LESS = 'Show less'
+export const STORY_REPORT_LINK = 'Read the report with every query and number'
 
 export const MAP_MODE_LABEL = 'Selection mode'
 export const MAP_MODES = { country: 'Country', rectangle: 'Rectangle', polygon: 'Polygon' } as const
@@ -63,6 +69,7 @@ export const TAB_LABELS_UI = {
   satellites: 'Satellites',
   evidence: 'Evidence in detail',
   anomalies: 'All anomalies',
+  analytics: 'Analytics',
 } as const
 export const TABS_LABEL = 'Details for the selected area'
 
@@ -73,7 +80,6 @@ export const SUMMARY_SATELLITES = 'Satellites used'
 export const SUMMARY_NO_SATELLITES = 'none contributed usable data'
 export const SUMMARY_ESTIMATE = 'Estimate'
 export const SUMMARY_INTERVAL = '90% interval'
-export const SUMMARY_NO_CAVEATS = 'No caveats are recorded for this month.'
 export const SUMMARY_LEARN_MORE = 'Learn more'
 export const DATA_LEVEL_TEXT: Record<string, string> = {
   SP: 'standard (SP)',

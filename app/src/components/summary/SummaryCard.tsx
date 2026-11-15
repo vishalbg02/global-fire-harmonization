@@ -8,11 +8,13 @@ import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { WITNESS_NAMES } from '../../content/witnesses.ts'
 import { monthLabel } from '../../state/months.ts'
 import type { Area } from '../../state/selection.ts'
+import { NO_CAVEATS_TEXT } from '../../content/evidenceText.ts'
 import { PROVISIONAL_NOTICE } from '../evidence/EvidenceBody.tsx'
 import { NO_DATA, oneDecimal, verdictProbability } from '../map/format.ts'
 import { EmptyState, ErrorState, LoadingState } from '../common/States.tsx'
 import { Badge } from '../ui/Badge.tsx'
 import { Card } from '../ui/Card.tsx'
+import { sentence } from './text.ts'
 import { Sparkline } from './Sparkline.tsx'
 
 export type SummaryStatus = 'loading' | 'error' | 'ready'
@@ -32,8 +34,6 @@ interface Props {
 
 const parseYm = (ym: string) => ({ year: Number(ym.slice(0, 4)), month: Number(ym.slice(5, 7)) })
 
-/** "more than 99% likely above normal" gets a capital letter. */
-export const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /** The source line of the card: satellites used this month, the data level, the method, and the link to how the verdict is made. */
 export function SummarySourceLine({ record, methodVersion }: { record: EntityMonth; methodVersion: string }) {
@@ -128,7 +128,7 @@ export function SummaryCard({ area, month, status, errorMessage, onRetry, record
           {!rawOnly && (
             <div className="reason">
               {record.reason_codes.length === 0 ? (
-                <p>{UI.SUMMARY_NO_CAVEATS}</p>
+                <p>{NO_CAVEATS_TEXT}</p>
               ) : (
                 <ul>
                   {record.reason_codes.map((code) => (
