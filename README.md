@@ -4,9 +4,13 @@
 
 > **Did fire activity really change here, or only the satellites watching it?**
 
+![The app on the globe: October 2026 for the world, with only above- and below-normal cells drawn strongly, the answer panel and the 2002–2026 timeline](docs/figures/screenshots/world-globe.jpg)
+
 Satellite fire records jump every time a new satellite joins. When S-NPP VIIRS joined MODIS in January 2012, raw counts stepped up **2.6 to 4.3 times** across regions, and again **1.6 to 2.1 times** when NOAA-20 joined in April 2018. That isn't more fire: the camera changed. This project puts NASA's MODIS and VIIRS hotspots on **one scale**. For any place and month from **July 2002 to November 2026**, it says whether fire activity was **above, within or below normal**, how sure it is, and why. It says **"cannot determine"** when the evidence is too weak.
 
 > **Status:** built, validated and running for method **0.1.0** on the complete NASA FIRMS archive. We published our own tests before seeing any result: **38 results, 18 PASS, 18 FAIL, 2 INCONCLUSIVE**. The failures are shown in the app and in this file, as clearly as the passes.
+
+**Jump to:** [In one minute](#in-one-minute) · [The app](#the-app) · [Run it](#run-it-about-5-minutes) · [How it works](#how-it-works) · [Validation](#validation-the-witness-stand) · [Data](#data-and-resources) · [License](#license)
 
 ---
 
@@ -18,6 +22,12 @@ Satellite fire records jump every time a new satellite joins. When S-NPP VIIRS j
 | **What we built** | A pipeline that converts each VIIRS satellite to the Aqua MODIS scale, combines the satellites with honest uncertainty, and gives every 0.5° cell, country, continent, the world or a drawn area a monthly **verdict** with a probability, a 90% interval, the satellites used and the reasons. A read-only API serves it, and a web app shows it on a 3D globe. |
 | **Proof** | The satellite-change steps disappear: the harmonized record stays within ±10% in **14 of 14** regions at 2012. Converted satellites agree in **97.6%** of 630 region-months. Every number the app shows was checked against the stored products: **0 mismatches in 6,491,894 values**. |
 | **Honesty** | In extreme months, the converted VIIRS reads **20 to 40% low**. We diagnosed it and built a fix. Our own pre-registered rule rejected the fix, and the app says so. |
+
+### The problem, and the fix, in one chart
+
+![Raw against harmonized fire-active cell-days per year, world: the raw count steps up when S-NPP VIIRS joins in 2012 and NOAA-20 VIIRS in 2018; the harmonized estimate stays on one scale](docs/figures/screenshots/analytics-raw-vs-harmonized.jpg)
+
+*World, fire-active cell-days per year (the app's Analytics tab). Black: raw, all satellites added together. Blue: harmonized to the Aqua MODIS scale.*
 
 ### Featured cases (stored values)
 
@@ -34,6 +44,22 @@ Verified against `data/products/entity_month.parquet` ([`docs/validation/T-079-f
 ---
 
 ## The app
+
+![Indonesia, September 2015: above normal, 265% of normal, more than 99% likely, with the interval bar against the normal range](docs/figures/screenshots/indonesia-2015-09.jpg)
+
+*Indonesia, September 2015. The verdict, % of normal and probability come first. The interval bar shows the estimate and its 90% interval far to the right of the hatched normal range.*
+
+<table>
+<tr>
+<td width="68%"><img src="docs/figures/screenshots/first-visit-tour.jpg" alt="First visit: the guided tour points at the area search, and Start here offers three example questions"></td>
+<td width="32%"><img src="docs/figures/screenshots/phone-indonesia.jpg" alt="On a phone: the dock as icon buttons, the timeline and the answer in a bottom sheet over the map"></td>
+</tr>
+<tr>
+<td><em>First visit: a five-step tour on the real screen, and Start here with three example questions.</em></td>
+<td><em>On a phone: the answer is a bottom sheet over the map.</em></td>
+</tr>
+</table>
+
 
 | | |
 |---|---|
@@ -151,6 +177,10 @@ Details: [`docs/SCIENTIFIC_METHODOLOGY.md`](docs/SCIENTIFIC_METHODOLOGY.md) and 
 
 Method 0.1.0 was run on 2026-11-14 and 2026-11-15. Thresholds were fixed before any result was seen and were not changed afterwards. The source of every number is [`data/products/validation_results.json`](data/products/validation_results.json) (38 entries: **18 PASS, 18 FAIL, 2 INCONCLUSIVE, 0 NOT_RUN**). The table is in [`docs/VALIDATION_PLAN.md`](docs/VALIDATION_PLAN.md) §4, with a report per task in [`docs/validation/`](docs/validation/).
 
+![The app's validation page: 18 FAIL, 2 INCONCLUSIVE, 18 PASS, 0 NOT RUN, with each test family and its status](docs/figures/screenshots/methods-validation.jpg)
+
+*The app's Methods and validation page shows every result, failures first and as prominently as passes.*
+
 | Test | Result | What it means |
 |---|---|---|
 | B1 steps at satellite changes | PASS | The raw record steps by 2.6 to 4.3 times at 2012. The harmonized record is within 10% in 14 of 14 regions, and 13 of 14 at 2018. |
@@ -227,6 +257,10 @@ Three members (see [`docs/TEAM_ROLES.md`](docs/TEAM_ROLES.md)):
 - **Member 1:** Project Lead and reviewer.
 - **Member 2:** data engineering, scientific analysis and the final UI pass (`pipeline/`, `app/`).
 - **Member 3:** application development (`api/`, `app/`).
+
+## License
+
+The code and documentation are released under the [MIT License](LICENSE), copyright (c) 2026 Vishal BG, Kaushik and Swastik Sahu. Third-party data, imagery and fonts (NASA FIRMS, NASA GIBS, Natural Earth, GFED4s, IBM Plex) keep their own terms: see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Data acknowledgement
 
