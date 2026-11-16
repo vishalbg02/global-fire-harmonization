@@ -16,15 +16,17 @@ export const DRAG_SLOP = 6
 export const FLICK_SPEED = 0.5
 /** The peek never gets smaller than this (the handle and a line of text). */
 export const MIN_PEEK = 96
+/** At full height a strip of the map this tall (px) stays in view, so it is clear the sheet lies over the map. */
+export const FULL_GAP = 40
 
 export type SheetHeights = Record<SheetHeight, number>
 
 /**
- * The three heights in px. Full is 90% of the viewport and half 50%, both within the space the sheet has; peek is the
- * measured height of the first view of the content (heading, verdict and big number), kept between MIN_PEEK and half.
+ * The three heights in px. Full is 90% of the viewport and half 50%, both within the space the sheet has less
+ * FULL_GAP; peek is the measured height of the first view of the content (heading, verdict and big number), kept between MIN_PEEK and half.
  */
 export function sheetHeights(viewport: number, available: number, peekContent: number): SheetHeights {
-  const full = Math.max(0, Math.round(Math.min(viewport * 0.9, available)))
+  const full = Math.max(0, Math.round(Math.min(viewport * 0.9, available - FULL_GAP)))
   const half = Math.min(Math.round(viewport * 0.5), full)
   const peek = Math.min(Math.max(Math.round(peekContent), Math.min(MIN_PEEK, half)), half)
   return { peek, half, full }

@@ -3,6 +3,7 @@ import { SHEET_TEXTS, sheetHandleLabel } from '../../content/sheet.ts'
 import {
   DRAG_SLOP,
   FLICK_SPEED,
+  FULL_GAP,
   MIN_PEEK,
   clampDrag,
   nearestHeight,
@@ -13,15 +14,15 @@ import {
 } from './sheet.ts'
 
 // SYNTHETIC viewport sizes (px), not data.
-const H = sheetHeights(800, 760, 220)
+const H = sheetHeights(800, 800, 220)
 
 describe('sheet heights', () => {
   it('are 90% and 50% of the viewport, and the measured peek', () => {
     expect(H).toEqual({ peek: 220, half: 400, full: 720 })
   })
 
-  it('keep full within the space the sheet has', () => {
-    expect(sheetHeights(800, 600, 200).full).toBe(600)
+  it('keep full within the space the sheet has, with a strip of the map in view', () => {
+    expect(sheetHeights(800, 600, 200).full).toBe(600 - FULL_GAP)
   })
 
   it('keep the peek between the minimum and half', () => {

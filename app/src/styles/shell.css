@@ -317,6 +317,25 @@
   .workspace > .details {
     margin-top: var(--s-16);
   }
+
+  /* The one-time globe hint: in the middle of the map that is in view, clear of the dock and the credit line. */
+  .stage .help-hint {
+    top: calc((100% - var(--sheet-rest, 0px)) / 2);
+  }
+
+  /* The globe's pause button goes under the zoom buttons, so the compact dock keeps the width of the row. */
+  .stage .map-rotate {
+    top: calc(14px + 58px + var(--s-8));
+    right: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .stage .map-rotate {
+    top: calc(14px + 88px + var(--s-8));
+    width: 44px;
+    height: 44px;
+  }
 }
 
 /* Phone: the credit line goes above the legend strip (side by side they would overlap), and the touch hint above it. */

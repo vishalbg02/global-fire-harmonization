@@ -244,3 +244,133 @@
 .dock .source-details {
   margin-top: var(--s-4);
 }
+
+/* ---- Narrow screens (the bottom-sheet layout): one compact row, the search and four icon buttons. The dock leaves
+   the right-hand column to the zoom and pause buttons, and stays above the sheet. ---- */
+.dock[data-compact='true'] {
+  right: calc(14px + 29px + var(--s-12));
+  width: auto;
+  max-width: 34rem;
+  max-height: calc(100% - var(--sheet-rest, 0px) - var(--s-24));
+  padding: var(--s-8);
+}
+
+.dock-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-8);
+  min-width: 0;
+}
+
+.dock-bar .dock-search {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.dock-icons {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--s-4);
+}
+
+.dock-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.dock .dock-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-height: 0;
+  padding: 0;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.dock .dock-icon:hover {
+  border-color: var(--ink);
+}
+
+/* On: filled with the brand colour (and the state is in the name: pressed, checked or expanded). */
+.dock .dock-icon[aria-expanded='true'],
+.dock .dock-icon[aria-pressed='true'],
+.dock .dock-icon[aria-checked='true'] {
+  color: var(--on-brand);
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.dock .dock-icon:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.dock .dock-icon svg {
+  display: block;
+}
+
+/* The label: under the button, shown on hover, keyboard focus and long-press. It never takes clicks. */
+.dock-tip {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 6px);
+  right: 0;
+  padding: 2px var(--s-8);
+  font-size: var(--t-12);
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--surface);
+  background: var(--ink);
+  border-radius: var(--radius);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.dock-icon:hover + .dock-tip,
+.dock-icon:focus-visible + .dock-tip,
+.dock-tip[data-shown='true'] {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dock-tip {
+    transition: opacity 150ms ease-out, visibility 150ms;
+  }
+}
+
+.dock[data-compact='true'] .dock-search .combo input {
+  min-height: 40px;
+}
+
+/* Phones: the primary controls are 44 px. */
+@media (max-width: 640px) {
+  .dock[data-compact='true'] {
+    right: calc(14px + 44px + var(--s-8));
+  }
+
+  .dock .dock-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dock[data-compact='true'] .dock-search .combo input {
+    min-height: 44px;
+  }
+}
+
+/* The labels of the first two buttons open to the right, so they stay on screen. */
+.dock-icon-wrap:nth-child(-n + 2) .dock-tip {
+  left: 0;
+  right: auto;
+}
