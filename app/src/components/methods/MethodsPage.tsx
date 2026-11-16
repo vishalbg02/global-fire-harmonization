@@ -34,7 +34,8 @@ function scrollToHash(): void {
   const el = document.getElementById(id)
   if (el === null) return
   for (let d = el.closest('details'); d !== null; d = d.parentElement?.closest('details') ?? null) d.open = true
-  requestAnimationFrame(() => el.scrollIntoView({ block: 'start' }))
+  // A timeout, not requestAnimationFrame: a background tab runs no animation frames.
+  setTimeout(() => el.scrollIntoView({ block: 'start' }), 0)
 }
 
 /**

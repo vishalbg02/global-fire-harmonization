@@ -76,8 +76,6 @@
 }
 
 .provisional-mark .help-tip {
-  width: 16px;
-  height: 16px;
   margin-left: var(--s-4);
   text-transform: none;
 }
@@ -224,9 +222,8 @@
 
 .ibar-legend .help-tip,
 .ibar-unit .help-tip {
-  width: 16px;
-  height: 16px;
-  margin-left: 0;
+  /* A full 24 px target that the next row does not cover (WCAG 2.2, 2.5.8). */
+  margin: 0;
 }
 
 .ibar-unit {
