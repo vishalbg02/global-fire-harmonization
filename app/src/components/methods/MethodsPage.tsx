@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchMeta, fetchValidation } from '../../api/client.ts'
 import { REASON_CODES } from '../../api/contract.ts'
@@ -17,7 +18,7 @@ import { REASON_CODE_SHORT } from '../../content/reasonCodes.ts'
 import { REASON_TEXTS } from '../../content/reasonTexts.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import { VERDICTS } from '../../api/contract.ts'
-import { reasonAnchor } from '../../content/methodsLink.ts'
+import { hashTarget, reasonAnchor } from '../../content/methodsLink.ts'
 import { ValidationResultsView } from './ValidationResultsView.tsx'
 import './methodsPage.css'
 
@@ -25,6 +26,16 @@ import './methodsPage.css'
  * Ids of the sections of this page. A method section whose own id is one of these gets no alias anchor (T-089).
  */
 const PAGE_SECTION_IDS: ReadonlySet<string> = new Set(['plain-words', 'validation', 'method', 'verdicts', 'reason-codes', 'grid', 'planned-tests', 'sources'])
+
+/** Scrolls to the element the address's hash names, opening any closed details around it. */
+function scrollToHash(): void {
+  const id = hashTarget(window.location.hash)
+  if (id === null) return
+  const el = document.getElementById(id)
+  if (el === null) return
+  for (let d = el.closest('details'); d !== null; d = d.parentElement?.closest('details') ?? null) d.open = true
+  requestAnimationFrame(() => el.scrollIntoView({ block: 'start' }))
+}
 
 /**
  * The methods and validation page (T-041, redesigned in T-089): the method in plain language, the validation results
@@ -34,6 +45,16 @@ const PAGE_SECTION_IDS: ReadonlySet<string> = new Set(['plain-words', 'validatio
 export function MethodsPage({ onBack }: { onBack: () => void }) {
   const validation = useQuery({ queryKey: ['validation'], queryFn: () => fetchValidation(), retry: false })
   const meta = useQuery({ queryKey: ['meta'], queryFn: () => fetchMeta(), retry: false })
+  // A link such as "Learn more" opens this page at an anchor. The page is loaded after the address is read, so the
+  // browser cannot scroll there by itself: scroll once it is drawn, and again when the validation results above have
+  // loaded and moved it (T-093).
+  const validationSettled = validation.isSuccess || validation.isError
+  useEffect(() => scrollToHash(), [validationSettled])
+  useEffect(() => {
+    const onHash = () => scrollToHash()
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   return (
     <main id="main-content" tabIndex={-1} className="methods-page">

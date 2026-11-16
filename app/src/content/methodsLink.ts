@@ -21,3 +21,13 @@ export function methodsHref(anchor?: string, location?: { pathname: string; sear
 
 /** The anchor of a reason code on the methods page: the evidence panel links here. */
 export const reasonAnchor = (code: string) => `reason-${code}`
+
+/** The element id a hash names ("#calibration" gives "calibration"); null for an empty or malformed hash. */
+export function hashTarget(hash: string): string | null {
+  if (hash.length < 2 || !hash.startsWith('#')) return null
+  try {
+    return decodeURIComponent(hash.slice(1))
+  } catch {
+    return null
+  }
+}
