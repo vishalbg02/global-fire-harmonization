@@ -1,6 +1,6 @@
 # Number inventory: every number the app displays (T-039 phase 2)
 
-> **Updated 2026-11-15 for the finished UI (T-078): the sections "Summary card and sparkline" to "Map source line, imagery and boundaries" and the methods rows were added or rewritten; the results of the check are in `docs/validation/T-078-final-number-check.md`.** For Member 2 and the Lead, to tick off in T-026. Written 2026-11-15 from the code on branch `frontend/T-039-real-verdicts` (app `app/src`, API `api/fire_api`), products T-014 (method 0.1.0, contract 0.1.1). Each row was derived by reading the component and its format helper; the file in the last column is where to look.
+> **Updated 2026-11-16 for the T-093 UI pass: the answer panel rows (interval bar, reason chips, source line), the timeline and the map's low-zoom drawing rule; the number check still reports 0 mismatches (`docs/validation/T-093-ui-excellence.md`).** Earlier: **updated 2026-11-15 for the finished UI (T-078): the sections "Summary card and sparkline" to "Map source line, imagery and boundaries" and the methods rows were added or rewritten; the results of the check are in `docs/validation/T-078-final-number-check.md`.** For Member 2 and the Lead, to tick off in T-026. Written 2026-11-15 from the code on branch `frontend/T-039-real-verdicts` (app `app/src`, API `api/fire_api`), products T-014 (method 0.1.0, contract 0.1.1). Each row was derived by reading the component and its format helper; the file in the last column is where to look.
 
 ## Rule: the app formats, it does not compute
 
@@ -125,11 +125,15 @@ Product columns are those of `data/products` (`cell_month_harmonized`, `entity_m
 | Summary card | Title: area name and month | `entity_month.entity_name` (the world reads "World" in the card and "Global" in the stored name and in the story texts), month of the selection | `<name>, <Month> <year>` | none |
 | Summary card | Verdict badge | `entity_month.verdict` | Label and icon of `content/verdicts.ts` | none |
 | Summary card | Probability sentence | `p_above`, `p_below` or `p_within` of the verdict | `formatProbability` wording, first letter capital, a full stop (for example "More than 99% likely above normal."); none for CANNOT_DETERMINE and NO_DETECTED_ACTIVITY | % |
-| Summary card | Big number | `entity_month.pct_of_normal` | `Math.round`, then "% of normal"; null reads "no data" | % |
-| Summary card | Estimate | `entity_month.estimate` | One decimal, then the unit "fire-active cell-days, Aqua-equivalent" | cell-days |
-| Summary card | 90% interval | `ci90_low`, `ci90_high` | One decimal each, "<low> to <high>" | cell-days |
-| Summary card | Satellites, data level, method | `witnesses_used`, `data_level`, `method_version` | Names of `content/witnesses.ts`; "standard (SP)" or "near-real-time (NRT)"; "method <version>" | none |
-| Summary card | Reason lines | `reason_codes` | Texts of `content/reasonTexts.ts`; "No caveat flags are recorded for this month." when empty; the evidence note for a disagreement scale above 1 (two decimals) | none |
+| Summary card | Big number | `entity_month.pct_of_normal` | `formatPctOfNormal` (`Math.round`), split into the number (Mono 40 px) and the unit "% of normal"; null reads "% of normal: no data" | % |
+| Summary card, interval bar (T-093) | Estimate (a dot in the bar and a printed value) | `entity_month.estimate` | `oneDecimal`; null reads "no data" and nothing is drawn; the unit "fire-active cell-days, Aqua-equivalent" is printed once under the bar | cell-days |
+| Summary card, interval bar (T-093) | 90% interval (a bar and a printed value) | `ci90_low`, `ci90_high` | `oneDecimal` each, "<low> to <high>"; "interval not available" when the estimate is there, "no data" when it is not | cell-days |
+| Summary card, interval bar (T-093) | Normal range (a hatched band and a printed value) | `baseline_p25`, `baseline_p75` | `oneDecimal` each, "<p25> to <p75>"; null reads "not available" | cell-days |
+| Summary card, interval bar (T-093) | Median (a dashed tick and a printed value) | `baseline_median` | `oneDecimal`; null reads "not available" | cell-days |
+| Summary card, interval bar (T-093) | Bar geometry | The four values above | **Drawing only**: positions on a 0 (or the lowest value) to highest-value scale with a small pad (`summary/intervalBar.ts`); no position or derived value is printed. The SVG description repeats the printed values. | none |
+| Summary card, source line | Satellites, data level, method | `witnesses_used`, `data_level`, `method_version` | Names of `content/witnesses.ts`; "standard (SP)" or "near-real-time (NRT)"; "method <version>". Shown once (T-093 removed the duplicate list above it). A "Provisional" marker beside the heading when `data_level` is not SP | none |
+| Summary card, "Why" chips (T-093) | Reason chips | `reason_codes` | One chip per code with the short label of `content/reasonCodes.ts`; it opens the text of `content/reasonTexts.ts` with "Learn more" |
+| Summary card (before T-093) | Reason lines | `reason_codes` | Texts of `content/reasonTexts.ts`; "No caveat flags are recorded for this month." when empty; the evidence note for a disagreement scale above 1 (two decimals) | none |
 | Sparkline (figure, text equivalent and hidden table) | 12 months of the estimate and the normal range | `entity_month.estimate`, `baseline_p25`, `baseline_p75` of the 12 months ending 3 months after the selected one (or at the latest month, never before the first) | One decimal; "no data" for a missing estimate (a gap in the line, never 0); "not available" for a missing range; the number of gaps and months in the text | cell-days |
 
 ### Month picker and scrubber (T-087)
@@ -137,6 +141,8 @@ Product columns are those of `data/products` (`cell_month_harmonized`, `entity_m
 | View | Field shown | Source | Format and rounding | Unit |
 |---|---|---|---|---|
 | Month scrubber | Position, ticks, label | `metadata.first_month` to `latest_month` (293 months for the T-014 products) | Index of the month in the record; year ticks every fifth year | month |
+| Timeline (T-093, replaces the scrubber row) | Strip, year labels, current month flag, provisional shading, satellite joins | `metadata.first_month`, `latest_month`, `provisional_months`; join dates from `content/witnessTimeline.ts` (S-NPP 2012-01, NOAA-20 2018-04: reference facts, not product data) | Year labels every 2, 4 or 8 years by width (2002 and 2026 always); "Month YYYY" via `monthLabel` | month |
+| Timeline (T-093) | Faint line behind the strip | The selected area's `estimate` (Harmonized) or `raw_combined_cell_days` (Raw), from the series already loaded | **Drawing only**: scaled 0 to the series' highest value; a null or missing month is a gap, never 0; no number is printed | none |
 | Month picker | Year select, 12 month buttons per year | `metadata.first_month`, `latest_month`, `provisional_months` | Months outside the record are disabled (here January to June 2002 and December 2026); provisional months carry "provisional" in the name and a dot | month |
 | Month picker | Typed month | The user | `YYYY-MM`, validated against the first and latest month | month |
 
@@ -156,6 +162,13 @@ Product columns are those of `data/products` (`cell_month_harmonized`, `entity_m
 | Rank | "<Month> <year> is the Nth highest <Month> of the record (M years with an estimate)", ties, years without an estimate, provisional note | `entity_month.estimate` of the same calendar month in every year | **Computed by the app:** 1 plus the number of years with a strictly larger estimate; M = years with an estimate; ordinal suffix | rank |
 | Coverage | "N% of M cells have a determinable verdict" and the verdict counts | `GET /api/map/cells` and the month's cells (`verdict`) | **Computed by the app:** determinable means any verdict except CANNOT_DETERMINE; `Math.round(share x 100)`; the world only until PR #94 (countries and continents: "shown for the world only") | % and cells |
 | Compare | % of normal of two areas by month | `entity_month.pct_of_normal` | `Math.round` in the tooltip; a gap for a missing month, never 0 | % |
+
+### Map drawing at world zoom (T-093)
+
+| View | Field shown | Source | Format and rounding | Unit |
+|---|---|---|---|---|
+| Map fill, verdict layer, zoom 3 and below | Opacity of the WITHIN_NORMAL, CANNOT_DETERMINE and NO_DETECTED_ACTIVITY cells | `verdict` | **Display only** (`components/map/signal.ts`): 12% of the colour's alpha at zoom 3 and below, rising linearly to full at zoom 4; ABOVE and BELOW always full; "Show all verdicts" (`allv=1`) draws all five at full strength. The verdict, tooltip, cell card and panel are unchanged | none |
+| Map legend | "Show all verdicts" switch and the low-zoom line | Fixed text (`content/earth.ts`) | No numbers | none |
 
 ### Map source line, imagery and boundaries (T-070, T-084, T-085)
 
