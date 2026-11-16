@@ -382,6 +382,17 @@
   cursor: pointer;
 }
 
+/* An invisible band above and below makes the 18 px line a 24 px target (WCAG 2.2, 2.5.8) without moving anything. */
+.export-about summary {
+  position: relative;
+}
+
+.export-about summary::after {
+  content: '';
+  position: absolute;
+  inset: -3px 0;
+}
+
 .export-about summary:hover {
   color: var(--ink);
 }
