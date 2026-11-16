@@ -1,0 +1,370 @@
+/* The timeline scrubber (zone C, T-093). Existing tokens only: 1 px rules, radius at most 4 px, the vermillion accent for
+   the current month only, Mono for every year. No gradients, no shadows except the picker's popover. */
+
+.timeline {
+  position: relative;
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+/* ---- The controls row ---- */
+.tl-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  min-width: 0;
+  min-height: 32px;
+}
+
+.tl-controls .btn {
+  min-height: 32px;
+}
+
+.tl-play {
+  gap: var(--s-8);
+  min-width: 5.5rem;
+  justify-content: flex-start;
+}
+
+.tl-play-icon {
+  display: inline-block;
+  width: 1em;
+  font-size: var(--t-12);
+  text-align: center;
+}
+
+.tl-play[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+
+.tl-play[aria-disabled='true'] {
+  color: var(--muted);
+}
+
+.tl-step {
+  min-width: 32px;
+  font-size: var(--t-20);
+  line-height: 1;
+}
+
+.tl-caption {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--t-12);
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.tl-key {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  font-size: var(--t-12);
+  color: var(--muted);
+}
+
+.tl-key-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: var(--s-4);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-top-width: 3px;
+  border-radius: 1px;
+  box-sizing: border-box;
+}
+
+.timeline .month-picker-trigger {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* The picker opens upwards from the bottom of the map column, aligned to its button on the right. */
+.timeline .month-picker-anchor {
+  top: auto;
+  bottom: 100%;
+  left: auto;
+  right: 0;
+  margin-top: 0;
+  margin-bottom: var(--s-8);
+}
+
+/* ---- The strip: the slider. The whole strip (flag lane, track and year labels) is the hit area. ---- */
+.tl-strip {
+  position: relative;
+  display: grid;
+  grid-template-rows: 20px 28px 18px;
+  min-width: 0;
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  border-radius: 2px;
+}
+
+.tl-strip.is-empty {
+  cursor: default;
+}
+
+.tl-strip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tl-track {
+  position: relative;
+  border-top: var(--rule);
+  border-bottom: 1px solid var(--muted);
+}
+
+.tl-span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+/* Provisional months: the badge's tint, with a 3 px bar on top so that a span of a few months is still seen. */
+.tl-prov {
+  background: var(--warn-bg);
+  border-top: 3px solid var(--warn-border);
+  border-left: 1px solid var(--warn-border);
+  box-sizing: border-box;
+}
+
+/* Months without a map in an offline copy: dimmed (the scrubber snaps past them). */
+.tl-missing {
+  z-index: 2;
+  background: var(--page);
+  opacity: 0.78;
+}
+
+.tl-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tl-line polyline,
+.tl-line line {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.6;
+}
+
+.tl-join {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--ink);
+}
+
+.tl-join-label {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  padding: 0 2px;
+  font-size: var(--t-12);
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.tl-hover {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px solid var(--ink);
+  opacity: 0.5;
+}
+
+.tl-thumb {
+  position: absolute;
+  z-index: 4;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--accent);
+}
+
+.tl-thumb::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3.5px;
+  width: 10px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+/* ---- Flags: the current month (vermillion rule) and the month under the pointer ---- */
+.tl-flags {
+  position: relative;
+}
+
+.tl-flag {
+  position: absolute;
+  bottom: 3px;
+  z-index: 4;
+  padding: 0 var(--s-4);
+  font-size: var(--t-12);
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--surface);
+  border-bottom: 2px solid var(--accent);
+  transform: translateX(-50%);
+}
+
+.tl-flag.is-start {
+  transform: translateX(-2px);
+}
+
+.tl-flag.is-end {
+  transform: translateX(calc(-100% + 2px));
+}
+
+.tl-flag-prov {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.tl-hover-flag {
+  z-index: 5;
+  font-weight: 400;
+  border: 1px solid var(--border);
+  border-bottom-color: var(--ink);
+  border-radius: 2px 2px 0 0;
+}
+
+.tl-year {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Year ticks ---- */
+.tl-ticks {
+  position: relative;
+}
+
+.tl-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 3px;
+  background: var(--muted);
+}
+
+.tl-tick.is-labelled {
+  height: 5px;
+  background: var(--ink);
+}
+
+.tl-tick-label {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-12);
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+}
+
+.tl-tick-label.is-start {
+  transform: none;
+}
+
+.tl-tick-label.is-end {
+  transform: translateX(-100%);
+}
+
+/* ---- Narrow zones: the caption is read out with the slider instead of shown, and Play keeps only its icon ---- */
+@container timeline (max-width: 760px) {
+  .tl-caption:not(.tl-note) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .tl-key {
+    margin-left: auto;
+  }
+}
+
+@container timeline (max-width: 520px) {
+  .tl-play {
+    min-width: 44px;
+    justify-content: center;
+  }
+
+  .tl-play-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Play, the steps and "Choose a month" on the first line; the provisional key on its own short line. */
+  .tl-controls {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .timeline .month-picker-trigger {
+    margin-left: auto;
+  }
+
+  .tl-key {
+    order: 5;
+    margin-left: 0;
+  }
+
+  .tl-note {
+    order: 10;
+    flex-basis: 100%;
+  }
+}
+
+/* Touch screens and phones: every control and the strip at least 44 px tall. */
+@media (pointer: coarse), (max-width: 600px) {
+  .tl-controls .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .tl-strip {
+    grid-template-rows: 20px 32px 18px;
+  }
+
+  /* The "?" keeps its round shape at the 24 px minimum target size (WCAG 2.2, 2.5.8); the doubled class outweighs the
+     page-wide 44 px rule for buttons on phones. */
+  .timeline .tl-key .help-tip.help-tip {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+  }
+}

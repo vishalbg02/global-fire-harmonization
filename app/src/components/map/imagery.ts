@@ -1,17 +1,36 @@
 // Map wiring for the GIBS imagery (T-084): raster sources and layers, the casings that keep outlines
 // readable over imagery, and the tile-error counters behind the single failure note.
-import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl'
+import type { Map as MapLibreMap, SkySpecification, StyleSpecification } from 'maplibre-gl'
 import { BASEMAP, TRUE_COLOUR, basemapTileUrl, imageryFailed, trueColourTileUrl } from './gibs.ts'
 import type { TileStats } from './gibs.ts'
-
-/** Whether the Flat / Globe switch is offered: only if the cells render correctly on the globe (see the PR). */
-export const GLOBE_OFFERED = true
 
 export const BASEMAP_SOURCE = 'gibs-basemap'
 export const BASEMAP_LAYER = 'gibs-basemap-layer'
 export const TRUE_COLOUR_SOURCE = 'gibs-true-colour'
 export const TRUE_COLOUR_LAYER = 'gibs-true-colour-layer'
-const PLAIN_BACKGROUND = '#dbe7f1'
+export const PLAIN_BACKGROUND = '#dbe7f1'
+/**
+ * Under imagery the background is a dark ocean blue close to Blue Marble's deep ocean: on the globe, MapLibre leaves a
+ * thin band at the limb without raster tiles, and the pale plain background showed there as a bright ring (T-093).
+ */
+export const IMAGERY_BACKGROUND = '#0e2340'
+/** The dark of space behind the globe: the same colour as the stage (--stage in tokens.css). */
+export const SPACE_COLOR = '#070b14'
+
+/**
+ * Space and atmosphere (T-093). On the globe MapLibre draws a thin atmosphere at the Earth's limb; it is kept subtle
+ * and fades out as the user zooms in, where it would only veil the map. The sky colours are the stage's dark, so a
+ * tilted view shows space, not a blue sky. The flat map draws no atmosphere, so it looks as before.
+ */
+export const SPACE_SKY: SkySpecification = {
+  'sky-color': SPACE_COLOR,
+  'horizon-color': SPACE_COLOR,
+  'fog-color': SPACE_COLOR,
+  'sky-horizon-blend': 0,
+  'horizon-fog-blend': 0,
+  'fog-ground-blend': 1,
+  'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 2.5, 0.5, 3.5, 0.15, 4.5, 0],
+}
 
 /**
  * The map style. The plain background is always there (the fallback); the Blue Marble raster is added
@@ -20,6 +39,7 @@ const PLAIN_BACKGROUND = '#dbe7f1'
 export function buildStyle(withImagery: boolean): StyleSpecification {
   return {
     version: 8,
+    sky: SPACE_SKY,
     sources: withImagery
       ? {
           [BASEMAP_SOURCE]: {
@@ -59,11 +79,12 @@ export function hideImagery(map: MapLibreMap, which: 'basemap' | 'true-colour' |
 }
 
 /**
- * Paint of the country layers for the plain background or over imagery. Over imagery the land fill is
- * invisible (it stays for clicks), and the borders and outlines get a pale casing so they read on dark
- * ocean and on bright cloud alike.
+ * Paint of the background and the country layers for the plain background or over imagery. Over imagery the
+ * land fill is invisible (it stays for clicks), the background is the dark ocean, and the borders and outlines
+ * get a pale casing so they read on dark ocean and on bright cloud alike.
  */
 export function paintForImagery(map: MapLibreMap, over: boolean): void {
+  if (map.getLayer('background') !== undefined) map.setPaintProperty('background', 'background-color', over ? IMAGERY_BACKGROUND : PLAIN_BACKGROUND)
   if (map.getLayer('countries-fill') === undefined) return
   map.setPaintProperty('countries-fill', 'fill-opacity', over ? 0 : 1)
   map.setPaintProperty('countries-line', 'line-color', over ? '#f4f4ee' : '#8a8f98')

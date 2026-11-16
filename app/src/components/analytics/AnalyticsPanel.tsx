@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchEntities, fetchMapCells, fetchMeta, fetchSeries } from '../../api/client.ts'
 import type { SeriesEntityType } from '../../api/client.ts'
 import type { EntityItem, EntityMonth, MapCell, Metadata } from '../../api/contract.ts'
+import { RAW_HARMONIZED_TAKEAWAY } from '../../content/answer.ts'
 import type { SourceMetadata, TextSegment } from '../../content/sources.ts'
 import { VERDICT_PRESENTATION } from '../../content/verdicts.ts'
 import './analytics.css'
@@ -138,11 +139,11 @@ export function AnalyticsPanel({ area, compareArea = null, onCompareChange, year
     <div className="analytics" aria-label={`Analytics for ${area.name}, ${monthName} ${year}`}>
       <section aria-labelledby="an-annual">
         <h3 id="an-annual">Raw against harmonized, by year</h3>
-        <p className="analytics-lede">The raw count steps up where a satellite joins; the harmonized estimate is built to stay on one scale.</p>
         <Status state={series} what="the series" />
         {annual !== null && (
           <>
             <AnalyticsChart option={annualOption(annual)} label={`Annual sums of raw and harmonized fire-active cell-days for ${area.name}, with the satellite joins in 2012 and 2018 marked. The table gives the same values.`} />
+            <p className="analytics-takeaway">{RAW_HARMONIZED_TAKEAWAY}</p>
             <p className="analytics-note">{ANNUAL_NOTE}</p>
             <details>
               <summary>Table of annual sums</summary>

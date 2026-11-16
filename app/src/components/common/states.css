@@ -1,0 +1,50 @@
+/* Loading, empty and error states (T-093). An error says what happened in plain words, with Retry when it can help;
+   a skeleton keeps the shape of what is coming so nothing moves when it arrives. */
+div.state.state-error {
+  display: grid;
+  gap: var(--s-8);
+  justify-items: start;
+  padding: var(--s-12);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius);
+  font-size: var(--t-14);
+  line-height: 1.45;
+}
+
+div.state.state-error p {
+  margin: 0;
+}
+
+p.state.state-empty,
+p.state.state-loading {
+  color: var(--muted);
+  font-size: var(--t-14);
+  line-height: 1.45;
+}
+
+.skeleton {
+  display: block;
+}
+
+.skeleton-block {
+  display: block;
+  max-width: 100%;
+  border-radius: 2px;
+  background: var(--border);
+  opacity: 0.55;
+  animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes skeleton-pulse {
+  to {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block {
+    animation: none;
+  }
+}

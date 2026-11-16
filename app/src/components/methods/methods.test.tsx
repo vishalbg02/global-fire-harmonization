@@ -269,3 +269,18 @@ describe('methods links', () => {
     expect(html).toContain('Learn more')
   })
 })
+
+describe('hashTarget (T-093: "Learn more" opens the page at its section)', () => {
+  it('reads the id after "#"', async () => {
+    const { hashTarget } = await import('../../content/methodsLink.ts')
+    expect(hashTarget('#calibration')).toBe('calibration')
+    expect(hashTarget('#reason-OUTAGE')).toBe('reason-OUTAGE')
+  })
+  it('gives null for an empty or malformed hash', async () => {
+    const { hashTarget } = await import('../../content/methodsLink.ts')
+    expect(hashTarget('')).toBeNull()
+    expect(hashTarget('#')).toBeNull()
+    expect(hashTarget('calibration')).toBeNull()
+    expect(hashTarget('#%E0%A4%A')).toBeNull()
+  })
+})

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   CELL_OPACITY_IMAGERY,
   CELL_OPACITY_PLAIN,
-  applyImageryParams,
   basemapTileUrl,
   cellOpacity,
   clampSatDay,
@@ -10,7 +9,6 @@ import {
   imageryFailed,
   imageryNote,
   isoDate,
-  parseImageryParams,
   satDate,
   satDayRange,
   trueColourTileUrl,
@@ -76,25 +74,5 @@ describe('cell opacity and failure rule', () => {
     expect(imageryNote(false, true, true)).toBe('failed')
     expect(imageryNote(false, false, true)).toBe('failed')
     expect(imageryNote(false, false, false)).toBeNull()
-  })
-})
-
-describe('imagery link parameters', () => {
-  it('defaults to nothing on', () => {
-    expect(parseImageryParams('')).toEqual({ sat: false, day: 15, globe: false })
-  })
-  it('round-trips and leaves defaults out', () => {
-    const p = new URLSearchParams('area=COUNTRY%3AIDN')
-    applyImageryParams(p, { sat: true, day: 20, globe: true })
-    expect(p.toString()).toBe('area=COUNTRY%3AIDN&sat=1&satday=20&globe=1')
-    expect(parseImageryParams(`?${p.toString()}`)).toEqual({ sat: true, day: 20, globe: true })
-    applyImageryParams(p, { sat: false, day: 20, globe: false })
-    expect(p.toString()).toBe('area=COUNTRY%3AIDN')
-    applyImageryParams(p, { sat: true, day: 15, globe: false })
-    expect(p.toString()).toBe('area=COUNTRY%3AIDN&sat=1')
-  })
-  it('ignores a bad day', () => {
-    expect(parseImageryParams('?satday=99').day).toBe(15)
-    expect(parseImageryParams('?satday=x').day).toBe(15)
   })
 })

@@ -17,8 +17,9 @@ export interface MapViewState {
 export const SHOW_ALL_PARAM = 'allv'
 
 /**
- * The view a link describes. `globe=1` is the globe; a link with other parameters and no `globe` keeps the flat map it
- * was shared with; an address with no parameters at all (a first visit at the world view) opens on the globe.
+ * The view a link describes. `globe=1` is the globe and `globe=0` the flat map; a link with other parameters and no
+ * `globe` keeps the flat map it was shared with; an address with no parameters at all (a first visit at the world view)
+ * opens on the globe. `satday` outside 1 to 31 (or not a whole number) falls back to the default day.
  */
 export function mapViewFromSearch(search: string): MapViewState {
   const params = new URLSearchParams(search)
@@ -32,7 +33,10 @@ export function mapViewFromSearch(search: string): MapViewState {
   }
 }
 
-/** Writes the view into link parameters; the defaults (flat, no Satellite view, day 15, signal only) are left out. */
+/**
+ * Writes the view into link parameters. The shape is always written (`globe=1` or `globe=0`), so a link read back gives
+ * the same view whatever else it carries; Satellite view, its day and "show all verdicts" are left out at their defaults.
+ */
 export function applyMapViewParams(params: URLSearchParams, view: MapViewState): void {
   params.delete('sat')
   params.delete('satday')
@@ -42,7 +46,7 @@ export function applyMapViewParams(params: URLSearchParams, view: MapViewState):
     params.set('sat', '1')
     if (view.satDay !== DEFAULT_SAT_DAY) params.set('satday', String(view.satDay))
   }
-  if (view.shape === 'globe') params.set('globe', '1')
+  params.set('globe', view.shape === 'globe' ? '1' : '0')
   if (view.showAll) params.set(SHOW_ALL_PARAM, '1')
 }
 

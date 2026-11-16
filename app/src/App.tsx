@@ -17,11 +17,16 @@ import { HelpLayer } from './components/help/HelpLayer.tsx'
 import type { HelpActions, HelpMode } from './components/help/HelpLayer.tsx'
 import { StartHere } from './components/help/StartHere.tsx'
 import { StoryChips } from './components/layout/StoryChips.tsx'
+import { BottomSheet } from './components/layout/BottomSheet.tsx'
+import { SHEET_QUERY } from './components/layout/sheet.ts'
+import { useMediaQuery } from './components/layout/useMediaQuery.ts'
 import { shiftMonth, shiftYear } from './components/map/monthPicker.ts'
 import { applyMapViewParams, mapViewFromSearch, mapViewReducer } from './state/mapView.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
 import { NO_OFFLINE_MAP, offlineMapNote } from './content/offline.ts'
-import { EmptyState, ErrorState, LoadingState } from './components/common/States.tsx'
+import { EmptyState, ErrorState, LoadingState, Skeleton } from './components/common/States.tsx'
+import { ToastHost } from './components/common/Toast.tsx'
+import { ANALYTICS_LOADING } from './content/answer.ts'
 import { PAGE_PARAM, METHODS_PAGE, pageFromSearch } from './content/methodsLink.ts'
 import { RAW_ONLY_AREA_UNAVAILABLE, RAW_ONLY_NOTE, RawOnlyContext, isRawOnly, isRawOnlySeries } from './content/rawOnly.ts'
 import { ExportButton } from './components/export/ExportButton.tsx'
@@ -40,7 +45,7 @@ import { Card } from './components/ui/Card.tsx'
 import { Tabs } from './components/ui/Tabs.tsx'
 import { compareFromSearch, setCompareParam } from './state/compare.ts'
 import type { CompareRef } from './state/compare.ts'
-import { analyticsAvailable, effectiveTab, setTabParam, tabFromSearch } from './state/tabs.ts'
+import { analyticsAvailable, effectiveTab, initialTab, rememberTab, setTabParam } from './state/tabs.ts'
 import type { TabId } from './state/tabs.ts'
 import { SyntheticBanner } from './components/common/SyntheticBanner.tsx'
 import { SourceToggle } from './components/common/SourceToggle.tsx'
@@ -48,7 +53,7 @@ import { MapModeSelector } from './components/map/MapModeSelector.tsx'
 import { CalendarPanel } from './components/calendar/CalendarPanel.tsx'
 import { EvidencePanel } from './components/evidence/EvidencePanel.tsx'
 import { WitnessPanel } from './components/witness/WitnessPanel.tsx'
-import { MonthSelector } from './components/map/MonthSelector.tsx'
+import { Timeline } from './components/timeline/Timeline.tsx'
 import { useMapCells } from './state/useMapCells.ts'
 import { hasOfflineMap, monthKey, monthLabel, monthRange, offlineMapMonths } from './state/months.ts'
 import { customArea } from './state/bbox.ts'
@@ -61,6 +66,8 @@ import { encodeSelection, selectionFromUrl } from './state/urlState.ts'
 
 const AnalyticsPanel = lazy(() => import('./components/analytics/index.ts').then((m) => ({ default: m.AnalyticsPanel })))
 const MethodsPage = lazy(() => import('./components/methods/MethodsPage.tsx').then((m) => ({ default: m.MethodsPage })))
+// The Analytics view's shape while its code loads: a heading, a line, the 260 px chart and a note.
+const ANALYTICS_SKELETON = [{ h: 18, w: '32%' }, { h: 14, w: '70%', gap: 10 }, { h: 260, gap: 10 }, { h: 12, w: '90%', gap: 10 }]
 // The map (MapLibre, deck.gl and the draw tool) is loaded when first needed, so the first load is small (T-042).
 const MapView = lazy(() => import('./components/map/MapView.tsx').then((m) => ({ default: m.MapView })))
 
@@ -74,9 +81,13 @@ export default function App() {
     const params = new URLSearchParams(window.location.search)
     return params.has('area') || params.has('month')
   })
+  // On narrow screens the answer panel is a bottom sheet; choosing an area or a story raises it to half height.
+  const narrow = useMediaQuery(SHEET_QUERY)
+  const [sheetRaise, setSheetRaise] = useState(0)
   // Every choice of the user goes through here; the automatic start month does not, so it leaves "Start here" in place.
   const dispatch = (action: SelectionAction) => {
     setStarted(true)
+    if (action.type === 'select-entity' || action.type === 'clear-entity') setSheetRaise((n) => n + 1)
     rawDispatch(action)
   }
   const [page, setPage] = useState<'map' | 'methods'>(() => pageFromSearch(window.location.search))
@@ -86,7 +97,9 @@ export default function App() {
   const [polygonDraft, setPolygonDraft] = useState<{ ring: Ring; error: string | null; seq: number } | null>(null)
   const [anomalyTab, setAnomalyTab] = useState<RankingTab>('COUNTRY')
   const [anomalyExpanded, setAnomalyExpanded] = useState(false)
-  const [tab, setTab] = useState<TabId>(() => tabFromSearch(window.location.search))
+  // The Details tab: the link's `tab=` wins; without one, the tab last opened in this browser.
+  const [tab, setTab] = useState<TabId>(() => initialTab(window.location.search))
+  useEffect(() => rememberTab(tab), [tab])
   // The area compared with in the Analytics tab, kept in the link as `compare=` (T-090).
   const [compare, setCompare] = useState<CompareRef | null>(() => compareFromSearch(window.location.search))
   // The guided tour opens once on a first visit without link parameters; Help in the header opens the help again.
@@ -321,6 +334,58 @@ export default function App() {
   }
   const startMonth = selection.month === null ? null : monthLabel(selection.month)
 
+  // The timeline, the answer panel and the source line: beside and under the map on wide screens, in the bottom
+  // sheet on narrow ones.
+  const timeline = (
+    <section className="timeline-zone" aria-label={UI.TIMELINE_LABEL} data-tour="month" data-playing={playing}>
+      <Timeline
+        months={mapMonths}
+        value={selection.month}
+        onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
+        meta={meta.data ?? null}
+        series={areaSeries.data}
+        source={rawOnly ? 'raw' : selection.source}
+        playing={playing}
+        onPlayingChange={setPlaying}
+      />
+    </section>
+  )
+  // In the sheet the stories follow the answer, so the sheet's first view is the verdict.
+  const storyChips = <StoryChips areaId={area.entity_id} month={selection.month} onChoose={chooseStory} />
+  const sourceLine = <MapSourceLine methodVersion={meta.data?.method_version ?? null} />
+  const answer = (
+    <aside className="answer" aria-label={UI.ANSWER_LABEL} data-tour="verdict">
+      {started ? (
+        <>
+        {!narrow && storyChips}
+        <SummaryCard
+          area={area}
+          month={selection.month}
+          status={areaSeries.isError ? 'error' : areaSeries.isPending ? 'loading' : 'ready'}
+          errorMessage={summaryError}
+          onRetry={summaryError === null || area.entity_type !== 'CUSTOM' ? () => void areaSeries.refetch() : undefined}
+          records={areaSeries.data}
+          meta={meta.data ?? null}
+          headingRef={summaryHeading}
+          download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
+          copyLink={<CopyLinkButton />}
+          story={story}
+          onCompare={analyticsAvailable(area.entity_type) ? () => openDetails('analytics') : undefined}
+          onDetails={() => openDetails(shownTab)}
+        />
+        {narrow && storyChips}
+        </>
+      ) : (
+        <StartHere
+          onChooseStory={chooseStory}
+          onSearch={focusSearch}
+          onShowWorld={() => dispatch({ type: 'clear-entity' })}
+          worldMonth={startMonth}
+        />
+      )}
+    </aside>
+  )
+
   return (
     <RawOnlyContext.Provider value={rawOnly}>
     <div className={page === 'map' ? 'app app-map' : 'app'}>
@@ -455,44 +520,17 @@ export default function App() {
                 {cellList !== null && cellList.length === 0 && <EmptyState message={UI.MAP_NO_CELLS} />}
               </div>
             </section>
-            <section className="timeline-zone" aria-label={UI.TIMELINE_LABEL} data-tour="month" data-playing={playing}>
-              <MonthSelector
-                months={mapMonths}
-                value={selection.month}
-                onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
-              />
-            </section>
-            <MapSourceLine methodVersion={meta.data?.method_version ?? null} />
+            {!narrow && timeline}
+            {!narrow && sourceLine}
           </div>
-          <aside className="answer" aria-label={UI.ANSWER_LABEL} data-tour="verdict">
-            {started ? (
-              <>
-              <StoryChips areaId={area.entity_id} month={selection.month} onChoose={chooseStory} />
-              <SummaryCard
-                area={area}
-                month={selection.month}
-                status={areaSeries.isError ? 'error' : areaSeries.isPending ? 'loading' : 'ready'}
-                errorMessage={summaryError}
-                onRetry={summaryError === null || area.entity_type !== 'CUSTOM' ? () => void areaSeries.refetch() : undefined}
-                records={areaSeries.data}
-                meta={meta.data ?? null}
-                headingRef={summaryHeading}
-                download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
-                copyLink={<CopyLinkButton />}
-                story={story}
-                onCompare={analyticsAvailable(area.entity_type) ? () => openDetails('analytics') : undefined}
-                onDetails={() => openDetails(shownTab)}
-              />
-              </>
-            ) : (
-              <StartHere
-                onChooseStory={chooseStory}
-                onSearch={focusSearch}
-                onShowWorld={() => dispatch({ type: 'clear-entity' })}
-                worldMonth={startMonth}
-              />
-            )}
-          </aside>
+          {narrow ? (
+            <BottomSheet top={timeline} raise={sheetRaise}>
+              {answer}
+              {sourceLine}
+            </BottomSheet>
+          ) : (
+            answer
+          )}
         </div>
 
         <Card id="details" className="details" aria-label={UI.TABS_LABEL}>
@@ -578,7 +616,7 @@ export default function App() {
                         selection.month === null || area.entity_type === 'CUSTOM' ? (
                           <EmptyState message={UI.SUMMARY_NO_MONTH} />
                         ) : (
-                          <Suspense fallback={<LoadingState what="the analytics" />}>
+                          <Suspense fallback={<Skeleton what={ANALYTICS_LOADING} blocks={ANALYTICS_SKELETON} />}>
                             <AnalyticsPanel
                               area={{ entityType: area.entity_type, entityId: area.entity_id, name: area.entity_name }}
                               compareArea={compare === null ? null : { entityType: compare.entityType, entityId: compare.entityId, name: compare.entityId }}
@@ -598,7 +636,8 @@ export default function App() {
         </Card>
       </main>
       )}
-      {page === 'map' && <HelpLayer mode={help} onMode={setHelp} actions={helpActions} shape={view.shape} />}
+      {page === 'map' && <HelpLayer mode={help} onMode={setHelp} actions={helpActions} shape={view.shape} onOpenMethods={openMethods} />}
+      <ToastHost />
     </div>
     </RawOnlyContext.Provider>
   )

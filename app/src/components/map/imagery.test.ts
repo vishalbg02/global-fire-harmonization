@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BASEMAP_LAYER, BASEMAP_SOURCE, TileCounter, buildStyle, layerKeyOfSource } from './imagery.ts'
+import { BASEMAP_LAYER, BASEMAP_SOURCE, SPACE_COLOR, TileCounter, buildStyle, layerKeyOfSource } from './imagery.ts'
 
 describe('map style', () => {
   it('has the Blue Marble raster above the plain background', () => {
@@ -11,6 +11,18 @@ describe('map style', () => {
     const s = buildStyle(false)
     expect(s.sources).toEqual({})
     expect(s.layers.map((l) => l.id)).toEqual(['background'])
+  })
+  it('puts the globe in dark space with a subtle atmosphere that fades out when zoomed in (T-093)', () => {
+    for (const withImagery of [true, false]) {
+      const sky = buildStyle(withImagery).sky
+      expect(sky?.['sky-color']).toBe(SPACE_COLOR)
+      expect(sky?.['horizon-color']).toBe(SPACE_COLOR)
+      const blend = sky?.['atmosphere-blend'] as unknown[]
+      // ['interpolate', ['linear'], ['zoom'], z0, v0, z1, v1, ...]: at most 0.6 (MapLibre's default is 0.8), 0 zoomed in.
+      const values = blend.slice(3).filter((_, i) => i % 2 === 1) as number[]
+      expect(Math.max(...values)).toBeLessThanOrEqual(0.6)
+      expect(values[values.length - 1]).toBe(0)
+    }
   })
 })
 

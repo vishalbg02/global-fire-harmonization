@@ -2,6 +2,8 @@
 .analytics section { border-top: 1px solid var(--border); padding-top: 0.6rem; }
 .analytics h3 { margin: 0 0 0.35rem; font-size: 0.95rem; font-weight: 600; }
 .analytics .analytics-lede { margin: 0 0 0.4rem; color: var(--text); }
+/* The one-line takeaway under the raw-against-harmonized chart (T-093). */
+.analytics .analytics-takeaway { margin: 0.4rem 0 0; font-size: var(--t-14); line-height: 1.45; color: var(--ink); }
 .analytics .analytics-note, .analytics .analytics-source { margin: 0.35rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .analytics .analytics-chart { width: 100%; }
 .analytics details { margin-top: 0.4rem; font-size: 0.85rem; overflow-x: auto; }

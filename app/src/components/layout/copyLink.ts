@@ -1,3 +1,5 @@
+import { LINK_COPIED } from '../../content/ui.ts'
+
 export interface CopyDeps {
   clipboard?: { writeText: (text: string) => Promise<void> } | undefined
   /** The old route (a hidden text box and `execCommand`); returns whether it worked. */
@@ -40,4 +42,14 @@ export async function copyText(text: string, deps: CopyDeps = {}): Promise<boole
   } catch {
     return false
   }
+}
+
+/**
+ * Copies the link and, when it was copied, confirms it with `notify` (the toast, "Link copied"). Returns whether it was
+ * copied; on failure the button shows the link to copy by hand and says so in its own status line.
+ */
+export async function copyAndConfirm(text: string, notify: (message: string) => void, deps: CopyDeps = {}): Promise<boolean> {
+  const ok = await copyText(text, deps)
+  if (ok) notify(LINK_COPIED)
+  return ok
 }
