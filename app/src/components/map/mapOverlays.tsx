@@ -70,12 +70,17 @@ export function MapLegend({
   )
 }
 
-/** The visible, announced loading indicator on the map while a month's cells load. */
+/**
+ * While a month's cells load: a slim line along the top edge of the map (no spinner over the data), and the same news
+ * in words for screen readers.
+ */
 export function MapLoading() {
   return (
     <div className="map-loading" role="status">
-      <span className="map-spinner" aria-hidden="true" />
-      {LOADING_TEXT}
+      <span className="map-progress" aria-hidden="true">
+        <span className="map-progress-bar" />
+      </span>
+      <span className="visually-hidden">{LOADING_TEXT}</span>
     </div>
   )
 }
