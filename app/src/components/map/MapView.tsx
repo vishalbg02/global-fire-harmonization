@@ -34,6 +34,7 @@ import { ImageryCredit } from './ImageryControls.tsx'
 import type { Dispatch } from 'react'
 import type { MapViewAction, MapViewState } from '../../state/mapView.ts'
 import { CELL_CASING_IMAGERY, cellOpacity, imageryNote, satDate, todayIso } from './gibs.ts'
+import { fadeZoom, quietAlpha, signalFill } from './signal.ts'
 import {
   TileCounter,
   buildStyle,
@@ -134,7 +135,6 @@ export function MapView({
   onView,
   onImageryStatus,
 }: Props) {
-  void onView
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const overlayRef = useRef<MapLibreOverlay | null>(null)
@@ -162,6 +162,9 @@ export function MapView({
   const tiles = useRef(new TileCounter())
   // Zoom of the map: the verdict icons are drawn only when a cell is big enough to hold one.
   const [zoom, setZoom] = useState(INITIAL_ZOOM)
+  // "Signal, not noise" (signal.ts): the zoom of the fade is followed during a zoom, in small steps, not only at its end.
+  const [fade, setFade] = useState(() => fadeZoom(INITIAL_ZOOM))
+  const quiet = quietAlpha(fade, view.showAll)
   // The outline of the country under the pointer, drawn above the cells (T-070).
   const [hoverOutline, setHoverOutline] = useState<unknown>(null)
   const countryShapes = useRef<Map<string, unknown> | null>(null)
@@ -244,7 +247,20 @@ export function MapView({
     overlayRef.current = overlay
     projected.current = 'flat'
     setZoom(map.getZoom())
-    map.on('zoomend', () => setZoom(map.getZoom()))
+    setFade(fadeZoom(map.getZoom()))
+    map.on('zoomend', () => {
+      setZoom(map.getZoom())
+      setFade(fadeZoom(map.getZoom()))
+    })
+    // During a zoom (a wheel, a pinch, a fly-to), once per frame at most; React re-renders only when a step is crossed.
+    let zoomFrame = 0
+    map.on('zoom', () => {
+      if (zoomFrame !== 0) return
+      zoomFrame = requestAnimationFrame(() => {
+        zoomFrame = 0
+        setFade(fadeZoom(map.getZoom()))
+      })
+    })
     // Imagery tiles: count loaded and failed ones; a failed layer is hidden and the plain background shows.
     map.on('data', (e) => {
       if (e.dataType !== 'source' || !('tile' in e) || e.tile === undefined) return
@@ -376,6 +392,7 @@ export function MapView({
 
     return () => {
       loaded.current = false
+      if (zoomFrame !== 0) cancelAnimationFrame(zoomFrame)
       map.remove()
       mapRef.current = null
       overlayRef.current = null
@@ -635,22 +652,22 @@ export function MapView({
         [c.lon_max, c.lat_max],
         [c.lon_min, c.lat_max],
       ],
-      getFillColor: (c) => [...cellFillColor(c, layer, max, opacity)],
+      // At world zoom the quiet verdicts are drawn faintly (signal.ts); they stay pickable for the tooltip and the card.
+      getFillColor: (c) => [...signalFill(cellFillColor(c, layer, max, opacity), c.verdict, layer, quiet)],
       // A light, thin stroke that grows with the zoom (none at world zoom); the selected cell's blue
       // outline and the dark "no data" outline stay as they were (T-071).
+      // A quiet cell's thin stroke fades with its fill, so the grid does not come back as noise.
       getLineColor: (c) =>
         c.cell_id === selectedCellId
           ? [0, 80, 200, 255]
           : needsOutline(c, layer)
             ? [27, 27, 31, 255]
-            : imageryVisible
-              ? [...CELL_CASING_IMAGERY]
-              : [60, 60, 60, CELL_STROKE_ALPHA],
+            : [...signalFill(imageryVisible ? CELL_CASING_IMAGERY : [60, 60, 60, CELL_STROKE_ALPHA], c.verdict, layer, quiet)],
       getLineWidth: (c) => (c.cell_id === selectedCellId ? 3 : needsOutline(c, layer) ? 1.5 : strokeWidth),
       lineWidthUnits: 'pixels',
       updateTriggers: {
-        getFillColor: [layer, max, opacity],
-        getLineColor: [selectedCellId, layer, imageryVisible],
+        getFillColor: [layer, max, opacity, quiet],
+        getLineColor: [selectedCellId, layer, imageryVisible, quiet],
         getLineWidth: [selectedCellId, layer, strokeWidth],
       },
       onHover: (info) => {
@@ -718,7 +735,7 @@ export function MapView({
             }),
           ]
     overlay.setProps({ layers: [polygons, ...selectedOutline, ...icons, ...outline] })
-  }, [cells, layer, selectedCellId, zoom, hoverOutline, selectedCountryIso3, shapesReady, imageryVisible, overlayGen])
+  }, [cells, layer, selectedCellId, zoom, hoverOutline, selectedCountryIso3, shapesReady, imageryVisible, overlayGen, quiet])
 
   return (
     <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
@@ -737,7 +754,14 @@ export function MapView({
         basemapShown={basemapShown}
       />
       <ScrollHint />
-      <MapLegend layer={layer} max={legendMax} cardPinned={pinnedCell !== null} />
+      <MapLegend
+        layer={layer}
+        max={legendMax}
+        cardPinned={pinnedCell !== null}
+        showAll={view.showAll}
+        onShowAll={onView === undefined ? undefined : (on) => onView({ type: 'set-show-all', on })}
+        ruleActive={quietAlpha(fade, false) < 1}
+      />
       {pinnedCell !== null && <PinnedCellCard cell={pinnedCell} layer={layer} onClose={closePinned} onPointerEnter={() => setHover(null)} />}
       {hover !== null && tooltipCellId(hover.cell.cell_id, pinned, false) !== null && cells !== null && cells.length > 0 && hover.cell.year === cells[0].year && hover.cell.month === cells[0].month && (
         <div
