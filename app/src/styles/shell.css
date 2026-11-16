@@ -162,6 +162,17 @@
   background: transparent;
 }
 
+/* The "i" is drawn at 18 px; an invisible ring makes its target 26 px (WCAG 2.2, 2.5.8). */
+.stage .map-credit-info {
+  position: relative;
+}
+
+.stage .map-credit-info::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
 .stage .map-credit a:focus-visible,
 .stage .map-credit button:focus-visible {
   outline-color: #ffffff;
@@ -257,36 +268,72 @@
   }
 }
 
-/* ---- Tablet and phone, until the bottom sheet: the zones stack ---- */
+/* ---- Tablet and phone (900 px and less): the map fills the first view and the answer panel is a bottom sheet over it
+   (components/layout/sheet.css), with the timeline at the sheet's top. A side panel at 769 to 900 px would leave the
+   map 390 to 520 px wide, too narrow for the dock and the zoom buttons side by side; the sheet keeps the map's full
+   width. The map's overlays ride on the sheet's top edge (at most at half height; above that the sheet covers them). */
 @media (max-width: 900px) {
   .first-view {
-    grid-template-columns: minmax(0, 1fr);
-    height: auto;
-    min-height: 0;
+    position: relative;
+    display: block;
+    height: calc(100dvh - var(--first-top, var(--header-h)));
+    min-height: 400px;
+    overflow: hidden;
+  }
+
+  .stage-col {
+    display: block;
+    height: 100%;
   }
 
   .stage {
-    height: 62dvh;
-    min-height: 360px;
-  }
-
-  .answer {
-    border-left: 0;
-    border-top: var(--rule);
-    overflow: visible;
+    height: 100%;
   }
 
   .app-map .top .subtitle {
     display: none;
   }
 
-  /* The answer first on narrow screens: the verdict is on the first screen, the map follows. */
-  .answer {
-    order: -1;
+  .stage .map-legend {
+    left: var(--s-8);
+    bottom: calc(var(--sheet-rest, 0px) + var(--s-8));
   }
 
   .stage .map-credit {
-    max-width: calc(100% - 10rem);
+    right: var(--s-8);
+    bottom: calc(var(--sheet-rest, 0px) + var(--s-8));
+    max-width: calc(100% - 12rem);
+  }
+
+  .stage .map-hint {
+    right: var(--s-8);
+    bottom: calc(var(--sheet-rest, 0px) + 3.75rem);
+  }
+
+  .stage-status {
+    bottom: calc(var(--sheet-rest, 0px) + 4.5rem);
+  }
+
+  .workspace > .details {
+    margin-top: var(--s-16);
+  }
+}
+
+/* Phone: the credit line goes above the legend strip (side by side they would overlap), and the touch hint above it. */
+@media (max-width: 600px) {
+  .stage .map-credit {
+    left: var(--s-8);
+    right: var(--s-8);
+    bottom: calc(var(--sheet-rest, 0px) + var(--s-8) + 52px);
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .stage .map-hint {
+    bottom: auto;
+    top: calc(100% - var(--sheet-rest, 0px) - 52px - 7rem);
   }
 }
 
@@ -309,13 +356,9 @@
     gap: var(--s-12);
   }
 
-  .stage .map-credit {
-    left: auto;
-    max-width: calc(100% - 9rem);
-  }
-
-  .stage .map-credit-line {
-    font-size: 11px;
+  /* The credit's "i" keeps its round shape; the page-wide 44 px rule for phone buttons would make the line tall. */
+  .stage .map-credit button.map-credit-info.map-credit-info {
+    min-height: 0;
   }
 }
 

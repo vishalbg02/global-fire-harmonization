@@ -17,6 +17,9 @@ import { HelpLayer } from './components/help/HelpLayer.tsx'
 import type { HelpActions, HelpMode } from './components/help/HelpLayer.tsx'
 import { StartHere } from './components/help/StartHere.tsx'
 import { StoryChips } from './components/layout/StoryChips.tsx'
+import { BottomSheet } from './components/layout/BottomSheet.tsx'
+import { SHEET_QUERY } from './components/layout/sheet.ts'
+import { useMediaQuery } from './components/layout/useMediaQuery.ts'
 import { shiftMonth, shiftYear } from './components/map/monthPicker.ts'
 import { applyMapViewParams, mapViewFromSearch, mapViewReducer } from './state/mapView.ts'
 import { OfflineNote } from './components/common/OfflineNote.tsx'
@@ -78,9 +81,13 @@ export default function App() {
     const params = new URLSearchParams(window.location.search)
     return params.has('area') || params.has('month')
   })
+  // On narrow screens the answer panel is a bottom sheet; choosing an area or a story raises it to half height.
+  const narrow = useMediaQuery(SHEET_QUERY)
+  const [sheetRaise, setSheetRaise] = useState(0)
   // Every choice of the user goes through here; the automatic start month does not, so it leaves "Start here" in place.
   const dispatch = (action: SelectionAction) => {
     setStarted(true)
+    if (action.type === 'select-entity' || action.type === 'clear-entity') setSheetRaise((n) => n + 1)
     rawDispatch(action)
   }
   const [page, setPage] = useState<'map' | 'methods'>(() => pageFromSearch(window.location.search))
@@ -327,6 +334,58 @@ export default function App() {
   }
   const startMonth = selection.month === null ? null : monthLabel(selection.month)
 
+  // The timeline, the answer panel and the source line: beside and under the map on wide screens, in the bottom
+  // sheet on narrow ones.
+  const timeline = (
+    <section className="timeline-zone" aria-label={UI.TIMELINE_LABEL} data-tour="month" data-playing={playing}>
+      <Timeline
+        months={mapMonths}
+        value={selection.month}
+        onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
+        meta={meta.data ?? null}
+        series={areaSeries.data}
+        source={rawOnly ? 'raw' : selection.source}
+        playing={playing}
+        onPlayingChange={setPlaying}
+      />
+    </section>
+  )
+  // In the sheet the stories follow the answer, so the sheet's first view is the verdict.
+  const storyChips = <StoryChips areaId={area.entity_id} month={selection.month} onChoose={chooseStory} />
+  const sourceLine = <MapSourceLine methodVersion={meta.data?.method_version ?? null} />
+  const answer = (
+    <aside className="answer" aria-label={UI.ANSWER_LABEL} data-tour="verdict">
+      {started ? (
+        <>
+        {!narrow && storyChips}
+        <SummaryCard
+          area={area}
+          month={selection.month}
+          status={areaSeries.isError ? 'error' : areaSeries.isPending ? 'loading' : 'ready'}
+          errorMessage={summaryError}
+          onRetry={summaryError === null || area.entity_type !== 'CUSTOM' ? () => void areaSeries.refetch() : undefined}
+          records={areaSeries.data}
+          meta={meta.data ?? null}
+          headingRef={summaryHeading}
+          download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
+          copyLink={<CopyLinkButton />}
+          story={story}
+          onCompare={analyticsAvailable(area.entity_type) ? () => openDetails('analytics') : undefined}
+          onDetails={() => openDetails(shownTab)}
+        />
+        {narrow && storyChips}
+        </>
+      ) : (
+        <StartHere
+          onChooseStory={chooseStory}
+          onSearch={focusSearch}
+          onShowWorld={() => dispatch({ type: 'clear-entity' })}
+          worldMonth={startMonth}
+        />
+      )}
+    </aside>
+  )
+
   return (
     <RawOnlyContext.Provider value={rawOnly}>
     <div className={page === 'map' ? 'app app-map' : 'app'}>
@@ -461,49 +520,17 @@ export default function App() {
                 {cellList !== null && cellList.length === 0 && <EmptyState message={UI.MAP_NO_CELLS} />}
               </div>
             </section>
-            <section className="timeline-zone" aria-label={UI.TIMELINE_LABEL} data-tour="month" data-playing={playing}>
-              <Timeline
-                months={mapMonths}
-                value={selection.month}
-                onChange={(year, month) => dispatch({ type: 'set-month', year, month })}
-                meta={meta.data ?? null}
-                series={areaSeries.data}
-                source={rawOnly ? 'raw' : selection.source}
-                playing={playing}
-                onPlayingChange={setPlaying}
-              />
-            </section>
-            <MapSourceLine methodVersion={meta.data?.method_version ?? null} />
+            {!narrow && timeline}
+            {!narrow && sourceLine}
           </div>
-          <aside className="answer" aria-label={UI.ANSWER_LABEL} data-tour="verdict">
-            {started ? (
-              <>
-              <StoryChips areaId={area.entity_id} month={selection.month} onChoose={chooseStory} />
-              <SummaryCard
-                area={area}
-                month={selection.month}
-                status={areaSeries.isError ? 'error' : areaSeries.isPending ? 'loading' : 'ready'}
-                errorMessage={summaryError}
-                onRetry={summaryError === null || area.entity_type !== 'CUSTOM' ? () => void areaSeries.refetch() : undefined}
-                records={areaSeries.data}
-                meta={meta.data ?? null}
-                headingRef={summaryHeading}
-                download={<ExportButton area={area} synthetic={meta.data?.synthetic === true} />}
-                copyLink={<CopyLinkButton />}
-                story={story}
-                onCompare={analyticsAvailable(area.entity_type) ? () => openDetails('analytics') : undefined}
-                onDetails={() => openDetails(shownTab)}
-              />
-              </>
-            ) : (
-              <StartHere
-                onChooseStory={chooseStory}
-                onSearch={focusSearch}
-                onShowWorld={() => dispatch({ type: 'clear-entity' })}
-                worldMonth={startMonth}
-              />
-            )}
-          </aside>
+          {narrow ? (
+            <BottomSheet top={timeline} raise={sheetRaise}>
+              {answer}
+              {sourceLine}
+            </BottomSheet>
+          ) : (
+            answer
+          )}
         </div>
 
         <Card id="details" className="details" aria-label={UI.TABS_LABEL}>
