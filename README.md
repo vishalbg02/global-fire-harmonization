@@ -58,6 +58,8 @@ Prerequisites:
 - **Node.js 22.12+ or 24 LTS** with npm
 - about 1 GB of disk
 
+To check your versions: `git lfs version`, `python --version` and `node --version`.
+
 You do **not** need the NASA raw archive or a FIRMS MAP_KEY to run the app.
 
 ```bash
