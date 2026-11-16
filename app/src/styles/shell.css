@@ -133,10 +133,6 @@
 .stage .map-legend {
   left: var(--s-12);
   bottom: var(--s-12);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--elev);
 }
 
 .stage .map-credit {

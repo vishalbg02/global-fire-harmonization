@@ -112,32 +112,3 @@ export function imageryNote(offlineCopy: boolean, basemapFailed: boolean, trueCo
   if (offlineCopy) return 'offline'
   return basemapFailed || trueColourFailed ? 'failed' : null
 }
-
-/** The imagery choices a link can carry: `sat=1`, `satday=DD` and `globe=1`; all absent by default. */
-export interface ImageryParams {
-  sat: boolean
-  day: number
-  globe: boolean
-}
-
-export function parseImageryParams(search: string): ImageryParams {
-  const params = new URLSearchParams(search)
-  const day = Number(params.get('satday'))
-  return {
-    sat: params.get('sat') === '1',
-    day: Number.isInteger(day) && day >= 1 && day <= 31 ? day : DEFAULT_SAT_DAY,
-    globe: params.get('globe') === '1',
-  }
-}
-
-/** Write the imagery choices into `params`; defaults are left out to keep links short. */
-export function applyImageryParams(params: URLSearchParams, value: ImageryParams): void {
-  params.delete('sat')
-  params.delete('satday')
-  params.delete('globe')
-  if (value.sat) {
-    params.set('sat', '1')
-    if (value.day !== DEFAULT_SAT_DAY) params.set('satday', String(value.day))
-  }
-  if (value.globe) params.set('globe', '1')
-}
