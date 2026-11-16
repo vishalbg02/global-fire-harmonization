@@ -1,22 +1,34 @@
 import { useState } from 'react'
+import { STORY_CARD_TITLE } from '../../content/answer.ts'
 import type { FeaturedStory } from '../../content/featured.ts'
 import * as UI from '../../content/ui.ts'
-import { Card } from '../ui/Card.tsx'
+import { rememberStoryOpen, storyOpenAtStart } from './storyCard.ts'
 
 /**
- * The selected story's headline, caption and facts, all taken from content/featured.ts (never retyped or recomputed).
- * On a phone only the headline shows at first, with a "Read more" toggle, so the verdict stays near the top.
+ * The featured story on screen, as a quiet "Story" card: its label ([VERIFIED]) and headline in the header, which opens
+ * and closes the caption, notes, context, source line, query and report link, all taken from content/featured.ts
+ * (never retyped or recomputed). Open by default; closed, it stays closed for the rest of the session.
  */
-function StoryCaptionBody({ story }: { story: FeaturedStory }) {
-  const [expanded, setExpanded] = useState(false)
+export function StoryCaption({ story }: { story: FeaturedStory }) {
+  const [open, setOpen] = useState(() => storyOpenAtStart())
   const bodyId = 'story-caption-body'
+  const toggle = () => {
+    const next = !open
+    setOpen(next)
+    rememberStoryOpen(next)
+  }
   return (
-    <Card className="story-caption" aria-label={UI.STORY_CAPTION_LABEL}>
-      <p className="eyebrow">
-        {UI.STORY_EYEBROW} <span className="story-label">{story.label}</span>
-      </p>
-      <h3>{story.headline}</h3>
-      <div id={bodyId} className={expanded ? 'story-body' : 'story-body story-body-collapsed'}>
+    <section className="story-card" aria-label={UI.STORY_CAPTION_LABEL} data-open={open}>
+      <h3 className="story-card-head">
+        <button type="button" className="bare story-toggle" aria-expanded={open} aria-controls={bodyId} onClick={toggle}>
+          <span className="story-kicker">
+            {STORY_CARD_TITLE} <span className="story-label">{story.label}</span>
+          </span>
+          <span className="story-headline">{story.headline}</span>
+          <span className="story-chevron" aria-hidden="true" />
+        </button>
+      </h3>
+      <div id={bodyId} className="story-body" hidden={!open}>
         <p>{story.caption}</p>
         {story.notes.map((n) => (
           <p key={n} className="story-note">
@@ -32,14 +44,6 @@ function StoryCaptionBody({ story }: { story: FeaturedStory }) {
           </a>
         </p>
       </div>
-      <button type="button" className="story-more" aria-expanded={expanded} aria-controls={bodyId} onClick={() => setExpanded((e) => !e)}>
-        {expanded ? UI.STORY_READ_LESS : UI.STORY_READ_MORE}
-      </button>
-    </Card>
+    </section>
   )
-}
-
-export function StoryCaption({ story }: { story: FeaturedStory }) {
-  // Keyed by the story, so a new story starts collapsed on a phone.
-  return <StoryCaptionBody key={story.label} story={story} />
 }

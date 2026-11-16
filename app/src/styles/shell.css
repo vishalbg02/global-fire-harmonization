@@ -213,20 +213,22 @@
   padding: var(--s-16) var(--s-24) var(--s-24);
 }
 
-.summary-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-8);
-  margin-top: var(--s-12);
-}
-
-/* ---- Details: full width below the first viewport ---- */
+/* ---- Details: full width below the first viewport; the tab headers stay in view while the card scrolls ---- */
 .workspace > .details {
   margin: var(--s-16) var(--s-24) var(--s-24);
   scroll-margin-top: var(--s-8);
 }
 
 /* "Start here", the tour, the Help sheet and the "?" explainers: components/help/help.css (T-093). */
+
+.workspace > .details .tabbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
 
 /* Story chips stay one click away in the answer panel after a story or area is chosen. */
 .answer > .stories {
@@ -238,6 +240,26 @@
   padding: var(--s-12) var(--s-16) 0;
   border: 0;
   background: transparent;
+}
+
+=======
+/* Short screens (a 1280 x 720 projector): smaller story chips and a tighter card, so the answer and its actions fit
+   in the first view. */
+@media (min-width: 901px) and (max-height: 760px) {
+  .answer > .stories {
+    gap: 6px;
+    padding: var(--s-8) var(--s-16) 0;
+    font-size: var(--t-12);
+  }
+
+  .answer > .stories .chip {
+    padding: 2px 8px;
+    font-size: var(--t-12);
+  }
+
+  .answer > .card {
+    padding: var(--s-8) var(--s-24) var(--s-16);
+  }
 }
 
 /* ---- Tablet and phone, until the bottom sheet: the zones stack ---- */
@@ -299,5 +321,19 @@
 
   .stage .map-credit-line {
     font-size: 11px;
+  }
+}
+
+/* Phone: the answer card uses the full width with a 16 px gutter. */
+@media (max-width: 600px) {
+  .answer > .card {
+    padding: var(--s-16);
+  }
+
+  .workspace > .details {
+    margin: var(--s-16) 0 var(--s-24);
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
   }
 }

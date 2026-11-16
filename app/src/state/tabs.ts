@@ -24,3 +24,42 @@ export const analyticsAvailable = (entityType: string): boolean => entityType !=
 export function effectiveTab(tab: TabId, entityType: string): TabId {
   return tab === 'analytics' && !analyticsAvailable(entityType) ? DEFAULT_TAB : tab
 }
+
+/** The last Details tab the user opened, remembered in this browser only (nothing is sent anywhere). */
+export const TAB_STORAGE_KEY = 'gfh.details.tab'
+
+type TabStore = Pick<Storage, 'getItem' | 'setItem'>
+
+function localStore(): TabStore | null {
+  try {
+    return typeof window === 'undefined' ? null : window.localStorage
+  } catch {
+    return null
+  }
+}
+
+const isTab = (value: string | null): value is TabId => (TAB_IDS as readonly string[]).includes(value ?? '')
+
+/**
+ * The tab to open with: a valid `tab=` in the link always wins; without one, the tab the user last opened; otherwise
+ * the default. Blocked or broken storage never throws (it gives the default).
+ */
+export function initialTab(search: string, store: TabStore | null = localStore()): TabId {
+  const fromLink = new URLSearchParams(search).get(TAB_PARAM)
+  if (isTab(fromLink)) return fromLink
+  try {
+    const remembered = store?.getItem(TAB_STORAGE_KEY) ?? null
+    return isTab(remembered) ? remembered : DEFAULT_TAB
+  } catch {
+    return DEFAULT_TAB
+  }
+}
+
+/** Remembers the open tab for the next visit; a blocked storage is ignored. */
+export function rememberTab(tab: TabId, store: TabStore | null = localStore()): void {
+  try {
+    store?.setItem(TAB_STORAGE_KEY, tab)
+  } catch {
+    // Without storage the next visit opens the default tab.
+  }
+}
