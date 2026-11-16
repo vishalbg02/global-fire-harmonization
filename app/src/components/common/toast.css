@@ -33,13 +33,26 @@
   }
 }
 
-/* Narrow screens stack the zones (the answer first): the toast sits at the foot of the screen. */
+/* Narrow screens (the bottom-sheet layout): the toast takes the scroll hint's place on the map, just above the sheet
+   and clear of the legend strip and the credit line; the hint steps aside while a toast is shown. */
 @media (max-width: 900px) {
   .toast-host {
     top: auto;
-    bottom: var(--s-16);
-    left: 50%;
-    max-width: calc(100vw - 2 * var(--s-16));
+    left: auto;
+    right: var(--s-8);
+    bottom: calc(var(--sheet-rest, 0px) + 3.75rem);
+    transform: none;
+    max-width: min(24rem, calc(100vw - 2 * var(--s-8)));
+  }
+
+  .app:has(.toast) .stage .map-hint {
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 600px) {
+  .toast-host {
+    bottom: calc(var(--sheet-rest, 0px) + 128px);
   }
 }
 

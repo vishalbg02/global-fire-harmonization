@@ -177,6 +177,13 @@
   color: var(--muted);
 }
 
+/* The imagery note is a status line: a rule on its left so it reads as a notice, not a hint. */
+.dock-note[role='status'] {
+  padding-left: var(--s-8);
+  color: var(--ink);
+  border-left: 2px solid var(--warn-border);
+}
+
 .dock-menus {
   padding-top: var(--s-8);
   border-top: var(--rule);

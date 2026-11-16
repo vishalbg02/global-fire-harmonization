@@ -138,11 +138,10 @@
 .stage .map-credit {
   right: var(--s-12);
   bottom: var(--s-12);
-  max-width: min(30rem, calc(100% - 20rem));
+  max-width: min(30rem, calc(100% - 17rem));
 }
 
-.stage .map-credit-line,
-.stage .map-imagery-note {
+.stage .map-credit-line {
   margin: 0;
   padding: 2px var(--s-8);
   background: rgba(7, 11, 20, 0.72);
@@ -185,6 +184,25 @@
   background: rgba(7, 11, 20, 0.72);
   color: var(--stage-ink);
   border-radius: var(--radius);
+}
+
+/* A narrower stage wraps the credit line beside the legend strip onto two lines, or three: the hint moves up with it. */
+.stage {
+  container: stage / inline-size;
+}
+
+@media (min-width: 901px) {
+  @container stage (max-width: 760px) {
+    .stage .map-hint {
+      bottom: 3.9rem;
+    }
+  }
+
+  @container stage (max-width: 600px) {
+    .stage .map-hint {
+      bottom: 5rem;
+    }
+  }
 }
 
 /* ---- Zone C: time ---- */
@@ -302,7 +320,7 @@
   .stage .map-credit {
     right: var(--s-8);
     bottom: calc(var(--sheet-rest, 0px) + var(--s-8));
-    max-width: calc(100% - 12rem);
+    max-width: calc(100% - 17rem);
   }
 
   .stage .map-hint {
@@ -310,8 +328,11 @@
     bottom: calc(var(--sheet-rest, 0px) + 3.75rem);
   }
 
+  /* Errors and empty states: in the middle of the map that is in view. */
   .stage-status {
-    bottom: calc(var(--sheet-rest, 0px) + 4.5rem);
+    top: calc((100% - var(--sheet-rest, 0px)) / 2);
+    bottom: auto;
+    transform: translate(-50%, -50%);
   }
 
   .workspace > .details {
@@ -351,8 +372,14 @@
   }
 
   .stage .map-hint {
-    bottom: auto;
-    top: calc(100% - var(--sheet-rest, 0px) - 52px - 7rem);
+    bottom: calc(var(--sheet-rest, 0px) + 128px);
+  }
+}
+
+/* A short phone has no room for the hint between the dock and the credit line. */
+@media (max-width: 600px) and (max-height: 700px) {
+  .stage .map-hint {
+    display: none;
   }
 }
 
