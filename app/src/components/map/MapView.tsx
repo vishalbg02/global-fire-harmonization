@@ -35,6 +35,7 @@ import type { Dispatch } from 'react'
 import type { MapViewAction, MapViewState } from '../../state/mapView.ts'
 import { CELL_CASING_IMAGERY, cellOpacity, imageryNote, satDate, todayIso } from './gibs.ts'
 import { fadeZoom, quietAlpha, signalFill } from './signal.ts'
+import { WORLD_CENTER, flyOptions, globeWorldZoom } from './globeMotion.ts'
 import {
   TileCounter,
   buildStyle,
@@ -113,6 +114,28 @@ function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+const sameBox = (a: Bbox, b: Bbox) => a.every((v, i) => v === b[i])
+
+/**
+ * The world view: on the globe, the Earth centred at `lng` and filling most of the stage; on the flat map, the world box
+ * fitted as at the start. Animated like a fly-to unless `instant`.
+ */
+function showWorld(map: maplibregl.Map, shape: MapViewState['shape'], instant: boolean, lng: number): void {
+  const options = flyOptions(instant)
+  if (shape === 'globe') {
+    const box = map.getContainer()
+    map.flyTo({ center: [lng, WORLD_CENTER[1]], zoom: globeWorldZoom(box.clientWidth, box.clientHeight), ...options })
+    return
+  }
+  map.fitBounds(
+    [
+      [WORLD_BBOX[0], WORLD_BBOX[1]],
+      [WORLD_BBOX[2], WORLD_BBOX[3]],
+    ],
+    { padding: 30, ...options },
+  )
+}
+
 export function MapView({
   cells,
   layer,
@@ -148,6 +171,11 @@ export function MapView({
   const { shape, satOn, satDay } = view
   /** The projection the map has now: a new map starts flat (mercator). */
   const projected = useRef<MapViewState['shape']>('flat')
+  /** False until the first projection is applied at load (that one is instant). */
+  const projectionApplied = useRef(false)
+  const shapeRef = useRef(shape)
+  /** True while nothing is selected: a change of shape then shows the whole world in the new one. */
+  const atWorld = useRef(true)
   const [overlayGen, setOverlayGen] = useState(0)
   const [basemapFailed, setBasemapFailed] = useState(false)
   const [failedTcDate, setFailedTcDate] = useState<string | null>(null)
@@ -171,7 +199,7 @@ export function MapView({
   // True once the country shapes are read: the selected country's outline and fit use them.
   const [shapesReady, setShapesReady] = useState(false)
   const [hover, setHover] = useState<{ cell: MapCell; x: number; y: number; w: number; h: number } | null>(null)
-  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry })
+  const callbacks = useRef({ onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry, onView })
   // The cell whose card is pinned on the map: until closed, Esc, or another cell is clicked (T-071).
   const [pinned, pinDispatch] = useReducer(pinnedReducer, null)
   useEffect(() => pinDispatch({ type: 'selection', selectedCellId }), [selectedCellId])
@@ -192,8 +220,11 @@ export function MapView({
   const ignoreClicksUntil = useRef(0)
   const drawingRef = useRef(drawing)
   useEffect(() => {
-    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry }
+    callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry, onView }
     drawingRef.current = drawing || polygonDrawing
+    shapeRef.current = shape
+    atWorld.current =
+      (fit === null || sameBox(fit.bbox, WORLD_BBOX)) && selectedCountryIso3 === null && customBbox === null && customRing === null
   })
   useEffect(() => {
     tcDateRef.current = tcDate
@@ -246,11 +277,16 @@ export function MapView({
     mapRef.current = map
     overlayRef.current = overlay
     projected.current = 'flat'
+    projectionApplied.current = false
     setZoom(map.getZoom())
     setFade(fadeZoom(map.getZoom()))
     map.on('zoomend', () => {
       setZoom(map.getZoom())
       setFade(fadeZoom(map.getZoom()))
+    })
+    // The globe needs more of the graphics card than the flat map: if the context is lost, fall back to flat silently.
+    map.on('webglcontextlost', () => {
+      if (projected.current === 'globe') callbacks.current.onView?.({ type: 'set-shape', shape: 'flat' })
     })
     // During a zoom (a wheel, a pinch, a fly-to), once per frame at most; React re-renders only when a step is crossed.
     let zoomFrame = 0
@@ -431,18 +467,30 @@ export function MapView({
 
   // The projection follows the shape of the app's state, at load and at every change: the control, the map and the link
   // read the same value (T-093). The cells overlay picks its view (flat or globe) when it is made, so a new one is made.
+  // If the globe cannot be drawn here, the app's state goes back to flat, so the control and the link follow.
   useEffect(() => {
     const map = mapRef.current
     if (map === null) return
     const apply = () => {
       if (projected.current === shape) return
+      const first = !projectionApplied.current
+      projectionApplied.current = true
+      try {
+        map.setProjection({ type: shape === 'globe' ? 'globe' : 'mercator' })
+      } catch {
+        if (shape === 'globe') callbacks.current.onView?.({ type: 'set-shape', shape: 'flat' })
+        return
+      }
       projected.current = shape
-      map.setProjection({ type: shape === 'globe' ? 'globe' : 'mercator' })
       if (overlayRef.current !== null) map.removeControl(overlayRef.current)
       const overlay = new MapLibreOverlay({ interleaved: false, layers: [] })
       map.addControl(overlay)
       overlayRef.current = overlay
       setOverlayGen((g) => g + 1)
+      // At the world view the whole world is shown in the new shape: the globe at its size, the flat map fitted.
+      if (atWorld.current && map.getZoom() < 3) {
+        showWorld(map, shape, first || prefersReducedMotion(), first ? WORLD_CENTER[0] : map.getCenter().lng)
+      }
     }
     if (loaded.current) apply()
     else map.once('load', apply)
@@ -738,7 +786,7 @@ export function MapView({
   }, [cells, layer, selectedCellId, zoom, hoverOutline, selectedCountryIso3, shapesReady, imageryVisible, overlayGen, quiet])
 
   return (
-    <div ref={wrap} className="map-wrap" onMouseLeave={() => setHover(null)}>
+    <div ref={wrap} className="map-wrap" data-shape={shape} onMouseLeave={() => setHover(null)}>
       <div
         ref={container}
         className="map"
