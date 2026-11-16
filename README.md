@@ -4,7 +4,9 @@
 
 > **Did fire activity really change here, or only the satellites watching it?**
 
-![The app on the globe: October 2026 for the world, with only above- and below-normal cells drawn strongly, the answer panel and the 2002–2026 timeline](docs/figures/screenshots/world-globe.jpg)
+![Indonesia, September 2015 on the globe: above normal, 265% of normal, more than 99% likely, with the interval bar, the answer panel and the 2002–2026 timeline](docs/figures/screenshots/indonesia-2015-09.jpg)
+
+*Indonesia, September 2015: **above normal, 265% of normal, more than 99% likely**. The interval bar shows the estimate and its 90% interval far to the right of the hatched normal range.*
 
 Satellite fire records jump every time a new satellite joins. When S-NPP VIIRS joined MODIS in January 2012, raw counts stepped up **2.6 to 4.3 times** across regions, and again **1.6 to 2.1 times** when NOAA-20 joined in April 2018. That isn't more fire: the camera changed. This project puts NASA's MODIS and VIIRS hotspots on **one scale**. For any place and month from **July 2002 to November 2026**, it says whether fire activity was **above, within or below normal**, how sure it is, and why. It says **"cannot determine"** when the evidence is too weak.
 
@@ -45,9 +47,9 @@ Verified against `data/products/entity_month.parquet` ([`docs/validation/T-079-f
 
 ## The app
 
-![Indonesia, September 2015: above normal, 265% of normal, more than 99% likely, with the interval bar against the normal range](docs/figures/screenshots/indonesia-2015-09.jpg)
+![Australia, December 2019 on the globe: above normal, 328% of normal, more than 99% likely](docs/figures/screenshots/australia-2019-12.jpg)
 
-*Indonesia, September 2015. The verdict, % of normal and probability come first. The interval bar shows the estimate and its 90% interval far to the right of the hatched normal range.*
+*Australia, December 2019 (Black Summer): **above normal, 328% of normal, more than 99% likely**. The verdict, % of normal and probability come first, then the interval bar, the 12-month trend against the normal band, the reasons and the source.*
 
 <table>
 <tr>
