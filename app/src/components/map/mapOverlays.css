@@ -257,6 +257,34 @@
   }
 }
 
+/* ---- The rotation button, level with the zoom buttons on their left (globe only) ---- */
+.map-rotate {
+  position: absolute;
+  /* MapLibre's zoom buttons sit 10 px inside their corner; the stage moves the corner 4 px in (shell.css). */
+  top: 14px;
+  right: calc(14px + 29px + 8px);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  background: var(--surface, #fff);
+  color: var(--ink, #14181f);
+  border: 0;
+  border-radius: var(--radius, 3px);
+  box-shadow: var(--elev, 0 0 0 2px rgba(0, 0, 0, 0.1));
+  cursor: pointer;
+}
+
+.map-rotate:hover {
+  background: #f2f4f8;
+}
+
+.map-rotate svg {
+  display: block;
+}
+
 .map-pinned {
   position: absolute;
   /* Top right, below the zoom buttons; the legend (bottom left) and hint (bottom right) stay free. */

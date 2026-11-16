@@ -8,6 +8,7 @@ import { GeoJsonLayer, PolygonLayer, TextLayer } from '@deck.gl/layers'
 import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { Bbox, MapCell, MapLayer } from '../../api/contract.ts'
+import { PAUSE_ROTATION, PAUSE_ROTATION_TITLE, RESUME_ROTATION_TITLE } from '../../content/earth.ts'
 import { bboxFromRing } from '../../state/bbox.ts'
 import { pinnedReducer } from '../../state/pinnedCell.ts'
 import { tooltipCellId } from './mapPlacement.ts'
@@ -35,7 +36,18 @@ import type { Dispatch } from 'react'
 import type { MapViewAction, MapViewState } from '../../state/mapView.ts'
 import { CELL_CASING_IMAGERY, cellOpacity, imageryNote, satDate, todayIso } from './gibs.ts'
 import { fadeZoom, quietAlpha, signalFill } from './signal.ts'
-import { WORLD_CENTER, flyOptions, globeWorldZoom } from './globeMotion.ts'
+import {
+  WORLD_CENTER,
+  fitPadding,
+  flyOptions,
+  globeWorldZoom,
+  idleLongEnough,
+  nextLongitude,
+  readRotationPaused,
+  rotationAllowed,
+  writeRotationPaused,
+} from './globeMotion.ts'
+import type { Padding } from './globeMotion.ts'
 import {
   TileCounter,
   buildStyle,
@@ -111,10 +123,54 @@ function ringFeature(ring: Ring) {
 }
 
 function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  return typeof window !== 'undefined' && window.matchMedia(REDUCED_MOTION).matches
+}
+
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)'
+
+/** Whether the user prefers reduced motion, kept up to date when the setting changes. */
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(prefersReducedMotion)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const query = window.matchMedia(REDUCED_MOTION)
+    const onChange = () => setReduced(query.matches)
+    query.addEventListener('change', onChange)
+    return () => query.removeEventListener('change', onChange)
+  }, [])
+  return reduced
+}
+
+function localStore(): Storage | null {
+  try {
+    return typeof window === 'undefined' ? null : window.localStorage
+  } catch {
+    return null
+  }
 }
 
 const sameBox = (a: Bbox, b: Bbox) => a.every((v, i) => v === b[i])
+
+/**
+ * The space the floating panels take on the map, for fitting an area beside them, not under them: the dock (top left,
+ * outside this component, found by its class) and the legend strip (bottom left) on the left, the zoom buttons on the
+ * right, the credit line at the bottom. On a phone, where a panel spans most of the width, its height is kept free.
+ */
+function reservedSpace(container: HTMLElement): Padding {
+  const box = container.getBoundingClientRect()
+  const reserved: Padding = { top: 0, right: 44, bottom: 24, left: 0 }
+  const dock = container.closest('.stage')?.querySelector<HTMLElement>('.dock')?.getBoundingClientRect()
+  if (dock !== undefined && dock.width > 0) {
+    if (dock.right - box.left > box.width / 2) reserved.top = Math.max(0, dock.bottom - box.top)
+    else reserved.left = Math.max(0, dock.right - box.left)
+  }
+  const legend = container.parentElement?.querySelector<HTMLElement>('.map-legend')?.getBoundingClientRect()
+  if (legend !== undefined && legend.width > 0) {
+    if (legend.right - box.left > box.width / 2) reserved.bottom = Math.max(reserved.bottom, box.bottom - legend.top)
+    else reserved.left = Math.max(reserved.left, legend.right - box.left)
+  }
+  return reserved
+}
 
 /**
  * The world view: on the globe, the Earth centred at `lng` and filling most of the stage; on the flat map, the world box
@@ -193,6 +249,13 @@ export function MapView({
   // "Signal, not noise" (signal.ts): the zoom of the fade is followed during a zoom, in small steps, not only at its end.
   const [fade, setFade] = useState(() => fadeZoom(INITIAL_ZOOM))
   const quiet = quietAlpha(fade, view.showAll)
+  const reducedMotion = useReducedMotion()
+  // Idle rotation of the globe (globeMotion.ts): the user's pause is remembered; any interaction stops it for 8 s.
+  const [rotationPaused, setRotationPaused] = useState(() => readRotationPaused(localStore()))
+  const lastInteraction = useRef(Date.now())
+  const stopRotation = useRef<() => void>(() => {})
+  const clearCountryHover = useRef<() => void>(() => {})
+  const motion = useRef({ shape, paused: rotationPaused, drawing: false, pinned: false, reducedMotion })
   // The outline of the country under the pointer, drawn above the cells (T-070).
   const [hoverOutline, setHoverOutline] = useState<unknown>(null)
   const countryShapes = useRef<Map<string, unknown> | null>(null)
@@ -223,6 +286,7 @@ export function MapView({
     callbacks.current = { onSelectCell, onSelectCountry, onDrawn, onDrawnPolygon, onHoverCountry, onView }
     drawingRef.current = drawing || polygonDrawing
     shapeRef.current = shape
+    motion.current = { shape, paused: rotationPaused, drawing: drawing || polygonDrawing, pinned: pinned !== null, reducedMotion }
     atWorld.current =
       (fit === null || sameBox(fit.bbox, WORLD_BBOX)) && selectedCountryIso3 === null && customBbox === null && customRing === null
   })
@@ -415,6 +479,7 @@ export function MapView({
       callbacks.current.onHoverCountry?.(iso3 === null ? null : { iso3, name })
       setHoverOutline(iso3 === null ? null : (countryShapes.current?.get(iso3) ?? null))
     }
+    clearCountryHover.current = () => setHover(null)
     map.on('mousemove', 'countries-fill', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
       if (drawingRef.current) return setHover(null)
       const props = e.features?.[0]?.properties
@@ -429,11 +494,85 @@ export function MapView({
     return () => {
       loaded.current = false
       if (zoomFrame !== 0) cancelAnimationFrame(zoomFrame)
+      clearCountryHover.current = () => {}
       map.remove()
       mapRef.current = null
       overlayRef.current = null
     }
   }, [])
+
+  // Idle rotation (globeMotion.ts): on the globe at the world view, after 8 s without interaction, the Earth turns slowly
+  // eastward. Any pointer, wheel, touch or key on the map, a selection or a fit stops it at once; it never runs while
+  // drawing, with a pinned card, in a hidden tab, under reduced motion or when paused with the map's button.
+  useEffect(() => {
+    const map = mapRef.current
+    if (map === null) return
+    let frame = 0
+    let last = 0
+    const conditions = () => {
+      const box = map.getContainer()
+      return {
+        ...motion.current,
+        zoom: map.getZoom(),
+        worldZoom: globeWorldZoom(box.clientWidth, box.clientHeight),
+        hidden: document.hidden,
+      }
+    }
+    const stop = () => {
+      if (frame !== 0) cancelAnimationFrame(frame)
+      frame = 0
+    }
+    const step = (t: number) => {
+      if (!rotationAllowed(conditions()) || map.isMoving()) {
+        frame = 0
+        return
+      }
+      const dt = last === 0 ? 0 : t - last
+      last = t
+      const center = map.getCenter()
+      map.jumpTo({ center: [nextLongitude(center.lng, dt), center.lat] })
+      frame = requestAnimationFrame(step)
+    }
+    const check = () => {
+      if (frame !== 0 || !loaded.current || map.isMoving()) return
+      if (!rotationAllowed(conditions()) || !idleLongEnough(Date.now(), lastInteraction.current)) return
+      // The pointer may rest on the map: its tooltip and outlines would no longer match what is under it.
+      setHover(null)
+      clearCountryHover.current()
+      last = 0
+      frame = requestAnimationFrame(step)
+    }
+    const interact = () => {
+      lastInteraction.current = Date.now()
+      stop()
+    }
+    stopRotation.current = interact
+    const timer = window.setInterval(check, 500)
+    const el = map.getContainer()
+    const events = ['pointerdown', 'pointermove', 'wheel', 'touchstart', 'keydown'] as const
+    for (const type of events) el.addEventListener(type, interact, { passive: true })
+    const onVisibility = () => {
+      if (document.hidden) stop()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.clearInterval(timer)
+      stop()
+      for (const type of events) el.removeEventListener(type, interact)
+      document.removeEventListener('visibilitychange', onVisibility)
+      stopRotation.current = () => {}
+    }
+  }, [])
+
+  // A new selection or a drawing mode is an interaction: the rotation waits another 8 s.
+  useEffect(() => stopRotation.current(), [selectedCellId, selectedCountryIso3, drawing, polygonDrawing])
+
+  const toggleRotation = () => {
+    const next = !rotationPaused
+    stopRotation.current()
+    setRotationPaused(next)
+    writeRotationPaused(localStore(), next)
+  }
 
   // Satellite view: add, change or remove the day's true-colour layer.
   useEffect(() => {
@@ -544,19 +683,27 @@ export function MapView({
     else map.once('load', apply)
   }, [customBbox, customRing])
 
-  // Fit the map to an area chosen in the picker (no animation if the user prefers reduced motion).
+  // Fly to an area chosen in the picker, a story or an anomaly (about 1.2 s, ease-out; instant under reduced motion),
+  // fitted beside the floating panels, not under them. Choosing the world flies back to the world view.
   useEffect(() => {
     const map = mapRef.current
     if (map === null || fit === null) return
+    stopRotation.current()
+    const reduced = prefersReducedMotion()
+    if (selectedCountryIso3 === null && sameBox(fit.bbox, WORLD_BBOX)) {
+      showWorld(map, shapeRef.current, reduced, map.getCenter().lng)
+      return
+    }
     // A selected country: its boundary's box (the cells stop short of the far north); else the box asked for.
     const shape = selectedCountryIso3 === null ? null : countryShapes.current?.get(selectedCountryIso3)
     const [w, s, e, n] = (shape === undefined || shape === null ? null : polygonBounds(shape)) ?? fit.bbox
+    const box = map.getContainer()
     map.fitBounds(
       [
         [w, s],
         [e, n],
       ],
-      { padding: 30, maxZoom: 6, animate: !prefersReducedMotion() },
+      { padding: fitPadding(box.clientWidth, box.clientHeight, reservedSpace(box)), maxZoom: 6, ...flyOptions(reduced) },
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- a new fit, or the shapes arriving, refits; the country is read at that moment
   }, [fit, shapesReady])
@@ -802,6 +949,26 @@ export function MapView({
         basemapShown={basemapShown}
       />
       <ScrollHint />
+      {shape === 'globe' && !reducedMotion && (
+        <button
+          type="button"
+          className="bare map-rotate"
+          aria-pressed={rotationPaused}
+          aria-label={PAUSE_ROTATION}
+          title={rotationPaused ? RESUME_ROTATION_TITLE : PAUSE_ROTATION_TITLE}
+          onClick={toggleRotation}
+        >
+          {rotationPaused ? (
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z" fill="currentColor" />
+            </svg>
+          )}
+        </button>
+      )}
       <MapLegend
         layer={layer}
         max={legendMax}
