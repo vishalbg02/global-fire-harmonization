@@ -255,6 +255,8 @@ export function MapView({
   const lastInteraction = useRef(Date.now())
   const stopRotation = useRef<() => void>(() => {})
   const clearCountryHover = useRef<() => void>(() => {})
+  // The cell under the pointer, outlined on the map (T-093); changes only when the pointer enters another cell.
+  const [hoverCell, setHoverCell] = useState<MapCell | null>(null)
   const motion = useRef({ shape, paused: rotationPaused, drawing: false, pinned: false, reducedMotion })
   // The outline of the country under the pointer, drawn above the cells (T-070).
   const [hoverOutline, setHoverOutline] = useState<unknown>(null)
@@ -538,6 +540,7 @@ export function MapView({
       if (!rotationAllowed(conditions()) || !idleLongEnough(Date.now(), lastInteraction.current)) return
       // The pointer may rest on the map: its tooltip and outlines would no longer match what is under it.
       setHover(null)
+      setHoverCell(null)
       clearCountryHover.current()
       last = 0
       frame = requestAnimationFrame(step)
@@ -867,11 +870,9 @@ export function MapView({
       },
       onHover: (info) => {
         const box = wrap.current?.getBoundingClientRect()
-        setHover(
-          info.object && box
-            ? { cell: info.object as MapCell, x: info.x, y: info.y, w: box.width, h: box.height }
-            : null,
-        )
+        const object = (info.object as MapCell | undefined) ?? null
+        setHover(object !== null && box ? { cell: object, x: info.x, y: info.y, w: box.width, h: box.height } : null)
+        setHoverCell((prev) => (prev?.cell_id === object?.cell_id ? prev : object))
       },
       onClick: (info) => {
         if (info.object && !clicksIgnored()) {
@@ -929,11 +930,53 @@ export function MapView({
               lineWidthUnits: 'pixels',
             }),
           ]
-    overlay.setProps({ layers: [polygons, ...selectedOutline, ...icons, ...outline] })
-  }, [cells, layer, selectedCellId, zoom, hoverOutline, selectedCountryIso3, shapesReady, imageryVisible, overlayGen, quiet])
+    // The cell under the pointer (T-093): a thin dark outline, with a pale casing over imagery. Not while drawing.
+    const cellRing = (c: MapCell) => [[c.lon_min, c.lat_min], [c.lon_max, c.lat_min], [c.lon_max, c.lat_max], [c.lon_min, c.lat_max]]
+    const hovered = hoverCell === null || drawing || polygonDrawing ? [] : [hoverCell]
+    const hoverLayers =
+      hovered.length === 0
+        ? []
+        : [
+            ...(imageryVisible
+              ? [
+                  new PolygonLayer<MapCell>({
+                    id: 'hover-cell-casing',
+                    data: hovered,
+                    pickable: false,
+                    stroked: true,
+                    filled: false,
+                    getPolygon: cellRing,
+                    getLineColor: [255, 255, 255, 190],
+                    getLineWidth: 3.5,
+                    lineWidthUnits: 'pixels',
+                  }),
+                ]
+              : []),
+            new PolygonLayer<MapCell>({
+              id: 'hover-cell',
+              data: hovered,
+              pickable: false,
+              stroked: true,
+              filled: false,
+              getPolygon: cellRing,
+              getLineColor: [20, 24, 31, 235],
+              getLineWidth: 1.5,
+              lineWidthUnits: 'pixels',
+            }),
+          ]
+    overlay.setProps({ layers: [polygons, ...selectedOutline, ...hoverLayers, ...icons, ...outline] })
+  }, [cells, layer, selectedCellId, zoom, hoverOutline, selectedCountryIso3, shapesReady, imageryVisible, overlayGen, quiet, hoverCell, drawing, polygonDrawing])
 
   return (
-    <div ref={wrap} className="map-wrap" data-shape={shape} onMouseLeave={() => setHover(null)}>
+    <div
+      ref={wrap}
+      className="map-wrap"
+      data-shape={shape}
+      onMouseLeave={() => {
+        setHover(null)
+        setHoverCell(null)
+      }}
+    >
       <div
         ref={container}
         className="map"
