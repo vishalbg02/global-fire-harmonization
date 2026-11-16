@@ -1,31 +1,23 @@
 import { useState } from 'react'
 import * as UI from '../../content/ui.ts'
 import { GIBS_LINK } from './gibs.ts'
-import type { ImageryNoteKind } from './gibs.ts'
 import './imagery.css'
 
 // The Satellite view and Flat / Globe controls live in the dock (components/dock, T-093); the map keeps the credit.
 
-/** Credit, layer date and the single failure note: one small line at the bottom right of the map. */
+/** Credit and layer date: one small line at the bottom right of the map. The imagery failure note is in the dock. */
 export function ImageryCredit({
   offlineCopy,
   satDateShown,
-  note,
   basemapShown,
 }: {
   offlineCopy: boolean
   satDateShown: string | null
-  note: ImageryNoteKind | null
   basemapShown: boolean
 }) {
   const [info, setInfo] = useState(false)
   return (
     <div className="map-credit">
-      {note !== null && (
-        <p className="map-imagery-note" role="status">
-          {note === 'offline' ? UI.IMAGERY_NOTE_OFFLINE : UI.IMAGERY_NOTE_FAILED}
-        </p>
-      )}
       {!offlineCopy && (satDateShown !== null || basemapShown) && (
         <p className="map-credit-line">
           <strong>{satDateShown !== null ? UI.IMAGERY_SAT_DATE(satDateShown) : UI.IMAGERY_BASEMAP_DATE}</strong>

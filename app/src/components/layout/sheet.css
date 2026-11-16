@@ -1,0 +1,131 @@
+/* The answer panel as a bottom sheet over the map on narrow screens (T-093). Under the handle, the timeline stays on
+   screen at every height; the answer scrolls inside the sheet at half and full height. One elevation (it floats over
+   the map), radius 4 px at the top, motion 200 ms ease-out and none under reduced motion or while dragging. */
+.sheet {
+  position: absolute;
+  z-index: 8;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* Before the first measurement: about the peek. */
+  height: 45%;
+  background: var(--surface);
+  border-top: var(--rule);
+  border-radius: 4px 4px 0 0;
+  box-shadow: var(--elev);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sheet:not([data-dragging='true']) {
+    transition: height 200ms ease-out;
+  }
+}
+
+/* The handle: the full width of the sheet, 28 px drawn, with 16 px more of touch area above it (44 px in all). */
+.sheet-handle {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 4px 4px 0 0;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sheet-handle::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -16px;
+  bottom: 0;
+}
+
+.sheet[data-dragging='true'] .sheet-handle {
+  cursor: grabbing;
+}
+
+.sheet-handle:focus-visible {
+  outline-offset: -3px;
+}
+
+.sheet-grip {
+  width: 40px;
+  height: 4px;
+  background: var(--muted);
+  border-radius: 2px;
+}
+
+.sheet-handle:hover .sheet-grip {
+  background: var(--ink);
+}
+
+.sheet-top {
+  flex: none;
+  min-width: 0;
+}
+
+.sheet-top .timeline-zone {
+  padding-top: 0;
+  border-top: 0;
+  border-bottom: var(--rule);
+}
+
+.sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sheet:not([data-height='peek']):not([data-dragging='true']) .sheet-body {
+  overflow-y: auto;
+}
+
+.sheet .answer {
+  overflow: visible;
+  border: 0;
+}
+
+/* A readable column on a tablet; the timeline above keeps the full width. */
+.sheet .answer > *,
+.sheet .sheet-body > .map-source {
+  box-sizing: border-box;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.sheet .sheet-body > .map-source {
+  margin-block: 0;
+  padding: var(--s-8) var(--s-16) var(--s-16);
+  border-top: var(--rule);
+  line-height: 1.4;
+}
+
+/* The heading says the area and month; the eyebrow above it is still read out. */
+.sheet .summary .eyebrow {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sheet .answer > .summary {
+  padding-top: var(--s-12);
+}
+
+/* The stories follow the answer in the sheet. */
+.sheet .answer > .stories {
+  padding: var(--s-12) var(--s-16) var(--s-16);
+  border-top: var(--rule);
+}

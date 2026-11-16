@@ -34,7 +34,7 @@ import {
 import { ImageryCredit } from './ImageryControls.tsx'
 import type { Dispatch } from 'react'
 import type { MapViewAction, MapViewState } from '../../state/mapView.ts'
-import { CELL_CASING_IMAGERY, cellOpacity, imageryNote, satDate, todayIso } from './gibs.ts'
+import { CELL_CASING_IMAGERY, cellOpacity, satDate, todayIso } from './gibs.ts'
 import { fadeZoom, quietAlpha, signalFill } from './signal.ts'
 import {
   WORLD_CENTER,
@@ -988,7 +988,6 @@ export function MapView({
       <ImageryCredit
         offlineCopy={offlineCopy}
         satDateShown={tcShown ? tcDate : null}
-        note={imageryNote(offlineCopy, basemapFailed, tcFailed)}
         basemapShown={basemapShown}
       />
       <ScrollHint />
