@@ -35,6 +35,7 @@ Approval status: **APPROVED** (by the Project Lead) · **PROPOSED** (awaiting ap
 | D-031 | 2026-11-15 | Keep the D-028 minimum-baseline rule for cells with unprecedented activity; no new caveat code; explained in the app and the demo | **APPROVED** (2026-11-15) |
 | D-032 | 2026-11-15 | Map: NASA GIBS imagery basemap and an optional 3D globe view (amends the plain-background basemap of TECH_STACK; CesiumJS stays rejected) | **APPROVED** (2026-11-15) |
 | D-033 | 2026-11-15 | India's official boundary: the map draws Natural Earth's India point-of-view boundaries now; the country assignment of the Jammu and Kashmir cells follows after the demo | **APPROVED** (2026-11-15) |
+| D-034 | 2026-11-16 | License: MIT for the project's code and documentation; third-party data, imagery and fonts keep their own terms (`THIRD_PARTY_NOTICES.md`) | **APPROVED** (2026-11-16) |
 | D-030 | 2026-11-15 | v0.2 activity-dependent conversion (post-hoc, prompted by A1 and T-020b): adopted only by a pre-registered rule; v0.1 stays visible | **NOT ADOPTED** (2026-11-15; rule not met, v0.1 stays) |
 | D-029 | 2026-11-15 | Test A1: both paths use the shared Aqua-measured 2003-2022 baseline (amends D-028 for A1 only; adopted after seeing C1, whose official result stays INCONCLUSIVE) | **APPROVED** (2026-11-15) |
 
@@ -315,3 +316,9 @@ The threshold 5 matches the D-009 evidence ("Aqua ≥ 5 cell-days"); 0.8 is the 
   3. **Until T-086 merges,** `RISKS_AND_LIMITATIONS.md` states that the country totals for India, Pakistan and China follow FIRMS's country attribution in Jammu and Kashmir.
 - **Why:** India's official map is required at an Indian event, and the fix uses the same public-domain source the project already uses. The data step changes products, so it waits until after the presentation, to keep `main` demo-ready.
 - **Status:** **APPROVED** by the Lead, 2026-11-15.
+
+### D-034: MIT License for the repository **[APPROVED 2026-11-16]**
+- **Context:** the repository is public for the Space Apps submission and had no license, so nobody could legally reuse the code.
+- **Decision (Lead, 2026-11-16):** the project's own code and documentation are released under the MIT License, copyright Vishal BG, Kaushik and Swastik Sahu (`LICENSE`). Third-party material keeps its own terms, listed in `THIRD_PARTY_NOTICES.md`: NASA FIRMS and NASA GIBS (NASA open data, acknowledgement requested), Natural Earth (public domain), GFED4s (citation), IBM Plex (SIL OFL 1.1, `app/public/fonts/OFL.txt`).
+- **Why:** MIT is short, permissive and widely understood, which suits an open-science hackathon project that others should be able to reuse and build on. The data products are derived from NASA open data, so the license adds no restriction to them beyond NASA's acknowledgement request.
+- **Status:** **APPROVED** by the Lead, 2026-11-16.

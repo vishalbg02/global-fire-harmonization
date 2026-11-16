@@ -228,6 +228,10 @@ Three members (see [`docs/TEAM_ROLES.md`](docs/TEAM_ROLES.md)):
 - **Member 2:** data engineering, scientific analysis and the final UI pass (`pipeline/`, `app/`).
 - **Member 3:** application development (`api/`, `app/`).
 
+## License
+
+The code and documentation are released under the [MIT License](LICENSE), copyright (c) 2026 Vishal BG, Kaushik and Swastik Sahu. Third-party data, imagery and fonts (NASA FIRMS, NASA GIBS, Natural Earth, GFED4s, IBM Plex) keep their own terms: see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
 ## Data acknowledgement
 
 We acknowledge the use of data and imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Earth Science Data and Information System (ESDIS), and from LANCE. FIRMS data are provided "as is". We acknowledge the use of imagery from NASA's Global Imagery Browse Services (GIBS), part of NASA's ESDIS.
