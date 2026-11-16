@@ -269,15 +269,16 @@
 
 /* Short screens (a 1280 x 720 projector): smaller story chips and a tighter card, so the answer and its actions fit
    in the first view. */
-@media (min-width: 901px) and (max-height: 760px) {
+@media (min-width: 901px) and (max-height: 800px) {
+  /* The label and the five stories in two rows instead of three. */
   .answer > .stories {
-    gap: 6px;
-    padding: var(--s-8) var(--s-16) 0;
+    gap: var(--s-4);
+    padding: var(--s-8) var(--s-12) 0;
     font-size: var(--t-12);
   }
 
   .answer > .stories .chip {
-    padding: 2px 8px;
+    padding: 2px 6px;
     font-size: var(--t-12);
   }
 
