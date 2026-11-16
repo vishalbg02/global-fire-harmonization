@@ -67,6 +67,8 @@ git lfs install
 git lfs pull                                   # data/products/*.parquet, about 600 MB
 ```
 
+To confirm the data products downloaded, run `git lfs ls-files`; each file should show `*` after its hash, meaning the real content is present.
+
 **1. The API**, started from the repository root (the default products folder is relative to it):
 
 ```bash
