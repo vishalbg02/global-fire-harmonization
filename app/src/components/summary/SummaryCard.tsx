@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react'
 import type { EntityMonth, Metadata } from '../../api/contract.ts'
-import { ACTIONS_LABEL, PROVISIONAL_MARK, SUMMARY_ERROR, SUMMARY_LOADING } from '../../content/answer.ts'
+import { ACTIONS_LABEL, PCT_UNIT, PROVISIONAL_MARK, SUMMARY_ERROR, SUMMARY_LOADING } from '../../content/answer.ts'
 import type { FeaturedStory } from '../../content/featured.ts'
 import { StoryCaption } from '../layout/StoryCaption.tsx'
 import { NOT_AVAILABLE_YET, isRawOnlyRecord, useRawOnly } from '../../content/rawOnly.ts'
@@ -99,7 +99,11 @@ function Verdict({ record, areaName }: { record: EntityMonth; areaName: string }
       </div>
       <p className="big num">
         {pct === null ? (
-          <span className="big-none">{NO_DATA}</span>
+          // Missing, never 0: the unit first, so it is clear what has no data.
+          <>
+            <small>{`${PCT_UNIT}:`}</small>
+            <span className="big-none">{NO_DATA}</span>
+          </>
         ) : (
           <>
             <span className="big-value">{pct.value}</span>

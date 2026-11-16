@@ -18,6 +18,20 @@
   margin: 0;
 }
 
+/* The "?" explainers keep their small circle inside the card (the phone rule that makes every button 44 px tall
+   would turn them into ovals and push the rows apart); an invisible margin around each keeps the touch area at
+   least 32 px. */
+.answer .summary .help-tip.bare {
+  position: relative;
+  min-height: 0;
+}
+
+.summary .help-tip::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
 /* ---- The verdict block ---- */
 .verdict {
   display: grid;
@@ -476,5 +490,48 @@
 @media (prefers-reduced-motion: reduce) {
   .story-chevron {
     transition: none;
+  }
+}
+
+/* ---- Short screens (a 1280 x 720 projector): the same answer, tighter, so the actions stay in the first view.
+   The sparkline's caption is still read out (the figure's description says the same). ---- */
+@media (min-width: 901px) and (max-height: 760px) {
+  .summary .eyebrow,
+  .summary .spark figcaption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .summary-head {
+    margin: 0 0 var(--s-8);
+  }
+
+  .verdict {
+    gap: 6px;
+  }
+
+  .ibar-legend > div,
+  .ibar-unit {
+    min-height: 16px;
+  }
+
+  .summary .spark,
+  .summary .why {
+    margin-top: var(--s-8);
+    padding-top: var(--s-8);
+  }
+
+  .summary .source-line {
+    margin-top: var(--s-8);
+    padding-top: 6px;
+  }
+
+  .summary-actions {
+    gap: 6px var(--s-8);
+    margin-top: var(--s-8);
   }
 }
